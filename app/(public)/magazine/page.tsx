@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { ArrowRight, Download, Calendar, Users } from 'lucide-react';
 import { getLatestMagazine } from '@/lib/data';
+import { MagazineCoverMockup } from '@/components/news/MagazineCoverMockup';
 
 export const metadata = {
   title: 'Monthly Magazine | ESB PowerLine',
@@ -45,24 +46,9 @@ export default function MagazinePage() {
           </div>
 
           {/* Cover mock */}
-          <div className="lg:w-3/5">
-            <div className="aspect-[16/10] rounded-2xl overflow-hidden border border-border/80 shadow-2xl bg-muted/40 relative">
-              <img 
-                src={magazine.coverUrl} 
-                alt="Magazine cover" 
-                className="absolute inset-0 w-full h-full object-cover opacity-90" 
-              />
-              <div className="absolute inset-0 bg-gradient-to-br from-black/70 via-black/40 to-black/60" />
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div className="text-center px-8">
-                  <div className="text-accent text-sm tracking-[3px] font-semibold mb-1">ESB POWERLINE</div>
-                  <div className="text-white text-5xl font-semibold tracking-[-1.5px] leading-none mb-2">Renewables Surge</div>
-                  <div className="text-foreground/90 text-xl tracking-tight">&amp; Tariff Reform</div>
-                  <div className="mt-4 inline-block text-xs border border-white/30 px-3 py-0.5 rounded text-white/90">JUNE 2026</div>
-                </div>
-              </div>
-            </div>
-            <div className="text-center mt-2 text-[10px] text-muted-foreground/70">Print • Digital • Archive access for subscribers</div>
+          <div className="lg:w-3/5 flex flex-col items-center">
+            <MagazineCoverMockup coverUrl={magazine.coverUrl} />
+            <div className="text-center mt-3 text-[10px] text-muted-foreground/70">Print • Digital • Archive access for subscribers</div>
           </div>
         </div>
 
