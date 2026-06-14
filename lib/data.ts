@@ -182,6 +182,6 @@ export const getLatestMagazine = () => ({
   id: 'm1',
   title: 'Renewables Surge & Tariff Reform — June 2026',
   issueDate: '2026-06-01',
-  coverUrl: '/images/download (10).jfif',
+  coverUrl: '/images/demo_magazine_cover.jpg',
   summary: 'In-depth analysis of the latest solar + wind pipeline, cross-border power trade, and BERC tariff reform.',
 });

@@ -129,7 +129,7 @@ async function main() {
   // === MAGAZINE ISSUES (3) ===
   await prisma.magazineIssue.createMany({
     data: [
-      { title: 'Renewables Surge & Tariff Reform', issueDate: new Date('2026-05-01'), coverUrl: '/images/download (10).jfif', pdfUrl: 'https://example.com/magazine/2026-05.pdf', summary: 'Cover story on the 1,800 MW solar tender and BERC’s latest bulk tariff order.', status: 'published' },
+      { title: 'Renewables Surge & Tariff Reform', issueDate: new Date('2026-05-01'), coverUrl: '/images/demo_magazine_cover.jpg', pdfUrl: 'https://example.com/magazine/2026-05.pdf', summary: 'Cover story on the 1,800 MW solar tender and BERC’s latest bulk tariff order.', status: 'published' },
       { title: 'Grid Modernization & Nuclear Dawn', issueDate: new Date('2026-04-01'), coverUrl: '/images/download (11).jfif', pdfUrl: 'https://example.com/magazine/2026-04.pdf', summary: 'Rooppur fuel loading, 400 kV backbone projects, and digital dispatch upgrades.', status: 'published' },
       { title: 'Gas Security & Regional Trade', issueDate: new Date('2026-03-01'), coverUrl: '/images/download (12).jfif', pdfUrl: 'https://example.com/magazine/2026-03.pdf', summary: 'LNG strategy, Nepal-Bhutan hydro prospects, and the future of domestic gas fields.', status: 'published' },
     ],
