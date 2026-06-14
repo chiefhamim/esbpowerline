@@ -6,8 +6,8 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { Zap } from 'lucide-react';
 
 export default function LoginPage() {
-  const [email, setEmail] = useState('editor@esbpowerline.com');
-  const [password, setPassword] = useState('editor123');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const router = useRouter();
@@ -105,11 +105,7 @@ export default function LoginPage() {
             </button>
           </form>
 
-          <div className="mt-7 pt-5 border-t text-[11px] leading-relaxed text-muted-foreground">
-            Demo accounts:<br />
-            <span className="font-mono">admin@esbpowerline.com / admin123</span> — Admin<br />
-            <span className="font-mono">editor@esbpowerline.com / editor123</span> — CMS
-          </div>
+          {/* Demo accounts removed */}
         </div>
       </div>
     </div>

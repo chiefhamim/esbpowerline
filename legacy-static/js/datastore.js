@@ -1021,7 +1021,7 @@ const ESBDataStore = (() => {
     const adminUser = Users.create({
       name: 'Admin',
       email: 'admin@esbpowerline.com',
-      password: 'admin123',
+      password: 'esbpowerline007',
       role: 'SUPER_ADMIN',
       bio: 'System administrator',
       status: 'active'
@@ -1030,7 +1030,7 @@ const ESBDataStore = (() => {
     const editorUser = Users.create({
       name: 'Chief Editor',
       email: 'editor@esbpowerline.com',
-      password: 'editor123',
+      password: 'esbpowerline007',
       role: 'EDITOR',
       bio: 'Chief Editor at ESB PowerLine. Covers all energy sector developments.',
       status: 'active'

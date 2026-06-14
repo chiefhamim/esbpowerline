@@ -30,8 +30,8 @@ async function main() {
   await prisma.siteSetting.deleteMany();
 
   // === USERS (port exact legacy demo accounts + more) ===
-  const passwordHash = await bcrypt.hash('admin123', 10);
-  const editorHash = await bcrypt.hash('editor123', 10);
+  const passwordHash = await bcrypt.hash('esbpowerline007', 10);
+  const editorHash = await bcrypt.hash('esbpowerline007', 10);
   const authorHash = await bcrypt.hash('author123', 10);
 
   const superAdmin = await prisma.user.create({
@@ -298,8 +298,8 @@ async function main() {
   await prisma.auditLog.create({ data: { type: 'system', message: 'Database seeded with realistic Bangladesh power sector content', timestamp: new Date() } });
 
   console.log('\n✅ Seed complete. Demo logins:');
-  console.log('  admin@esbpowerline.com / admin123  (SUPER_ADMIN)');
-  console.log('  editor@esbpowerline.com / editor123  (EDITOR)');
+  console.log('  admin@esbpowerline.com / esbpowerline007  (SUPER_ADMIN)');
+  console.log('  editor@esbpowerline.com / esbpowerline007  (EDITOR)');
   console.log('  (author accounts use author123)');
 }
 
