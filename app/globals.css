@@ -1,0 +1,352 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Base (will be overridden by theme classes) */
+    --background: 222 47% 9%;
+    --foreground: 210 40% 96%;
+    --card: 217 33% 14%;
+    --card-foreground: 210 40% 96%;
+    --popover: 217 33% 13%;
+    --popover-foreground: 210 40% 96%;
+    --primary: 224 76% 52%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 217 30% 16%;
+    --secondary-foreground: 210 40% 96%;
+    --muted: 217 28% 15%;
+    --muted-foreground: 215 18% 62%;
+    --accent: 160 84% 39%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 70% 48%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 217 30% 22%;
+    --input: 217 28% 20%;
+    --ring: 224 76% 52%;
+    --radius: 0.75rem;
+
+    --bg: #0b111f;
+    --bg-elev: #121a2b;
+    --bg-card: #1a2334;
+    --text: #e2e8f0;
+    --text-muted: #94a3b8;
+    --primary-hex: #3b82f6;
+    --primary-light: #60a5fa;
+    --accent-hex: #10b981;
+
+    --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.25);
+    --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.3), 0 2px 4px -2px rgb(0 0 0 / 0.25);
+    --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.35), 0 4px 6px -4px rgb(0 0 0 / 0.3);
+    --shadow-xl: 0 25px 50px -12px rgb(0 0 0 / 0.5);
+
+    /* Scrollbar theme vars (will be set per theme) */
+    --scroll-track: #121a2b;
+    --scroll-thumb: #3b82f6;
+    --scroll-thumb-hover: #60a5fa;
+  }
+
+  /* === THEME: Midnight (deep professional navy dark) === */
+  .theme-midnight {
+    --background: 220 50% 5%;
+    --foreground: 210 40% 98%;
+    --card: 220 40% 9.5%;
+    --card-foreground: 210 40% 98%;
+    --popover: 220 40% 8.5%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 217 91% 60%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 220 35% 12%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 220 30% 11%;
+    --muted-foreground: 215 20% 70%;
+    --accent: 160 84% 42%;
+    --accent-foreground: 0 0% 100%;
+    --border: 220 30% 16%;
+    --input: 220 30% 14%;
+    --ring: 217 91% 60%;
+
+    --bg: #04070f;
+    --bg-elev: #0e1523;
+    --bg-card: #141c2c;
+    --text: #f1f5f9;
+    --text-muted: #cbd5e1;
+
+    --scroll-track: #0e1523;
+    --scroll-thumb: #3b82f6;
+    --scroll-thumb-hover: #60a5fa;
+  }
+
+  /* === THEME: Dark (neutral sleek dark) === */
+  .theme-dark {
+    --background: 240 10% 3.5%;
+    --foreground: 0 0% 98%;
+    --card: 240 5% 9%;
+    --card-foreground: 0 0% 98%;
+    --popover: 240 5% 8%;
+    --popover-foreground: 0 0% 98%;
+    --primary: 220 85% 57%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 240 5% 13%;
+    --secondary-foreground: 0 0% 98%;
+    --muted: 240 5% 11%;
+    --muted-foreground: 240 5% 65%;
+    --accent: 160 84% 39%;
+    --accent-foreground: 0 0% 100%;
+    --border: 240 5% 16%;
+    --input: 240 5% 14%;
+    --ring: 220 85% 57%;
+
+    --bg: #09090b;
+    --bg-elev: #161619;
+    --bg-card: #202024;
+    --text: #f4f4f5;
+    --text-muted: #a1a1aa;
+
+    --scroll-track: #161619;
+    --scroll-thumb: #64748b;
+    --scroll-thumb-hover: #94a3b8;
+  }
+
+  /* === THEME: White (clean professional light) === */
+  .theme-white {
+    --background: 210 40% 98%;
+    --foreground: 222 47% 11%;
+    --card: 0 0% 100%;
+    --card-foreground: 222 47% 11%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 47% 11%;
+    --primary: 224 85% 42%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 210 40% 96%;
+    --secondary-foreground: 222 47% 11%;
+    --muted: 210 40% 95%;
+    --muted-foreground: 215 16% 40%;
+    --accent: 160 84% 33%;
+    --accent-foreground: 0 0% 100%;
+    --border: 214 32% 90%;
+    --input: 214 32% 88%;
+    --ring: 224 85% 42%;
+
+    --bg: #f8fafc;
+    --bg-elev: #f1f5f9;
+    --bg-card: #ffffff;
+    --text: #0f172a;
+    --text-muted: #475569;
+
+    --scroll-track: #f1f5f9;
+    --scroll-thumb: #1e40af;
+    --scroll-thumb-hover: #3b82f6;
+  }
+
+  .theme-white .card {
+    box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.04);
+    border: 1px solid hsl(var(--border));
+  }
+
+  /* Improve category cards in light/white theme for better framing and no heavy drop shadow */
+  .theme-white .category-card {
+    box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.03);
+  }
+}
+
+@layer base {
+  * { @apply border-border; }
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-family: Inter, -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif;
+    font-feature-settings: "tnum" 1, "cv03" 1, "cv04" 1; /* proportional & tabular numbers, clean punctuation */
+  }
+
+  /* Premium typography scales */
+  h1, .h1 { @apply font-display text-5xl md:text-6xl font-semibold tracking-[-0.035em] leading-[0.92]; }
+  h2, .h2 { @apply font-display text-3xl md:text-4xl font-semibold tracking-[-0.025em] leading-tight; }
+  h3, .h3 { @apply font-display text-2xl font-semibold tracking-[-0.015em]; }
+  h4, .h4 { @apply font-display text-xl font-semibold tracking-[-0.01em]; }
+
+  .text-balance { text-wrap: balance; }
+}
+
+/* ======================
+   Rich Elevated Surfaces
+   ====================== */
+.card, .glass-card {
+  @apply rounded-2xl border bg-card text-card-foreground;
+  box-shadow: var(--shadow);
+  transition: transform 160ms cubic-bezier(0.23, 1, 0.32, 1), 
+              box-shadow 160ms cubic-bezier(0.23, 1, 0.32, 1),
+              border-color 120ms ease;
+}
+
+.glass-card {
+  @apply bg-card/95 backdrop-blur-xl;
+  border-color: hsl(var(--border) / 0.6);
+}
+
+.card:hover {
+  box-shadow: var(--shadow-lg);
+}
+
+.article-card {
+  @apply overflow-hidden rounded-2xl border bg-card transition-all duration-200;
+  box-shadow: var(--shadow-sm);
+}
+
+.article-card:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-lg);
+  border-color: hsl(var(--primary) / 0.35);
+}
+
+.article-card__image {
+  @apply w-full h-48 object-cover bg-muted transition-transform duration-300;
+}
+
+.article-card:hover .article-card__image {
+  transform: scale(1.015);
+}
+
+/* Elegant category pills & segmented controls */
+.category-pill {
+  @apply inline-flex items-center px-3.5 py-1 text-xs font-medium rounded-full border bg-secondary/70 text-muted-foreground hover:bg-secondary hover:text-foreground transition-all active:scale-[0.985];
+  letter-spacing: -0.01em;
+}
+.category-pill.active {
+  @apply bg-primary text-primary-foreground border-primary shadow-sm;
+}
+
+/* Premium segmented tabs (macOS control feel) - flex wrap for responsive vertical distribution, no horizontal scroll */
+.segmented {
+  @apply flex flex-wrap rounded-2xl bg-muted/70 p-1 border border-border/70 backdrop-blur;
+}
+.segmented button {
+  @apply flex items-center gap-2 px-3 py-1 text-xs font-medium rounded-xl transition-all;
+}
+.segmented button[data-active="true"] {
+  @apply shadow-sm;
+}
+
+/* Rich stats / KPI cards */
+.stat {
+  @apply card p-5;
+}
+.stat-value {
+  @apply font-mono text-3xl md:text-4xl font-semibold tabular-nums tracking-[-0.02em] text-foreground;
+}
+
+/* Sleek buttons */
+.btn {
+  @apply inline-flex items-center justify-center rounded-2xl px-5 py-2.5 text-sm font-medium transition-all active:scale-[0.985] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background;
+}
+.btn-primary { 
+  @apply bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm; 
+}
+.btn-secondary { 
+  @apply border bg-secondary/70 hover:bg-secondary hover:border-border/80 text-foreground; 
+}
+
+/* Refined prose / body text */
+.prose { @apply max-w-none; }
+.prose p { @apply text-muted-foreground leading-relaxed; }
+
+/* Container with breathing room */
+.container { @apply max-w-7xl mx-auto px-5 sm:px-6 lg:px-8; }
+
+/* Section headers - informative + sleek */
+.section-header {
+  @apply flex items-center justify-between mb-5;
+}
+.section-header h2 {
+  @apply flex items-center gap-3 text-2xl font-semibold tracking-[-0.02em];
+}
+
+/* Modern table rows */
+.table-row {
+  @apply transition-colors hover:bg-muted/40;
+}
+
+/* Login / form cards */
+.auth-card {
+  @apply glass-card p-9 shadow-xl rounded-3xl border-border/60;
+}
+
+/* Power / data explorer polish */
+.explorer-tab {
+  @apply flex items-center gap-2 px-5 py-2.5 text-sm font-medium rounded-2xl transition-all border border-transparent;
+}
+.explorer-tab.active {
+  @apply bg-primary/10 text-primary border-primary/20 shadow-sm;
+}
+.explorer-tab:not(.active):hover {
+  @apply bg-muted text-foreground;
+}
+
+/* TipTap editor – keep functional but cleaner */
+.tiptap { @apply min-h-[320px] p-6 outline-none text-[15px] leading-relaxed; }
+.tiptap p { @apply mb-4 text-foreground; }
+.tiptap h1 { @apply text-3xl font-semibold tracking-tight mb-4; }
+.tiptap h2 { @apply text-2xl font-semibold tracking-tight mb-3 mt-6; }
+.tiptap h3 { @apply text-xl font-semibold tracking-tight mb-2 mt-4; }
+.tiptap ul, .tiptap ol { @apply pl-6 mb-4 space-y-1; }
+.tiptap blockquote { @apply border-l-4 border-primary/60 pl-5 italic text-muted-foreground my-4; }
+.tiptap img { @apply max-w-full rounded-xl my-5 shadow-sm; }
+.tiptap a { @apply text-primary underline underline-offset-2; }
+
+/* Subtle dividers and separators */
+.divider { @apply border-t border-border/70; }
+
+/* Icon containers for rich cards */
+.icon-wrap {
+  @apply flex h-9 w-9 items-center justify-center rounded-xl bg-muted text-primary transition-colors;
+}
+.card:hover .icon-wrap {
+  @apply bg-primary/10 text-primary;
+}
+
+/* Professional moving ticker / marquee */
+@keyframes marquee {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+.animate-marquee {
+  animation: marquee 28s linear infinite;
+}
+
+/* Themed scrollbars - midnight / dark / white */
+html {
+  scrollbar-width: thin;
+  scrollbar-color: var(--scroll-thumb) var(--scroll-track);
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--scroll-track);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--scroll-thumb);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--scroll-thumb-hover);
+}
+
+/* Apply base theme on load (default midnight) */
+html:not(.theme-dark):not(.theme-white) {
+  /* falls back to .theme-midnight vars */
+}
+
+/* Scrollbar-hide helper for mobile horizontal scrolls */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+

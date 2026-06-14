@@ -1,0 +1,275 @@
+// ESB PowerLine Prisma Schema
+// Ported & extended from the excellent legacy datastore.js models + BD_PWR_TREE power data models.
+// PostgreSQL + full feature parity for Articles, Users/Roles/Permissions, Magazine, Media, Comments, Analytics, + interactive Grid data.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  // url is now provided via DATABASE_URL env or prisma.config.ts for Prisma 7+
+}
+
+// ============================================
+// USERS + AUTH + ROLES (port of datastore Users + ROLES + hasPermission)
+// ============================================
+model User {
+  id            String     @id @default(cuid())
+  name          String
+  email         String     @unique
+  passwordHash  String
+  role          Role       @default(AUTHOR)
+  avatar        String?
+  bio           String?
+  status        UserStatus @default(ACTIVE)
+  lastLoginAt   DateTime?
+  articlesCount Int        @default(0)
+  totalViews    Int        @default(0)
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+
+  articles   Article[]
+}
+
+enum Role {
+  SUPER_ADMIN
+  ADMIN
+  EDITOR
+  AUTHOR
+  CONTRIBUTOR
+  SUBSCRIBER
+}
+
+enum UserStatus {
+  ACTIVE
+  SUSPENDED
+  PENDING
+}
+
+// ============================================
+// ARTICLES (core of the news portal; rich parity with datastore)
+// ============================================
+model Article {
+  id          String          @id @default(cuid())
+  title       String
+  slug        String          @unique
+  excerpt     String?
+  content     String          // TipTap JSON or sanitized HTML
+  authorId    String
+  author      User            @relation(fields: [authorId], references: [id])
+  publishedAt DateTime?
+  status      ArticleStatus   @default(DRAFT)
+  category    String          // Matches legacy 10 categories (flexible; can normalize to Category later)
+  imageUrl    String?
+  readTime    Int             @default(1)
+  views       Int             @default(0)
+  likes       Int             @default(0)
+  isFeatured  Boolean         @default(false)
+  isBreaking  Boolean         @default(false)
+  isPinned    Boolean         @default(false)
+  tags        Json?           // array of strings stored as JSON (sqlite does not support scalar lists natively in this setup)
+  seo         Json?           // { metaTitle, metaDescription, focusKeyword, ogImage }
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+  version     Int             @default(1)
+
+  revisions Revision[]
+}
+
+enum ArticleStatus {
+  DRAFT
+  PUBLISHED
+  SCHEDULED
+  ARCHIVED
+  TRASH
+}
+
+// ============================================
+// CATEGORIES (exact legacy 10)
+// ============================================
+model Category {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  slug        String   @unique
+  description String?
+  icon        String?
+  color       String?
+  order       Int      @default(0)
+  createdAt   DateTime @default(now())
+}
+
+// ============================================
+// REVISIONS (article history)
+// ============================================
+model Revision {
+  id        String   @id @default(cuid())
+  articleId String
+  article   Article  @relation(fields: [articleId], references: [id], onDelete: Cascade)
+  content   String
+  userId    String?
+  note      String?
+  createdAt DateTime @default(now())
+}
+
+// ============================================
+// MEDIA (images, PDFs for articles + magazine)
+// ============================================
+model Media {
+  id           String   @id @default(cuid())
+  name         String
+  url          String
+  type         String   // image | pdf | video
+  mimeType     String?
+  size         Int?
+  altText      String?
+  caption      String?
+  uploadedById String?
+  usedIn       Json?     // array of ids stored as JSON for sqlite compatibility
+  createdAt    DateTime @default(now())
+}
+
+// ============================================
+// COMMENTS (moderation)
+// ============================================
+model Comment {
+  id         String          @id @default(cuid())
+  articleId  String
+  parentId   String?
+  authorName String
+  authorEmail String?
+  content    String
+  status     CommentStatus   @default(PENDING)
+  likes      Int             @default(0)
+  createdAt  DateTime        @default(now())
+}
+
+enum CommentStatus {
+  APPROVED
+  PENDING
+  SPAM
+  TRASH
+}
+
+// ============================================
+// MAGAZINE ISSUES
+// ============================================
+model MagazineIssue {
+  id           String   @id @default(cuid())
+  title        String
+  issueDate    DateTime
+  coverUrl     String?
+  pdfUrl       String?
+  summary      String?
+  status       String   @default("published")
+  articleLinks Json?     // array of article slugs/ids stored as JSON (sqlite compatible)
+  createdAt    DateTime @default(now())
+}
+
+// ============================================
+// POWER GRID / DATA REPORTS (unified from BD_PWR_TREE)
+// ============================================
+model Node {
+  id                String    @id @default(cuid())
+  label             String
+  designation       String
+  category          String
+  status            String    @default("normal")
+  websiteUrl        String?
+  capacityData      String?
+  nodeColor         String?
+  textColor         String    @default("#e2e8f0")
+  x                 Float     @default(0)
+  y                 Float     @default(0)
+  manualX           Float?
+  manualY           Float?
+  useManualOverride Boolean   @default(false)
+  parentId          String?
+  icon              String?
+  kpiValue          String?
+  kpiUnit           String?
+  lastUpdated       String?
+  description       String?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  parent   Node?  @relation("NodeHierarchy", fields: [parentId], references: [id], onDelete: SetNull)
+  children Node[] @relation("NodeHierarchy")
+
+  edgesFrom Edge[] @relation("EdgeSource")
+  edgesTo   Edge[] @relation("EdgeTarget")
+}
+
+model Edge {
+  id        String   @id @default(cuid())
+  sourceId  String
+  targetId  String
+  edgeColor String   @default("#64748b")
+  edgeStyle String   @default("solid")
+  label     String?
+  flowVolume Float?
+  flowType  String?
+  animated  Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  source Node @relation("EdgeSource", fields: [sourceId], references: [id], onDelete: Cascade)
+  target Node @relation("EdgeTarget", fields: [targetId], references: [id], onDelete: Cascade)
+}
+
+model DashboardStat {
+  id                String    @id @default(cuid())
+  statName          String    @unique
+  value             Float     @default(0)
+  calculatedValue   Float?
+  isManualOverride  Boolean   @default(false)
+  unit              String?
+  formula           String?
+  lastCalculated    DateTime?
+  source            String?
+  sourceUrl         String?
+  lastVerified      String?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+}
+
+// ============================================
+// SUPPORTING (Logs, Newsletter, Ads, Settings, Pages)
+// ============================================
+model AuditLog {
+  id        String   @id @default(cuid())
+  type      String
+  message   String
+  userId    String?
+  // user relation removed to satisfy Prisma validation in current dev setup
+  timestamp DateTime @default(now())
+}
+
+model NewsletterSub {
+  id            String   @id @default(cuid())
+  email         String   @unique
+  subscribedAt  DateTime @default(now())
+  status        String   @default("active")
+}
+
+model Ad {
+  id         String   @id @default(cuid())
+  name       String
+  position   String
+  content    String
+  link       String   @default("#")
+  isActive   Boolean  @default(true)
+  impressions Int     @default(0)
+  clicks     Int      @default(0)
+  startDate  DateTime?
+  endDate    DateTime?
+  createdAt  DateTime @default(now())
+}
+
+model SiteSetting {
+  key       String   @id
+  value     Json
+  updatedAt DateTime @updatedAt
+}
+
+// (Pages model can be added later for About/Contact custom content)
