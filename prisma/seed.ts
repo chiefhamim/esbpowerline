@@ -26,6 +26,7 @@ async function main() {
   await prisma.ad.deleteMany();
   await prisma.user.deleteMany();
   await prisma.category.deleteMany();
+  await prisma.siteSetting.deleteMany();
 
   // === USERS (port exact legacy demo accounts + more) ===
   const passwordHash = await bcrypt.hash('admin123', 10);
@@ -100,7 +101,8 @@ async function main() {
     { title: 'LNG spot cargoes arrive at 12% discount to long-term contracts', cat: 'LNG & Gas', featured: false, breaking: false, views: 2800, author: authors[0].id, excerpt: 'Relief for power sector fuel costs as global prices soften.', content: '<p>Three spot cargoes discharged at Moheshkhali this week...</p>', status: 'PUBLISHED' },
   ];
 
-  for (const a of articlesData) {
+  for (let i = 0; i < articlesData.length; i++) {
+    const a = articlesData[i];
     const slug = a.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '').slice(0, 80);
     await prisma.article.create({
       data: {
@@ -116,7 +118,7 @@ async function main() {
         views: a.views,
         readTime: Math.ceil((a.content.length || 600) / 200),
         publishedAt: a.status === 'PUBLISHED' ? new Date(Date.now() - Math.random() * 1000 * 3600 * 24 * 12) : null,
-        imageUrl: 'https://picsum.photos/id/1015/1200/630',
+        imageUrl: `/images/download (${10 + (i % 5)}).jfif`,
         tags: [a.cat.split(' ')[0].toLowerCase()],
         seo: { metaTitle: a.title, metaDescription: a.excerpt },
       },
@@ -127,9 +129,9 @@ async function main() {
   // === MAGAZINE ISSUES (3) ===
   await prisma.magazineIssue.createMany({
     data: [
-      { title: 'Renewables Surge & Tariff Reform', issueDate: new Date('2026-05-01'), coverUrl: 'https://picsum.photos/id/1018/800/1000', pdfUrl: 'https://example.com/magazine/2026-05.pdf', summary: 'Cover story on the 1,800 MW solar tender and BERC’s latest bulk tariff order.', status: 'published' },
-      { title: 'Grid Modernization & Nuclear Dawn', issueDate: new Date('2026-04-01'), coverUrl: 'https://picsum.photos/id/160/800/1000', pdfUrl: 'https://example.com/magazine/2026-04.pdf', summary: 'Rooppur fuel loading, 400 kV backbone projects, and digital dispatch upgrades.', status: 'published' },
-      { title: 'Gas Security & Regional Trade', issueDate: new Date('2026-03-01'), coverUrl: 'https://picsum.photos/id/201/800/1000', pdfUrl: 'https://example.com/magazine/2026-03.pdf', summary: 'LNG strategy, Nepal-Bhutan hydro prospects, and the future of domestic gas fields.', status: 'published' },
+      { title: 'Renewables Surge & Tariff Reform', issueDate: new Date('2026-05-01'), coverUrl: '/images/download (10).jfif', pdfUrl: 'https://example.com/magazine/2026-05.pdf', summary: 'Cover story on the 1,800 MW solar tender and BERC’s latest bulk tariff order.', status: 'published' },
+      { title: 'Grid Modernization & Nuclear Dawn', issueDate: new Date('2026-04-01'), coverUrl: '/images/download (11).jfif', pdfUrl: 'https://example.com/magazine/2026-04.pdf', summary: 'Rooppur fuel loading, 400 kV backbone projects, and digital dispatch upgrades.', status: 'published' },
+      { title: 'Gas Security & Regional Trade', issueDate: new Date('2026-03-01'), coverUrl: '/images/download (12).jfif', pdfUrl: 'https://example.com/magazine/2026-03.pdf', summary: 'LNG strategy, Nepal-Bhutan hydro prospects, and the future of domestic gas fields.', status: 'published' },
     ],
   });
   console.log('✓ Magazine issues seeded');
@@ -168,7 +170,108 @@ async function main() {
     data: [
       { key: 'site', value: { name: 'ESB PowerLine', tagline: "Bangladesh's premier energy news portal" } },
       { key: 'seo', value: { metaTitle: 'ESB PowerLine — Bangladesh Energy News', metaDescription: 'Authoritative coverage of power generation, renewables, policy, and grid infrastructure.' } },
-      { key: 'hero', value: { title: 'Bangladesh Energy Intelligence', subtitle: 'Real-time news, data, and analysis for the power sector', imageUrl: 'https://picsum.photos/id/28/1200/600' } },
+      { key: 'hero', value: { title: 'Bangladesh Energy Intelligence', subtitle: 'Real-time news, data, and analysis for the power sector', imageUrl: '/images/download (6).jfif' } },
+      {
+        key: 'ticker',
+        value: [
+          { id: 'lng', name: 'LNG (Spot)', value: 11.85, unit: '/mmbtu', change: 1.4, prefix: '$' },
+          { id: 'coal', name: 'Coal (API2)', value: 102.5, unit: '/t', change: -0.8, prefix: '$' },
+          { id: 'fx', name: 'USD/BDT', value: 117.65, unit: '', change: 0.12, prefix: '৳' },
+          { id: 'solar', name: 'Solar Module', value: 0.118, unit: '/W', change: -2.1, prefix: '$' },
+          { id: 'tariff', name: 'Bulk Tariff', value: 8.95, unit: 'Tk/kWh', change: 0.0, prefix: '' },
+          { id: 'gas', name: 'Petrobangla Gas', value: 1380, unit: 'MMcfd', change: -3.2, prefix: '' },
+        ],
+      },
+      {
+        key: 'snapshot',
+        value: [
+          { label: 'Generation Capacity', value: 28420, unit: 'MW', icon: 'Zap', color: '#3b82f6' },
+          { label: 'Current Demand', value: 15230, unit: 'MW', icon: 'Activity', color: '#ef4444' },
+          { label: 'Renewable Share', value: 4.8, unit: '%', isDecimal: true, icon: 'Leaf', color: '#10b981' },
+          { label: 'System Loss', value: 7.6, unit: '%', isDecimal: true, icon: 'Gauge', color: '#f59e0b' },
+          { label: 'Gas Supply', value: 1380, unit: 'MMcfd', icon: 'Flame', color: '#8b5cf6' },
+          { label: 'Peak Today', value: 16850, unit: 'MW', icon: 'TrendingUp', color: '#3b82f6' },
+        ],
+      },
+      {
+        key: 'interviews',
+        value: [
+          {
+            id: 'i1',
+            title: 'Powering the Future: SREDA’s 2030 Renewable Roadmap',
+            guest: 'Dr. Shahana Rahman',
+            role: 'Chairman, SREDA',
+            duration: '24:15',
+            date: 'Jun 11',
+            thumbnail: '/images/download (6).jfif',
+            youtubeId: 'dQw4w9wgxcQ',
+            excerpt: 'Inside the new solar + wind tender pipeline and grid integration challenges.',
+          },
+          {
+            id: 'i2',
+            title: 'Grid Modernization at PGCB: 400kV Backbone Update',
+            guest: 'Engr. Nasir Uddin',
+            role: 'Managing Director, PGCB',
+            duration: '18:40',
+            date: 'Jun 9',
+            thumbnail: '/images/download (7).jfif',
+            youtubeId: '3JZ_2t4vV3c',
+            excerpt: 'How the new transmission corridors are unlocking southern generation.',
+          },
+          {
+            id: 'i3',
+            title: 'Tariff Reform & Consumer Protection — A BERC Perspective',
+            guest: 'Barrister M. Rahman',
+            role: 'Member, BERC',
+            duration: '31:05',
+            date: 'Jun 5',
+            thumbnail: '/images/download (8).jfif',
+            youtubeId: '9bZkp7q19f0',
+            excerpt: 'Balancing cost recovery with affordability in the new bulk supply tariff.',
+          },
+          {
+            id: 'i4',
+            title: 'Rooppur Nuclear: First Fuel Loading & Safety First',
+            guest: 'Dr. A. K. M. Fazle Kabir',
+            role: 'Project Director, Rooppur NPP',
+            duration: '27:30',
+            date: 'Jun 3',
+            thumbnail: '/images/download (9).jfif',
+            youtubeId: 'jNQXAC9IVRw',
+            excerpt: 'Milestones, fuel cycle, and what it means for Bangladesh’s baseload.',
+          },
+        ],
+      },
+      {
+        key: 'gridMix',
+        value: [
+          { name: 'Gas (CCGT + GT)', value: 52, mw: 14780 },
+          { name: 'Coal', value: 18, mw: 5110 },
+          { name: 'HFO / Diesel', value: 12, mw: 3410 },
+          { name: 'Hydro', value: 2, mw: 570 },
+          { name: 'Solar + Wind', value: 5, mw: 1420 },
+          { name: 'Imports', value: 8, mw: 2270 },
+          { name: 'Nuclear (Rooppur-1)', value: 3, mw: 850 },
+        ],
+      },
+      {
+        key: 'gridLines',
+        value: [
+          { name: '400 kV Patuakhali–Gopalganj', status: 'Commissioned', capacity: '1800 MW', owner: 'PGCB', load: 74 },
+          { name: '400 kV Rooppur–Baghabari', status: 'Under Construction', capacity: '2400 MW', owner: 'PGCB', load: 0 },
+          { name: '230 kV Barisal–Khulna', status: 'Commissioned', capacity: '650 MW', owner: 'PGCB', load: 82 },
+          { name: '400 kV Bheramara HVDC (India)', status: 'Operational', capacity: '1000 MW', owner: 'PGCB/POWERGRID', load: 90 },
+        ],
+      },
+      {
+        key: 'gridProjects',
+        value: [
+          { name: 'SREDA 1800 MW Solar+Wind', status: 'Tender', mw: '1800', date: 'Q3 2026' },
+          { name: 'Matarbari Phase-2 Coal', status: 'Construction', mw: '1200', date: '2027' },
+          { name: 'Payra 1320 MW Expansion', status: 'Planned', mw: '1320', date: '2028' },
+          { name: 'BREB 500k SHS + Mini-grid', status: 'Ongoing', mw: '—', date: '2026-27' },
+        ],
+      },
     ],
   });
   console.log('✓ Site settings seeded');
