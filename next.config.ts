@@ -15,9 +15,8 @@ const nextConfig: NextConfig = {
       },
     ],
   },
-  // Experimental for better RSC / auth patterns if required
-  experimental: {
-    // serverActions: { bodySizeLimit: '2mb' },
+  outputFileTracingIncludes: {
+    '/**/*': ['./dev.db'],
   },
 };
 
