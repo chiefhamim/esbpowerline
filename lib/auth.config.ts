@@ -4,6 +4,7 @@ import type { Role } from '@/lib/constants';
 export const authConfig: NextAuthConfig = {
   pages: { signIn: '/login' },
   session: { strategy: 'jwt' },
+  secret: process.env.AUTH_SECRET,
   providers: [],
   callbacks: {
     async jwt({ token, user }) {

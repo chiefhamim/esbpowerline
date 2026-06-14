@@ -4,26 +4,43 @@ import { useEffect, useState } from 'react';
 import { formatNumber } from '@/lib/utils';
 import { Zap, Activity, Leaf, Gauge, Flame, Cable, Sun, TrendingUp } from 'lucide-react';
 
+const IconMap: Record<string, any> = {
+  Zap,
+  Activity,
+  Leaf,
+  Gauge,
+  Flame,
+  Cable,
+  Sun,
+  TrendingUp,
+};
+
 interface Stat {
   label: string;
   value: number;
   unit: string;
   isDecimal?: boolean;
-  icon: React.ComponentType<any>;
+  icon: any;
   color?: string;
 }
 
 const initial: Stat[] = [
-  { label: 'Generation Capacity', value: 28420, unit: 'MW', icon: Zap, color: '#3b82f6' },
-  { label: 'Current Demand', value: 15230, unit: 'MW', icon: Activity, color: '#ef4444' },
-  { label: 'Renewable Share', value: 4.8, unit: '%', isDecimal: true, icon: Leaf, color: '#10b981' },
-  { label: 'System Loss', value: 7.6, unit: '%', isDecimal: true, icon: Gauge, color: '#f59e0b' },
-  { label: 'Gas Supply', value: 1380, unit: 'MMcfd', icon: Flame, color: '#8b5cf6' },
-  { label: 'Peak Today', value: 16850, unit: 'MW', icon: TrendingUp, color: '#3b82f6' },
+  { label: 'Generation Capacity', value: 28420, unit: 'MW', icon: 'Zap', color: '#3b82f6' },
+  { label: 'Current Demand', value: 15230, unit: 'MW', icon: 'Activity', color: '#ef4444' },
+  { label: 'Renewable Share', value: 4.8, unit: '%', isDecimal: true, icon: 'Leaf', color: '#10b981' },
+  { label: 'System Loss', value: 7.6, unit: '%', isDecimal: true, icon: 'Gauge', color: '#f59e0b' },
+  { label: 'Gas Supply', value: 1380, unit: 'MMcfd', icon: 'Flame', color: '#8b5cf6' },
+  { label: 'Peak Today', value: 16850, unit: 'MW', icon: 'TrendingUp', color: '#3b82f6' },
 ];
 
-export function EnergyDashboard() {
-  const [stats, setStats] = useState(initial);
+export function EnergyDashboard({ initialStats }: { initialStats?: any[] }) {
+  const [stats, setStats] = useState<Stat[]>(() => {
+    const raw = initialStats || initial;
+    return raw.map(s => ({
+      ...s,
+      icon: typeof s.icon === 'string' ? (IconMap[s.icon] || Zap) : s.icon
+    }));
+  });
 
   useEffect(() => {
     const interval = setInterval(() => {

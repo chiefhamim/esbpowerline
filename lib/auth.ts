@@ -43,7 +43,6 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       },
     }),
   ],
-  secret: process.env.AUTH_SECRET,
 });
 
 export async function getServerSession() {

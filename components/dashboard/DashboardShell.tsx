@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { signOut, useSession } from 'next-auth/react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import { ThemeToggle } from './ThemeToggle';
 import { Button } from '@/components/ui/button';
@@ -51,6 +51,20 @@ export function DashboardShell({
   const accent = variant === 'admin' ? 'text-rose-400' : 'text-sky-400';
   const label = variant === 'admin' ? 'ADMIN' : 'CMS';
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [publicSiteUrl, setPublicSiteUrl] = useState('/');
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const host = window.location.host;
+      const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+      if (isLocal) {
+        setPublicSiteUrl('http://localhost:3000');
+      } else {
+        const baseDomain = host.replace(/^(cms\.|admin\.)/, '');
+        setPublicSiteUrl(`${window.location.protocol}//${baseDomain}`);
+      }
+    }
+  }, []);
 
   const NavLink = ({ item }: { item: NavItem }) => {
     const active = pathname === item.href || (item.href !== `/admin` && item.href !== `/cms` && pathname.startsWith(item.href));
@@ -102,7 +116,7 @@ export function DashboardShell({
             </div>
           )}
           <div className="flex items-center gap-2 text-xs">
-            <Link href="/" target="_blank" className="flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-border/70 bg-background px-3 py-2 hover:bg-muted transition">
+            <Link href={publicSiteUrl} target="_blank" className="flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-border/70 bg-background px-3 py-2 hover:bg-muted transition">
               <ExternalLink className="h-3.5 w-3.5" /> Public site
             </Link>
             <Button variant="ghost" size="sm" className="flex-1" onClick={() => signOut({ callbackUrl: '/login' })}>

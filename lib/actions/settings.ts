@@ -5,10 +5,14 @@ import prisma from '@/lib/prisma';
 import { auth } from '@/lib/auth';
 import { can } from '@/lib/constants';
 
-async function requireAdmin() {
+async function requirePermission(action: string) {
   const session = await auth();
-  if (!session?.user || !can(session.user.role, 'settings.view')) throw new Error('Forbidden');
+  if (!session?.user || !can(session.user.role, action)) throw new Error('Forbidden');
   return session.user;
+}
+
+async function requireAdmin() {
+  return requirePermission('settings.view');
 }
 
 export async function getSettings() {
@@ -31,7 +35,7 @@ export async function updateSetting(key: string, value: unknown) {
 }
 
 export async function getAnalytics() {
-  await requireAdmin();
+  await requirePermission('analytics.view_all');
 
   const [articleCount, userCount, totalViews, publishedCount, recentLogs, topArticles] = await Promise.all([
     prisma.article.count(),

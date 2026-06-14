@@ -17,9 +17,18 @@ export const metadata = {
   },
 };
 
-export default function Home() {
+import prisma from '@/lib/prisma';
+
+export default async function Home() {
   const trending = getTrendingArticles(5);
   const magazine = getLatestMagazine();
+
+  // Load dynamic settings from database
+  const settingsRecords = await prisma.siteSetting.findMany();
+  const settings: Record<string, any> = {};
+  for (const s of settingsRecords) {
+    settings[s.key] = s.value;
+  }
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -28,10 +37,10 @@ export default function Home() {
         <FeaturedCarousel />
 
         {/* Live Market Update (from BD_PWR_Tree inspiration) */}
-        <LiveMarketTicker />
+        <LiveMarketTicker initialItems={settings.ticker} />
 
         {/* In Conversation / Latest Interviews — right under Live Market */}
-        <InterviewsSection />
+        <InterviewsSection initialInterviews={settings.interviews} />
 
         {/* Live System Snapshot + Pricing */}
         <div className="container py-8">
@@ -42,7 +51,7 @@ export default function Home() {
             </div>
             <span className="text-[10px] text-muted-foreground uppercase tracking-widest font-semibold">Live • BPDB • PGCB • SREDA • Petrobangla</span>
           </div>
-          <EnergyDashboard />
+          <EnergyDashboard initialStats={settings.snapshot} />
 
           {/* Moving informative market/pricing line (no heavy ruler) */}
           <div className="mt-3 text-[11px] text-muted-foreground flex items-center gap-2 overflow-hidden">

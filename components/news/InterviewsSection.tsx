@@ -62,8 +62,9 @@ const interviews: Interview[] = [
   },
 ];
 
-export function InterviewsSection() {
+export function InterviewsSection({ initialInterviews }: { initialInterviews?: Interview[] }) {
   const [selected, setSelected] = useState<Interview | null>(null);
+  const interviewsList = initialInterviews || interviews;
 
   const openInterview = (interview: Interview) => setSelected(interview);
   const closeModal = () => setSelected(null);
@@ -84,7 +85,7 @@ export function InterviewsSection() {
       </div>
 
       <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {interviews.map((iv) => (
+        {interviewsList.map((iv) => (
           <button
             key={iv.id}
             onClick={() => openInterview(iv)}

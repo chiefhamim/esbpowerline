@@ -21,8 +21,8 @@ const initialItems: TickerItem[] = [
   { id: 'gas', name: 'Petrobangla Gas', value: 1380, unit: 'MMcfd', change: -3.2, prefix: '' },
 ];
 
-export function LiveMarketTicker() {
-  const [items, setItems] = useState<TickerItem[]>(initialItems);
+export function LiveMarketTicker({ initialItems: propItems }: { initialItems?: TickerItem[] }) {
+  const [items, setItems] = useState<TickerItem[]>(propItems || initialItems);
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {

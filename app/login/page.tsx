@@ -32,10 +32,24 @@ export default function LoginPage() {
 
     if (callbackUrl) {
       router.push(callbackUrl);
-    } else if (role === 'SUPER_ADMIN' || role === 'ADMIN') {
-      router.push('http://localhost:3002/admin');
     } else {
-      router.push('http://localhost:3001/cms');
+      const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+      const host = window.location.host;
+      if (role === 'SUPER_ADMIN' || role === 'ADMIN') {
+        if (isLocal) {
+          router.push('http://localhost:3002/admin');
+        } else {
+          const baseDomain = host.replace(/^(cms\.|admin\.)/, '');
+          router.push(`${window.location.protocol}//admin.${baseDomain}/admin`);
+        }
+      } else {
+        if (isLocal) {
+          router.push('http://localhost:3001/cms');
+        } else {
+          const baseDomain = host.replace(/^(cms\.|admin\.)/, '');
+          router.push(`${window.location.protocol}//cms.${baseDomain}/cms`);
+        }
+      }
     }
     setLoading(false);
   }
