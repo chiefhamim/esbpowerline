@@ -97,11 +97,11 @@ export function FeaturedCarousel() {
   };
 
   return (
-    <div className="w-full bg-background">
+    <div className="w-full bg-background py-4">
       {/* Carousel Body */}
-      <div className="max-w-7xl mx-auto w-full">
-        <div className="relative border-l border-r border-b border-border/40 overflow-hidden bg-[radial-gradient(hsl(var(--border))_1px,transparent_1px)] [background-size:24px_24px]">
-          <div className="py-12 md:py-16 px-5 sm:px-6 lg:px-8 relative">
+      <div className="container">
+        <div className="relative border border-border/40 rounded-2xl overflow-hidden bg-[radial-gradient(hsl(var(--border))_1px,transparent_1px)] [background-size:24px_24px]">
+          <div className="py-12 md:py-16 px-6 md:px-12 relative">
             <div className="grid md:grid-cols-12 gap-8 items-center">
               
               {/* Text content with soft slide-and-fade animation */}
@@ -182,9 +182,9 @@ export function FeaturedCarousel() {
       </div>
 
       {/* Slide progress and control bar */}
-      <div className="w-full bg-background">
-        <div className="max-w-7xl mx-auto w-full">
-          <div className="border-l border-r border-b border-border/40 bg-background/90 backdrop-blur supports-[backdrop-filter]:bg-background/70 flex items-center justify-between py-3 px-5 sm:px-6 lg:px-8 text-xs">
+      <div className="w-full bg-background mt-4">
+        <div className="container">
+          <div className="border border-border/40 rounded-xl bg-background/90 backdrop-blur supports-[backdrop-filter]:bg-background/70 flex items-center justify-between py-3 px-6 text-xs">
             
             <div className="flex items-center gap-4">
               {/* Liquid progress indicators */}

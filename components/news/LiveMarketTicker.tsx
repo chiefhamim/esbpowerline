@@ -46,10 +46,10 @@ export function LiveMarketTicker({ initialItems: propItems }: { initialItems?: T
   if (!mounted) return null;
 
   return (
-    <div className="w-full">
-      <div className="max-w-7xl mx-auto w-full">
-        <div className="border-l border-r border-b border-border/40 bg-[var(--bg-elev)]/60 backdrop-blur-sm overflow-hidden">
-          <div className="flex items-center h-9 text-[11px] px-5 sm:px-6 lg:px-8">
+    <div className="w-full py-1.5">
+      <div className="container">
+        <div className="border border-border/40 bg-[var(--bg-elev)]/60 backdrop-blur-sm overflow-hidden rounded-xl">
+          <div className="flex items-center h-9 text-[11px] px-4">
             <div className="flex items-center gap-2 pr-4 border-r border-border/60 text-muted-foreground shrink-0 mr-4">
               <span className="font-semibold tracking-[1px] text-[10px] uppercase">Live Markets</span>
             </div>
