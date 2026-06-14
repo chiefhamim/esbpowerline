@@ -92,7 +92,7 @@ export function PublicNavbar() {
       {/* Sticky Navigation Area (Sticks to top of screen on scroll) */}
       <nav className="sticky top-0 z-50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
         {/* Primary Navigation Row */}
-        <div className="container px-0 sm:px-0 lg:px-0">
+        <div className="max-w-7xl mx-auto w-full">
           <div className="border-l border-r border-b border-border/40 flex h-14 items-center justify-between px-5 sm:px-6 lg:px-8">
             {/* Left Section: Home Link */}
             <div className="flex md:w-1/4 justify-start">
@@ -196,7 +196,7 @@ export function PublicNavbar() {
         {/* Secondary Editorial Sectors Ribbon */}
         {/* Desktop View: 10-Column Data Ribbon */}
         <div className="hidden md:block">
-          <div className="container px-0 sm:px-0 lg:px-0">
+          <div className="max-w-7xl mx-auto w-full">
             <div className="border-l border-r border-b border-border/40 bg-card/30 backdrop-blur-sm">
               <div className="grid grid-cols-10 divide-x divide-border/40">
                 {CATEGORIES.map((c) => {
@@ -234,7 +234,7 @@ export function PublicNavbar() {
 
         {/* Mobile View: Swipeable Channel Scrollbar */}
         <div className="md:hidden">
-          <div className="container px-0 sm:px-0 lg:px-0">
+          <div className="max-w-7xl mx-auto w-full">
             <div className="relative border-l border-r border-b border-border/40 bg-muted/5 backdrop-blur-sm">
               {/* Left/Right scroll indicators for mobile overlay */}
               <div className="absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-background to-transparent pointer-events-none z-10" />
