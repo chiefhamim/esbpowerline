@@ -99,7 +99,7 @@ export function FeaturedCarousel() {
   return (
     <div className="w-full bg-background">
       {/* Carousel Body */}
-      <div className="container px-0">
+      <div className="container px-0 sm:px-0 lg:px-0">
         <div className="relative border-l border-r border-b border-border/40 overflow-hidden bg-[radial-gradient(hsl(var(--border))_1px,transparent_1px)] [background-size:24px_24px]">
           <div className="py-12 md:py-16 px-5 sm:px-6 lg:px-8 relative">
             <div className="grid md:grid-cols-12 gap-8 items-center">
@@ -183,7 +183,7 @@ export function FeaturedCarousel() {
 
       {/* Slide progress and control bar */}
       <div className="w-full bg-background">
-        <div className="container px-0">
+        <div className="container px-0 sm:px-0 lg:px-0">
           <div className="border-l border-r border-b border-border/40 bg-background/90 backdrop-blur supports-[backdrop-filter]:bg-background/70 flex items-center justify-between py-3 px-5 sm:px-6 lg:px-8 text-xs">
             
             <div className="flex items-center gap-4">

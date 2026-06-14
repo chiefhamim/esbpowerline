@@ -90,111 +90,113 @@ export function PublicNavbar() {
       </div>
 
       {/* Sticky Navigation Area (Sticks to top of screen on scroll) */}
-      <nav className="sticky top-0 z-50 border-b border-border/70 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
+      <nav className="sticky top-0 z-50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
         {/* Primary Navigation Row */}
-        <div className="container flex h-14 items-center justify-between">
-          {/* Left Section: Home Link */}
-          <div className="flex md:w-1/4 justify-start">
-            <Link 
-              href="/" 
-              className={`hover:text-primary flex items-center gap-1.5 transition-colors text-sm font-semibold select-none ${
-                pathname === '/' ? 'text-primary font-bold' : 'text-foreground/80'
-              }`}
-            >
-              <Home className="h-4 w-4" /> Home
-            </Link>
-          </div>
-
-          {/* Center Section: Navigation Links (Symmetrically centered tabs on desktop) */}
-          <div className="hidden md:flex flex-1 justify-center">
-            <div className="bg-muted/40 border border-border/50 p-1 rounded-full flex items-center gap-1 shadow-inner backdrop-blur-sm">
+        <div className="container px-0 sm:px-0 lg:px-0">
+          <div className="border-l border-r border-b border-border/40 flex h-14 items-center justify-between px-5 sm:px-6 lg:px-8">
+            {/* Left Section: Home Link */}
+            <div className="flex md:w-1/4 justify-start">
               <Link 
-                href="/articles" 
-                className={`px-4 py-1.5 rounded-full transition-all duration-200 text-xs font-semibold flex items-center gap-1.5 select-none ${
-                  pathname === '/articles' 
-                    ? 'bg-primary text-primary-foreground shadow-sm' 
-                    : 'text-muted-foreground hover:text-foreground hover:bg-muted/30'
+                href="/" 
+                className={`hover:text-primary flex items-center gap-1.5 transition-colors text-sm font-semibold select-none ${
+                  pathname === '/' ? 'text-primary font-bold' : 'text-foreground/80'
                 }`}
               >
-                <Newspaper className="h-3.5 w-3.5" /> Latest
-              </Link>
-              
-              <Link 
-                href="/data-reports/power-grid" 
-                className={`px-4 py-1.5 rounded-full transition-all duration-200 text-xs font-semibold flex items-center gap-1.5 select-none ${
-                  pathname.includes('/power-grid') 
-                    ? 'bg-primary text-primary-foreground shadow-sm' 
-                    : 'text-muted-foreground hover:text-foreground hover:bg-muted/30'
-                }`}
-              >
-                <BarChart3 className="h-3.5 w-3.5" /> Grid Explorer
-              </Link>
-              
-              <Link 
-                href="/magazine" 
-                className={`px-4 py-1.5 rounded-full transition-all duration-200 text-xs font-semibold flex items-center gap-1.5 select-none ${
-                  pathname === '/magazine' 
-                    ? 'bg-emerald-600 dark:bg-emerald-500 text-white shadow-sm' 
-                    : 'text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 hover:bg-emerald-500/15'
-                }`}
-              >
-                <BookOpen className="h-3.5 w-3.5" /> Magazine
+                <Home className="h-4 w-4" /> Home
               </Link>
             </div>
-          </div>
 
-          {/* Right Section: Utilities (Search, Switcher, Menu Button) */}
-          <div className="flex md:w-1/4 justify-end items-center gap-3">
-            <Link 
-              href="/search" 
-              className="btn btn-secondary flex items-center gap-1.5 text-xs px-3 py-1 rounded-xl h-8"
-              aria-label="Search"
-            >
-              <Search className="h-3.5 w-3.5" /> Search
-            </Link>
+            {/* Center Section: Navigation Links (Symmetrically centered tabs on desktop) */}
+            <div className="hidden md:flex flex-1 justify-center">
+              <div className="bg-muted/40 border border-border/50 p-1 rounded-full flex items-center gap-1 shadow-inner backdrop-blur-sm">
+                <Link 
+                  href="/articles" 
+                  className={`px-4 py-1.5 rounded-full transition-all duration-200 text-xs font-semibold flex items-center gap-1.5 select-none ${
+                    pathname === '/articles' 
+                      ? 'bg-primary text-primary-foreground shadow-sm' 
+                      : 'text-muted-foreground hover:text-foreground hover:bg-muted/30'
+                  }`}
+                >
+                  <Newspaper className="h-3.5 w-3.5" /> Latest
+                </Link>
+                
+                <Link 
+                  href="/data-reports/power-grid" 
+                  className={`px-4 py-1.5 rounded-full transition-all duration-200 text-xs font-semibold flex items-center gap-1.5 select-none ${
+                    pathname.includes('/power-grid') 
+                      ? 'bg-primary text-primary-foreground shadow-sm' 
+                      : 'text-muted-foreground hover:text-foreground hover:bg-muted/30'
+                  }`}
+                >
+                  <BarChart3 className="h-3.5 w-3.5" /> Grid Explorer
+                </Link>
+                
+                <Link 
+                  href="/magazine" 
+                  className={`px-4 py-1.5 rounded-full transition-all duration-200 text-xs font-semibold flex items-center gap-1.5 select-none ${
+                    pathname === '/magazine' 
+                      ? 'bg-emerald-600 dark:bg-emerald-500 text-white shadow-sm' 
+                      : 'text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 hover:bg-emerald-500/15'
+                  }`}
+                >
+                  <BookOpen className="h-3.5 w-3.5" /> Magazine
+                </Link>
+              </div>
+            </div>
 
-            {/* Theme switcher */}
-            <div className="hidden sm:flex items-center gap-1.5 pl-2 border-l border-border/50">
-              {THEMES.map((t) => (
-                <div key={t.id} className="relative group">
-                  <button
-                    onClick={() => changeTheme(t.id)}
-                    className={`w-4 h-4 rounded-full border transition-all duration-200 ${
-                      theme === t.id 
-                        ? 'border-primary scale-110 shadow-sm ring-2 ring-primary/20' 
-                        : 'border-border/50 hover:border-border hover:scale-105'
-                    }`}
-                    style={{ backgroundColor: t.color }}
-                    aria-label={`Switch to ${t.label} theme`}
-                  />
-                  
-                  {/* Slick Custom Tooltip */}
-                  <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 pointer-events-none opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-all duration-200 ease-out transform -translate-y-1.5 group-hover:translate-y-0 z-50">
-                    <div className="bg-popover/95 text-popover-foreground text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-lg border border-border shadow-xl backdrop-blur-sm whitespace-nowrap">
-                      {t.label}
+            {/* Right Section: Utilities (Search, Switcher, Menu Button) */}
+            <div className="flex md:w-1/4 justify-end items-center gap-3">
+              <Link 
+                href="/search" 
+                className="btn btn-secondary flex items-center gap-1.5 text-xs px-3 py-1 rounded-xl h-8"
+                aria-label="Search"
+              >
+                <Search className="h-3.5 w-3.5" /> Search
+              </Link>
+
+              {/* Theme switcher */}
+              <div className="hidden sm:flex items-center gap-1.5 pl-2 border-l border-border/50">
+                {THEMES.map((t) => (
+                  <div key={t.id} className="relative group">
+                    <button
+                      onClick={() => changeTheme(t.id)}
+                      className={`w-4 h-4 rounded-full border transition-all duration-200 ${
+                        theme === t.id 
+                          ? 'border-primary scale-110 shadow-sm ring-2 ring-primary/20' 
+                          : 'border-border/50 hover:border-border hover:scale-105'
+                      }`}
+                      style={{ backgroundColor: t.color }}
+                      aria-label={`Switch to ${t.label} theme`}
+                    />
+                    
+                    {/* Slick Custom Tooltip */}
+                    <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 pointer-events-none opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-all duration-200 ease-out transform -translate-y-1.5 group-hover:translate-y-0 z-50">
+                      <div className="bg-popover/95 text-popover-foreground text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-lg border border-border shadow-xl backdrop-blur-sm whitespace-nowrap">
+                        {t.label}
+                      </div>
+                      {/* Tiny indicator arrow pointing up */}
+                      <div className="w-1.5 h-1.5 bg-popover border-l border-t border-border absolute left-1/2 -translate-x-1/2 -top-[4px] rotate-45" />
                     </div>
-                    {/* Tiny indicator arrow pointing up */}
-                    <div className="w-1.5 h-1.5 bg-popover border-l border-t border-border absolute left-1/2 -translate-x-1/2 -top-[4px] rotate-45" />
                   </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
 
-            {/* Mobile hamburger */}
-            <button
-              onClick={() => setMobileOpen(!mobileOpen)}
-              className="md:hidden p-2 text-foreground/80 hover:text-foreground"
-              aria-label="Toggle menu"
-            >
-              {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-            </button>
+              {/* Mobile hamburger */}
+              <button
+                onClick={() => setMobileOpen(!mobileOpen)}
+                className="md:hidden p-2 text-foreground/80 hover:text-foreground"
+                aria-label="Toggle menu"
+              >
+                {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+              </button>
+            </div>
           </div>
         </div>
 
         {/* Secondary Editorial Sectors Ribbon */}
         {/* Desktop View: 10-Column Data Ribbon */}
         <div className="hidden md:block">
-          <div className="container px-0">
+          <div className="container px-0 sm:px-0 lg:px-0">
             <div className="border-l border-r border-b border-border/40 bg-card/30 backdrop-blur-sm">
               <div className="grid grid-cols-10 divide-x divide-border/40">
                 {CATEGORIES.map((c) => {
@@ -232,7 +234,7 @@ export function PublicNavbar() {
 
         {/* Mobile View: Swipeable Channel Scrollbar */}
         <div className="md:hidden">
-          <div className="container px-0">
+          <div className="container px-0 sm:px-0 lg:px-0">
             <div className="relative border-l border-r border-b border-border/40 bg-muted/5 backdrop-blur-sm">
               {/* Left/Right scroll indicators for mobile overlay */}
               <div className="absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-background to-transparent pointer-events-none z-10" />
