@@ -16,7 +16,7 @@ const nextConfig: NextConfig = {
     ],
   },
   outputFileTracingIncludes: {
-    '/**/*': ['./dev.db'],
+    '/*': ['./dev.db'],
   },
 };
 
