@@ -9,7 +9,7 @@
     "dev:cms": "APP_SURFACE=cms next dev -p 3001",
     "dev:admin": "APP_SURFACE=admin next dev -p 3002",
     "dev:all": "concurrently -k -n public,cms,admin -c blue,green,magenta \"npm:dev:public\" \"npm:dev:cms\" \"npm:dev:admin\"",
-    "build": "next build",
+    "build": "prisma generate && next build",
     "start": "next start",
     "lint": "next lint",
     "db:generate": "prisma generate",
