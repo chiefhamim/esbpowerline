@@ -18,7 +18,22 @@ function matchesPrefix(pathname: string, prefixes: string[]) {
 
 function redirectTo(port: number, pathname: string, request: NextRequest) {
   const url = request.nextUrl.clone();
-  url.port = String(port);
+  if (process.env.NODE_ENV === 'production') {
+    const host = request.headers.get('host') || '';
+    // Extract base domain by removing leading subdomains (cms. or admin.)
+    const baseDomain = host.replace(/^(cms\.|admin\.)/, '');
+    
+    if (port === 3001) {
+      url.host = `cms.${baseDomain}`;
+    } else if (port === 3002) {
+      url.host = `admin.${baseDomain}`;
+    } else {
+      url.host = baseDomain;
+    }
+    url.port = ''; // Reset port for production standard ports (80/443)
+  } else {
+    url.port = String(port);
+  }
   url.pathname = pathname;
   return NextResponse.redirect(url);
 }
