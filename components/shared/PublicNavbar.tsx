@@ -68,7 +68,7 @@ export function PublicNavbar() {
 
   return (
     <>
-      {/* Masthead Banner (Proportionally sized using object-cover to make it taller without skewing or distortion) */}
+      {/* Masthead Banner (Sized proportionally using h-auto to ensure the full image is visible without cropping) */}
       <div className="bg-background w-full flex justify-center">
         <div className="container px-0">
           <div className="border-l border-r border-b border-border/40 overflow-hidden bg-[#0b121e]">
@@ -76,7 +76,7 @@ export function PublicNavbar() {
               <img 
                 src={bannerSrc} 
                 alt="ESB PowerLine Banner" 
-                className="w-full h-[140px] sm:h-[180px] md:h-[230px] object-cover block mx-auto"
+                className="w-full h-auto object-contain block mx-auto"
                 onError={() => {
                   // Fallback to web link if local banner.jpg does not exist in /public/images/ yet
                   if (bannerSrc !== 'https://i.ibb.co/VKq8pgw/001.jpg') {
