@@ -193,81 +193,85 @@ export function PublicNavbar() {
 
         {/* Secondary Editorial Sectors Ribbon */}
         {/* Desktop View: 10-Column Data Ribbon */}
-        <div className="border-t border-b border-border/40 bg-card/30 backdrop-blur-sm hidden md:block">
+        <div className="hidden md:block">
           <div className="container px-0">
-            <div className="grid grid-cols-10 divide-x divide-border/40 border-l border-r border-border/40">
-              {CATEGORIES.map((c) => {
-                const Icon = ICONS[c] || Zap;
-                const slug = c.toLowerCase().replace(/\s+/g, '-');
-                const href = `/categories/${encodeURIComponent(slug)}`;
-                const isActive = pathname === `/categories/${slug}` || pathname === `/categories/${encodeURIComponent(slug)}`;
-                const colors = CATEGORY_COLORS[c] || { text: 'text-primary', bg: 'bg-primary/10', underline: 'bg-primary' };
-                
-                return (
-                  <Link
-                    key={c}
-                    href={href}
-                    className={`group relative flex flex-col items-center justify-center py-2.5 px-1 text-center transition-all duration-200 select-none ${
-                      isActive 
-                        ? 'bg-muted/15 font-semibold text-foreground' 
-                        : 'hover:bg-muted/30 font-medium text-muted-foreground/85 hover:text-foreground'
-                    }`}
-                  >
-                    {/* Top color indicator line (ONLY visible on hover) */}
-                    <span className={`absolute top-0 left-0 right-0 h-[2px] transition-transform duration-200 origin-center ${colors.underline} scale-x-0 group-hover:scale-x-100`} />
-                    
-                    {/* Persistent category color on the icon */}
-                    <Icon className={`h-3.5 w-3.5 mb-1 transition-transform duration-200 group-hover:scale-110 ${colors.text}`} />
-                    
-                    {/* Text uses standard theme text colors */}
-                    <span className="text-[10px] tracking-tight leading-snug font-sans">{c}</span>
-                  </Link>
-                );
-              })}
+            <div className="border-l border-r border-b border-border/40 bg-card/30 backdrop-blur-sm">
+              <div className="grid grid-cols-10 divide-x divide-border/40">
+                {CATEGORIES.map((c) => {
+                  const Icon = ICONS[c] || Zap;
+                  const slug = c.toLowerCase().replace(/\s+/g, '-');
+                  const href = `/categories/${encodeURIComponent(slug)}`;
+                  const isActive = pathname === `/categories/${slug}` || pathname === `/categories/${encodeURIComponent(slug)}`;
+                  const colors = CATEGORY_COLORS[c] || { text: 'text-primary', bg: 'bg-primary/10', underline: 'bg-primary' };
+                  
+                  return (
+                    <Link
+                      key={c}
+                      href={href}
+                      className={`group relative flex flex-col items-center justify-center py-2.5 px-1 text-center transition-all duration-200 select-none ${
+                        isActive 
+                          ? 'bg-muted/15 font-semibold text-foreground' 
+                          : 'hover:bg-muted/30 font-medium text-muted-foreground/85 hover:text-foreground'
+                      }`}
+                    >
+                      {/* Top color indicator line (ONLY visible on hover) */}
+                      <span className={`absolute top-0 left-0 right-0 h-[2px] transition-transform duration-200 origin-center ${colors.underline} scale-x-0 group-hover:scale-x-100`} />
+                      
+                      {/* Persistent category color on the icon */}
+                      <Icon className={`h-3.5 w-3.5 mb-1 transition-transform duration-200 group-hover:scale-110 ${colors.text}`} />
+                      
+                      {/* Text uses standard theme text colors */}
+                      <span className="text-[10px] tracking-tight leading-snug font-sans">{c}</span>
+                    </Link>
+                  );
+                })}
+              </div>
             </div>
           </div>
         </div>
 
         {/* Mobile View: Swipeable Channel Scrollbar */}
-        <div className="relative border-t border-border/40 bg-muted/5 backdrop-blur-sm md:hidden">
-          {/* Left/Right scroll indicators for mobile overlay */}
-          <div className="absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-background to-transparent pointer-events-none z-10" />
-          <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-background to-transparent pointer-events-none z-10" />
+        <div className="md:hidden">
+          <div className="container px-0">
+            <div className="relative border-l border-r border-b border-border/40 bg-muted/5 backdrop-blur-sm">
+              {/* Left/Right scroll indicators for mobile overlay */}
+              <div className="absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-background to-transparent pointer-events-none z-10" />
+              <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-background to-transparent pointer-events-none z-10" />
 
-          <div className="container">
-            <div className="flex items-center h-10 overflow-x-auto no-scrollbar gap-5 w-full">
-              {CATEGORIES.map((c) => {
-                const Icon = ICONS[c] || Zap;
-                const slug = c.toLowerCase().replace(/\s+/g, '-');
-                const href = `/categories/${encodeURIComponent(slug)}`;
-                const isActive = pathname === `/categories/${slug}` || pathname === `/categories/${encodeURIComponent(slug)}`;
-                const colors = CATEGORY_COLORS[c] || { text: 'text-primary', underline: 'bg-primary' };
-                
-                return (
-                  <Link
-                    key={c}
-                    href={href}
-                    className={`group relative flex items-center gap-1.5 px-0.5 py-2.5 text-[10.5px] font-semibold uppercase tracking-wider transition-all duration-200 shrink-0 select-none ${
-                      isActive 
-                        ? `${colors.text}` 
-                        : 'text-muted-foreground hover:text-foreground'
-                    }`}
-                  >
-                    <Icon className={`h-3 w-3 shrink-0 transition-transform duration-200 ${
-                      isActive 
-                        ? 'scale-110' 
-                        : 'opacity-70 group-hover:opacity-100 group-hover:scale-110'
-                    }`} />
-                    <span>{c}</span>
-                    {/* Underline active indicator */}
-                    <span 
-                      className={`absolute bottom-0 left-0 h-[2px] w-full transition-transform duration-200 origin-left ${colors.underline} ${
-                        isActive ? 'scale-x-100' : 'scale-x-0 group-hover:scale-x-100'
-                      }`} 
-                    />
-                  </Link>
-                );
-              })}
+              <div className="flex items-center h-10 overflow-x-auto no-scrollbar gap-5 w-full px-5">
+                {CATEGORIES.map((c) => {
+                  const Icon = ICONS[c] || Zap;
+                  const slug = c.toLowerCase().replace(/\s+/g, '-');
+                  const href = `/categories/${encodeURIComponent(slug)}`;
+                  const isActive = pathname === `/categories/${slug}` || pathname === `/categories/${encodeURIComponent(slug)}`;
+                  const colors = CATEGORY_COLORS[c] || { text: 'text-primary', underline: 'bg-primary' };
+                  
+                  return (
+                    <Link
+                      key={c}
+                      href={href}
+                      className={`group relative flex items-center gap-1.5 px-0.5 py-2.5 text-[10.5px] font-semibold uppercase tracking-wider transition-all duration-200 shrink-0 select-none ${
+                        isActive 
+                          ? `${colors.text}` 
+                          : 'text-muted-foreground hover:text-foreground'
+                      }`}
+                    >
+                      <Icon className={`h-3 w-3 shrink-0 transition-transform duration-200 ${
+                        isActive 
+                          ? 'scale-110' 
+                          : 'opacity-70 group-hover:opacity-100 group-hover:scale-110'
+                      }`} />
+                      <span>{c}</span>
+                      {/* Underline active indicator */}
+                      <span 
+                        className={`absolute bottom-0 left-0 h-[2px] w-full transition-transform duration-200 origin-left ${colors.underline} ${
+                          isActive ? 'scale-x-100' : 'scale-x-0 group-hover:scale-x-100'
+                        }`} 
+                      />
+                    </Link>
+                  );
+                })}
+              </div>
             </div>
           </div>
         </div>
