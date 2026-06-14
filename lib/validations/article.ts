@@ -11,6 +11,7 @@ export const articleSchema = z.object({
   tags: z.array(z.string()).optional(),
   isFeatured: z.boolean().optional(),
   isBreaking: z.boolean().optional(),
+  isPinned: z.boolean().optional(),
   publishedAt: z.string().optional().nullable(),
   seo: z.object({
     metaTitle: z.string().optional(),

@@ -1,74 +1,91 @@
 'use client';
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import Link from 'next/link';
-import { ArrowRight, Zap, Sun, Flame, Cable, Scale, Globe, Home, Gauge, TrendingUp, Atom } from 'lucide-react';
+import { ArrowRight, Zap } from 'lucide-react';
 import { ArticleCard } from './ArticleCard';
-import { demoArticles, DemoArticle } from '@/lib/data';
+import { demoArticles } from '@/lib/data';
 import { CATEGORIES } from '@/lib/constants';
-
-const ICON_MAP: Record<string, React.ComponentType<any>> = {
-  'All Coverage': Zap,
-  'Power Generation': Zap,
-  'Renewable Energy': Sun,
-  'LNG & Gas': Flame,
-  'Nuclear Energy': Atom,
-  'Grid & Transmission': Cable,
-  'Energy Policy': Scale,
-  'Rural Electrification': Home,
-  'Energy Efficiency': Gauge,
-  'International': Globe,
-  'Market & Finance': TrendingUp,
-};
-
-const DESC_MAP: Record<string, string> = {
-  'All Coverage': 'Latest stories across all 10 power sector categories.',
-  'Power Generation': 'Coal, gas, HFO & new capacity additions.',
-  'Renewable Energy': 'Solar, wind, hydro progress and targets.',
-  'LNG & Gas': 'Supply, terminals & pricing dynamics.',
-  'Nuclear Energy': 'Rooppur milestones and future fleet.',
-  'Grid & Transmission': '400kV/230kV backbone and evacuation.',
-  'Energy Policy': 'Tariffs, BERC regulation and master plans.',
-  'Rural Electrification': 'SHS, mini-grids and last-mile access.',
-  'Energy Efficiency': 'Industrial DSM and building programs.',
-  'International': 'Cross-border trade, imports and cooperation.',
-  'Market & Finance': 'IPPs, capacity payments and investment.',
-};
+import type { PublicArticleCard, PublicCategory } from '@/lib/category-types';
+import {
+  categoryColorVars,
+  categoryTextStyle,
+  hasCategoryColor,
+  resolveCategoryIcon,
+} from '@/lib/category-icons';
+import { CategoryIconDisplay } from '@/components/category/CategoryIconDisplay';
+import type { LucideIcon } from 'lucide-react';
 
 type SectorTab = {
   id: string;
   label: string;
-  icon: React.ComponentType<any>;
-  category: string | null; // null for All
+  icon: LucideIcon;
+  iconKey?: string | null;
+  iconImageUrl?: string | null;
+  category: string | null;
+  slug: string | null;
+  color?: string | null;
   description: string;
 };
 
-const SECTOR_TABS: SectorTab[] = [
-  {
-    id: 'all',
-    label: 'All Coverage',
-    icon: ICON_MAP['All Coverage'],
-    category: null,
-    description: DESC_MAP['All Coverage'],
-  },
-  ...CATEGORIES.map((cat) => ({
-    id: cat.toLowerCase().replace(/\s+/g, '-'),
-    label: cat,
-    icon: ICON_MAP[cat] || Zap,
-    category: cat,
-    description: DESC_MAP[cat] || 'Latest coverage and analysis.',
-  })),
-];
+type ArticleItem = PublicArticleCard | (typeof demoArticles)[number];
 
-export function SectorCoverage({ hideHeader = false }: { hideHeader?: boolean }) {
+function buildTabs(categories: PublicCategory[]): SectorTab[] {
+  const source = categories.length
+    ? categories
+    : CATEGORIES.map((name, order) => ({
+        id: name,
+        name,
+        slug: name.toLowerCase().replace(/\s+/g, '-'),
+        description: null,
+        color: null,
+        icon: null,
+        iconImageUrl: null,
+        order,
+      }));
+
+  return [
+    {
+      id: 'all',
+      label: 'All Coverage',
+      icon: Zap,
+      category: null,
+      slug: null,
+      description: `Latest stories across all ${source.length} power sector categories.`,
+    },
+    ...source.map((cat) => ({
+      id: cat.slug,
+      label: cat.name,
+      icon: resolveCategoryIcon(cat.icon, cat.name),
+      iconKey: cat.icon,
+      iconImageUrl: cat.iconImageUrl,
+      category: cat.name,
+      slug: cat.slug,
+      color: cat.color,
+      description: cat.description ?? `Latest ${cat.name.toLowerCase()} coverage and analysis.`,
+    })),
+  ];
+}
+
+export function SectorCoverage({
+  hideHeader = false,
+  categories = [],
+  articles = [],
+}: {
+  hideHeader?: boolean;
+  categories?: PublicCategory[];
+  articles?: PublicArticleCard[];
+}) {
   const [activeTab, setActiveTab] = useState('all');
+  const sectorTabs = useMemo(() => buildTabs(categories), [categories]);
 
-  const active = SECTOR_TABS.find(t => t.id === activeTab)!;
+  const articlePool: ArticleItem[] = articles.length ? articles : demoArticles;
+  const active = sectorTabs.find((t) => t.id === activeTab) ?? sectorTabs[0];
 
-  const filteredArticles: DemoArticle[] = active.category === null
-    ? [...demoArticles].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).slice(0, 6)
-    : demoArticles
-        .filter(a => a.category === active.category)
+  const filteredArticles = active.category === null
+    ? [...articlePool].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).slice(0, 6)
+    : articlePool
+        .filter((a) => a.category === active.category)
         .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
         .slice(0, 6);
 
@@ -98,7 +115,7 @@ export function SectorCoverage({ hideHeader = false }: { hideHeader?: boolean })
             <h2 className="text-xl font-semibold tracking-[-0.015em]">Power Sector Coverage</h2>
             <div className="hidden sm:flex items-center text-[10px] px-2 py-0.5 rounded-full border bg-muted text-muted-foreground">
               <ActiveIcon className="h-3 w-3 mr-1" />
-              {active.category ? '1 category' : '10 categories'}
+              {active.category ? '1 category' : `${sectorTabs.length - 1} categories`}
             </div>
           </div>
           <Link href="/articles" className="text-xs font-medium text-primary flex items-center gap-1 hover:underline">
@@ -109,20 +126,28 @@ export function SectorCoverage({ hideHeader = false }: { hideHeader?: boolean })
 
       {/* Floating individual category capsules */}
       <div className="flex flex-wrap gap-2 mb-6">
-        {SECTOR_TABS.map((tab) => {
-          const TabIcon = tab.icon;
+        {sectorTabs.map((tab) => {
           const isActive = tab.id === activeTab;
-          const activeClasses = isActive 
-            ? getSectorActiveClasses(tab.label) 
+          const useCustom = isActive && hasCategoryColor(tab.color);
+          const activeClasses = isActive
+            ? (useCustom ? 'category-sector-tab--active' : getSectorActiveClasses(tab.label))
             : 'border-border/60 bg-secondary/30 text-muted-foreground hover:bg-secondary/70 hover:text-foreground hover:border-border/80';
           return (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
+              style={useCustom ? categoryColorVars(tab.color) : undefined}
               className={`flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold rounded-full border transition-all duration-200 active:scale-[0.97] ${activeClasses}`}
             >
-              <TabIcon className="h-3.5 w-3.5" />
-              {tab.label}
+              <CategoryIconDisplay
+                icon={tab.iconKey}
+                iconImageUrl={tab.iconImageUrl}
+                name={tab.label}
+                size={14}
+                className="h-3.5 w-3.5"
+                style={useCustom ? categoryTextStyle(tab.color) : undefined}
+              />
+              <span style={useCustom ? categoryTextStyle(tab.color) : undefined}>{tab.label}</span>
             </button>
           );
         })}
@@ -157,7 +182,7 @@ export function SectorCoverage({ hideHeader = false }: { hideHeader?: boolean })
 
       <div className="mt-4 text-right">
         <Link 
-          href={active.category ? `/categories/${active.category.toLowerCase().replace(/\s+/g,'-')}` : '/articles'}
+          href={active.slug ? `/categories/${active.slug}` : '/articles'}
           className="text-xs font-medium text-muted-foreground hover:text-primary transition-colors inline-flex items-center gap-1"
         >
           View all in {active.label} <ArrowRight className="h-3 w-3" />

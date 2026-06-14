@@ -8,6 +8,7 @@
 import bcrypt from 'bcryptjs';
 import { CATEGORIES } from '../lib/constants';
 import prisma from '../lib/prisma';
+import { slugify } from '../lib/utils';
 
 async function main() {
   console.log('🌱 Seeding ESB PowerLine database...');
@@ -70,10 +71,10 @@ async function main() {
       prisma.category.create({
         data: {
           name,
-          slug: name.toLowerCase().replace(/\s+/g, '-'),
+          slug: slugify(name),
           description: `${name} coverage for Bangladesh energy sector`,
           color: ['#1e40af', '#10b981', '#f59e0b', '#8b5cf6', '#0ea5e9', '#ef4444', '#14b8a6', '#eab308', '#6366f1', '#ec4899'][idx],
-          icon: 'zap',
+          icon: ['Zap', 'Sun', 'Flame', 'Atom', 'Cable', 'Scale', 'Home', 'Gauge', 'Globe', 'TrendingUp'][idx],
           order: idx,
         },
       })
@@ -171,6 +172,22 @@ async function main() {
       { key: 'site', value: { name: 'ESB PowerLine', tagline: "Bangladesh's premier energy news portal" } },
       { key: 'seo', value: { metaTitle: 'ESB PowerLine — Bangladesh Energy News', metaDescription: 'Authoritative coverage of power generation, renewables, policy, and grid infrastructure.' } },
       { key: 'hero', value: { title: 'Bangladesh Energy Intelligence', subtitle: 'Real-time news, data, and analysis for the power sector', imageUrl: '/images/download (6).jfif' } },
+      {
+        key: 'homepage',
+        value: {
+          carouselMode: 'demo',
+          marketPulse: 'LNG spot firming • Solar module prices -2.1% WoW • BDT volatility impacting IPP margins • Coal API2 steady at $102 • New 8.95 Tk/kWh bulk tariff in effect',
+          snapshotLabel: 'Live • BPDB • PGCB • SREDA • Petrobangla',
+          professionalsCta: {
+            label: 'FOR PROFESSIONALS',
+            title: 'Access detailed data reports, tenders & the full archive.',
+            primaryLabel: 'Open Grid Explorer',
+            primaryHref: '/data-reports/power-grid',
+            secondaryLabel: 'Institutional Login',
+            secondaryHref: '/login',
+          },
+        },
+      },
       {
         key: 'ticker',
         value: [

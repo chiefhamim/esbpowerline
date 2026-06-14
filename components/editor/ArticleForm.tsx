@@ -14,11 +14,20 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { createArticle, updateArticle } from '@/lib/actions/articles';
 import { CATEGORIES } from '@/lib/constants';
+import type { PublicCategory } from '@/lib/category-types';
 import { slugify } from '@/lib/utils';
 import { Eye } from 'lucide-react';
 
+type ArticleFormPermissions = {
+  canPublish?: boolean;
+  canFeature?: boolean;
+  canBreaking?: boolean;
+  canPin?: boolean;
+};
+
 interface ArticleFormProps {
   mode: 'create' | 'edit';
+  permissions?: ArticleFormPermissions;
   article?: {
     id: string;
     title: string;
@@ -31,11 +40,26 @@ interface ArticleFormProps {
     tags?: unknown;
     isFeatured: boolean;
     isBreaking: boolean;
+    isPinned?: boolean;
     seo?: unknown;
   };
 }
 
-export function ArticleForm({ mode, article }: ArticleFormProps) {
+export function ArticleForm({
+  mode,
+  article,
+  categories = [],
+  permissions = {},
+}: ArticleFormProps & { categories?: Pick<PublicCategory, 'name'>[] }) {
+  const {
+    canPublish = true,
+    canFeature = true,
+    canBreaking = true,
+    canPin = true,
+  } = permissions;
+  const categoryOptions = categories.length
+    ? categories.map((c) => c.name)
+    : [...CATEGORIES];
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [preview, setPreview] = useState(false);
@@ -44,12 +68,13 @@ export function ArticleForm({ mode, article }: ArticleFormProps) {
   const [slug, setSlug] = useState(article?.slug ?? '');
   const [excerpt, setExcerpt] = useState(article?.excerpt ?? '');
   const [content, setContent] = useState(article?.content ?? '<p></p>');
-  const [category, setCategory] = useState(article?.category ?? CATEGORIES[0]);
+  const [category, setCategory] = useState(article?.category ?? categoryOptions[0] ?? CATEGORIES[0]);
   const [status, setStatus] = useState(article?.status ?? 'DRAFT');
   const [imageUrl, setImageUrl] = useState(article?.imageUrl ?? '');
   const [tags, setTags] = useState(((article?.tags as string[]) ?? []).join(', '));
   const [isFeatured, setIsFeatured] = useState(article?.isFeatured ?? false);
   const [isBreaking, setIsBreaking] = useState(article?.isBreaking ?? false);
+  const [isPinned, setIsPinned] = useState(article?.isPinned ?? false);
   const [metaTitle, setMetaTitle] = useState((article?.seo as any)?.metaTitle ?? '');
   const [metaDescription, setMetaDescription] = useState((article?.seo as any)?.metaDescription ?? '');
 
@@ -67,6 +92,7 @@ export function ArticleForm({ mode, article }: ArticleFormProps) {
         tags: tags.split(',').map((t) => t.trim()).filter(Boolean),
         isFeatured,
         isBreaking,
+        isPinned,
         seo: { metaTitle, metaDescription },
       };
 
@@ -141,15 +167,15 @@ export function ArticleForm({ mode, article }: ArticleFormProps) {
               <Label>Status</Label>
               <Select value={status} onChange={(e) => setStatus(e.target.value)} className="mt-1">
                 <option value="DRAFT">Draft</option>
-                <option value="PUBLISHED">Published</option>
-                <option value="SCHEDULED">Scheduled</option>
+                {canPublish && <option value="PUBLISHED">Published</option>}
+                {canPublish && <option value="SCHEDULED">Scheduled</option>}
                 <option value="ARCHIVED">Archived</option>
               </Select>
             </div>
             <div>
               <Label>Category</Label>
               <Select value={category} onChange={(e) => setCategory(e.target.value)} className="mt-1">
-                {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
+                {categoryOptions.map((c) => <option key={c} value={c}>{c}</option>)}
               </Select>
             </div>
             <div>
@@ -160,21 +186,36 @@ export function ArticleForm({ mode, article }: ArticleFormProps) {
               <Label>Featured Image URL</Label>
               <Input value={imageUrl} onChange={(e) => setImageUrl(e.target.value)} className="mt-1" placeholder="https://..." />
             </div>
-            <div className="flex items-center justify-between">
-              <Label>Featured</Label>
-              <Switch checked={isFeatured} onCheckedChange={setIsFeatured} />
-            </div>
-            <div className="flex items-center justify-between">
-              <Label>Breaking News</Label>
-              <Switch checked={isBreaking} onCheckedChange={setIsBreaking} />
-            </div>
+            {canFeature && (
+              <div className="flex items-center justify-between">
+                <Label>Featured</Label>
+                <Switch checked={isFeatured} onCheckedChange={setIsFeatured} />
+              </div>
+            )}
+            {canBreaking && (
+              <div className="flex items-center justify-between">
+                <Label>Breaking News</Label>
+                <Switch checked={isBreaking} onCheckedChange={setIsBreaking} />
+              </div>
+            )}
+            {canPin && (
+              <div className="flex items-center justify-between">
+                <div>
+                  <Label>Pin to Carousel Top</Label>
+                  <p className="text-[10px] text-muted-foreground mt-0.5">Shows first when managed carousel is on</p>
+                </div>
+                <Switch checked={isPinned} onCheckedChange={setIsPinned} />
+              </div>
+            )}
             <div className="flex flex-col gap-2 pt-2">
               <Button onClick={() => handleSubmit()} disabled={loading}>
                 {loading ? 'Saving…' : 'Save Draft'}
               </Button>
-              <Button variant="secondary" onClick={() => handleSubmit('PUBLISHED')} disabled={loading}>
-                Publish
-              </Button>
+              {canPublish && (
+                <Button variant="secondary" onClick={() => handleSubmit('PUBLISHED')} disabled={loading}>
+                  Publish
+                </Button>
+              )}
               <Button variant="ghost" size="sm" onClick={() => setPreview(!preview)}>
                 <Eye className="h-4 w-4 mr-2" /> Preview
               </Button>

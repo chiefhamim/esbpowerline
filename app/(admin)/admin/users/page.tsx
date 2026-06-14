@@ -1,11 +1,11 @@
 import Link from 'next/link';
-import { PageHeader } from '@/components/dashboard/PageHeader';
+import { AdminPageHeader, AdminTableShell } from '@/components/admin/AdminUI';
 import { getUsers } from '@/lib/actions/users';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { RoleBadge } from '@/components/dashboard/RoleBadge';
 import { StatusBadge } from '@/components/dashboard/StatusBadge';
 import { Button } from '@/components/ui/button';
-import { Plus } from 'lucide-react';
+import { Plus, Users, Pencil } from 'lucide-react';
 import type { Role } from '@/lib/constants';
 
 export default async function AdminUsersPage() {
@@ -13,11 +13,17 @@ export default async function AdminUsersPage() {
 
   return (
     <div>
-      <PageHeader title="User Management" description="Manage roles, status, and access for all platform users">
-        <Link href="/admin/users/new"><Button><Plus className="h-4 w-4 mr-2" />Add User</Button></Link>
-      </PageHeader>
+      <AdminPageHeader
+        icon={Users}
+        title="User Management"
+        description="Manage roles, status, and access for all platform users."
+      >
+        <Link href="/admin/users/new">
+          <Button><Plus className="h-4 w-4 mr-2" />Add User</Button>
+        </Link>
+      </AdminPageHeader>
 
-      <div className="card">
+      <AdminTableShell>
         <Table>
           <TableHeader>
             <TableRow>
@@ -27,7 +33,7 @@ export default async function AdminUsersPage() {
               <TableHead>Status</TableHead>
               <TableHead>Articles</TableHead>
               <TableHead>Last Login</TableHead>
-              <TableHead></TableHead>
+              <TableHead className="w-16" />
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -37,18 +43,23 @@ export default async function AdminUsersPage() {
                 <TableCell className="text-muted-foreground">{u.email}</TableCell>
                 <TableCell><RoleBadge role={u.role as Role} /></TableCell>
                 <TableCell><StatusBadge status={u.status} /></TableCell>
-                <TableCell>{u.articlesCount}</TableCell>
-                <TableCell className="text-muted-foreground text-sm">
+                <TableCell className="tabular-nums">{u.articlesCount}</TableCell>
+                <TableCell className="text-muted-foreground">
                   {u.lastLoginAt ? new Date(u.lastLoginAt).toLocaleDateString() : '—'}
                 </TableCell>
                 <TableCell>
-                  <Link href={`/admin/users/${u.id}`} className="text-sm text-primary hover:underline">Edit</Link>
+                  <Link
+                    href={`/admin/users/${u.id}`}
+                    className="inline-flex items-center gap-1 text-[12px] font-medium text-rose-400 hover:text-rose-300 transition-colors"
+                  >
+                    <Pencil className="h-3 w-3" /> Edit
+                  </Link>
                 </TableCell>
               </TableRow>
             ))}
           </TableBody>
         </Table>
-      </div>
+      </AdminTableShell>
     </div>
   );
 }

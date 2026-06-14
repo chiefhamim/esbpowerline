@@ -10,6 +10,7 @@ import { Select } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { createUser, updateUser } from '@/lib/actions/users';
 import type { Role } from '@/lib/constants';
+import { AdminFormCard } from './AdminUI';
 
 interface UserFormProps {
   mode: 'create' | 'edit';
@@ -47,51 +48,55 @@ export function UserForm({ mode, user }: UserFormProps) {
         toast.success('User updated');
         router.refresh();
       }
-    } catch (err: any) {
-      toast.error(err.message ?? 'Failed');
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : 'Failed');
     } finally {
       setLoading(false);
     }
   }
 
   return (
-    <form onSubmit={handleSubmit} className="card p-6 max-w-lg space-y-4">
-      <div>
-        <Label>Name</Label>
-        <Input value={name} onChange={(e) => setName(e.target.value)} required className="mt-1" />
-      </div>
-      <div>
-        <Label>Email</Label>
-        <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required className="mt-1" disabled={mode === 'edit'} />
-      </div>
-      <div>
-        <Label>{mode === 'create' ? 'Password' : 'New Password (leave blank to keep)'}</Label>
-        <Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} className="mt-1" />
-      </div>
-      <div>
-        <Label>Role</Label>
-        <Select value={role} onChange={(e) => setRole(e.target.value as Role)} className="mt-1">
-          <option value="SUPER_ADMIN">Super Admin</option>
-          <option value="ADMIN">Admin</option>
-          <option value="EDITOR">Editor</option>
-          <option value="AUTHOR">Author</option>
-          <option value="CONTRIBUTOR">Contributor</option>
-          <option value="SUBSCRIBER">Subscriber</option>
-        </Select>
-      </div>
-      <div>
-        <Label>Status</Label>
-        <Select value={status} onChange={(e) => setStatus(e.target.value as 'ACTIVE' | 'SUSPENDED' | 'PENDING')} className="mt-1">
-          <option value="ACTIVE">Active</option>
-          <option value="SUSPENDED">Suspended</option>
-          <option value="PENDING">Pending</option>
-        </Select>
-      </div>
-      <div>
-        <Label>Bio</Label>
-        <Textarea value={bio} onChange={(e) => setBio(e.target.value)} className="mt-1" rows={3} />
-      </div>
-      <Button type="submit" disabled={loading}>{loading ? 'Saving…' : mode === 'create' ? 'Create User' : 'Update User'}</Button>
-    </form>
+    <AdminFormCard>
+      <form onSubmit={handleSubmit} className="space-y-5">
+        <div className="space-y-1.5">
+          <Label>Name</Label>
+          <Input value={name} onChange={(e) => setName(e.target.value)} required />
+        </div>
+        <div className="space-y-1.5">
+          <Label>Email</Label>
+          <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required disabled={mode === 'edit'} />
+        </div>
+        <div className="space-y-1.5">
+          <Label>{mode === 'create' ? 'Password' : 'New Password (leave blank to keep)'}</Label>
+          <Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
+        </div>
+        <div className="space-y-1.5">
+          <Label>Role</Label>
+          <Select value={role} onChange={(e) => setRole(e.target.value as Role)}>
+            <option value="SUPER_ADMIN">Super Admin</option>
+            <option value="ADMIN">Admin</option>
+            <option value="EDITOR">Editor</option>
+            <option value="AUTHOR">Author</option>
+            <option value="CONTRIBUTOR">Contributor</option>
+            <option value="SUBSCRIBER">Subscriber</option>
+          </Select>
+        </div>
+        <div className="space-y-1.5">
+          <Label>Status</Label>
+          <Select value={status} onChange={(e) => setStatus(e.target.value as 'ACTIVE' | 'SUSPENDED' | 'PENDING')}>
+            <option value="ACTIVE">Active</option>
+            <option value="SUSPENDED">Suspended</option>
+            <option value="PENDING">Pending</option>
+          </Select>
+        </div>
+        <div className="space-y-1.5">
+          <Label>Bio</Label>
+          <Textarea value={bio} onChange={(e) => setBio(e.target.value)} rows={3} />
+        </div>
+        <Button type="submit" disabled={loading}>
+          {loading ? 'Saving…' : mode === 'create' ? 'Create User' : 'Update User'}
+        </Button>
+      </form>
+    </AdminFormCard>
   );
 }

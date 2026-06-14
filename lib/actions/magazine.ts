@@ -35,6 +35,8 @@ export async function createMagazineIssue(data: {
     },
   });
   revalidatePath('/admin/magazine');
+  revalidatePath('/');
+  revalidatePath('/magazine');
   return issue;
 }
 
@@ -50,6 +52,8 @@ export async function updateMagazineIssue(id: string, data: Partial<{
     },
   });
   revalidatePath('/admin/magazine');
+  revalidatePath('/');
+  revalidatePath('/magazine');
   return issue;
 }
 
@@ -57,4 +61,6 @@ export async function deleteMagazineIssue(id: string) {
   await requireAdmin();
   await prisma.magazineIssue.delete({ where: { id } });
   revalidatePath('/admin/magazine');
+  revalidatePath('/');
+  revalidatePath('/magazine');
 }

@@ -1,8 +1,12 @@
 import Link from 'next/link';
 import { Zap } from 'lucide-react';
+import type { PublicCategory } from '@/lib/category-types';
 import { CATEGORIES } from '@/lib/constants';
 
-export function PublicFooter() {
+export function PublicFooter({ categories = [] }: { categories?: PublicCategory[] }) {
+  const sectorLinks = categories.length
+    ? categories.map((c) => ({ name: c.name, slug: c.slug }))
+    : CATEGORIES.map((c) => ({ name: c, slug: c.toLowerCase().replace(/\s+/g, '-') }));
   const year = new Date().getFullYear();
 
   return (
@@ -64,16 +68,13 @@ export function PublicFooter() {
               <div>
                 <div className="font-display font-semibold text-[10px] tracking-[0.1em] uppercase text-foreground mb-4">SECTORS</div>
                 <ul className="space-y-2 text-xs">
-                  {CATEGORIES.slice(0, 6).map(cat => {
-                    const slug = cat.toLowerCase().replace(/\s+/g, '-');
-                    return (
-                      <li key={cat}>
-                        <Link href={`/categories/${slug}`} className="text-muted-foreground hover:text-foreground transition-colors font-medium">
-                          {cat}
-                        </Link>
-                      </li>
-                    );
-                  })}
+                  {sectorLinks.slice(0, 6).map((cat) => (
+                    <li key={cat.slug}>
+                      <Link href={`/categories/${cat.slug}`} className="text-muted-foreground hover:text-foreground transition-colors font-medium">
+                        {cat.name}
+                      </Link>
+                    </li>
+                  ))}
                 </ul>
               </div>
             </div>

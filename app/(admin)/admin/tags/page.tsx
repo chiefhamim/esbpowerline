@@ -1,20 +1,24 @@
-import { PageHeader } from '@/components/dashboard/PageHeader';
+import { AdminPageHeader, AdminCard, AdminTagCapsule } from '@/components/admin/AdminUI';
 import { getAllTags } from '@/lib/actions/articles';
-import { Badge } from '@/components/ui/badge';
+import { Tag } from 'lucide-react';
 
 export default async function AdminTagsPage() {
   const tags = await getAllTags();
   return (
     <div>
-      <PageHeader title="Tags" description="All tags used across articles" />
-      <div className="card p-6">
+      <AdminPageHeader
+        icon={Tag}
+        title="Tags"
+        description="All tags used across articles on the platform."
+      />
+      <AdminCard title={`${tags.length} tags`} icon={Tag}>
         <div className="flex flex-wrap gap-2">
-          {tags.map((tag) => (
-            <Badge key={tag} variant="secondary" className="text-sm px-3 py-1">{tag}</Badge>
+          {tags.map((t) => (
+            <AdminTagCapsule key={t}>{t}</AdminTagCapsule>
           ))}
-          {tags.length === 0 && <p className="text-muted-foreground">No tags yet</p>}
+          {tags.length === 0 && <p className="text-[13px] text-muted-foreground">No tags yet</p>}
         </div>
-      </div>
+      </AdminCard>
     </div>
   );
 }

@@ -16,6 +16,7 @@ async function requireAdmin() {
 }
 
 export async function getSettings() {
+  await requireAdmin();
   const settings = await prisma.siteSetting.findMany();
   const map: Record<string, unknown> = {};
   for (const s of settings) map[s.key] = s.value;
@@ -31,35 +32,8 @@ export async function updateSetting(key: string, value: unknown) {
     create: { key, value: value as any },
     update: { value: value as any },
   });
+
+  const { PUBLIC_REVALIDATE_PATHS } = await import('@/lib/public-paths');
+  for (const path of PUBLIC_REVALIDATE_PATHS) revalidatePath(path);
   revalidatePath('/admin/settings');
-}
-
-export async function getAnalytics() {
-  await requirePermission('analytics.view_all');
-
-  const [articleCount, userCount, totalViews, publishedCount, recentLogs, topArticles] = await Promise.all([
-    prisma.article.count(),
-    prisma.user.count(),
-    prisma.article.aggregate({ _sum: { views: true } }),
-    prisma.article.count({ where: { status: 'PUBLISHED' } }),
-    prisma.auditLog.findMany({ orderBy: { timestamp: 'desc' }, take: 10 }),
-    prisma.article.findMany({
-      where: { status: 'PUBLISHED' },
-      orderBy: { views: 'desc' },
-      take: 10,
-      select: { id: true, title: true, slug: true, views: true, category: true },
-    }),
-  ]);
-
-  const usersByRole = await prisma.user.groupBy({ by: ['role'], _count: true });
-
-  return {
-    articleCount,
-    userCount,
-    totalViews: totalViews._sum.views ?? 0,
-    publishedCount,
-    recentLogs,
-    topArticles,
-    usersByRole,
-  };
 }

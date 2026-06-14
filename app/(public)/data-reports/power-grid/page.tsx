@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { RefreshCw, Download } from 'lucide-react';
-import prisma from '@/lib/prisma';
+import { getGridSettingsMap } from '@/lib/homepage-content';
 import { PowerGridExplorer } from '@/components/news/PowerGridExplorer';
 
 export const metadata = {
@@ -10,11 +10,7 @@ export const metadata = {
 
 export default async function PowerGridExplorerPage() {
   // Load dynamic grid data from database settings if available
-  const settingsRecords = await prisma.siteSetting.findMany();
-  const settings: Record<string, any> = {};
-  for (const s of settingsRecords) {
-    settings[s.key] = s.value;
-  }
+  const settings = await getGridSettingsMap();
 
   return (
     <div className="container py-8">
@@ -35,10 +31,10 @@ export default async function PowerGridExplorerPage() {
         </div>
       </div>
 
-      <PowerGridExplorer 
-        initialMix={settings.gridMix} 
-        initialLines={settings.gridLines} 
-        initialProjects={settings.gridProjects} 
+      <PowerGridExplorer
+        initialMix={settings.gridMix as Parameters<typeof PowerGridExplorer>[0]['initialMix']}
+        initialLines={settings.gridLines as Parameters<typeof PowerGridExplorer>[0]['initialLines']}
+        initialProjects={settings.gridProjects as Parameters<typeof PowerGridExplorer>[0]['initialProjects']}
       />
 
       <div className="mt-10 pt-6 border-t border-border/60 text-[11px] text-muted-foreground flex flex-wrap gap-x-5 gap-y-1.5 leading-relaxed">

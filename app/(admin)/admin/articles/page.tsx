@@ -1,11 +1,12 @@
-import { PageHeader } from '@/components/dashboard/PageHeader';
-import { getArticles } from '@/lib/actions/articles';
-import { ArticleTable } from '@/components/dashboard/ArticleTable';
+import { AdminPageHeader } from '@/components/admin/AdminUI';
+import { AdminArticleManager } from '@/components/admin/AdminArticleManager';
+import { getAdminArticles } from '@/lib/actions/articles';
+import { FileText } from 'lucide-react';
 
 export default async function AdminArticlesPage() {
-  const articles = await getArticles();
+  const articles = await getAdminArticles();
 
-  const rows = articles.map((a: any) => ({
+  const rows = articles.map((a) => ({
     id: a.id,
     title: a.title,
     slug: a.slug,
@@ -13,13 +14,22 @@ export default async function AdminArticlesPage() {
     category: a.category,
     status: a.status,
     views: a.views,
+    createdAt: a.createdAt,
     updatedAt: a.updatedAt,
+    publishedAt: a.publishedAt,
+    isPinned: a.isPinned,
+    isFeatured: a.isFeatured,
+    isBreaking: a.isBreaking,
   }));
 
   return (
     <div>
-      <PageHeader title="Content Management" description="Moderate all articles across the platform. Search and filter by status." />
-      <ArticleTable articles={rows} showAuthor={true} editBase="/cms/articles" />
+      <AdminPageHeader
+        icon={FileText}
+        title="Content Management"
+        description="Sort, filter, and batch-manage all articles — publish, archive, trash, restore, and flag content."
+      />
+      <AdminArticleManager articles={rows} editBase="/cms/articles" />
     </div>
   );
 }

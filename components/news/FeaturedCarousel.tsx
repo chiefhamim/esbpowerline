@@ -16,8 +16,8 @@ interface FeaturedItem {
   isBreaking?: boolean;
 }
 
-export function FeaturedCarousel() {
-  const featured: FeaturedItem[] = demoArticles
+export function FeaturedCarousel({ items }: { items?: FeaturedItem[] }) {
+  const featured: FeaturedItem[] = items ?? demoArticles
     .slice(0, 5)
     .map(a => ({
       slug: a.slug,

@@ -2,11 +2,14 @@ import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { formatDate, formatNumber } from '@/lib/utils';
 import { ArticleCard } from '@/components/news/ArticleCard';
-import { getArticleBySlug, getPublishedArticles } from '@/lib/data';
+import {
+  getPublishedArticleBySlug,
+  getRelatedPublishedArticles,
+} from '@/lib/category-content';
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const article = getArticleBySlug(slug);
+  const article = await getPublishedArticleBySlug(slug);
   if (!article) return { title: 'Article not found | ESB PowerLine' };
 
   return {
@@ -22,14 +25,11 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 
 export default async function ArticlePage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const article = getArticleBySlug(slug);
+  const article = await getPublishedArticleBySlug(slug);
   if (!article) notFound();
 
-  const related = getPublishedArticles()
-    .filter(a => a.slug !== slug && (a.category === article.category || a.tags.some(t => article.tags.includes(t))))
-    .slice(0, 3);
+  const related = await getRelatedPublishedArticles(slug, article.category, article.tags, 3);
 
-  // JSON-LD for NewsArticle
   const jsonLd = {
     '@context': 'https://schema.org',
     '@type': 'NewsArticle',
@@ -75,24 +75,23 @@ export default async function ArticlePage({ params }: { params: Promise<{ slug: 
       <div className="mt-10 border-t border-[#334155] pt-8">
         <h3 className="font-semibold mb-4">Related stories</h3>
         <div className="grid sm:grid-cols-2 gap-4">
-          {related.map(r => (
-            <ArticleCard 
-              key={r.id} 
-              id={r.slug} 
-              title={r.title} 
-              excerpt={r.excerpt} 
-              category={r.category} 
-              imageUrl={r.imageUrl} 
-              author={r.author} 
-              date={r.date} 
-              readTime={r.readTime} 
-              views={r.views} 
+          {related.map((r) => (
+            <ArticleCard
+              key={r.id}
+              id={r.slug}
+              title={r.title}
+              excerpt={r.excerpt}
+              category={r.category}
+              imageUrl={r.imageUrl}
+              author={r.author}
+              date={r.date}
+              readTime={r.readTime}
+              views={r.views}
             />
           ))}
         </div>
       </div>
 
-      {/* SEO Structured Data */}
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}

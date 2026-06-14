@@ -28,7 +28,9 @@ model User {
   createdAt     DateTime   @default(now())
   updatedAt     DateTime   @updatedAt
 
-  articles   Article[]
+  articles        Article[]
+  receivedNotices EditorialNotice[] @relation("ReceivedNotices")
+  sentNotices     EditorialNotice[] @relation("SentNotices")
 }
 
 enum Role {
@@ -74,6 +76,7 @@ model Article {
   version     Int             @default(1)
 
   revisions Revision[]
+  notices   EditorialNotice[]
 }
 
 enum ArticleStatus {
@@ -92,10 +95,43 @@ model Category {
   name        String   @unique
   slug        String   @unique
   description String?
-  icon        String?
+  icon          String?
+  iconImageUrl  String?
   color       String?
   order       Int      @default(0)
   createdAt   DateTime @default(now())
+}
+
+// ============================================
+// EDITORIAL NOTICES (admin → author requests & alerts)
+// ============================================
+model EditorialNotice {
+  id          String                @id @default(cuid())
+  type        EditorialNoticeType
+  message     String
+  status      EditorialNoticeStatus @default(PENDING)
+  articleId   String?
+  article     Article?              @relation(fields: [articleId], references: [id], onDelete: SetNull)
+  recipientId String
+  recipient   User                  @relation("ReceivedNotices", fields: [recipientId], references: [id], onDelete: Cascade)
+  senderId    String
+  sender      User                  @relation("SentNotices", fields: [senderId], references: [id], onDelete: Cascade)
+  metadata    Json?
+  createdAt   DateTime              @default(now())
+  updatedAt   DateTime              @updatedAt
+}
+
+enum EditorialNoticeType {
+  REVISION_REQUEST
+  CONTENT_REMOVED
+  CATEGORY_CHANGED
+  ADMIN_NOTE
+}
+
+enum EditorialNoticeStatus {
+  PENDING
+  ACKNOWLEDGED
+  RESOLVED
 }
 
 // ============================================

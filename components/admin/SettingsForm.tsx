@@ -8,9 +8,10 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { updateSetting } from '@/lib/actions/settings';
 import { cn } from '@/lib/utils';
+import { HOMEPAGE_DEFAULTS } from '@/lib/homepage-defaults';
 import { 
   Settings, TrendingUp, BarChart3, Users, Play, Globe, 
-  Database, RefreshCw, Plus, Trash2, ArrowRight
+  Database, RefreshCw, Plus, Trash2, ArrowRight, ArrowUp, ArrowDown, Pin,
 } from 'lucide-react';
 
 interface SettingsFormProps {
@@ -33,6 +34,26 @@ export function SettingsForm({ settings }: SettingsFormProps) {
   const [heroTitle, setHeroTitle] = useState(hero.title ?? '');
   const [heroSubtitle, setHeroSubtitle] = useState(hero.subtitle ?? '');
   const [heroImage, setHeroImage] = useState(hero.imageUrl ?? '');
+
+  const homepage = (settings.homepage as Record<string, unknown>) ?? {};
+  const professionalsDefault = HOMEPAGE_DEFAULTS.professionalsCta;
+  const professionals = (homepage.professionalsCta as typeof professionalsDefault) ?? professionalsDefault;
+
+  const [carouselMode, setCarouselMode] = useState<'demo' | 'managed'>(
+    homepage.carouselMode === 'managed' ? 'managed' : 'demo'
+  );
+  const [marketPulse, setMarketPulse] = useState(
+    (homepage.marketPulse as string) ?? HOMEPAGE_DEFAULTS.marketPulse
+  );
+  const [snapshotLabel, setSnapshotLabel] = useState(
+    (homepage.snapshotLabel as string) ?? HOMEPAGE_DEFAULTS.snapshotLabel
+  );
+  const [ctaLabel, setCtaLabel] = useState(professionals.label ?? professionalsDefault.label);
+  const [ctaTitle, setCtaTitle] = useState(professionals.title ?? professionalsDefault.title);
+  const [ctaPrimaryLabel, setCtaPrimaryLabel] = useState(professionals.primaryLabel ?? professionalsDefault.primaryLabel);
+  const [ctaPrimaryHref, setCtaPrimaryHref] = useState(professionals.primaryHref ?? professionalsDefault.primaryHref);
+  const [ctaSecondaryLabel, setCtaSecondaryLabel] = useState(professionals.secondaryLabel ?? professionalsDefault.secondaryLabel);
+  const [ctaSecondaryHref, setCtaSecondaryHref] = useState(professionals.secondaryHref ?? professionalsDefault.secondaryHref);
 
   // 2. Live Markets Ticker
   const [ticker, setTicker] = useState<any[]>(
@@ -145,6 +166,19 @@ export function SettingsForm({ settings }: SettingsFormProps) {
       await updateSetting('site', { name: siteName, tagline });
       await updateSetting('seo', { metaTitle, metaDescription });
       await updateSetting('hero', { title: heroTitle, subtitle: heroSubtitle, imageUrl: heroImage });
+      await updateSetting('homepage', {
+        carouselMode,
+        marketPulse,
+        snapshotLabel,
+        professionalsCta: {
+          label: ctaLabel,
+          title: ctaTitle,
+          primaryLabel: ctaPrimaryLabel,
+          primaryHref: ctaPrimaryHref,
+          secondaryLabel: ctaSecondaryLabel,
+          secondaryHref: ctaSecondaryHref,
+        },
+      });
       await updateSetting('ticker', ticker);
       await updateSetting('snapshot', snapshot);
       await updateSetting('interviews', interviews);
@@ -180,6 +214,19 @@ export function SettingsForm({ settings }: SettingsFormProps) {
     setInterviews(next);
   };
 
+  const moveInterview = (index: number, direction: 'up' | 'down' | 'first') => {
+    const next = [...interviews];
+    if (direction === 'first' && index > 0) {
+      const [item] = next.splice(index, 1);
+      next.unshift(item);
+    } else if (direction === 'up' && index > 0) {
+      [next[index - 1], next[index]] = [next[index], next[index - 1]];
+    } else if (direction === 'down' && index < next.length - 1) {
+      [next[index + 1], next[index]] = [next[index], next[index + 1]];
+    }
+    setInterviews(next);
+  };
+
   // Grid Mix helpers
   const updateGridMixField = (index: number, field: string, val: any) => {
     const next = [...gridMix];
@@ -211,23 +258,18 @@ export function SettingsForm({ settings }: SettingsFormProps) {
 
   return (
     <div className="space-y-6">
-      {/* Modern navigation tabs */}
-      <div className="flex border-b border-border/60 overflow-x-auto gap-1">
+      <div className="settings-tabs">
         {tabs.map((tab) => {
           const Icon = tab.icon;
           const active = activeTab === tab.id;
           return (
             <button
               key={tab.id}
+              type="button"
               onClick={() => setActiveTab(tab.id)}
-              className={cn(
-                "flex items-center gap-2 px-5 py-3 text-sm font-medium border-b-2 transition-all whitespace-nowrap",
-                active 
-                  ? "border-primary text-primary bg-primary/5 font-semibold" 
-                  : "border-transparent text-muted-foreground hover:text-foreground hover:bg-muted/30"
-              )}
+              className={cn('settings-tab', active && 'settings-tab--active')}
             >
-              <Icon className="h-4 w-4" />
+              <Icon className="h-3.5 w-3.5" strokeWidth={active ? 2.25 : 2} />
               {tab.label}
             </button>
           );
@@ -238,7 +280,7 @@ export function SettingsForm({ settings }: SettingsFormProps) {
         {/* Tab 1: General & SEO */}
         {activeTab === 'general' && (
           <div className="grid lg:grid-cols-2 gap-6">
-            <div className="card p-6 space-y-4">
+            <div className="admin-card settings-panel p-6 space-y-4">
               <h2 className="font-semibold flex items-center gap-2"><Globe className="h-4.5 w-4.5 text-primary" /> Site Configuration</h2>
               <div>
                 <Label htmlFor="siteName">Site Name</Label>
@@ -250,7 +292,7 @@ export function SettingsForm({ settings }: SettingsFormProps) {
               </div>
             </div>
 
-            <div className="card p-6 space-y-4">
+            <div className="admin-card settings-panel p-6 space-y-4">
               <h2 className="font-semibold flex items-center gap-2"><Globe className="h-4.5 w-4.5 text-primary" /> SEO Defaults</h2>
               <div>
                 <Label htmlFor="metaTitle">Meta Title</Label>
@@ -262,7 +304,44 @@ export function SettingsForm({ settings }: SettingsFormProps) {
               </div>
             </div>
 
-            <div className="card p-6 space-y-4 lg:col-span-2">
+            <div className="admin-card settings-panel p-6 space-y-4 lg:col-span-2">
+              <h2 className="font-semibold flex items-center gap-2"><Globe className="h-4.5 w-4.5 text-primary" /> Homepage Controls</h2>
+              <div className="grid md:grid-cols-2 gap-4">
+                <div>
+                  <Label>Carousel mode</Label>
+                  <select
+                    value={carouselMode}
+                    onChange={(e) => setCarouselMode(e.target.value as 'demo' | 'managed')}
+                    className="mt-1 w-full border border-input rounded-xl h-9 px-3 text-sm bg-background"
+                  >
+                    <option value="demo">Demo (unchanged public homepage)</option>
+                    <option value="managed">Managed (pinned + featured articles)</option>
+                  </select>
+                </div>
+                <div>
+                  <Label>Snapshot sources label</Label>
+                  <Input value={snapshotLabel} onChange={(e) => setSnapshotLabel(e.target.value)} className="mt-1" />
+                </div>
+                <div className="md:col-span-2">
+                  <Label>Market pulse marquee</Label>
+                  <Textarea value={marketPulse} onChange={(e) => setMarketPulse(e.target.value)} className="mt-1" rows={2} />
+                </div>
+              </div>
+            </div>
+
+            <div className="admin-card settings-panel p-6 space-y-4 lg:col-span-2">
+              <h2 className="font-semibold flex items-center gap-2"><Globe className="h-4.5 w-4.5 text-primary" /> Professionals CTA Block</h2>
+              <div className="grid md:grid-cols-2 gap-4">
+                <div><Label>Section label</Label><Input value={ctaLabel} onChange={(e) => setCtaLabel(e.target.value)} className="mt-1" /></div>
+                <div className="md:col-span-2"><Label>Headline</Label><Input value={ctaTitle} onChange={(e) => setCtaTitle(e.target.value)} className="mt-1" /></div>
+                <div><Label>Primary button</Label><Input value={ctaPrimaryLabel} onChange={(e) => setCtaPrimaryLabel(e.target.value)} className="mt-1" /></div>
+                <div><Label>Primary link</Label><Input value={ctaPrimaryHref} onChange={(e) => setCtaPrimaryHref(e.target.value)} className="mt-1" /></div>
+                <div><Label>Secondary button</Label><Input value={ctaSecondaryLabel} onChange={(e) => setCtaSecondaryLabel(e.target.value)} className="mt-1" /></div>
+                <div><Label>Secondary link</Label><Input value={ctaSecondaryHref} onChange={(e) => setCtaSecondaryHref(e.target.value)} className="mt-1" /></div>
+              </div>
+            </div>
+
+            <div className="admin-card settings-panel p-6 space-y-4 lg:col-span-2">
               <h2 className="font-semibold flex items-center gap-2"><Globe className="h-4.5 w-4.5 text-primary" /> Homepage Hero Section</h2>
               <div className="grid md:grid-cols-2 gap-4">
                 <div>
@@ -284,7 +363,7 @@ export function SettingsForm({ settings }: SettingsFormProps) {
 
         {/* Tab 2: Live Markets */}
         {activeTab === 'markets' && (
-          <div className="card p-6 space-y-5">
+          <div className="admin-card settings-panel p-6 space-y-5">
             <div className="flex items-center justify-between">
               <div>
                 <h2 className="font-semibold flex items-center gap-2"><TrendingUp className="h-4.5 w-4.5 text-primary" /> Live Markets Ticker</h2>
@@ -329,7 +408,7 @@ export function SettingsForm({ settings }: SettingsFormProps) {
 
         {/* Tab 3: System Snapshot */}
         {activeTab === 'snapshot' && (
-          <div className="card p-6 space-y-5">
+          <div className="admin-card settings-panel p-6 space-y-5">
             <div>
               <h2 className="font-semibold flex items-center gap-2"><BarChart3 className="h-4.5 w-4.5 text-primary" /> Live System Snapshot</h2>
               <p className="text-xs text-muted-foreground mt-0.5">Configure national power grid generation capacity, demand numbers, loss parameters, etc.</p>
@@ -390,12 +469,25 @@ export function SettingsForm({ settings }: SettingsFormProps) {
         {activeTab === 'interviews' && (
           <div className="space-y-6">
             {interviews.map((iv, idx) => (
-              <div key={iv.id} className="card p-6 space-y-4">
-                <div className="flex items-center justify-between border-b pb-2">
-                  <h3 className="font-semibold text-sm flex items-center gap-2">
-                    <Play className="h-4 w-4 text-[#10b981]" /> Interview #{idx + 1}: {iv.guest || 'Untitled'}
+              <div key={iv.id} className="admin-card settings-panel p-6 space-y-4">
+                <div className="flex items-center justify-between border-b pb-2 gap-2">
+                  <h3 className="font-semibold text-sm flex items-center gap-2 min-w-0">
+                    <Play className="h-4 w-4 text-[#10b981] shrink-0" />
+                    <span className="truncate">Interview #{idx + 1}: {iv.guest || 'Untitled'}</span>
+                    {idx === 0 && <span className="admin-role-pill shrink-0">Pinned first</span>}
                   </h3>
-                  <span className="font-mono text-xs text-muted-foreground">{iv.id}</span>
+                  <div className="flex items-center gap-1 shrink-0">
+                    <button type="button" className="admin-category-delete opacity-100" title="Pin to first" onClick={() => moveInterview(idx, 'first')}>
+                      <Pin className="h-3.5 w-3.5" />
+                    </button>
+                    <button type="button" className="admin-category-delete opacity-100" title="Move up" onClick={() => moveInterview(idx, 'up')} disabled={idx === 0}>
+                      <ArrowUp className="h-3.5 w-3.5" />
+                    </button>
+                    <button type="button" className="admin-category-delete opacity-100" title="Move down" onClick={() => moveInterview(idx, 'down')} disabled={idx === interviews.length - 1}>
+                      <ArrowDown className="h-3.5 w-3.5" />
+                    </button>
+                    <span className="font-mono text-xs text-muted-foreground ml-1">{iv.id}</span>
+                  </div>
                 </div>
                 <div className="grid md:grid-cols-2 gap-4">
                   <div>
@@ -442,7 +534,7 @@ export function SettingsForm({ settings }: SettingsFormProps) {
         {activeTab === 'grid' && (
           <div className="space-y-6">
             {/* Grid Mix */}
-            <div className="card p-6 space-y-4">
+            <div className="admin-card settings-panel p-6 space-y-4">
               <h2 className="font-semibold flex items-center gap-2"><Database className="h-4.5 w-4.5 text-primary" /> Generation Fuel Mix</h2>
               <div className="space-y-3">
                 <div className="grid grid-cols-12 gap-3 text-xs font-semibold text-muted-foreground border-b pb-2 px-1">
@@ -467,7 +559,7 @@ export function SettingsForm({ settings }: SettingsFormProps) {
             </div>
 
             {/* Grid Transmission Corridors */}
-            <div className="card p-6 space-y-4">
+            <div className="admin-card settings-panel p-6 space-y-4">
               <h2 className="font-semibold flex items-center gap-2"><Database className="h-4.5 w-4.5 text-primary" /> Transmission Corridors</h2>
               <div className="space-y-3">
                 <div className="grid grid-cols-12 gap-3 text-xs font-semibold text-muted-foreground border-b pb-2 px-1">
@@ -500,7 +592,7 @@ export function SettingsForm({ settings }: SettingsFormProps) {
             </div>
 
             {/* Grid Projects */}
-            <div className="card p-6 space-y-4">
+            <div className="admin-card settings-panel p-6 space-y-4">
               <h2 className="font-semibold flex items-center gap-2"><Database className="h-4.5 w-4.5 text-primary" /> Major Infrastructure Projects</h2>
               <div className="space-y-3">
                 <div className="grid grid-cols-12 gap-3 text-xs font-semibold text-muted-foreground border-b pb-2 px-1">

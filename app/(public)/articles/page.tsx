@@ -1,8 +1,7 @@
-import { Suspense } from 'react';
 import Link from 'next/link';
 import { ArticleCard } from '@/components/news/ArticleCard';
-import { getPublishedArticles, getArticlesByCategory, getTrendingArticles } from '@/lib/data';
-import { CATEGORIES } from '@/lib/constants';
+import { getTrendingArticles } from '@/lib/data';
+import { getPublicCategories, getPublishedArticlesForPublic } from '@/lib/category-content';
 import { SortSelect } from '@/components/news/SortSelect';
 
 export const metadata = {
@@ -24,23 +23,29 @@ export default async function ArticlesPage({ searchParams }: ArticlesPageProps) 
   const sort = resolvedParams.sort || 'latest';
   const currentPage = parseInt(resolvedParams.page || '1', 10);
 
-  let articles = getPublishedArticles();
+  const [categories, allArticles] = await Promise.all([
+    getPublicCategories(),
+    getPublishedArticlesForPublic(120),
+  ]);
+
+  let articles = allArticles;
 
   if (categoryParam) {
-    articles = getArticlesByCategory(categoryParam.replace(/-/g, ' '));
+    const match = categories.find((c) => c.slug === categoryParam);
+    if (match) {
+      articles = articles.filter((a) => a.category === match.name);
+    }
   }
 
-  // Sort
   if (sort === 'views') {
     articles = [...articles].sort((a, b) => b.views - a.views);
   } else {
-    // latest by date
     articles = [...articles].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   }
 
   const perPage = 6;
   const totalPages = Math.ceil(articles.length / perPage);
-  const paginatedArticles = articles.slice(0, currentPage * perPage); // "infinite" style - cumulative
+  const paginatedArticles = articles.slice(0, currentPage * perPage);
 
   const trending = getTrendingArticles(4);
 
@@ -57,41 +62,38 @@ export default async function ArticlesPage({ searchParams }: ArticlesPageProps) 
         </div>
       </div>
 
-      {/* Category filters */}
       <div className="flex flex-wrap gap-2 mb-8">
-        <Link 
-          href={sort === 'views' ? '/articles?sort=views' : '/articles'} 
+        <Link
+          href={sort === 'views' ? '/articles?sort=views' : '/articles'}
           className={`category-pill ${!categoryParam ? 'active' : ''}`}
         >
           All
         </Link>
-        {CATEGORIES.map(cat => {
-          const slug = cat.toLowerCase().replace(/\s+/g, '-');
-          const isActive = categoryParam === slug;
-          const href = sort === 'views' 
-            ? `/articles?category=${slug}&sort=views` 
-            : `/articles?category=${slug}`;
+        {categories.map((cat) => {
+          const isActive = categoryParam === cat.slug;
+          const href = sort === 'views'
+            ? `/articles?category=${cat.slug}&sort=views`
+            : `/articles?category=${cat.slug}`;
           return (
-            <Link 
-              key={cat} 
+            <Link
+              key={cat.id}
               href={href}
               className={`category-pill ${isActive ? 'active' : ''}`}
             >
-              {cat}
+              {cat.name}
             </Link>
           );
         })}
       </div>
 
       <div className="grid lg:grid-cols-3 gap-8">
-        {/* Main listing */}
         <div className="lg:col-span-2">
           {paginatedArticles.length === 0 ? (
             <p className="text-muted-foreground">No articles found for this filter.</p>
           ) : (
             <div className="grid sm:grid-cols-2 gap-6" id="articles-grid">
-              {paginatedArticles.map(article => (
-                <ArticleCard 
+              {paginatedArticles.map((article) => (
+                <ArticleCard
                   key={article.id}
                   id={article.slug}
                   title={article.title}
@@ -107,14 +109,13 @@ export default async function ArticlesPage({ searchParams }: ArticlesPageProps) 
             </div>
           )}
 
-          {/* Load more / Infinite scroll simulation */}
           {currentPage < totalPages && (
             <div className="mt-8 text-center">
-              <Link 
-                href={`/articles?${new URLSearchParams({ 
-                  ...(categoryParam && { category: categoryParam }), 
-                  ...(sort !== 'latest' && { sort }), 
-                  page: String(currentPage + 1) 
+              <Link
+                href={`/articles?${new URLSearchParams({
+                  ...(categoryParam && { category: categoryParam }),
+                  ...(sort !== 'latest' && { sort }),
+                  page: String(currentPage + 1),
                 })}`}
                 className="btn btn-primary px-8"
                 scroll={false}
@@ -129,7 +130,6 @@ export default async function ArticlesPage({ searchParams }: ArticlesPageProps) 
           )}
         </div>
 
-        {/* Sidebar */}
         <div className="lg:pl-6">
           <div className="sticky top-20">
             <h3 className="font-semibold mb-4 text-lg">Trending</h3>

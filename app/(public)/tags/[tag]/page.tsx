@@ -1,7 +1,7 @@
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { ArticleCard } from '@/components/news/ArticleCard';
-import { demoArticles } from '@/lib/data';
+import { getPublishedArticlesByTag } from '@/lib/category-content';
 
 interface Props {
   params: Promise<{ tag: string }>;
@@ -17,7 +17,7 @@ export async function generateMetadata({ params }: Props) {
 
 export default async function TagPage({ params }: Props) {
   const { tag } = await params;
-  const articles = demoArticles.filter(a => a.tags.includes(tag));
+  const articles = await getPublishedArticlesByTag(tag);
 
   if (articles.length === 0) notFound();
 
@@ -30,8 +30,8 @@ export default async function TagPage({ params }: Props) {
       </div>
 
       <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        {articles.map(article => (
-          <ArticleCard 
+        {articles.map((article) => (
+          <ArticleCard
             key={article.id}
             id={article.slug}
             title={article.title}

@@ -1,12 +1,17 @@
-import { PageHeader } from '@/components/dashboard/PageHeader';
+import { AdminPageHeader } from '@/components/admin/AdminUI';
 import { CategoryManager } from '@/components/admin/CategoryManager';
-import { getCategories } from '@/lib/actions/categories';
+import { getCategoriesWithCounts } from '@/lib/actions/categories';
+import { Tag } from 'lucide-react';
 
 export default async function AdminCategoriesPage() {
-  const categories = await getCategories();
+  const categories = await getCategoriesWithCounts();
   return (
     <div>
-      <PageHeader title="Categories" description="Manage the 10 core energy sector categories" />
+      <AdminPageHeader
+        icon={Tag}
+        title="Categories"
+        description="Rename, reorder, and edit categories — changes sync to the public site, navbar, and all linked articles."
+      />
       <CategoryManager categories={categories} />
     </div>
   );

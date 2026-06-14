@@ -1,10 +1,19 @@
 'use client';
 
 import Link from 'next/link';
-import { Search, Menu, X, Newspaper, BookOpen, BarChart3, Zap, Sun, Flame, Atom, Cable, Scale, Home, Gauge, Globe, TrendingUp } from 'lucide-react';
+import { Search, Menu, X, Newspaper, BookOpen, BarChart3, Home } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { usePathname } from 'next/navigation';
+import type { PublicCategory } from '@/lib/category-types';
 import { CATEGORIES } from '@/lib/constants';
+import {
+  categoryColorVars,
+  categoryTextStyle,
+  categoryUnderlineStyle,
+  getNavbarColorClasses,
+} from '@/lib/category-icons';
+import { CategoryIconDisplay } from '@/components/category/CategoryIconDisplay';
+
 
 type Theme = 'midnight' | 'dark' | 'white';
 
@@ -14,7 +23,33 @@ const THEMES: { id: Theme; label: string; color: string }[] = [
   { id: 'white', label: 'White', color: '#f8fafc' },
 ];
 
-export function PublicNavbar() {
+type NavCategory = {
+  name: string;
+  slug: string;
+  description?: string | null;
+  color?: string | null;
+  icon?: string | null;
+  iconImageUrl?: string | null;
+};
+
+export function PublicNavbar({ categories = [] }: { categories?: PublicCategory[] }) {
+  const navCategories: NavCategory[] = categories.length
+    ? categories.map((c) => ({
+        name: c.name,
+        slug: c.slug,
+        description: c.description,
+        color: c.color,
+        icon: c.icon,
+        iconImageUrl: c.iconImageUrl,
+      }))
+    : CATEGORIES.map((c) => ({
+        name: c,
+        slug: c.toLowerCase().replace(/\s+/g, '-'),
+        description: null,
+        color: null,
+        icon: null,
+        iconImageUrl: null,
+      }));
   const [mobileOpen, setMobileOpen] = useState(false);
   const [theme, setTheme] = useState<Theme>('midnight');
   const [bannerSrc, setBannerSrc] = useState('/images/banner.jpg');
@@ -37,33 +72,6 @@ export function PublicNavbar() {
   const changeTheme = (newTheme: Theme) => {
     setTheme(newTheme);
     applyTheme(newTheme);
-  };
-
-  const ICONS: Record<string, React.ComponentType<any>> = {
-    'Power Generation': Zap,
-    'Renewable Energy': Sun,
-    'LNG & Gas': Flame,
-    'Nuclear Energy': Atom,
-    'Grid & Transmission': Cable,
-    'Energy Policy': Scale,
-    'Rural Electrification': Home,
-    'Energy Efficiency': Gauge,
-    'International': Globe,
-    'Market & Finance': TrendingUp,
-  };
-
-  // Modern category specific accents for active/hover states (high contrast HSL mappings)
-  const CATEGORY_COLORS: Record<string, { text: string; bg: string; underline: string }> = {
-    'Power Generation': { text: 'text-blue-600 dark:text-blue-400', bg: 'bg-blue-500/10 dark:bg-blue-500/15', underline: 'bg-blue-500' },
-    'Renewable Energy': { text: 'text-emerald-600 dark:text-emerald-400', bg: 'bg-emerald-500/10 dark:bg-emerald-500/15', underline: 'bg-emerald-500' },
-    'LNG & Gas': { text: 'text-amber-600 dark:text-amber-400', bg: 'bg-amber-500/10 dark:bg-amber-500/15', underline: 'bg-amber-500' },
-    'Nuclear Energy': { text: 'text-violet-600 dark:text-violet-400', bg: 'bg-violet-500/10 dark:bg-violet-500/15', underline: 'bg-violet-500' },
-    'Grid & Transmission': { text: 'text-cyan-600 dark:text-cyan-400', bg: 'bg-cyan-500/10 dark:bg-cyan-500/15', underline: 'bg-cyan-500' },
-    'Energy Policy': { text: 'text-indigo-600 dark:text-indigo-400', bg: 'bg-indigo-500/10 dark:bg-indigo-500/15', underline: 'bg-indigo-500' },
-    'Rural Electrification': { text: 'text-lime-600 dark:text-lime-450', bg: 'bg-lime-500/10 dark:bg-lime-500/15', underline: 'bg-lime-500' },
-    'Energy Efficiency': { text: 'text-teal-600 dark:text-teal-400', bg: 'bg-teal-500/10 dark:bg-teal-500/15', underline: 'bg-teal-500' },
-    'International': { text: 'text-sky-600 dark:text-sky-400', bg: 'bg-sky-500/10 dark:bg-sky-500/15', underline: 'bg-sky-500' },
-    'Market & Finance': { text: 'text-rose-600 dark:text-rose-455', bg: 'bg-rose-500/10 dark:bg-rose-500/15', underline: 'bg-rose-500' },
   };
 
   return (
@@ -196,32 +204,39 @@ export function PublicNavbar() {
         <div className="hidden md:block py-2">
           <div className="container">
             <div className="border border-border/40 bg-card/30 backdrop-blur-sm rounded-xl overflow-hidden">
-              <div className="grid grid-cols-10 divide-x divide-border/40">
-                {CATEGORIES.map((c) => {
-                  const Icon = ICONS[c] || Zap;
-                  const slug = c.toLowerCase().replace(/\s+/g, '-');
-                  const href = `/categories/${encodeURIComponent(slug)}`;
-                  const isActive = pathname === `/categories/${slug}` || pathname === `/categories/${encodeURIComponent(slug)}`;
-                  const colors = CATEGORY_COLORS[c] || { text: 'text-primary', bg: 'bg-primary/10', underline: 'bg-primary' };
+              <div
+                className="grid divide-x divide-border/40"
+                style={{ gridTemplateColumns: `repeat(${navCategories.length}, minmax(0, 1fr))` }}
+              >
+                {navCategories.map((c) => {
+                  const href = `/categories/${c.slug}`;
+                  const isActive = pathname === `/categories/${c.slug}`;
+                  const colors = getNavbarColorClasses(c.name, c.color);
                   
                   return (
                     <Link
-                      key={c}
+                      key={c.slug}
                       href={href}
-                      className={`group relative flex flex-col items-center justify-center py-2.5 px-1 text-center transition-all duration-200 select-none ${
+                      style={categoryColorVars(c.color)}
+                      className={`group relative flex flex-col items-center justify-center py-2.5 px-1 text-center transition-all duration-200 select-none w-full ${
                         isActive 
                           ? 'bg-muted/15 font-semibold text-foreground' 
                           : 'hover:bg-muted/30 font-medium text-muted-foreground/85 hover:text-foreground'
                       }`}
                     >
-                      {/* Top color indicator line (ONLY visible on hover) */}
-                      <span className={`absolute top-0 left-0 right-0 h-[2px] transition-transform duration-200 origin-center ${colors.underline} scale-x-0 group-hover:scale-x-100`} />
-                      
-                      {/* Persistent category color on the icon */}
-                      <Icon className={`h-3.5 w-3.5 mb-1 transition-transform duration-200 group-hover:scale-110 ${colors.text}`} />
-                      
-                      {/* Text uses standard theme text colors */}
-                      <span className="text-[10px] tracking-tight leading-snug font-sans">{c}</span>
+                      <span
+                        className={`absolute top-0 left-0 right-0 h-[2px] transition-transform duration-200 origin-center scale-x-0 group-hover:scale-x-100 ${colors.useCustom ? 'category-nav-underline--custom' : colors.underline}`}
+                        style={colors.useCustom ? categoryUnderlineStyle(c.color) : undefined}
+                      />
+                      <CategoryIconDisplay
+                        icon={c.icon}
+                        iconImageUrl={c.iconImageUrl}
+                        name={c.name}
+                        size={14}
+                        className={`h-3.5 w-3.5 mb-1 transition-transform duration-200 group-hover:scale-110 ${colors.useCustom ? 'category-nav--custom' : colors.text}`}
+                        style={colors.useCustom ? categoryTextStyle(c.color) : undefined}
+                      />
+                      <span className="text-[10px] tracking-tight leading-snug font-sans">{c.name}</span>
                     </Link>
                   );
                 })}
@@ -239,34 +254,40 @@ export function PublicNavbar() {
               <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-background to-transparent pointer-events-none z-10" />
 
               <div className="flex items-center h-10 overflow-x-auto no-scrollbar gap-5 w-full px-4">
-                {CATEGORIES.map((c) => {
-                  const Icon = ICONS[c] || Zap;
-                  const slug = c.toLowerCase().replace(/\s+/g, '-');
-                  const href = `/categories/${encodeURIComponent(slug)}`;
-                  const isActive = pathname === `/categories/${slug}` || pathname === `/categories/${encodeURIComponent(slug)}`;
-                  const colors = CATEGORY_COLORS[c] || { text: 'text-primary', underline: 'bg-primary' };
+                {navCategories.map((c) => {
+                  const href = `/categories/${c.slug}`;
+                  const isActive = pathname === `/categories/${c.slug}`;
+                  const colors = getNavbarColorClasses(c.name, c.color);
                   
                   return (
                     <Link
-                      key={c}
+                      key={c.slug}
                       href={href}
+                      style={categoryColorVars(c.color)}
                       className={`group relative flex items-center gap-1.5 px-0.5 py-2.5 text-[10.5px] font-semibold uppercase tracking-wider transition-all duration-200 shrink-0 select-none ${
                         isActive 
-                          ? `${colors.text}` 
+                          ? (colors.useCustom ? 'category-nav--custom' : colors.text)
                           : 'text-muted-foreground hover:text-foreground'
                       }`}
                     >
-                      <Icon className={`h-3 w-3 shrink-0 transition-transform duration-200 ${
-                        isActive 
-                          ? 'scale-110' 
-                          : 'opacity-70 group-hover:opacity-100 group-hover:scale-110'
-                      }`} />
-                      <span>{c}</span>
-                      {/* Underline active indicator */}
-                      <span 
-                        className={`absolute bottom-0 left-0 h-[2px] w-full transition-transform duration-200 origin-left ${colors.underline} ${
+                      <CategoryIconDisplay
+                        icon={c.icon}
+                        iconImageUrl={c.iconImageUrl}
+                        name={c.name}
+                        size={12}
+                        className={`h-3 w-3 shrink-0 transition-transform duration-200 ${
+                          isActive 
+                            ? 'scale-110' 
+                            : 'opacity-70 group-hover:opacity-100 group-hover:scale-110'
+                        } ${colors.useCustom ? 'category-nav--custom' : ''}`}
+                        style={colors.useCustom ? categoryTextStyle(c.color) : undefined}
+                      />
+                      <span style={colors.useCustom && isActive ? categoryTextStyle(c.color) : undefined}>{c.name}</span>
+                      <span
+                        className={`absolute bottom-0 left-0 h-[2px] w-full transition-transform duration-200 origin-left ${colors.useCustom ? 'category-nav-underline--custom' : colors.underline} ${
                           isActive ? 'scale-x-100' : 'scale-x-0 group-hover:scale-x-100'
-                        }`} 
+                        }`}
+                        style={colors.useCustom ? categoryUnderlineStyle(c.color) : undefined}
                       />
                     </Link>
                   );

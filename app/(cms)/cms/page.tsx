@@ -2,7 +2,10 @@ import Link from 'next/link';
 import { auth } from '@/lib/auth';
 import { PageHeader } from '@/components/dashboard/PageHeader';
 import { StatCard } from '@/components/dashboard/StatCard';
-import { getArticles } from '@/lib/actions/articles';
+import { getAuthorArticleStats } from '@/lib/actions/articles';
+import { getMyNotices } from '@/lib/actions/notices';
+import { EditorialNoticesPanel } from '@/components/cms/EditorialNoticesPanel';
+import { publicPathUrl } from '@/lib/public-site-url';
 import { formatNumber } from '@/lib/utils';
 import { FileText, Eye, PenLine, Clock, Plus, BookOpen } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -10,10 +13,12 @@ import { StatusBadge } from '@/components/dashboard/StatusBadge';
 
 export default async function CMSDashboardPage() {
   const session = await auth();
-  const articles = await getArticles({ authorId: session?.user?.id, limit: 50 });
-  const published = articles.filter((a) => a.status === 'PUBLISHED').length;
-  const drafts = articles.filter((a) => a.status === 'DRAFT').length;
-  const totalViews = articles.reduce((sum, a) => sum + a.views, 0);
+  const authorId = session?.user?.id;
+  const [stats, notices] = await Promise.all([
+    authorId ? getAuthorArticleStats(authorId) : Promise.resolve({ total: 0, published: 0, drafts: 0, totalViews: 0, recent: [] }),
+    getMyNotices(),
+  ]);
+  const { total: articlesCount, published, drafts, totalViews, recent: articles } = stats;
 
   return (
     <div>
@@ -21,8 +26,15 @@ export default async function CMSDashboardPage() {
         <Link href="/cms/articles/new"><Button><Plus className="h-4 w-4 mr-2" />New Article</Button></Link>
       </PageHeader>
 
+      <EditorialNoticesPanel
+        notices={notices.map((n) => ({
+          ...n,
+          createdAt: n.createdAt.toISOString(),
+        }))}
+      />
+
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-8">
-        <StatCard title="My Articles" value={articles.length} icon={FileText} />
+        <StatCard title="My Articles" value={articlesCount} icon={FileText} />
         <StatCard title="Published" value={published} icon={Clock} change={`${drafts} drafts`} />
         <StatCard title="Total Views" value={formatNumber(totalViews)} icon={Eye} />
         <StatCard title="Drafts" value={drafts} icon={PenLine} />
@@ -41,7 +53,7 @@ export default async function CMSDashboardPage() {
                 </div>
               </div>
             ))}
-            {articles.length === 0 && <p className="text-muted-foreground">No articles yet. <Link href="/cms/articles/new" className="text-primary">Create your first story</Link></p>}
+            {articlesCount === 0 && <p className="text-muted-foreground">No articles yet. <Link href="/cms/articles/new" className="text-primary">Create your first story</Link></p>}
           </div>
         </div>
 
@@ -50,7 +62,7 @@ export default async function CMSDashboardPage() {
           <Link href="/cms/articles/new" className="block p-3 border rounded hover:bg-muted">Write new article</Link>
           <Link href="/cms/media" className="block p-3 border rounded hover:bg-muted">Upload media assets</Link>
           <Link href="/cms/calendar" className="block p-3 border rounded hover:bg-muted">Editorial calendar</Link>
-          <Link href="/" target="_blank" className="block p-3 border rounded hover:bg-muted text-[#3b82f6]">View public homepage →</Link>
+          <a href={publicPathUrl('/')} target="_blank" rel="noreferrer" className="block p-3 border rounded hover:bg-muted text-[#3b82f6]">View public homepage →</a>
         </div>
       </div>
     </div>
