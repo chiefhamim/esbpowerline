@@ -38,11 +38,13 @@ function ThemePreview({ label, preview }: { label: string; preview: SiteThemePre
   );
 }
 
-const TIP_DISMISS_MS = 2000;
+const TIP_VISIBLE_MS = 500;
+const TIP_FADE_MS = 500;
 
 export function SiteThemeToggle({ className = '' }: SiteThemeToggleProps) {
   const [theme, setTheme] = useState<SiteTheme>('midnight');
   const [openTip, setOpenTip] = useState<SiteTheme | null>(null);
+  const [closingTip, setClosingTip] = useState<SiteTheme | null>(null);
   const lockedTipRef = useRef<SiteTheme | null>(null);
   const hideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -61,14 +63,25 @@ export function SiteThemeToggle({ className = '' }: SiteThemeToggleProps) {
   function clearTipLock() {
     lockedTipRef.current = null;
     setOpenTip(null);
+    setClosingTip(null);
     hideTimerRef.current = null;
+  }
+
+  function startTipFade() {
+    const tipId = lockedTipRef.current;
+    if (!tipId) return;
+    setClosingTip(tipId);
+    setOpenTip(null);
+    if (hideTimerRef.current) clearTimeout(hideTimerRef.current);
+    hideTimerRef.current = setTimeout(clearTipLock, TIP_FADE_MS);
   }
 
   function scheduleTipDismiss(tipId: SiteTheme) {
     if (hideTimerRef.current) clearTimeout(hideTimerRef.current);
+    setClosingTip(null);
     lockedTipRef.current = tipId;
     setOpenTip(tipId);
-    hideTimerRef.current = setTimeout(clearTipLock, TIP_DISMISS_MS);
+    hideTimerRef.current = setTimeout(startTipFade, TIP_VISIBLE_MS);
   }
 
   function showTip(tipId: SiteTheme) {
@@ -123,9 +136,10 @@ export function SiteThemeToggle({ className = '' }: SiteThemeToggleProps) {
               <div
                 className={cn(
                   'site-theme-toggle__flyout',
-                  openTip === t.id && 'site-theme-toggle__flyout--visible',
+                  (openTip === t.id || closingTip === t.id) && 'site-theme-toggle__flyout--visible',
+                  closingTip === t.id && 'site-theme-toggle__flyout--closing',
                 )}
-                aria-hidden={openTip !== t.id}
+                aria-hidden={openTip !== t.id && closingTip !== t.id}
               >
                 <div
                   className="site-theme-toggle__tip"

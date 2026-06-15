@@ -980,13 +980,31 @@
 }
 
 .site-theme-toggle__flyout {
-  @apply pointer-events-none absolute top-full left-1/2 z-50 mt-2 -translate-x-1/2 opacity-0 transition-all duration-200 ease-out;
+  @apply pointer-events-none absolute top-full left-1/2 z-50 mt-2 -translate-x-1/2 opacity-0;
   transform: translate(-50%, -0.375rem);
+  transition:
+    opacity 200ms ease-out,
+    transform 200ms ease-out;
 }
 
 .site-theme-toggle__flyout--visible {
   @apply opacity-100;
   transform: translate(-50%, 0);
+}
+
+.site-theme-toggle__flyout--closing {
+  opacity: 0;
+  transform: translate(-50%, -0.375rem);
+  transition:
+    opacity 500ms ease-in,
+    transform 500ms ease-in;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .site-theme-toggle__flyout,
+  .site-theme-toggle__flyout--closing {
+    transition: none;
+  }
 }
 
 .site-theme-toggle__tip {
