@@ -15,6 +15,7 @@ import {
 import { CategoryIconDisplay } from '@/components/category/CategoryIconDisplay';
 import { LiveMarketTicker, type TickerItem } from '@/components/news/LiveMarketTicker';
 import { MemberAuthButton } from '@/components/members/MemberAuthButton';
+import { MemberNavMenuLinks } from '@/components/members/MemberNavMenuLinks';
 import { SiteThemeToggle } from '@/components/shared/SiteThemeToggle';
 
 type NavCategory = {
@@ -265,8 +266,7 @@ export function PublicNavbar({
             <Link href="/data-reports/power-grid" className="flex items-center gap-2 py-1.5"><BarChart3 className="h-4 w-4" /> Grid Explorer</Link>
             <Link href="/magazine" className="flex items-center gap-2 py-1.5 text-emerald-500"><BookOpen className="h-4 w-4" /> Monthly Magazine</Link>
             <Link href="/search" className="flex items-center gap-2 py-1.5"><Search className="h-4 w-4" /> Search Articles</Link>
-            <Link href="/members" className="flex items-center gap-2 py-1.5">My library</Link>
-            <Link href="/members/login" className="flex items-center gap-2 py-1.5">Member login</Link>
+            <MemberNavMenuLinks />
           </div>
         )}
       </nav>

@@ -2,63 +2,50 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useSession } from 'next-auth/react';
 import { UserRound } from 'lucide-react';
 import { ModernTooltip } from '@/components/shared/ModernTooltip';
-import type { Role } from '@/lib/constants';
-
-function staffHome(role: Role | undefined) {
-  if (role === 'SUPER_ADMIN' || role === 'ADMIN') return '/admin';
-  if (role === 'EDITOR' || role === 'AUTHOR' || role === 'CONTRIBUTOR') return '/cms';
-  return '/login';
-}
+import { useMemberAccess } from '@/hooks/useMemberAccess';
+import { cn } from '@/lib/utils';
 
 export function MemberAuthButton() {
-  const { data: session, status } = useSession();
   const pathname = usePathname();
-  const role = session?.user?.role;
-  const isMember = role === 'SUBSCRIBER';
-  const signedIn = status === 'authenticated' && !!session?.user;
+  const access = useMemberAccess();
   const isMemberArea = pathname.startsWith('/members');
 
-  const href = signedIn
-    ? isMember
-      ? '/members'
-      : staffHome(role)
-    : '/members/login';
-
-  const initial = session?.user?.name?.charAt(0)?.toUpperCase() ?? 'M';
-
-  if (status === 'loading') {
+  if (access.state === 'loading') {
     return (
       <span
-        className="inline-flex h-8 w-8 items-center justify-center rounded-xl border border-border/50 bg-muted/40"
+        className="inline-flex h-8 min-w-[2rem] items-center justify-center rounded-xl border border-border/50 bg-muted/40 px-2"
         aria-hidden
       />
     );
   }
 
+  const signedInStyle = access.isMember
+    ? 'border-emerald-500/35 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
+    : 'border-primary/30 bg-primary/10 text-primary';
+
   return (
-    <ModernTooltip
-      label={signedIn ? (isMember ? 'My library' : 'Staff workspace') : 'Member login'}
-      hint={
-        signedIn
-          ? isMember
-            ? 'Saved articles, magazine, downloads & comments.'
-            : 'Open your editorial or admin workspace.'
-          : 'Save articles, magazine & data downloads; comment and access in-depth analysis.'
-      }
-      fast
-    >
+    <ModernTooltip label={access.label} hint={access.hint} fast>
       <Link
-        href={href}
-        className={`inline-flex h-8 w-8 items-center justify-center rounded-xl border border-border/50 bg-muted/40 text-foreground/80 transition-colors hover:bg-muted/30 hover:text-foreground ${
-          isMemberArea && isMember ? 'border-emerald-500/40 text-emerald-500' : ''
-        }`}
-        aria-label={signedIn ? (isMember ? 'My member library' : 'Staff workspace') : 'Member login'}
+        href={access.href}
+        className={cn(
+          'inline-flex h-8 items-center justify-center gap-1.5 rounded-xl border border-border/50 bg-muted/40 text-foreground/80 transition-colors hover:bg-muted/30 hover:text-foreground',
+          access.signedIn ? signedInStyle : '',
+          access.signedIn ? 'px-2.5 min-w-[2rem]' : 'w-8',
+          isMemberArea && access.isMember && 'border-emerald-500/40',
+        )}
+        aria-label={access.signedIn ? `${access.label} — ${access.userName}` : access.label}
       >
-        {signedIn ? (
-          <span className="text-xs font-semibold">{initial}</span>
+        {access.signedIn ? (
+          <>
+            <span className="flex h-5 w-5 items-center justify-center rounded-md bg-background/60 text-[10px] font-bold">
+              {access.initial}
+            </span>
+            <span className="hidden sm:inline text-xs font-semibold max-w-[5.5rem] truncate">
+              {access.shortLabel}
+            </span>
+          </>
         ) : (
           <UserRound className="h-4 w-4" strokeWidth={2} />
         )}

@@ -1,9 +1,10 @@
 import type { ReactNode } from 'react';
 import Link from 'next/link';
-import { ArrowUpRight, Mail, MapPin, Phone, Share2, UserRound } from 'lucide-react';
+import { Mail, MapPin, Phone, Share2, UserRound } from 'lucide-react';
 import { BrandDeck } from '@/components/shared/BrandDeck';
 import { BrandLogo } from '@/components/shared/BrandLogo';
 import { OfficialSocialLinks } from '@/components/shared/OfficialSocialLinks';
+import { MemberFooterCard } from '@/components/members/MemberFooterCard';
 import type { PublicCategory } from '@/lib/category-types';
 import { CATEGORIES } from '@/lib/constants';
 
@@ -139,22 +140,7 @@ export function PublicFooter({ categories = [] }: { categories?: PublicCategory[
 
           <section className="lg:col-span-4">
             <FooterHeading>Members</FooterHeading>
-            <div className="card flex flex-col gap-4 p-5 sm:p-6">
-              <p className="text-sm leading-relaxed text-foreground/85">
-                Sign in to save articles and magazine issues, download data packages, join discussions, and unlock
-                in-depth analysis across the power sector.
-              </p>
-              <Link
-                href="/members/login"
-                className="btn btn-primary inline-flex w-fit items-center gap-1.5 text-sm"
-              >
-                Member login
-                <ArrowUpRight className="h-4 w-4" />
-              </Link>
-              <p className="text-xs leading-relaxed text-foreground/60">
-                Editorial staff and administrators use the same sign-in with assigned roles.
-              </p>
-            </div>
+            <MemberFooterCard />
           </section>
         </div>
 

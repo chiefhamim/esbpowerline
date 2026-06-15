@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { MemberAccessCta } from '@/components/members/MemberAccessCta';
 import { ArrowRight, Zap, BarChart3, BookOpen, TrendingUp, Briefcase } from 'lucide-react';
 import { EnergyDashboard } from '@/components/news/EnergyDashboard';
 import { SectorCoverage } from '@/components/news/SectorCoverage';
@@ -146,9 +147,10 @@ export default async function Home() {
                   <Link href={professionalsCta.primaryHref} className="btn btn-secondary w-full justify-center text-sm">
                     {professionalsCta.primaryLabel}
                   </Link>
-                  <Link href={professionalsCta.secondaryHref} className="btn btn-primary w-full justify-center text-sm opacity-90">
-                    {professionalsCta.secondaryLabel}
-                  </Link>
+                  <MemberAccessCta
+                    guestLabel={professionalsCta.secondaryLabel}
+                    guestHref={professionalsCta.secondaryHref}
+                  />
                 </div>
               </div>
             </div>
