@@ -127,7 +127,10 @@ export function PublicNavbar({
                     : 'text-emerald-600/75 dark:text-emerald-400/75 hover:text-emerald-600 dark:hover:text-emerald-400'
                 }`}
               >
-                <BookOpen className="h-3.5 w-3.5" /> Magazine
+                <span className="nav-magazine-icon" aria-hidden>
+                  <BookOpen className="h-3.5 w-3.5" />
+                </span>
+                Magazine
               </Link>
             </div>
           </div>
@@ -264,7 +267,12 @@ export function PublicNavbar({
           <div className="md:hidden border-t border-border/70 bg-background px-4 py-4 text-sm space-y-1">
             <Link href="/articles" className="flex items-center gap-2 py-1.5"><Newspaper className="h-4 w-4" /> Latest News</Link>
             <Link href="/data-reports/power-grid" className="flex items-center gap-2 py-1.5"><BarChart3 className="h-4 w-4" /> Grid Explorer</Link>
-            <Link href="/magazine" className="flex items-center gap-2 py-1.5 text-emerald-500"><BookOpen className="h-4 w-4" /> Monthly Magazine</Link>
+            <Link href="/magazine" className="flex items-center gap-2 py-1.5 text-emerald-500">
+              <span className="nav-magazine-icon" aria-hidden>
+                <BookOpen className="h-4 w-4" />
+              </span>
+              Monthly Magazine
+            </Link>
             <Link href="/search" className="flex items-center gap-2 py-1.5"><Search className="h-4 w-4" /> Search Articles</Link>
             <MemberNavMenuLinks />
           </div>
