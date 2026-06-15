@@ -33,7 +33,9 @@ export default async function PowerGridExplorerPage() {
               Member login to export
             </Link>
           )}
-          <Link href="/admin/analytics" className="text-primary hover:underline text-xs px-2 font-semibold transition-colors">Admin analytics →</Link>
+          {signedIn ? (
+            <Link href="/members/downloads" className="text-primary hover:underline text-xs px-2 font-semibold transition-colors">My downloads →</Link>
+          ) : null}
         </div>
       </div>
 

@@ -1,4 +1,4 @@
-import { auth } from '@/lib/auth';
+import { auth, getRedirectForRole } from '@/lib/auth';
 import type { Role } from '@/lib/constants';
 import { redirect } from 'next/navigation';
 
@@ -24,5 +24,15 @@ export async function requireMemberSession(callbackPath?: string) {
       : '/members/login';
     redirect(login);
   }
+
+  if (!isMemberRole(session.user.role)) {
+    redirect(getRedirectForRole(session.user.role));
+  }
+
   return session;
+}
+
+export async function requireMemberUserId() {
+  const session = await requireMemberSession();
+  return { userId: session.user.id, session };
 }

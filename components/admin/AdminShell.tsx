@@ -14,7 +14,7 @@ import type { LucideIcon } from 'lucide-react';
 import {
   LayoutDashboard, Users, FileText, BarChart3, Settings, ScrollText,
   Image, Tag, Hash, BookOpen, LogOut, ExternalLink, Zap, Menu, X, Shield,
-  ChevronRight, FolderOpen,
+  ChevronRight, FolderOpen, MessageSquare,
 } from 'lucide-react';
 
 type NavItem = { href: string; label: string; icon: LucideIcon };
@@ -35,6 +35,7 @@ const NAV_GROUPS: { label: string; items: NavItem[] }[] = [
       { href: '/admin/tags', label: 'Tags', icon: Hash },
       { href: '/admin/magazine', label: 'Magazine', icon: BookOpen },
       { href: '/admin/media', label: 'Media', icon: Image },
+      { href: '/admin/comments', label: 'Comments', icon: MessageSquare },
     ],
   },
   {
@@ -55,6 +56,7 @@ const PAGE_TITLES: Record<string, string> = {
   '/admin/tags': 'Tags',
   '/admin/magazine': 'Magazine',
   '/admin/media': 'Media',
+  '/admin/comments': 'Comments',
   '/admin/users': 'Users',
   '/admin/users/new': 'New User',
   '/admin/settings': 'Settings',

@@ -83,6 +83,8 @@ export default async function AdminAnalyticsPage({ searchParams }: PageProps) {
         <AdminActionPill href="/admin/media" label="Media" icon={Image} description={`${stats.mediaCount} files`} />
         <AdminActionPill href="/admin/magazine" label="Magazine" icon={BookOpen} description={`${stats.magazineCount} issues`} accent="emerald" />
         <AdminActionPill href="/admin/logs" label="Logs" icon={Clock} description="Audit trail" />
+        <AdminActionPill href="/admin/comments" label="Comments" icon={PenLine} description={`${stats.pendingComments} pending`} />
+        <AdminActionPill href="/admin/users?filter=members" label="Members" icon={Users} description="Subscriber accounts" accent="emerald" />
       </div>
 
       <div className="admin-analytics-kpi-primary">
@@ -112,6 +114,9 @@ export default async function AdminAnalyticsPage({ searchParams }: PageProps) {
           {healthItems.map((item) => (
             <AdminMetricRow key={item.label} label={item.label} value={formatNumber(item.value)} highlight={item.warn} />
           ))}
+          {stats.pendingComments > 0 && (
+            <Link href="/admin/comments" className="admin-analytics-link">Moderate pending comments →</Link>
+          )}
           <div className="admin-analytics-flag-row">
             <span>{stats.featuredCount} feat</span>
             <span>{stats.breakingCount} break</span>

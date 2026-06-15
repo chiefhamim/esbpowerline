@@ -11,6 +11,7 @@ export const ADMIN_NAV_PERMISSIONS: Record<string, string> = {
   '/admin/magazine': 'user.view',
   '/admin/media': 'user.view',
   '/admin/users': 'user.view',
+  '/admin/comments': 'comment.moderate_any',
   '/admin/settings': 'settings.view',
   '/admin/logs': 'logs.view',
 };

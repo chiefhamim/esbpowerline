@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache';
 import { auth } from '@/lib/auth';
+import { isMemberRole } from '@/lib/member-auth';
 import prisma from '@/lib/prisma';
 import type { PublicArticleCard } from '@/lib/category-types';
 import type { PublicMagazineIssue } from '@/lib/category-content';
@@ -10,6 +11,9 @@ async function requireUserId() {
   const session = await auth();
   if (!session?.user?.id) {
     throw new Error('Sign in required');
+  }
+  if (!isMemberRole(session.user.role)) {
+    throw new Error('Member account required');
   }
   return { userId: session.user.id, session };
 }

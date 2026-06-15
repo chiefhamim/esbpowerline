@@ -1578,6 +1578,43 @@ html:not(.theme-dark):not(.theme-white) {
   color: hsl(160 84% 35%);
 }
 
+.admin-filter-tab {
+  @apply inline-flex items-center gap-2 rounded-full border border-border px-3.5 py-1.5 text-xs font-semibold text-muted-foreground transition-colors hover:text-foreground;
+  background-color: hsl(var(--muted) / 0.35);
+}
+
+.admin-filter-tab--active {
+  color: hsl(var(--admin-rose));
+  border-color: hsl(var(--admin-rose) / 0.35);
+  background-color: hsl(var(--admin-rose) / 0.1);
+}
+
+.admin-filter-tab__count {
+  @apply rounded-full px-1.5 py-0.5 text-[10px] tabular-nums;
+  background-color: hsl(var(--muted) / 0.55);
+}
+
+.admin-comment-card {
+  @apply rounded-xl border border-border p-4;
+  background-color: hsl(var(--card) / 0.65);
+}
+
+.admin-comment-action {
+  @apply inline-flex h-8 w-8 items-center justify-center rounded-lg border border-border text-muted-foreground transition-colors hover:text-foreground disabled:opacity-50;
+  background-color: hsl(var(--muted) / 0.35);
+}
+
+.admin-comment-action--approve:hover {
+  border-color: hsl(160 84% 39% / 0.4);
+  color: hsl(160 84% 39%);
+}
+
+.admin-comment-action--spam:hover,
+.admin-comment-action--trash:hover {
+  border-color: hsl(var(--destructive) / 0.35);
+  color: hsl(var(--destructive));
+}
+
 .admin-action-label {
   display: block;
   font-size: 13px;

@@ -89,6 +89,12 @@ export default auth((request) => {
     return NextResponse.redirect(login);
   }
 
+  if (isMemberPanel && session && role !== 'SUBSCRIBER') {
+    const port = role === 'SUPER_ADMIN' || role === 'ADMIN' ? 3002 : 3001;
+    const dest = role === 'SUPER_ADMIN' || role === 'ADMIN' ? '/admin' : '/cms';
+    return redirectTo(port, dest, request);
+  }
+
   return NextResponse.next();
 });
 

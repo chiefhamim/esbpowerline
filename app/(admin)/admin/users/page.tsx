@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { AdminPageHeader, AdminTableShell } from '@/components/admin/AdminUI';
-import { getUsers } from '@/lib/actions/users';
+import { getUsers, type UserListFilter } from '@/lib/actions/users';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { RoleBadge } from '@/components/dashboard/RoleBadge';
 import { StatusBadge } from '@/components/dashboard/StatusBadge';
@@ -8,9 +8,22 @@ import { Button } from '@/components/ui/button';
 import { Plus, Users, Pencil } from 'lucide-react';
 import { auth } from '@/lib/auth';
 import { can, type Role } from '@/lib/constants';
+import { cn } from '@/lib/utils';
 
-export default async function AdminUsersPage() {
-  const [users, session] = await Promise.all([getUsers(), auth()]);
+type PageProps = {
+  searchParams: Promise<{ filter?: string }>;
+};
+
+const FILTERS: { id: UserListFilter; label: string }[] = [
+  { id: 'all', label: 'All users' },
+  { id: 'members', label: 'Members' },
+  { id: 'staff', label: 'Staff' },
+];
+
+export default async function AdminUsersPage({ searchParams }: PageProps) {
+  const params = await searchParams;
+  const filter = (FILTERS.some((f) => f.id === params.filter) ? params.filter : 'all') as UserListFilter;
+  const [users, session] = await Promise.all([getUsers(filter), auth()]);
   const canCreate = can(session?.user?.role, 'user.create');
 
   return (
@@ -18,7 +31,7 @@ export default async function AdminUsersPage() {
       <AdminPageHeader
         icon={Users}
         title="User Management"
-        description="Manage roles, status, and access for all platform users."
+        description="Manage members, editorial staff, and platform access."
       >
         {canCreate && (
           <Link href="/admin/users/new">
@@ -26,6 +39,18 @@ export default async function AdminUsersPage() {
           </Link>
         )}
       </AdminPageHeader>
+
+      <div className="mb-5 flex flex-wrap gap-2">
+        {FILTERS.map((tab) => (
+          <Link
+            key={tab.id}
+            href={`/admin/users?filter=${tab.id}`}
+            className={cn('admin-filter-tab', filter === tab.id && 'admin-filter-tab--active')}
+          >
+            {tab.label}
+          </Link>
+        ))}
+      </div>
 
       <AdminTableShell>
         <Table>
@@ -35,7 +60,7 @@ export default async function AdminUsersPage() {
               <TableHead>Email</TableHead>
               <TableHead>Role</TableHead>
               <TableHead>Status</TableHead>
-              <TableHead>Articles</TableHead>
+              <TableHead>{filter === 'members' ? 'Library' : 'Articles'}</TableHead>
               <TableHead>Last Login</TableHead>
               <TableHead className="w-16" />
             </TableRow>
@@ -47,7 +72,11 @@ export default async function AdminUsersPage() {
                 <TableCell className="text-muted-foreground">{u.email}</TableCell>
                 <TableCell><RoleBadge role={u.role as Role} /></TableCell>
                 <TableCell><StatusBadge status={u.status} /></TableCell>
-                <TableCell className="tabular-nums">{u.articlesCount}</TableCell>
+                <TableCell className="tabular-nums text-muted-foreground text-sm">
+                  {u.role === 'SUBSCRIBER'
+                    ? `${u.savedCount} saved · ${u.commentCount} comments`
+                    : u.articlesCount}
+                </TableCell>
                 <TableCell className="text-muted-foreground">
                   {u.lastLoginAt ? new Date(u.lastLoginAt).toLocaleDateString() : '—'}
                 </TableCell>

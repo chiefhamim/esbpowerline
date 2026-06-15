@@ -10,6 +10,7 @@ const STATUS_VARIANTS: Record<string, 'default' | 'secondary' | 'success' | 'war
   SUSPENDED: 'destructive',
   PENDING: 'warning',
   APPROVED: 'success',
+  SPAM: 'destructive',
 };
 
 export function StatusBadge({ status }: { status: string }) {

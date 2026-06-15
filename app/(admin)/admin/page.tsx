@@ -6,7 +6,7 @@ import { getAdminOverview } from '@/lib/actions/analytics';
 import { formatNumber } from '@/lib/utils';
 import {
   FileText, Users, Eye, CheckCircle, Zap, BarChart3,
-  UserPlus, Settings, Tag, Layers,
+  UserPlus, Settings, Tag, Layers, MessageSquare,
 } from 'lucide-react';
 import Link from 'next/link';
 import { StatusBadge } from '@/components/dashboard/StatusBadge';
@@ -32,6 +32,15 @@ export default async function AdminDashboardPage() {
         <AdminStatCard title="Total Views" value={formatNumber(stats.totalViews)} icon={Eye} accent="sky" />
         <AdminStatCard title="Published Live" value={formatNumber(stats.publishedCount)} icon={CheckCircle} accent="emerald" change="Visible on public site" />
       </div>
+
+      {(stats.pendingComments > 0 || stats.memberCount > 0) && (
+        <div className="grid gap-3 sm:grid-cols-2 mb-8">
+          {stats.pendingComments > 0 && (
+            <AdminStatCard title="Pending Comments" value={formatNumber(stats.pendingComments)} icon={MessageSquare} accent="amber" change="Awaiting moderation" />
+          )}
+          <AdminStatCard title="Members" value={formatNumber(stats.memberCount)} icon={Users} accent="emerald" change="Subscriber accounts" />
+        </div>
+      )}
 
       <div className="grid lg:grid-cols-3 gap-5 mb-8">
         <AdminCard title="Top Content by Views" icon={BarChart3} className="lg:col-span-2">
@@ -92,6 +101,10 @@ export default async function AdminDashboardPage() {
               <AdminActionPill href="/admin/users/new" label="Create user" icon={UserPlus} description="Add platform member" />
             )}
             <AdminActionPill href="/admin/articles" label="Review content" icon={FileText} description="Moderate articles" />
+            {can(role, 'comment.moderate_any') && (
+              <AdminActionPill href="/admin/comments" label="Moderate comments" icon={MessageSquare} description={`${stats.pendingComments} pending`} />
+            )}
+            <AdminActionPill href="/admin/users?filter=members" label="Members" icon={Users} description={`${stats.memberCount} accounts`} accent="emerald" />
             {can(role, 'category.manage') && (
               <AdminActionPill href="/admin/categories" label="Categories" icon={Tag} description="Organize topics" />
             )}

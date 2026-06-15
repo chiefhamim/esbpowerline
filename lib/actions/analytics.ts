@@ -49,6 +49,8 @@ export async function getAdminOverview() {
     recentLogs,
     dashboardStats,
     publishedThisMonth,
+    pendingComments,
+    memberCount,
   ] = await Promise.all([
     prisma.article.count(),
     prisma.user.count(),
@@ -63,6 +65,8 @@ export async function getAdminOverview() {
     prisma.auditLog.findMany({ orderBy: { timestamp: 'desc' }, take: 8 }),
     prisma.dashboardStat.findMany({ orderBy: { lastVerified: 'desc' }, take: 4 }),
     prisma.article.count({ where: { status: 'PUBLISHED', publishedAt: { gte: monthStart } } }),
+    prisma.comment.count({ where: { status: 'PENDING' } }),
+    prisma.user.count({ where: { role: 'SUBSCRIBER' } }),
   ]);
 
   return {
@@ -74,6 +78,8 @@ export async function getAdminOverview() {
     recentLogs,
     dashboardStats,
     publishedThisMonth,
+    pendingComments,
+    memberCount,
   };
 }
 

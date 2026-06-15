@@ -1,13 +1,14 @@
 import { notFound } from 'next/navigation';
 import { AdminPageHeader } from '@/components/admin/AdminUI';
 import { UserForm } from '@/components/admin/UserForm';
-import { getUser } from '@/lib/actions/users';
+import { MemberActivityPanel } from '@/components/admin/MemberActivityPanel';
+import { getUser, getUserMemberActivity } from '@/lib/actions/users';
 import type { Role } from '@/lib/constants';
 import { Pencil } from 'lucide-react';
 
 export default async function EditUserPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const user = await getUser(id);
+  const [user, activity] = await Promise.all([getUser(id), getUserMemberActivity(id)]);
   if (!user) notFound();
 
   return (
@@ -17,6 +18,7 @@ export default async function EditUserPage({ params }: { params: Promise<{ id: s
         title={`Edit: ${user.name}`}
         description={user.email}
       />
+      {activity ? <MemberActivityPanel activity={activity} /> : null}
       <UserForm mode="edit" user={{ ...user, role: user.role as Role }} />
     </div>
   );
