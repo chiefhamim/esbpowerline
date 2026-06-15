@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import type { TickerItem } from '@/components/news/LiveMarketTicker';
 import { PublicNavbar } from '@/components/shared/PublicNavbar';
 import { PublicFooter } from '@/components/shared/PublicFooter';
 import { getPublicCategories } from '@/lib/category-content';
@@ -15,11 +16,17 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function PublicLayout({ children }: { children: React.ReactNode }) {
-  const categories = await getPublicCategories();
+  const [categories, settings] = await Promise.all([
+    getPublicCategories(),
+    getPublicSettingsMap(),
+  ]);
 
   return (
     <>
-      <PublicNavbar categories={categories} />
+      <PublicNavbar
+        categories={categories}
+        tickerItems={settings.ticker as TickerItem[] | undefined}
+      />
       {children}
       <PublicFooter categories={categories} />
     </>

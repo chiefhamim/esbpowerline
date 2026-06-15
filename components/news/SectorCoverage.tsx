@@ -7,6 +7,7 @@ import { ArticleCard } from './ArticleCard';
 import { demoArticles } from '@/lib/data';
 import { CATEGORIES } from '@/lib/constants';
 import type { PublicArticleCard, PublicCategory } from '@/lib/category-types';
+import type { ResolvedCoverageSlot } from '@/lib/coverage-types';
 import {
   categoryColorVars,
   categoryTextStyle,
@@ -71,10 +72,12 @@ export function SectorCoverage({
   hideHeader = false,
   categories = [],
   articles = [],
+  coverageSlots = [],
 }: {
   hideHeader?: boolean;
   categories?: PublicCategory[];
   articles?: PublicArticleCard[];
+  coverageSlots?: ResolvedCoverageSlot[];
 }) {
   const [activeTab, setActiveTab] = useState('all');
   const sectorTabs = useMemo(() => buildTabs(categories), [categories]);
@@ -82,8 +85,14 @@ export function SectorCoverage({
   const articlePool: ArticleItem[] = articles.length ? articles : demoArticles;
   const active = sectorTabs.find((t) => t.id === activeTab) ?? sectorTabs[0];
 
+  const coverageArticles: PublicArticleCard[] = coverageSlots
+    .map((slot) => slot.article)
+    .filter((article): article is PublicArticleCard => article !== null);
+
   const filteredArticles = active.category === null
-    ? [...articlePool].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).slice(0, 6)
+    ? (coverageArticles.length > 0
+        ? coverageArticles
+        : [...articlePool].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).slice(0, 9))
     : articlePool
         .filter((a) => a.category === active.category)
         .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
@@ -158,10 +167,10 @@ export function SectorCoverage({
         {active.description}
       </div>
 
-      {/* Articles grid */}
+      {/* Uniform article cards — 9 in All Coverage, 6 per category */}
       <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {filteredArticles.length > 0 ? (
-          filteredArticles.map(a => (
+          filteredArticles.map((a) => (
             <ArticleCard
               key={a.id}
               id={a.slug}

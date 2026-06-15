@@ -12,12 +12,15 @@ export function ModernTooltip({
   children,
   className,
   side = 'top',
+  fast = false,
 }: {
   label: string;
   hint?: string;
   children: React.ReactNode;
   className?: string;
   side?: Placement;
+  /** Snappier show animation (public chrome, icon controls) */
+  fast?: boolean;
 }) {
   const [mounted, setMounted] = useState(false);
   const [visible, setVisible] = useState(false);
@@ -83,6 +86,7 @@ export function ModernTooltip({
           role="tooltip"
           className={cn(
             'modern-tooltip modern-tooltip--portal',
+            fast && 'modern-tooltip--fast',
             placement === 'top' ? 'modern-tooltip--top' : 'modern-tooltip--bottom'
           )}
           style={{

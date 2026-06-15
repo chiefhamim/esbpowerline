@@ -10,7 +10,7 @@ const SURFACE = process.env.APP_SURFACE ?? 'all';
 
 const CMS_PATHS = ['/cms'];
 const ADMIN_PATHS = ['/admin'];
-const SHARED_PATHS = ['/login', '/api'];
+const SHARED_PATHS = ['/login', '/api', '/images'];
 
 function matchesPrefix(pathname: string, prefixes: string[]) {
   return prefixes.some((p) => pathname === p || pathname.startsWith(`${p}/`));
@@ -82,5 +82,5 @@ export default auth((request) => {
 });
 
 export const config = {
-  matcher: ['/((?!_next/static|_next/image|favicon.ico|uploads).*)'],
+  matcher: ['/((?!_next/static|_next/image|favicon.ico|uploads|images/).*)'],
 };

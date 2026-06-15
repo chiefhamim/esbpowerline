@@ -1,9 +1,11 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import { ArrowRight, ChevronLeft, ChevronRight, Play, Pause, Flame } from 'lucide-react';
 import { demoArticles } from '@/lib/data';
+import { LiveMarketTicker, type TickerItem } from '@/components/news/LiveMarketTicker';
+import { ModernTooltip } from '@/components/shared/ModernTooltip';
 
 interface FeaturedItem {
   slug: string;
@@ -16,10 +18,16 @@ interface FeaturedItem {
   isBreaking?: boolean;
 }
 
-export function FeaturedCarousel({ items }: { items?: FeaturedItem[] }) {
-  const featured: FeaturedItem[] = items ?? demoArticles
-    .slice(0, 5)
-    .map(a => ({
+export function FeaturedCarousel({
+  items,
+  tickerItems,
+}: {
+  items?: FeaturedItem[];
+  tickerItems?: TickerItem[];
+}) {
+  const featured: FeaturedItem[] =
+    items ??
+    demoArticles.slice(0, 5).map((a) => ({
       slug: a.slug,
       title: a.title,
       excerpt: a.excerpt,
@@ -35,29 +43,37 @@ export function FeaturedCarousel({ items }: { items?: FeaturedItem[] }) {
   const [progress, setProgress] = useState(0);
   const [isTransitioning, setIsTransitioning] = useState(false);
   const transitionTimeout = useRef<NodeJS.Timeout | null>(null);
+  const currentRef = useRef(current);
 
-  const goTo = (index: number) => {
+  useEffect(() => {
+    currentRef.current = current;
+  }, [current]);
+
+  const goTo = useCallback((index: number) => {
     if (transitionTimeout.current) clearTimeout(transitionTimeout.current);
-    
+
     setIsTransitioning(true);
-    // Smooth transition handshake
     transitionTimeout.current = setTimeout(() => {
       setCurrent(index);
       setProgress(0);
       setIsTransitioning(false);
     }, 200);
-  };
+  }, []);
 
-  const next = () => goTo((current + 1) % featured.length);
-  const prev = () => goTo((current - 1 + featured.length) % featured.length);
+  const next = useCallback(() => {
+    goTo((currentRef.current + 1) % featured.length);
+  }, [featured.length, goTo]);
 
-  // Auto-advance with smooth professional timing (7.5s total)
+  const prev = useCallback(() => {
+    goTo((currentRef.current - 1 + featured.length) % featured.length);
+  }, [featured.length, goTo]);
+
   useEffect(() => {
     if (!isPlaying || isTransitioning) return;
 
     const progressInterval = setInterval(() => {
-      setProgress(p => {
-        const nextP = p + (100 / 75); // ~7.5s (100ms ticks)
+      setProgress((p) => {
+        const nextP = p + 100 / 75;
         if (nextP >= 100) {
           next();
           return 0;
@@ -66,12 +82,9 @@ export function FeaturedCarousel({ items }: { items?: FeaturedItem[] }) {
       });
     }, 100);
 
-    return () => {
-      clearInterval(progressInterval);
-    };
-  }, [current, isPlaying, isTransitioning]);
+    return () => clearInterval(progressInterval);
+  }, [isPlaying, isTransitioning, next]);
 
-  // Clean up timeout strictly on unmount to prevent page freeze on transition re-renders
   useEffect(() => {
     return () => {
       if (transitionTimeout.current) clearTimeout(transitionTimeout.current);
@@ -79,8 +92,40 @@ export function FeaturedCarousel({ items }: { items?: FeaturedItem[] }) {
   }, []);
 
   const currentItem = featured[current];
+  const hasTicker = tickerItems && tickerItems.length > 0;
 
-  // Dynamic category pill coloring to reinforce sectoral identity
+  /** Fixed 4-line headline slot — image uses the same height for a standard placeholder */
+  const headlineSlot = 'min-h-[12.6rem] md:min-h-[15.75rem]';
+  const imageSlot = 'h-[12.6rem] md:h-[15.75rem]';
+
+  const storyProgress = (
+    <div className="flex min-w-0 flex-1 items-center gap-1" role="tablist" aria-label="Featured stories">
+      {featured.map((item, idx) => {
+        const isActive = idx === current;
+        const isPast = idx < current;
+        return (
+          <button
+            key={idx}
+            onClick={() => goTo(idx)}
+            role="tab"
+            className="flex flex-1 items-center py-2"
+            aria-label={`Story ${idx + 1}: ${item.title}`}
+            aria-selected={isActive}
+          >
+            <span className="relative h-1 w-full overflow-hidden rounded-full bg-border/40">
+              <span
+                className={`absolute inset-y-0 left-0 rounded-full bg-muted-foreground/30 transition-[width] duration-100 ease-linear ${
+                  isPast ? 'w-full' : isActive ? '' : 'w-0'
+                }`}
+                style={isActive ? { width: `${progress}%` } : undefined}
+              />
+            </span>
+          </button>
+        );
+      })}
+    </div>
+  );
+
   const getCategoryBadgeClasses = (cat: string): string => {
     const lower = cat.toLowerCase();
     if (lower.includes('generation')) return 'border-blue-500/25 text-blue-600 dark:text-blue-400 bg-blue-500/5';
@@ -89,7 +134,7 @@ export function FeaturedCarousel({ items }: { items?: FeaturedItem[] }) {
     if (lower.includes('nuclear')) return 'border-violet-500/25 text-violet-600 dark:text-violet-400 bg-violet-500/5';
     if (lower.includes('grid') || lower.includes('transmission')) return 'border-cyan-500/25 text-cyan-600 dark:text-cyan-400 bg-cyan-500/5';
     if (lower.includes('policy')) return 'border-indigo-500/25 text-indigo-600 dark:text-indigo-400 bg-indigo-500/5';
-    if (lower.includes('rural')) return 'border-lime-500/25 text-lime-650 dark:text-lime-400 bg-lime-500/5';
+    if (lower.includes('rural')) return 'border-lime-500/25 text-lime-600 dark:text-lime-400 bg-lime-500/5';
     if (lower.includes('efficiency')) return 'border-teal-500/25 text-teal-600 dark:text-teal-400 bg-teal-500/5';
     if (lower.includes('international')) return 'border-sky-500/25 text-sky-600 dark:text-sky-400 bg-sky-500/5';
     if (lower.includes('market') || lower.includes('finance')) return 'border-rose-500/25 text-rose-600 dark:text-rose-400 bg-rose-500/5';
@@ -98,40 +143,117 @@ export function FeaturedCarousel({ items }: { items?: FeaturedItem[] }) {
 
   return (
     <div className="w-full bg-background py-4">
-      {/* Carousel Body */}
       <div className="container">
-        <div className="relative border border-border/40 rounded-2xl overflow-hidden bg-[radial-gradient(hsl(var(--border))_1px,transparent_1px)] [background-size:24px_24px]">
-          <div className="py-12 md:py-16 px-6 md:px-12 relative">
-            <div className="grid md:grid-cols-12 gap-8 items-center">
-              
-              {/* Text content with soft slide-and-fade animation */}
-              <div 
-                className={`md:col-span-7 transition-all duration-300 ease-out transform ${
-                  isTransitioning ? 'opacity-0 translate-y-1.5' : 'opacity-100 translate-y-0'
-                }`}
-              >
-                <div className="flex items-center gap-3 mb-4">
-                  <div className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-wider transition-colors duration-300 ${getCategoryBadgeClasses(currentItem.category)}`}>
-                    <span className="h-1.5 w-1.5 rounded-full bg-current opacity-75 animate-pulse" />
+        <div
+          className="relative overflow-hidden rounded-2xl border border-border/40"
+          aria-roledescription="carousel"
+          aria-label="Featured stories"
+        >
+          {/* Markets — solid clean background, separate from hero dot pattern */}
+          {hasTicker && (
+            <div className="border-b border-border/30 bg-background px-4 py-2 md:px-6">
+              <LiveMarketTicker variant="embedded" compact initialItems={tickerItems} playing={isPlaying} />
+            </div>
+          )}
+
+          <div className="relative hero-dot-pattern px-6 py-10 md:px-12 md:py-14">
+            <div
+              className={`grid gap-x-8 gap-y-5 md:grid-cols-12 transition-all duration-300 ease-out ${
+                isTransitioning ? 'translate-y-1 opacity-0' : 'translate-y-0 opacity-100'
+              }`}
+            >
+              {/* Meta row — badge left, progress right (same line, aligned to columns below) */}
+              <div className="grid gap-x-8 md:col-span-12 md:grid-cols-12">
+                <div className="flex flex-wrap items-center gap-2 md:col-span-7">
+                  <div
+                    className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-wider transition-colors duration-300 ${getCategoryBadgeClasses(currentItem.category)}`}
+                  >
+                    <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-current opacity-75" />
                     Featured • {currentItem.category}
                   </div>
-                  <div className="hidden sm:flex items-center gap-1 text-[10px] text-muted-foreground tracking-widest font-bold font-mono">
-                    {current + 1} / {featured.length}
-                  </div>
+                  {currentItem.isBreaking ? (
+                    <div className="inline-flex select-none items-center gap-1 rounded-full bg-rose-600 px-2.5 py-1 text-[9px] font-bold uppercase tracking-wider text-white shadow-sm animate-pulse">
+                      <Flame className="h-3 w-3 fill-current" />
+                      Breaking
+                    </div>
+                  ) : null}
                 </div>
 
-                <h1 className="h1 mb-5 text-balance pr-2 font-display font-extrabold leading-[1.05] tracking-tight">
+                <div className="relative mt-3 flex min-h-8 items-center justify-end md:col-span-5 md:mt-0">
+                  <div className="group/transport absolute left-1/2 flex w-1/2 min-w-[9.5rem] -translate-x-1/2 items-center gap-1 opacity-45 transition-opacity duration-150 hover:opacity-100 focus-within:opacity-100">
+                    <div className="flex min-w-0 flex-1 items-center gap-0.5">
+                      <button
+                        onClick={prev}
+                        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground"
+                        aria-label="Previous story"
+                      >
+                        <ChevronLeft className="h-3.5 w-3.5" />
+                      </button>
+                      {storyProgress}
+                      <button
+                        onClick={next}
+                        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground"
+                        aria-label="Next story"
+                      >
+                        <ChevronRight className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                    <span className="shrink-0 font-mono text-[10px] font-medium tabular-nums text-muted-foreground">
+                      {current + 1}/{featured.length}
+                    </span>
+                  </div>
+
+                  <ModernTooltip
+                    label={isPlaying ? 'Pause' : 'Play'}
+                    hint="Stories & markets"
+                    side="top"
+                    fast
+                  >
+                    <button
+                      onClick={() => setIsPlaying(!isPlaying)}
+                      className="relative z-10 flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-muted-foreground opacity-45 transition-all duration-150 hover:bg-muted/50 hover:text-foreground hover:opacity-100 focus-visible:opacity-100"
+                      aria-label={isPlaying ? 'Pause stories and markets' : 'Resume stories and markets'}
+                    >
+                      {isPlaying ? <Pause className="h-3 w-3" /> : <Play className="h-3 w-3" />}
+                    </button>
+                  </ModernTooltip>
+                </div>
+              </div>
+
+              {/* Headline + fixed image slot — aligned top to bottom of 4-line wrap */}
+              <div className="md:col-span-7">
+                <h1
+                  className={`h1 ${headlineSlot} line-clamp-4 text-balance pr-2 font-display text-5xl font-extrabold leading-[1.05] tracking-tight md:text-6xl`}
+                >
                   {currentItem.title}
                 </h1>
-                <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mb-6 leading-relaxed">
+              </div>
+
+              <div className="relative md:col-span-5">
+                <div
+                  className={`relative ${imageSlot} w-full overflow-hidden rounded-2xl border border-border bg-muted/30 shadow-lg`}
+                >
+                  {featured.map((item, idx) => (
+                    <img
+                      key={idx}
+                      src={item.imageUrl}
+                      alt={item.title}
+                      className={`absolute inset-0 h-full w-full object-cover transition-all duration-700 ease-out ${
+                        idx === current ? 'scale-100 opacity-100' : 'scale-[1.03] opacity-0'
+                      }`}
+                    />
+                  ))}
+                  <div className="pointer-events-none absolute inset-0 rounded-2xl border border-white/5" />
+                </div>
+              </div>
+
+              <div className="md:col-span-7">
+                <p className="mb-6 max-w-2xl text-lg leading-relaxed text-muted-foreground md:text-xl">
                   {currentItem.excerpt}
                 </p>
 
                 <div className="flex flex-wrap items-center gap-3">
-                  <Link 
-                    href={`/articles/${currentItem.slug}`} 
-                    className="btn btn-primary gap-2 px-7 py-3 text-[15px]"
-                  >
+                  <Link href={`/articles/${currentItem.slug}`} className="btn btn-primary gap-2 px-7 py-3 text-[15px]">
                     Read full story <ArrowRight className="h-4 w-4" />
                   </Link>
                   <Link href="/articles" className="btn btn-secondary gap-2 px-6 py-3 text-[15px]">
@@ -139,98 +261,11 @@ export function FeaturedCarousel({ items }: { items?: FeaturedItem[] }) {
                   </Link>
                 </div>
 
-                <div className="mt-6 text-xs text-muted-foreground uppercase tracking-wider font-semibold">
+                <div className="mt-6 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                   By <span className="text-foreground">{currentItem.author}</span> • {currentItem.readTime} min read
                 </div>
               </div>
-
-              {/* Image viewer with crossfade & SCADA indicators */}
-              <div className="md:col-span-5 relative group/image">
-                <div className="relative rounded-2xl overflow-hidden border border-border shadow-2xl aspect-video bg-muted-foreground/10">
-                  {featured.map((item, idx) => (
-                    <img
-                      key={idx}
-                      src={item.imageUrl}
-                      alt={item.title}
-                      className={`absolute inset-0 w-full h-full object-cover transition-all duration-700 ease-out ${
-                        idx === current ? 'opacity-100 scale-100' : 'opacity-0 scale-[1.03]'
-                      }`}
-                    />
-                  ))}
-                  <div className="absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-t from-black/40 via-black/10 to-transparent" />
-                  
-                  {/* Spine/Border details on image */}
-                  <div className="absolute inset-0 border border-white/5 rounded-2xl pointer-events-none" />
-                </div>
-
-                {/* Dynamic context badge (Redundant tag replaced by Live/Breaking news indicator) */}
-                {currentItem.isBreaking ? (
-                  <div className="absolute top-4 right-4 px-3 py-1.5 text-[10px] uppercase tracking-wider font-bold rounded-full bg-rose-600 text-white shadow-lg flex items-center gap-1.5 animate-pulse select-none">
-                    <span className="h-1.5 w-1.5 rounded-full bg-white animate-ping" />
-                    <Flame className="h-3.5 w-3.5 fill-current" />
-                    Breaking News
-                  </div>
-                ) : (
-                  <div className="absolute top-4 right-4 px-3 py-1 text-xs rounded-full bg-black/60 text-white border border-white/10 backdrop-blur font-medium select-none uppercase tracking-wider text-[10px]">
-                    Live coverage
-                  </div>
-                )}
-              </div>
             </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Slide progress and control bar */}
-      <div className="w-full bg-background mt-4">
-        <div className="container">
-          <div className="border border-border/40 rounded-xl bg-background/90 backdrop-blur supports-[backdrop-filter]:bg-background/70 flex items-center justify-between py-3 px-6 text-xs">
-            
-            <div className="flex items-center gap-4">
-              {/* Liquid progress indicators */}
-              <div className="flex items-center gap-2.5">
-                {featured.map((item, idx) => {
-                  const isActive = idx === current;
-                  return (
-                    <button
-                      key={idx}
-                      onClick={() => goTo(idx)}
-                      className="h-1.5 rounded-full bg-border/80 hover:bg-border transition-all w-12 overflow-hidden relative group/btn"
-                      aria-label={`Go to story ${idx + 1}`}
-                      title={item.title}
-                    >
-                      {isActive && (
-                        <div 
-                          className="absolute left-0 top-0 bottom-0 bg-primary transition-[width] duration-100 ease-linear"
-                          style={{ width: `${progress}%` }}
-                        />
-                      )}
-                    </button>
-                  );
-                })}
-              </div>
-
-              {/* Pause/Play controls */}
-              <button
-                onClick={() => setIsPlaying(!isPlaying)}
-                className="flex items-center gap-1 px-2.5 py-1 rounded-lg border border-border bg-secondary/20 hover:bg-secondary text-muted-foreground hover:text-foreground transition"
-                aria-label={isPlaying ? 'Pause rotation' : 'Resume rotation'}
-              >
-                {isPlaying ? <Pause className="h-3 w-3" /> : <Play className="h-3 w-3" />}
-                <span className="hidden sm:inline text-[10px] font-bold uppercase tracking-wider">{isPlaying ? 'Pause' : 'Play'}</span>
-              </button>
-            </div>
-
-            {/* Navigation chevrons */}
-            <div className="flex items-center gap-1.5 text-muted-foreground">
-              <button onClick={prev} className="p-2 hover:bg-secondary border border-border/40 hover:text-foreground rounded-xl transition" aria-label="Previous">
-                <ChevronLeft className="h-4 w-4" />
-              </button>
-              <button onClick={next} className="p-2 hover:bg-secondary border border-border/40 hover:text-foreground rounded-xl transition" aria-label="Next">
-                <ChevronRight className="h-4 w-4" />
-              </button>
-            </div>
-
           </div>
         </div>
       </div>

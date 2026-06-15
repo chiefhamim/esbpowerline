@@ -2,9 +2,11 @@ import { cache } from 'react';
 import prisma from '@/lib/prisma';
 import { demoArticles } from '@/lib/data';
 import { HOMEPAGE_DEFAULTS, type CarouselItem } from '@/lib/homepage-defaults';
+import { normalizeCoverageSlots } from '@/lib/coverage-content';
+import type { CoverageSlot } from '@/lib/coverage-types';
 
 const PUBLIC_SETTING_KEYS = [
-  'homepage', 'ticker', 'snapshot', 'interviews', 'site', 'seo', 'hero',
+  'homepage', 'ticker', 'snapshot', 'interviews', 'site', 'seo', 'hero', 'coverage',
 ] as const;
 
 const GRID_SETTING_KEYS = ['gridMix', 'gridLines', 'gridProjects'] as const;
@@ -93,4 +95,8 @@ export function getSnapshotLabel(settings: Record<string, unknown>) {
 export function getProfessionalsCta(settings: Record<string, unknown>) {
   const hp = settings.homepage as Partial<typeof HOMEPAGE_DEFAULTS.professionalsCta> | undefined;
   return { ...HOMEPAGE_DEFAULTS.professionalsCta, ...hp };
+}
+
+export function getCoverageSlotsFromSettings(settings: Record<string, unknown>): CoverageSlot[] {
+  return normalizeCoverageSlots(settings.coverage);
 }

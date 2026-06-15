@@ -11,9 +11,12 @@ import {
 import Link from 'next/link';
 import { StatusBadge } from '@/components/dashboard/StatusBadge';
 import { publicArticleUrl, publicPathUrl } from '@/lib/public-site-url';
+import { auth } from '@/lib/auth';
+import { can } from '@/lib/constants';
 
 export default async function AdminDashboardPage() {
-  const stats = await getAdminOverview();
+  const [stats, session] = await Promise.all([getAdminOverview(), auth()]);
+  const role = session?.user?.role;
 
   return (
     <div>
@@ -85,10 +88,16 @@ export default async function AdminDashboardPage() {
 
         <AdminCard title="Quick Actions" icon={Zap}>
           <div className="grid sm:grid-cols-2 gap-2.5">
-            <AdminActionPill href="/admin/users/new" label="Create user" icon={UserPlus} description="Add platform member" />
+            {can(role, 'user.create') && (
+              <AdminActionPill href="/admin/users/new" label="Create user" icon={UserPlus} description="Add platform member" />
+            )}
             <AdminActionPill href="/admin/articles" label="Review content" icon={FileText} description="Moderate articles" />
-            <AdminActionPill href="/admin/categories" label="Categories" icon={Tag} description="Organize topics" />
-            <AdminActionPill href="/admin/settings" label="Settings" icon={Settings} description="Platform config" />
+            {can(role, 'category.manage') && (
+              <AdminActionPill href="/admin/categories" label="Categories" icon={Tag} description="Organize topics" />
+            )}
+            {can(role, 'settings.view') && (
+              <AdminActionPill href="/admin/settings" label="Settings" icon={Settings} description="Platform config" />
+            )}
           </div>
         </AdminCard>
       </div>

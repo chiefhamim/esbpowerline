@@ -2,16 +2,17 @@ import Link from 'next/link';
 import { ArrowRight, Zap, BarChart3, BookOpen, TrendingUp, Briefcase } from 'lucide-react';
 import { EnergyDashboard } from '@/components/news/EnergyDashboard';
 import { SectorCoverage } from '@/components/news/SectorCoverage';
+import type { TickerItem } from '@/components/news/LiveMarketTicker';
 import { FeaturedCarousel } from '@/components/news/FeaturedCarousel';
-import { LiveMarketTicker } from '@/components/news/LiveMarketTicker';
 import { InterviewsSection } from '@/components/news/InterviewsSection';
 import {
   getPublicSettingsMap,
   getCarouselItems,
-  getMarketPulse,
   getSnapshotLabel,
   getProfessionalsCta,
+  getCoverageSlotsFromSettings,
 } from '@/lib/homepage-content';
+import { resolveCoverageSlots } from '@/lib/coverage-content';
 import {
   getPublicCategories,
   getPublishedArticlesForPublic,
@@ -30,12 +31,14 @@ export const metadata = {
 
 export default async function Home() {
   const settings = await getPublicSettingsMap();
-  const [trending, magazineRow, categories, sectorArticles, carouselItems] = await Promise.all([
+  const coverageSlotConfig = getCoverageSlotsFromSettings(settings);
+  const [trending, magazineRow, categories, sectorArticles, carouselItems, coverageSlots] = await Promise.all([
     getTrendingPublishedArticles(5),
     getLatestMagazineIssue(),
     getPublicCategories(),
     getPublishedArticlesForPublic(40),
     getCarouselItems(settings),
+    resolveCoverageSlots(coverageSlotConfig),
   ]);
   const magazine = magazineRow ?? {
     title: 'ESB PowerLine Monthly',
@@ -46,16 +49,16 @@ export default async function Home() {
   const magazineLabel = magazineRow
     ? magazineRow.issueDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
     : 'Latest';
-  const marketPulse = getMarketPulse(settings);
   const snapshotLabel = getSnapshotLabel(settings);
   const professionalsCta = getProfessionalsCta(settings);
 
   return (
     <div className="min-h-screen flex flex-col">
       <main className="flex-1">
-        <FeaturedCarousel items={carouselItems} />
-
-        <LiveMarketTicker initialItems={settings.ticker as Parameters<typeof LiveMarketTicker>[0]['initialItems']} />
+        <FeaturedCarousel
+          items={carouselItems}
+          tickerItems={settings.ticker as TickerItem[] | undefined}
+        />
 
         <InterviewsSection initialInterviews={settings.interviews as Parameters<typeof InterviewsSection>[0]['initialInterviews']} />
 
@@ -68,15 +71,6 @@ export default async function Home() {
             <span className="text-[10px] text-muted-foreground uppercase tracking-widest font-semibold">{snapshotLabel}</span>
           </div>
           <EnergyDashboard initialStats={settings.snapshot as Parameters<typeof EnergyDashboard>[0]['initialStats']} />
-
-          <div className="mt-3 text-[11px] text-muted-foreground flex items-center gap-2 overflow-hidden">
-            <span className="shrink-0 font-medium text-emerald-400/90">MARKET PULSE:</span>
-            <div className="flex-1 overflow-hidden">
-              <div className="animate-[marquee_25s_linear_infinite] flex gap-8 whitespace-nowrap text-[11px]">
-                {marketPulse}
-              </div>
-            </div>
-          </div>
         </div>
 
         <div className="container py-8">
@@ -88,7 +82,7 @@ export default async function Home() {
             <p className="text-sm text-muted-foreground mt-1">Browse coverage across all sectors or filter to a specific one.</p>
           </div>
 
-          <SectorCoverage hideHeader categories={categories} articles={sectorArticles} />
+          <SectorCoverage hideHeader categories={categories} articles={sectorArticles} coverageSlots={coverageSlots} />
         </div>
 
         <div className="container py-8">

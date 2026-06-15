@@ -22,6 +22,7 @@ import { CategoryIconDisplay } from '@/components/category/CategoryIconDisplay';
 import { ModernTooltip } from '@/components/shared/ModernTooltip';
 import { AdminSecureActionDialog } from '@/components/admin/AdminSecureActionDialog';
 import { resizeCategoryIconFile } from '@/lib/category-image';
+import { usePublicSiteOrigin } from '@/hooks/usePublicSiteOrigin';
 
 type CategoryRow = {
   id: string;
@@ -44,6 +45,7 @@ type IconMode = 'lucide' | 'custom';
 
 export function CategoryManager({ categories }: { categories: CategoryRow[] }) {
   const router = useRouter();
+  const publicSiteOrigin = usePublicSiteOrigin();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [name, setName] = useState('');
   const [loading, setLoading] = useState(false);
@@ -427,7 +429,7 @@ export function CategoryManager({ categories }: { categories: CategoryRow[] }) {
                     <>
                       <ModernTooltip label="View on site">
                         <a
-                          href={`/categories/${c.slug}`}
+                          href={`${publicSiteOrigin}/categories/${c.slug}`}
                           target="_blank"
                           rel="noreferrer"
                           className="admin-category-action-btn"

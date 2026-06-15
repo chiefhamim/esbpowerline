@@ -6,10 +6,12 @@ import { RoleBadge } from '@/components/dashboard/RoleBadge';
 import { StatusBadge } from '@/components/dashboard/StatusBadge';
 import { Button } from '@/components/ui/button';
 import { Plus, Users, Pencil } from 'lucide-react';
-import type { Role } from '@/lib/constants';
+import { auth } from '@/lib/auth';
+import { can, type Role } from '@/lib/constants';
 
 export default async function AdminUsersPage() {
-  const users = await getUsers();
+  const [users, session] = await Promise.all([getUsers(), auth()]);
+  const canCreate = can(session?.user?.role, 'user.create');
 
   return (
     <div>
@@ -18,9 +20,11 @@ export default async function AdminUsersPage() {
         title="User Management"
         description="Manage roles, status, and access for all platform users."
       >
-        <Link href="/admin/users/new">
-          <Button><Plus className="h-4 w-4 mr-2" />Add User</Button>
-        </Link>
+        {canCreate && (
+          <Link href="/admin/users/new">
+            <Button><Plus className="h-4 w-4 mr-2" />Add User</Button>
+          </Link>
+        )}
       </AdminPageHeader>
 
       <AdminTableShell>

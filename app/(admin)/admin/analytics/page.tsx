@@ -34,7 +34,6 @@ export default async function AdminAnalyticsPage({ searchParams }: PageProps) {
   });
 
   const pm = stats.periodMetrics;
-  const moderationTotal = stats.pendingComments + stats.approvedComments + stats.spamComments;
 
   const primaryKpis = [
     { label: 'Views', value: formatNumber(stats.totalViews), hint: `${formatNumber(stats.avgViewsPerArticle)} / article`, icon: Eye },

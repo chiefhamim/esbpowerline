@@ -2,8 +2,10 @@
 
 import { useEffect, useState } from 'react';
 
-export function usePublicSiteOrigin(): string {
-  const [origin, setOrigin] = useState('');
+const DEFAULT_DEV_PUBLIC = 'http://localhost:3000';
+
+export function usePublicSiteOrigin() {
+  const [origin, setOrigin] = useState(DEFAULT_DEV_PUBLIC);
 
   useEffect(() => {
     const host = window.location.host;
@@ -11,15 +13,20 @@ export function usePublicSiteOrigin(): string {
       window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
     setOrigin(
       isLocal
-        ? 'http://localhost:3000'
-        : `${window.location.protocol}//${host.replace(/^(cms\.|admin\.)/, '')}`,
+        ? DEFAULT_DEV_PUBLIC
+        : `${window.location.protocol}//${host.replace(/^(cms\.|admin\.)/, '')}`
     );
   }, []);
 
   return origin;
 }
 
-export function usePublicArticleUrl(slug: string): string {
+export function usePublicPathUrl(path: string) {
   const origin = usePublicSiteOrigin();
-  return origin ? `${origin}/articles/${slug}` : `/articles/${slug}`;
+  const normalized = path.startsWith('/') ? path : `/${path}`;
+  return `${origin}${normalized}`;
+}
+
+export function usePublicArticleUrl(slug: string) {
+  return usePublicPathUrl(`/articles/${slug}`);
 }

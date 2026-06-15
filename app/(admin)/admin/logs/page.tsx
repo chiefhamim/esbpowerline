@@ -1,10 +1,21 @@
 import { AdminPageHeader, AdminTableShell } from '@/components/admin/AdminUI';
-import prisma from '@/lib/prisma';
+import { AdminForbidden } from '@/components/admin/AdminForbidden';
+import { getAdminLogs } from '@/lib/actions/logs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { ScrollText } from 'lucide-react';
 
 export default async function AdminLogsPage() {
-  const logs = await prisma.auditLog.findMany({ orderBy: { timestamp: 'desc' }, take: 50 });
+  let logs: Awaited<ReturnType<typeof getAdminLogs>>;
+  try {
+    logs = await getAdminLogs();
+  } catch {
+    return (
+      <AdminForbidden
+        title="Activity logs restricted"
+        description="Only Admins and Super Admins can view the audit trail."
+      />
+    );
+  }
 
   return (
     <div>
@@ -35,11 +46,15 @@ export default async function AdminLogsPage() {
                   </span>
                 </TableCell>
                 <TableCell>{log.message}</TableCell>
-                <TableCell className="text-muted-foreground">{log.userId ?? '—'}</TableCell>
+                <TableCell className="text-muted-foreground">{log.userLabel}</TableCell>
               </TableRow>
             ))}
             {logs.length === 0 && (
-              <TableRow><TableCell colSpan={4} className="text-muted-foreground text-center py-8">No logs yet</TableCell></TableRow>
+              <TableRow>
+                <TableCell colSpan={4} className="text-muted-foreground text-center py-8">
+                  No logs yet
+                </TableCell>
+              </TableRow>
             )}
           </TableBody>
         </Table>

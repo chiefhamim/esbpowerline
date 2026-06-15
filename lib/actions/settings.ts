@@ -24,14 +24,25 @@ export async function getSettings() {
 }
 
 export async function updateSetting(key: string, value: unknown) {
+  return updateSettingsBatch({ [key]: value });
+}
+
+export async function updateSettingsBatch(updates: Record<string, unknown>) {
   const admin = await requireAdmin();
   if (!can(admin.role, 'settings.edit')) throw new Error('Forbidden');
 
-  await prisma.siteSetting.upsert({
-    where: { key },
-    create: { key, value: value as any },
-    update: { value: value as any },
-  });
+  const entries = Object.entries(updates);
+  if (!entries.length) return;
+
+  await prisma.$transaction(
+    entries.map(([key, value]) =>
+      prisma.siteSetting.upsert({
+        where: { key },
+        create: { key, value: value as object },
+        update: { value: value as object },
+      })
+    )
+  );
 
   const { PUBLIC_REVALIDATE_PATHS } = await import('@/lib/public-paths');
   for (const path of PUBLIC_REVALIDATE_PATHS) revalidatePath(path);

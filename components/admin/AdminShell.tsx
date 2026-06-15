@@ -8,12 +8,13 @@ import { cn } from '@/lib/utils';
 import { AdminThemeToggle } from '@/components/admin/AdminThemeToggle';
 import { PlatformControl } from '@/components/admin/PlatformControl';
 import { Button } from '@/components/ui/button';
-import { ROLES } from '@/lib/constants';
+import { ROLES, type Role } from '@/lib/constants';
+import { canAccessAdminRoute } from '@/lib/admin-nav';
 import type { LucideIcon } from 'lucide-react';
 import {
   LayoutDashboard, Users, FileText, BarChart3, Settings, ScrollText,
-  Image, Tag, BookOpen, LogOut, ExternalLink, Zap, Menu, X, Shield,
-  ChevronRight,
+  Image, Tag, Hash, BookOpen, LogOut, ExternalLink, Zap, Menu, X, Shield,
+  ChevronRight, FolderOpen,
 } from 'lucide-react';
 
 type NavItem = { href: string; label: string; icon: LucideIcon };
@@ -30,8 +31,8 @@ const NAV_GROUPS: { label: string; items: NavItem[] }[] = [
     label: 'Content',
     items: [
       { href: '/admin/articles', label: 'Articles', icon: FileText },
-      { href: '/admin/categories', label: 'Categories', icon: Tag },
-      { href: '/admin/tags', label: 'Tags', icon: Tag },
+      { href: '/admin/categories', label: 'Categories', icon: FolderOpen },
+      { href: '/admin/tags', label: 'Tags', icon: Hash },
       { href: '/admin/magazine', label: 'Magazine', icon: BookOpen },
       { href: '/admin/media', label: 'Media', icon: Image },
     ],
@@ -66,6 +67,30 @@ function getPageTitle(pathname: string) {
   return 'Admin';
 }
 
+function NavLink({
+  item,
+  active,
+  onNavigate,
+}: {
+  item: NavItem;
+  active: boolean;
+  onNavigate: () => void;
+}) {
+  return (
+    <Link
+      href={item.href}
+      onClick={onNavigate}
+      className={cn('admin-nav-item group', active && 'admin-nav-item--active')}
+    >
+      <span className={cn('admin-nav-icon', active && 'admin-nav-icon--active')}>
+        <item.icon className="h-[14px] w-[14px]" strokeWidth={active ? 2.25 : 2} />
+      </span>
+      <span className="flex-1 truncate">{item.label}</span>
+      {active && <ChevronRight className="h-3 w-3 opacity-50 shrink-0" />}
+    </Link>
+  );
+}
+
 export function AdminShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const { data: session } = useSession();
@@ -80,22 +105,11 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  const NavLink = ({ item }: { item: NavItem }) => {
-    const active = pathname === item.href || (item.href !== '/admin' && pathname.startsWith(item.href));
-    return (
-      <Link
-        href={item.href}
-        onClick={() => setMobileOpen(false)}
-        className={cn('admin-nav-item group', active && 'admin-nav-item--active')}
-      >
-        <span className={cn('admin-nav-icon', active && 'admin-nav-icon--active')}>
-          <item.icon className="h-[14px] w-[14px]" strokeWidth={active ? 2.25 : 2} />
-        </span>
-        <span className="flex-1 truncate">{item.label}</span>
-        {active && <ChevronRight className="h-3 w-3 opacity-50 shrink-0" />}
-      </Link>
-    );
-  };
+  const role = session?.user?.role as Role | undefined;
+  const visibleNavGroups = NAV_GROUPS.map((group) => ({
+    ...group,
+    items: group.items.filter((item) => canAccessAdminRoute(role, item.href)),
+  })).filter((group) => group.items.length > 0);
 
   const sidebar = (
     <>
@@ -115,11 +129,23 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
       </div>
 
       <nav className="flex-1 px-3 py-2 overflow-y-auto space-y-5">
-        {NAV_GROUPS.map((group) => (
+        {visibleNavGroups.map((group) => (
           <div key={group.label}>
             <div className="admin-nav-group-label">{group.label}</div>
             <div className="space-y-0.5">
-              {group.items.map((item) => <NavLink key={item.href} item={item} />)}
+              {group.items.map((item) => {
+                const active =
+                  pathname === item.href ||
+                  (item.href !== '/admin' && pathname.startsWith(item.href));
+                return (
+                  <NavLink
+                    key={item.href}
+                    item={item}
+                    active={active}
+                    onNavigate={() => setMobileOpen(false)}
+                  />
+                );
+              })}
             </div>
           </div>
         ))}

@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { TrendingUp, TrendingDown } from 'lucide-react';
 
-interface TickerItem {
+export interface TickerItem {
   id: string;
   name: string;
   value: number;
@@ -21,23 +21,38 @@ const initialItems: TickerItem[] = [
   { id: 'gas', name: 'Petrobangla Gas', value: 1380, unit: 'MMcfd', change: -3.2, prefix: '' },
 ];
 
-export function LiveMarketTicker({ initialItems: propItems }: { initialItems?: TickerItem[] }) {
+export function LiveMarketTicker({
+  initialItems: propItems,
+  variant = 'chrome',
+  playing = true,
+  compact = false,
+}: {
+  initialItems?: TickerItem[];
+  variant?: 'chrome' | 'card' | 'embedded';
+  playing?: boolean;
+  compact?: boolean;
+}) {
   const [items, setItems] = useState<TickerItem[]>(propItems || initialItems);
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     setMounted(true);
-    // Simulate live micro-updates every ~25s for demo (professional, not frantic)
     const interval = setInterval(() => {
-      setItems(prev => prev.map(item => {
-        if (Math.random() > 0.6) {
-          const delta = (Math.random() - 0.5) * (item.id === 'fx' || item.id === 'tariff' ? 0.15 : item.value > 50 ? 1.2 : 0.008);
-          const newVal = Math.max(0.01, parseFloat((item.value + delta).toFixed(item.value > 100 ? 1 : 2)));
-          const newChange = parseFloat(((newVal - item.value) / item.value * 100 * (item.id === 'fx' ? 5 : 1)).toFixed(1));
-          return { ...item, value: newVal, change: newChange };
-        }
-        return item;
-      }));
+      setItems((prev) =>
+        prev.map((item) => {
+          if (Math.random() > 0.6) {
+            const delta =
+              (Math.random() - 0.5) *
+              (item.id === 'fx' || item.id === 'tariff' ? 0.15 : item.value > 50 ? 1.2 : 0.008);
+            const newVal = Math.max(0.01, parseFloat((item.value + delta).toFixed(item.value > 100 ? 1 : 2)));
+            const newChange = parseFloat(
+              (((newVal - item.value) / item.value) * 100 * (item.id === 'fx' ? 5 : 1)).toFixed(1)
+            );
+            return { ...item, value: newVal, change: newChange };
+          }
+          return item;
+        })
+      );
     }, 25000);
 
     return () => clearInterval(interval);
@@ -45,52 +60,65 @@ export function LiveMarketTicker({ initialItems: propItems }: { initialItems?: T
 
   if (!mounted) return null;
 
-  return (
-    <div className="w-full py-1.5">
-      <div className="container">
-        <div className="border border-border/40 bg-[var(--bg-elev)]/60 backdrop-blur-sm overflow-hidden rounded-xl">
-          <div className="flex items-center h-9 text-[11px] px-4">
-            <div className="flex items-center gap-2 pr-4 border-r border-border/60 text-muted-foreground shrink-0 mr-4">
-              <span className="font-semibold tracking-[1px] text-[10px] uppercase">Live Markets</span>
-            </div>
-
-            <div className="flex-1 overflow-hidden relative mask-fade">
-              <div className="flex w-max items-center gap-8 animate-[marquee_32s_linear_infinite] hover:[animation-play-state:paused] whitespace-nowrap">
-                {[...items, ...items].map((item, idx) => {
-                  const isPositive = item.change >= 0;
-                  const ChangeIcon = isPositive ? TrendingUp : TrendingDown;
-                  return (
-                    <div key={`${item.id}-${idx}`} className="flex items-center gap-2 text-muted-foreground shrink-0">
-                      <span className="font-medium text-foreground/90">{item.name}</span>
-                      <span className="font-mono tabular-nums text-foreground">
-                        {item.prefix}{item.value.toLocaleString()}
-                        {item.unit && <span className="ml-0.5 text-[10px] text-muted-foreground/80">{item.unit}</span>}
-                      </span>
-                      <span 
-                        className={`inline-flex items-center gap-0.5 text-[10px] font-semibold px-1.5 py-px rounded ${isPositive ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}
-                        style={{ background: isPositive ? 'rgba(16,185,129,0.12)' : 'rgba(244,63,94,0.12)' }}
-                      >
-                        {isPositive ? '+' : ''}{item.change}% <ChangeIcon className="h-3 w-3" />
-                      </span>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
+  const track = (
+    <div
+      className={`flex w-max items-center whitespace-nowrap ${compact ? 'gap-6' : 'gap-8'} animate-[marquee_32s_linear_infinite]`}
+      style={{ animationPlayState: playing ? 'running' : 'paused' }}
+    >
+      {[...items, ...items].map((item, idx) => {
+        const isPositive = item.change >= 0;
+        const ChangeIcon = isPositive ? TrendingUp : TrendingDown;
+        return (
+          <div key={`${item.id}-${idx}`} className="flex shrink-0 items-center gap-1.5 text-muted-foreground">
+            <span className={`font-medium text-foreground/90 ${compact ? 'text-[10px]' : ''}`}>{item.name}</span>
+            <span className={`font-mono tabular-nums text-foreground ${compact ? 'text-[10px]' : ''}`}>
+              {item.prefix}
+              {item.value.toLocaleString()}
+              {item.unit && <span className="ml-0.5 text-muted-foreground/80">{item.unit}</span>}
+            </span>
+            <span
+              className={`inline-flex items-center gap-0.5 rounded px-1 py-px font-semibold ${compact ? 'text-[9px]' : 'text-[10px]'} ${isPositive ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}
+              style={{ background: isPositive ? 'rgba(16,185,129,0.12)' : 'rgba(244,63,94,0.12)' }}
+            >
+              {isPositive ? '+' : ''}
+              {item.change}%
+              <ChangeIcon className={compact ? 'h-2.5 w-2.5' : 'h-3 w-3'} />
+            </span>
           </div>
-        </div>
-      </div>
+        );
+      })}
+    </div>
+  );
 
-      <style jsx global>{`
-        @keyframes marquee {
-          0% { transform: translateX(0); }
-          100% { transform: translateX(-50%); }
-        }
-        .mask-fade {
-          mask-image: linear-gradient(to right, transparent, black 8%, black 92%, transparent);
-          -webkit-mask-image: linear-gradient(to right, transparent, black 8%, black 92%, transparent);
-        }
-      `}</style>
+  const label = (
+    <div className={`flex shrink-0 items-center gap-1.5 text-muted-foreground ${compact ? 'pr-2.5' : 'border-r border-border/60 pr-3'}`}>
+      <span className="h-1.5 w-1.5 shrink-0 animate-pulse rounded-full bg-emerald-500" aria-hidden />
+      <span className={`font-semibold uppercase tracking-[0.12em] ${compact ? 'text-[9px]' : 'text-[10px]'}`}>Markets</span>
+    </div>
+  );
+
+  const marqueeRow = (
+    <div className={`flex items-center ${compact ? 'h-7 text-[10px]' : 'h-8 text-[11px]'}`}>
+      {label}
+      <div className={`relative min-w-0 flex-1 overflow-hidden mask-fade ${compact ? 'ml-2' : 'ml-3'}`}>{track}</div>
+    </div>
+  );
+
+  if (variant === 'embedded') {
+    return marqueeRow;
+  }
+
+  return (
+    <div className={variant === 'chrome' ? 'w-full border-t border-border/40 bg-[var(--bg-elev)]/80' : 'w-full py-1.5'}>
+      <div className="container px-4">
+        {variant === 'chrome' ? (
+          marqueeRow
+        ) : (
+          <div className="overflow-hidden rounded-xl border border-border/40 bg-[var(--bg-elev)]/60 backdrop-blur-sm">
+            <div className="px-4">{marqueeRow}</div>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { Search, Menu, X, Newspaper, BookOpen, BarChart3, Home } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { usePathname } from 'next/navigation';
 import type { PublicCategory } from '@/lib/category-types';
 import { CATEGORIES } from '@/lib/constants';
@@ -13,15 +13,8 @@ import {
   getNavbarColorClasses,
 } from '@/lib/category-icons';
 import { CategoryIconDisplay } from '@/components/category/CategoryIconDisplay';
-
-
-type Theme = 'midnight' | 'dark' | 'white';
-
-const THEMES: { id: Theme; label: string; color: string }[] = [
-  { id: 'midnight', label: 'Midnight', color: '#04070f' },
-  { id: 'dark', label: 'Dark', color: '#09090b' },
-  { id: 'white', label: 'White', color: '#f8fafc' },
-];
+import { LiveMarketTicker, type TickerItem } from '@/components/news/LiveMarketTicker';
+import { SiteThemeToggle } from '@/components/shared/SiteThemeToggle';
 
 type NavCategory = {
   name: string;
@@ -32,7 +25,13 @@ type NavCategory = {
   iconImageUrl?: string | null;
 };
 
-export function PublicNavbar({ categories = [] }: { categories?: PublicCategory[] }) {
+export function PublicNavbar({
+  categories = [],
+  tickerItems,
+}: {
+  categories?: PublicCategory[];
+  tickerItems?: TickerItem[];
+}) {
   const navCategories: NavCategory[] = categories.length
     ? categories.map((c) => ({
         name: c.name,
@@ -51,28 +50,8 @@ export function PublicNavbar({ categories = [] }: { categories?: PublicCategory[
         iconImageUrl: null,
       }));
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [theme, setTheme] = useState<Theme>('midnight');
   const [bannerSrc, setBannerSrc] = useState('/images/banner.jpg');
   const pathname = usePathname();
-
-  // Load and apply theme
-  useEffect(() => {
-    const saved = (localStorage.getItem('theme') as Theme) || 'midnight';
-    setTheme(saved);
-    applyTheme(saved);
-  }, []);
-
-  const applyTheme = (newTheme: Theme) => {
-    const root = document.documentElement;
-    root.classList.remove('theme-midnight', 'theme-dark', 'theme-white');
-    root.classList.add(`theme-${newTheme}`);
-    localStorage.setItem('theme', newTheme);
-  };
-
-  const changeTheme = (newTheme: Theme) => {
-    setTheme(newTheme);
-    applyTheme(newTheme);
-  };
 
   return (
     <>
@@ -152,7 +131,7 @@ export function PublicNavbar({ categories = [] }: { categories?: PublicCategory[
           </div>
 
           {/* Right Section: Utilities (Search, Switcher, Menu Button) */}
-          <div className="flex md:w-1/4 justify-end items-center gap-3">
+          <div className="flex md:w-1/4 justify-end items-center gap-3 overflow-visible">
             <Link 
               href="/search" 
               className="btn btn-secondary flex items-center gap-1.5 text-xs px-3 py-1 rounded-xl h-8"
@@ -161,32 +140,7 @@ export function PublicNavbar({ categories = [] }: { categories?: PublicCategory[
               <Search className="h-3.5 w-3.5" /> Search
             </Link>
 
-            {/* Theme switcher */}
-            <div className="hidden sm:flex items-center gap-1.5 pl-2 border-l border-border/50">
-              {THEMES.map((t) => (
-                <div key={t.id} className="relative group">
-                  <button
-                    onClick={() => changeTheme(t.id)}
-                    className={`w-4 h-4 rounded-full border transition-all duration-200 ${
-                      theme === t.id 
-                        ? 'border-primary scale-110 shadow-sm ring-2 ring-primary/20' 
-                        : 'border-border/50 hover:border-border hover:scale-105'
-                    }`}
-                    style={{ backgroundColor: t.color }}
-                    aria-label={`Switch to ${t.label} theme`}
-                  />
-                  
-                  {/* Slick Custom Tooltip */}
-                  <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 pointer-events-none opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-all duration-200 ease-out transform -translate-y-1.5 group-hover:translate-y-0 z-50">
-                    <div className="bg-popover/95 text-popover-foreground text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-lg border border-border shadow-xl backdrop-blur-sm whitespace-nowrap">
-                      {t.label}
-                    </div>
-                    {/* Tiny indicator arrow pointing up */}
-                    <div className="w-1.5 h-1.5 bg-popover border-l border-t border-border absolute left-1/2 -translate-x-1/2 -top-[4px] rotate-45" />
-                  </div>
-                </div>
-              ))}
-            </div>
+            <SiteThemeToggle className="flex pl-2 border-l border-border/50" />
 
             {/* Mobile hamburger */}
             <button
@@ -198,6 +152,10 @@ export function PublicNavbar({ categories = [] }: { categories?: PublicCategory[
             </button>
           </div>
         </div>
+
+        {pathname !== '/' && (
+          <LiveMarketTicker initialItems={tickerItems} variant="chrome" />
+        )}
 
         {/* Secondary Editorial Sectors Ribbon */}
         {/* Desktop View: 10-Column Data Ribbon */}

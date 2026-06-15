@@ -6,21 +6,32 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { updateSetting } from '@/lib/actions/settings';
+import { updateSettingsBatch } from '@/lib/actions/settings';
 import { cn } from '@/lib/utils';
 import { HOMEPAGE_DEFAULTS } from '@/lib/homepage-defaults';
+import { DEFAULT_COVERAGE_SLOTS } from '@/lib/coverage-defaults';
+import { normalizeCoverageSlots } from '@/lib/coverage-content';
+import type { CoverageSlot } from '@/lib/coverage-types';
 import { 
-  Settings, TrendingUp, BarChart3, Users, Play, Globe, 
-  Database, RefreshCw, Plus, Trash2, ArrowRight, ArrowUp, ArrowDown, Pin,
+  Settings, TrendingUp, BarChart3, Play, Globe, 
+  Database, RefreshCw, ArrowRight, ArrowUp, ArrowDown, Pin, LayoutGrid,
 } from 'lucide-react';
+
+type ArticlePickerItem = {
+  slug: string;
+  title: string;
+  category: string;
+  publishedAt: Date | null;
+};
 
 interface SettingsFormProps {
   settings: Record<string, unknown>;
+  articlePickerList?: ArticlePickerItem[];
 }
 
-export function SettingsForm({ settings }: SettingsFormProps) {
+export function SettingsForm({ settings, articlePickerList = [] }: SettingsFormProps) {
   const [loading, setLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState<'general' | 'markets' | 'snapshot' | 'interviews' | 'grid'>('general');
+  const [activeTab, setActiveTab] = useState<'general' | 'markets' | 'snapshot' | 'interviews' | 'grid' | 'coverage'>('general');
 
   // 1. General, SEO & Hero
   const site = (settings.site as Record<string, string>) ?? {};
@@ -151,6 +162,10 @@ export function SettingsForm({ settings }: SettingsFormProps) {
     ]
   );
 
+  const [coverageSlots, setCoverageSlots] = useState<CoverageSlot[]>(
+    normalizeCoverageSlots(settings.coverage ?? DEFAULT_COVERAGE_SLOTS)
+  );
+
   const [gridProjects, setGridProjects] = useState<any[]>(
     (settings.gridProjects as any[]) ?? [
       { name: 'SREDA 1800 MW Solar+Wind', status: 'Tender', mw: '1800', date: 'Q3 2026' },
@@ -163,28 +178,31 @@ export function SettingsForm({ settings }: SettingsFormProps) {
   async function handleSave() {
     setLoading(true);
     try {
-      await updateSetting('site', { name: siteName, tagline });
-      await updateSetting('seo', { metaTitle, metaDescription });
-      await updateSetting('hero', { title: heroTitle, subtitle: heroSubtitle, imageUrl: heroImage });
-      await updateSetting('homepage', {
-        carouselMode,
-        marketPulse,
-        snapshotLabel,
-        professionalsCta: {
-          label: ctaLabel,
-          title: ctaTitle,
-          primaryLabel: ctaPrimaryLabel,
-          primaryHref: ctaPrimaryHref,
-          secondaryLabel: ctaSecondaryLabel,
-          secondaryHref: ctaSecondaryHref,
+      await updateSettingsBatch({
+        site: { name: siteName, tagline },
+        seo: { metaTitle, metaDescription },
+        hero: { title: heroTitle, subtitle: heroSubtitle, imageUrl: heroImage },
+        homepage: {
+          carouselMode,
+          marketPulse,
+          snapshotLabel,
+          professionalsCta: {
+            label: ctaLabel,
+            title: ctaTitle,
+            primaryLabel: ctaPrimaryLabel,
+            primaryHref: ctaPrimaryHref,
+            secondaryLabel: ctaSecondaryLabel,
+            secondaryHref: ctaSecondaryHref,
+          },
         },
+        ticker,
+        snapshot,
+        interviews,
+        gridMix,
+        gridLines,
+        gridProjects,
+        coverage: coverageSlots,
       });
-      await updateSetting('ticker', ticker);
-      await updateSetting('snapshot', snapshot);
-      await updateSetting('interviews', interviews);
-      await updateSetting('gridMix', gridMix);
-      await updateSetting('gridLines', gridLines);
-      await updateSetting('gridProjects', gridProjects);
       toast.success('All settings saved successfully');
     } catch (err: any) {
       toast.error(err.message || 'Failed to save settings');
@@ -248,12 +266,19 @@ export function SettingsForm({ settings }: SettingsFormProps) {
     setGridProjects(next);
   };
 
+  const updateCoverageArticle = (index: number, articleSlug: string) => {
+    const next = [...coverageSlots];
+    next[index] = { ...next[index], articleSlug };
+    setCoverageSlots(next);
+  };
+
   const tabs = [
     { id: 'general', label: 'General & SEO', icon: Settings },
     { id: 'markets', label: 'Live Markets', icon: TrendingUp },
     { id: 'snapshot', label: 'System Snapshot', icon: BarChart3 },
     { id: 'interviews', label: 'Interviews', icon: Play },
     { id: 'grid', label: 'Grid Explorer', icon: Database },
+    { id: 'coverage', label: 'All Coverage', icon: LayoutGrid },
   ] as const;
 
   return (
@@ -527,6 +552,46 @@ export function SettingsForm({ settings }: SettingsFormProps) {
                 </div>
               </div>
             ))}
+          </div>
+        )}
+
+        {/* Tab 6: All Coverage mosaic */}
+        {activeTab === 'coverage' && (
+          <div className="admin-card settings-panel p-6 space-y-5">
+            <div>
+              <h2 className="font-semibold flex items-center gap-2">
+                <LayoutGrid className="h-4.5 w-4.5 text-primary" /> All Coverage Mosaic
+              </h2>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Choose which nine published stories appear in the All Coverage grid on the homepage. Cards use the same uniform style.
+              </p>
+            </div>
+
+            <div className="space-y-3">
+              <div className="grid grid-cols-12 gap-3 text-xs font-semibold text-muted-foreground border-b pb-2 px-1">
+                <div className="col-span-1">#</div>
+                <div className="col-span-11">Article</div>
+              </div>
+              {coverageSlots.map((slot, idx) => (
+                <div key={slot.id} className="grid grid-cols-12 gap-3 items-center hover:bg-muted/10 p-1 rounded-xl">
+                  <div className="col-span-1 font-mono text-xs text-muted-foreground">{idx + 1}</div>
+                  <div className="col-span-11">
+                    <select
+                      value={slot.articleSlug}
+                      onChange={(e) => updateCoverageArticle(idx, e.target.value)}
+                      className="w-full bg-background border border-input rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                    >
+                      <option value="">— Select article —</option>
+                      {articlePickerList.map((article) => (
+                        <option key={article.slug} value={article.slug}>
+                          {article.title} ({article.category})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         )}
 

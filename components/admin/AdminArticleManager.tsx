@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import {
-  Search, ExternalLink, ArrowUpDown, Tag, User, Star, Pin,
+  Search, ArrowUpDown, Tag, User, Star, Pin,
   Trash2, RotateCcw, Send, FileEdit, Archive, Flame, X, Check,
   MoreHorizontal, Pencil, Eye, MessageSquare,
 } from 'lucide-react';
@@ -335,30 +335,53 @@ export function AdminArticleManager({
     setRevisionIds(ids);
   }
 
-  const categoryOptions = [
-    { value: 'ALL', label: 'All categories', count: articles.length },
-    ...categories.map((c) => ({
-      value: c,
-      label: c,
-      count: articles.filter((a) => a.category === c).length,
-    })),
-  ];
+  const categoryOptions = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const article of articles) {
+      counts.set(article.category, (counts.get(article.category) ?? 0) + 1);
+    }
+    return [
+      { value: 'ALL', label: 'All categories', count: articles.length },
+      ...categories.map((c) => ({
+        value: c,
+        label: c,
+        count: counts.get(c) ?? 0,
+      })),
+    ];
+  }, [articles, categories]);
 
-  const authorOptions = [
-    { value: 'ALL', label: 'All authors', count: articles.length },
-    ...authors.map(([id, name]) => ({
-      value: id,
-      label: name,
-      count: articles.filter((a) => authorId(a) === id).length,
-    })),
-  ];
+  const authorOptions = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const article of articles) {
+      const id = authorId(article);
+      counts.set(id, (counts.get(id) ?? 0) + 1);
+    }
+    return [
+      { value: 'ALL', label: 'All authors', count: articles.length },
+      ...authors.map(([id, name]) => ({
+        value: id,
+        label: name,
+        count: counts.get(id) ?? 0,
+      })),
+    ];
+  }, [articles, authors]);
 
-  const flagOptions = [
-    { value: 'ALL', label: 'All flags', count: articles.length },
-    { value: 'featured', label: 'Featured', count: articles.filter((a) => a.isFeatured).length },
-    { value: 'pinned', label: 'Pinned', count: articles.filter((a) => a.isPinned).length },
-    { value: 'breaking', label: 'Breaking', count: articles.filter((a) => a.isBreaking).length },
-  ];
+  const flagOptions = useMemo(() => {
+    let featured = 0;
+    let pinned = 0;
+    let breaking = 0;
+    for (const article of articles) {
+      if (article.isFeatured) featured += 1;
+      if (article.isPinned) pinned += 1;
+      if (article.isBreaking) breaking += 1;
+    }
+    return [
+      { value: 'ALL', label: 'All flags', count: articles.length },
+      { value: 'featured', label: 'Featured', count: featured },
+      { value: 'pinned', label: 'Pinned', count: pinned },
+      { value: 'breaking', label: 'Breaking', count: breaking },
+    ];
+  }, [articles]);
 
   const sortOptions = SORT_OPTIONS.map((o) => ({
     value: o.value,
