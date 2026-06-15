@@ -22,7 +22,17 @@ export function MemberAuthButton() {
   }
 
   return (
-    <ModernTooltip label={access.label} hint={access.hint} fast>
+    <ModernTooltip
+      label={access.label}
+      hint={access.hint}
+      variant="chrome"
+      side="bottom"
+      showDelayMs={280}
+      hideFadeMs={300}
+      dismissOnClick
+      clickVisibleMs={500}
+      clickFadeMs={500}
+    >
       <Link
         href={access.href}
         className={cn(
