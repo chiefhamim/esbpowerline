@@ -145,7 +145,10 @@ export async function createUser(data: UserInput) {
   const existing = await prisma.user.findUnique({ where: { email: parsed.email } });
   if (existing) throw new Error('Email already exists');
 
-  const passwordHash = await bcrypt.hash(parsed.password || 'changeme123', 10);
+  if (!parsed.password?.trim()) {
+    throw new Error('Password is required when creating a user');
+  }
+  const passwordHash = await bcrypt.hash(parsed.password.trim(), 10);
   const user = await prisma.user.create({
     data: {
       name: parsed.name,

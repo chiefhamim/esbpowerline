@@ -33,8 +33,14 @@ async function main() {
   await prisma.category.deleteMany();
   await prisma.siteSetting.deleteMany();
 
-  // === USERS (port exact legacy demo accounts + more) ===
-  const passwordHash = await bcrypt.hash('esbpowerline007', 10);
+  // === USERS (demo accounts — password from local env only, never committed) ===
+  const seedPassword = process.env.SEED_DEMO_PASSWORD?.trim();
+  if (!seedPassword) {
+    throw new Error(
+      'SEED_DEMO_PASSWORD is not set. Add it to .env.local before running db:seed.',
+    );
+  }
+  const passwordHash = await bcrypt.hash(seedPassword, 10);
 
   const superAdmin = await prisma.user.create({
     data: {
@@ -543,11 +549,11 @@ async function main() {
   await prisma.newsletterSub.create({ data: { email: 'industry@power.com.bd' } });
   await prisma.auditLog.create({ data: { type: 'system', message: 'Database seeded with realistic Bangladesh power sector content', timestamp: new Date() } });
 
-  console.log('\n✅ Seed complete. Demo logins:');
-  console.log('  admin@esbpowerline.com / esbpowerline007  (SUPER_ADMIN)');
-  console.log('  editor@esbpowerline.com / esbpowerline007  (EDITOR)');
-  console.log('  aminul@esbpowerline.com / esbpowerline007  (AUTHOR)');
-  console.log('  member@esbpowerline.com / esbpowerline007  (SUBSCRIBER)');
+  console.log('\n✅ Seed complete. Demo accounts (use SEED_DEMO_PASSWORD from .env.local):');
+  console.log('  admin@esbpowerline.com  (SUPER_ADMIN)');
+  console.log('  editor@esbpowerline.com  (EDITOR)');
+  console.log('  aminul@esbpowerline.com  (AUTHOR)');
+  console.log('  member@esbpowerline.com  (SUBSCRIBER)');
 }
 
 main()

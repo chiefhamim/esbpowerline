@@ -1014,42 +1014,55 @@ const ESBDataStore = (() => {
   // ═══════════════════════════════════════════════
   // SEED DATA (runs only once on first load)
   // ═══════════════════════════════════════════════
+  function legacySeedPassword() {
+    try {
+      return sessionStorage.getItem('esb_legacy_seed_password') || '';
+    } catch {
+      return '';
+    }
+  }
+
   function seed() {
     if (_get('esb_seeded')) return;
 
-    // Seed default users
-    const adminUser = Users.create({
-      name: 'Admin',
-      email: 'admin@esbpowerline.com',
-      password: 'esbpowerline007',
-      role: 'SUPER_ADMIN',
-      bio: 'System administrator',
-      status: 'active'
-    });
-
-    const editorUser = Users.create({
-      name: 'Chief Editor',
-      email: 'editor@esbpowerline.com',
-      password: 'esbpowerline007',
-      role: 'EDITOR',
-      bio: 'Chief Editor at ESB PowerLine. Covers all energy sector developments.',
-      status: 'active'
-    });
-
-    const authorUsers = [
-      { name: 'Dr. Aminul Haque', email: 'aminul@esbpowerline.com', password: 'author123', role: 'AUTHOR', bio: 'Nuclear energy specialist' },
-      { name: 'Farhana Rahman', email: 'farhana@esbpowerline.com', password: 'author123', role: 'AUTHOR', bio: 'Renewable energy correspondent' },
-      { name: 'Engr. Kamal Uddin', email: 'kamal@esbpowerline.com', password: 'author123', role: 'AUTHOR', bio: 'Grid & transmission expert' },
-      { name: 'Mehedi Hassan', email: 'mehedi@esbpowerline.com', password: 'author123', role: 'AUTHOR', bio: 'Power generation reporter' },
-      { name: 'Sharif Uddin Khan', email: 'sharif@esbpowerline.com', password: 'author123', role: 'AUTHOR', bio: 'LNG & gas sector analyst' },
-      { name: 'Nadia Begum', email: 'nadia@esbpowerline.com', password: 'author123', role: 'CONTRIBUTOR', bio: 'Energy policy analyst' }
-    ];
-
+    const seedPassword = legacySeedPassword();
     const createdAuthors = {};
-    authorUsers.forEach(u => {
-      const created = Users.create(u);
-      createdAuthors[u.name] = created.id;
-    });
+
+    if (seedPassword) {
+      Users.create({
+        name: 'Admin',
+        email: 'admin@esbpowerline.com',
+        password: seedPassword,
+        role: 'SUPER_ADMIN',
+        bio: 'System administrator',
+        status: 'active'
+      });
+
+      Users.create({
+        name: 'Chief Editor',
+        email: 'editor@esbpowerline.com',
+        password: seedPassword,
+        role: 'EDITOR',
+        bio: 'Chief Editor at ESB PowerLine. Covers all energy sector developments.',
+        status: 'active'
+      });
+
+      const authorUsers = [
+        { name: 'Dr. Aminul Haque', email: 'aminul@esbpowerline.com', role: 'AUTHOR', bio: 'Nuclear energy specialist' },
+        { name: 'Farhana Rahman', email: 'farhana@esbpowerline.com', role: 'AUTHOR', bio: 'Renewable energy correspondent' },
+        { name: 'Engr. Kamal Uddin', email: 'kamal@esbpowerline.com', role: 'AUTHOR', bio: 'Grid & transmission expert' },
+        { name: 'Mehedi Hassan', email: 'mehedi@esbpowerline.com', role: 'AUTHOR', bio: 'Power generation reporter' },
+        { name: 'Sharif Uddin Khan', email: 'sharif@esbpowerline.com', role: 'AUTHOR', bio: 'LNG & gas sector analyst' },
+        { name: 'Nadia Begum', email: 'nadia@esbpowerline.com', role: 'CONTRIBUTOR', bio: 'Energy policy analyst' }
+      ];
+
+      authorUsers.forEach(u => {
+        const created = Users.create({ ...u, password: seedPassword });
+        createdAuthors[u.name] = created.id;
+      });
+    } else {
+      console.warn('Legacy demo users skipped — set sessionStorage esb_legacy_seed_password for local testing.');
+    }
 
     // Seed categories
     const defaultCategories = [

@@ -40,7 +40,11 @@ export function UserForm({ mode, user }: UserFormProps) {
     try {
       const data = { name, email, role, status, bio, ...(password ? { password } : {}) };
       if (mode === 'create') {
-        await createUser({ ...data, password: password || 'changeme123' });
+        if (!password.trim()) {
+          toast.error('Password is required when creating a user');
+          return;
+        }
+        await createUser({ ...data, password });
         toast.success('User created');
         router.push('/admin/users');
       } else if (user) {
