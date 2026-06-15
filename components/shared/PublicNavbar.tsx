@@ -121,15 +121,13 @@ export function PublicNavbar({
               
               <Link 
                 href="/magazine" 
-                className={`nav-magazine-link px-4 py-1.5 rounded-lg transition-all duration-200 text-xs font-semibold flex items-center gap-1.5 select-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/35 focus-visible:ring-offset-2 focus-visible:ring-offset-background ${
+                className={`px-4 py-1.5 transition-all duration-200 text-xs font-semibold flex items-center gap-1.5 select-none ${
                   pathname === '/magazine' 
-                    ? 'nav-magazine-link--active text-emerald-600 dark:text-emerald-400 font-bold' 
+                    ? 'text-emerald-600 dark:text-emerald-400 font-bold' 
                     : 'text-emerald-600/75 dark:text-emerald-400/75 hover:text-emerald-600 dark:hover:text-emerald-400'
                 }`}
               >
-                <span className="nav-magazine-icon" aria-hidden>
-                  <BookOpen className="h-3.5 w-3.5" />
-                </span>
+                <BookOpen className="h-3.5 w-3.5" />
                 Magazine
               </Link>
             </div>
@@ -267,17 +265,8 @@ export function PublicNavbar({
           <div className="md:hidden border-t border-border/70 bg-background px-4 py-4 text-sm space-y-1">
             <Link href="/articles" className="flex items-center gap-2 py-1.5"><Newspaper className="h-4 w-4" /> Latest News</Link>
             <Link href="/data-reports/power-grid" className="flex items-center gap-2 py-1.5"><BarChart3 className="h-4 w-4" /> Grid Explorer</Link>
-            <Link
-              href="/magazine"
-              className={`nav-magazine-link flex items-center gap-2 py-1.5 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/35 focus-visible:ring-offset-2 focus-visible:ring-offset-background ${
-                pathname === '/magazine'
-                  ? 'nav-magazine-link--active text-emerald-600 dark:text-emerald-400 font-semibold'
-                  : 'text-emerald-500'
-              }`}
-            >
-              <span className="nav-magazine-icon" aria-hidden>
-                <BookOpen className="h-4 w-4" />
-              </span>
+            <Link href="/magazine" className="flex items-center gap-2 py-1.5 text-emerald-600/90 dark:text-emerald-400/90">
+              <BookOpen className="h-4 w-4" />
               Monthly Magazine
             </Link>
             <Link href="/search" className="flex items-center gap-2 py-1.5"><Search className="h-4 w-4" /> Search Articles</Link>
