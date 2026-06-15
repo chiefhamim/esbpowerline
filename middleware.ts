@@ -10,7 +10,7 @@ const SURFACE = process.env.APP_SURFACE ?? 'all';
 
 const CMS_PATHS = ['/cms'];
 const ADMIN_PATHS = ['/admin'];
-const SHARED_PATHS = ['/login', '/api', '/images'];
+const SHARED_PATHS = ['/login', '/members', '/api', '/images'];
 
 function matchesPrefix(pathname: string, prefixes: string[]) {
   return prefixes.some((p) => pathname === p || pathname.startsWith(`${p}/`));

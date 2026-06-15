@@ -10,7 +10,7 @@ export const HOMEPAGE_DEFAULTS = {
     primaryLabel: 'Open Grid Explorer',
     primaryHref: '/data-reports/power-grid',
     secondaryLabel: 'Member login',
-    secondaryHref: '/login',
+    secondaryHref: '/members/login',
   },
   magazineCtaTemplate: 'Read {month} {year} Issue',
 };

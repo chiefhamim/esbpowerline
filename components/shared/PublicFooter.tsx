@@ -145,7 +145,7 @@ export function PublicFooter({ categories = [] }: { categories?: PublicCategory[
                 in-depth analysis across the power sector.
               </p>
               <Link
-                href="/login"
+                href="/members/login"
                 className="btn btn-primary inline-flex w-fit items-center gap-1.5 text-sm"
               >
                 Member login

@@ -1,10 +1,10 @@
-import { LoginScreen } from '@/components/auth/LoginScreen';
+import { StaffLoginScreen } from '@/components/auth/StaffLoginScreen';
 
 export const metadata = {
-  title: 'Sign in',
-  description: 'Secure sign-in for ESB PowerLine admin and editor workspaces.',
+  title: 'Staff sign in',
+  description: 'Secure sign-in for ESB PowerLine editorial staff, CMS, and administration.',
 };
 
 export default function LoginPage() {
-  return <LoginScreen />;
+  return <StaffLoginScreen />;
 }

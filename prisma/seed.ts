@@ -56,6 +56,17 @@ async function main() {
     },
   });
 
+  await prisma.user.create({
+    data: {
+      name: 'Demo Member',
+      email: 'member@esbpowerline.com',
+      passwordHash,
+      role: 'SUBSCRIBER',
+      status: 'ACTIVE',
+      bio: 'Energy sector professional — member account',
+    },
+  });
+
   const authors = await Promise.all([
     prisma.user.create({ data: { name: 'Dr. Aminul Haque', email: 'aminul@esbpowerline.com', passwordHash, role: 'AUTHOR', bio: 'Power Systems Specialist', articlesCount: 7 } }),
     prisma.user.create({ data: { name: 'Farhana Rahman', email: 'farhana@esbpowerline.com', passwordHash, role: 'AUTHOR', bio: 'Renewables & Climate Reporter', articlesCount: 5 } }),
@@ -370,7 +381,7 @@ async function main() {
             primaryLabel: 'Open Grid Explorer',
             primaryHref: '/data-reports/power-grid',
             secondaryLabel: 'Member login',
-            secondaryHref: '/login',
+            secondaryHref: '/members/login',
           },
         },
       },

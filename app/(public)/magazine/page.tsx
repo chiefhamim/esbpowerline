@@ -87,7 +87,7 @@ export default async function MagazinePage() {
           <div className="max-w-md mx-auto">
             <div className="font-semibold text-lg mb-2">Access the full archive + exclusive briefings</div>
             <p className="text-sm text-muted-foreground mb-5">Monthly magazine + data packages for energy professionals.</p>
-            <Link href="/login" className="btn btn-primary px-8">Sign in for full access</Link>
+            <Link href="/members/login" className="btn btn-primary px-8">Sign in for full access</Link>
           </div>
         </div>
       </div>
