@@ -31,8 +31,6 @@ async function main() {
 
   // === USERS (port exact legacy demo accounts + more) ===
   const passwordHash = await bcrypt.hash('esbpowerline007', 10);
-  const editorHash = await bcrypt.hash('esbpowerline007', 10);
-  const authorHash = await bcrypt.hash('author123', 10);
 
   const superAdmin = await prisma.user.create({
     data: {
@@ -49,7 +47,7 @@ async function main() {
     data: {
       name: 'Nadia Karim',
       email: 'editor@esbpowerline.com',
-      passwordHash: editorHash,
+      passwordHash,
       role: 'EDITOR',
       status: 'ACTIVE',
       bio: 'Senior Energy Correspondent',
@@ -58,9 +56,9 @@ async function main() {
   });
 
   const authors = await Promise.all([
-    prisma.user.create({ data: { name: 'Dr. Aminul Haque', email: 'aminul@esbpowerline.com', passwordHash: authorHash, role: 'AUTHOR', bio: 'Power Systems Specialist', articlesCount: 7 } }),
-    prisma.user.create({ data: { name: 'Farhana Rahman', email: 'farhana@esbpowerline.com', passwordHash: authorHash, role: 'AUTHOR', bio: 'Renewables & Climate Reporter', articlesCount: 5 } }),
-    prisma.user.create({ data: { name: 'Rafiq Islam', email: 'rafiq@esbpowerline.com', passwordHash: authorHash, role: 'AUTHOR', bio: 'Policy & Regulation Desk', articlesCount: 9 } }),
+    prisma.user.create({ data: { name: 'Dr. Aminul Haque', email: 'aminul@esbpowerline.com', passwordHash, role: 'AUTHOR', bio: 'Power Systems Specialist', articlesCount: 7 } }),
+    prisma.user.create({ data: { name: 'Farhana Rahman', email: 'farhana@esbpowerline.com', passwordHash, role: 'AUTHOR', bio: 'Renewables & Climate Reporter', articlesCount: 5 } }),
+    prisma.user.create({ data: { name: 'Rafiq Islam', email: 'rafiq@esbpowerline.com', passwordHash, role: 'AUTHOR', bio: 'Policy & Regulation Desk', articlesCount: 9 } }),
   ]);
 
   console.log('✓ Users seeded');
@@ -300,7 +298,7 @@ async function main() {
   console.log('\n✅ Seed complete. Demo logins:');
   console.log('  admin@esbpowerline.com / esbpowerline007  (SUPER_ADMIN)');
   console.log('  editor@esbpowerline.com / esbpowerline007  (EDITOR)');
-  console.log('  (author accounts use author123)');
+  console.log('  aminul@esbpowerline.com / esbpowerline007  (AUTHOR)');
 }
 
 main()
