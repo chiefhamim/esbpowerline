@@ -121,10 +121,10 @@ export function PublicNavbar({
               
               <Link 
                 href="/magazine" 
-                className={`px-4 py-1.5 rounded-full transition-all duration-200 text-xs font-semibold flex items-center gap-1.5 select-none ${
+                className={`px-4 py-1.5 transition-all duration-200 text-xs font-semibold flex items-center gap-1.5 select-none ${
                   pathname === '/magazine' 
-                    ? 'bg-emerald-600 dark:bg-emerald-500 text-white shadow-sm' 
-                    : 'text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 hover:bg-emerald-500/15'
+                    ? 'text-emerald-600 dark:text-emerald-400 font-bold' 
+                    : 'text-emerald-600/75 dark:text-emerald-400/75 hover:text-emerald-600 dark:hover:text-emerald-400'
                 }`}
               >
                 <BookOpen className="h-3.5 w-3.5" /> Magazine

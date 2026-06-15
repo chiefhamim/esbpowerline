@@ -37,7 +37,7 @@ export function MemberFooterCard() {
   }
 
   return (
-    <div className="card flex flex-col gap-4 p-5 sm:p-6 border-emerald-500/20 bg-emerald-500/5">
+    <div className="card flex flex-col gap-4 p-5 sm:p-6 border-violet-500/20 bg-violet-500/5">
       <p className="text-sm leading-relaxed text-foreground/85">
         {access.isMember ? (
           <>

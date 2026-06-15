@@ -22,7 +22,7 @@ export function MemberAuthButton() {
   }
 
   const signedInStyle = access.isMember
-    ? 'border-emerald-500/35 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
+    ? 'border-violet-500/35 bg-violet-500/10 text-violet-600 dark:text-violet-400'
     : 'border-primary/30 bg-primary/10 text-primary';
 
   return (
@@ -33,7 +33,7 @@ export function MemberAuthButton() {
           'inline-flex h-8 items-center justify-center gap-1.5 rounded-xl border border-border/50 bg-muted/40 text-foreground/80 transition-colors hover:bg-muted/30 hover:text-foreground',
           access.signedIn ? signedInStyle : '',
           access.signedIn ? 'px-2.5 min-w-[2rem]' : 'w-8',
-          isMemberArea && access.isMember && 'border-emerald-500/40',
+          isMemberArea && access.isMember && 'border-violet-500/40',
         )}
         aria-label={access.signedIn ? `${access.label} — ${access.userName}` : access.label}
       >

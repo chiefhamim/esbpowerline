@@ -23,7 +23,7 @@ export function MemberNavMenuLinks() {
 
   return (
     <>
-      <Link href={access.href} className="flex items-center gap-2 py-1.5 text-emerald-600 dark:text-emerald-400 font-medium">
+      <Link href={access.href} className="flex items-center gap-2 py-1.5 text-violet-600 dark:text-violet-400 font-medium">
         <BookOpenCheck className="h-4 w-4" />
         {access.label}
         <span className="text-muted-foreground font-normal">({access.userName})</span>
