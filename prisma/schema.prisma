@@ -31,6 +31,9 @@ model User {
   articles        Article[]
   receivedNotices EditorialNotice[] @relation("ReceivedNotices")
   sentNotices     EditorialNotice[] @relation("SentNotices")
+  savedItems      SavedItem[]
+  memberDownloads MemberDownload[]
+  comments        Comment[]
 }
 
 enum Role {
@@ -168,15 +171,42 @@ model Media {
 // COMMENTS (moderation)
 // ============================================
 model Comment {
-  id         String          @id @default(cuid())
-  articleId  String
-  parentId   String?
-  authorName String
+  id          String        @id @default(cuid())
+  articleId   String
+  parentId    String?
+  userId      String?
+  user        User?         @relation(fields: [userId], references: [id], onDelete: SetNull)
+  authorName  String
   authorEmail String?
-  content    String
-  status     CommentStatus   @default(PENDING)
-  likes      Int             @default(0)
-  createdAt  DateTime        @default(now())
+  content     String
+  status      CommentStatus @default(PENDING)
+  likes       Int           @default(0)
+  createdAt   DateTime      @default(now())
+}
+
+model SavedItem {
+  id        String        @id @default(cuid())
+  userId    String
+  user      User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  itemType  SavedItemType
+  targetId  String
+  createdAt DateTime      @default(now())
+
+  @@unique([userId, itemType, targetId])
+}
+
+enum SavedItemType {
+  ARTICLE
+  MAGAZINE
+}
+
+model MemberDownload {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  label     String
+  fileUrl   String?
+  createdAt DateTime @default(now())
 }
 
 enum CommentStatus {

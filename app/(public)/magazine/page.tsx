@@ -2,6 +2,9 @@ import Link from 'next/link';
 import { ArrowRight, Download, Calendar, Users } from 'lucide-react';
 import { getLatestMagazineIssue } from '@/lib/category-content';
 import { MagazineCoverMockup } from '@/components/news/MagazineCoverMockup';
+import { auth } from '@/lib/auth';
+import { getMagazineSavedState } from '@/lib/actions/members';
+import { SaveMagazineButton } from '@/components/members/SaveMagazineButton';
 
 export const metadata = {
   title: 'Monthly Magazine | ESB PowerLine',
@@ -10,7 +13,12 @@ export const metadata = {
 
 export default async function MagazinePage() {
   const issue = await getLatestMagazineIssue();
+  const session = await auth();
+  const signedIn = !!session?.user?.id;
+  const saved = issue && signedIn ? await getMagazineSavedState(issue.id) : false;
+
   const magazine = issue ?? {
+    id: '',
     title: 'ESB PowerLine Monthly',
     summary: 'In-depth analysis on Bangladesh power sector policy, projects and data.',
     coverUrl: '/images/demo_magazine_cover.jpg',
@@ -40,16 +48,26 @@ export default async function MagazinePage() {
               <p className="text-[15px] text-muted-foreground leading-relaxed">{magazine.summary}</p>
 
               <div className="mt-6 flex flex-wrap gap-3">
-                {magazine.pdfUrl ? (
+                {signedIn && magazine.pdfUrl ? (
                   <a href={magazine.pdfUrl} target="_blank" rel="noopener noreferrer" className="btn btn-primary gap-2 px-5">
                     <Download className="h-4 w-4" /> Download PDF
                   </a>
+                ) : magazine.pdfUrl ? (
+                  <Link href="/members/login?callbackUrl=/magazine" className="btn btn-primary gap-2 px-5">
+                    <Download className="h-4 w-4" /> Member login to download
+                  </Link>
                 ) : (
                   <button type="button" className="btn btn-primary gap-2 px-5" disabled>
                     <Download className="h-4 w-4" /> PDF coming soon
                   </button>
                 )}
+                {signedIn && issue ? (
+                  <SaveMagazineButton magazineId={issue.id} initialSaved={saved} />
+                ) : null}
                 <Link href="/articles" className="btn btn-secondary">Browse related articles</Link>
+                {signedIn ? (
+                  <Link href="/members/magazine" className="btn btn-secondary">Full archive</Link>
+                ) : null}
               </div>
 
               <div className="mt-8 text-xs text-muted-foreground/80 flex items-center gap-4">
@@ -87,7 +105,11 @@ export default async function MagazinePage() {
           <div className="max-w-md mx-auto">
             <div className="font-semibold text-lg mb-2">Access the full archive + exclusive briefings</div>
             <p className="text-sm text-muted-foreground mb-5">Monthly magazine + data packages for energy professionals.</p>
-            <Link href="/members/login" className="btn btn-primary px-8">Sign in for full access</Link>
+            {signedIn ? (
+              <Link href="/members" className="btn btn-primary px-8">Open my library</Link>
+            ) : (
+              <Link href="/members/login" className="btn btn-primary px-8">Sign in for full access</Link>
+            )}
           </div>
         </div>
       </div>

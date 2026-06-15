@@ -52,5 +52,5 @@ export async function getServerSession() {
 export function getRedirectForRole(role: Role): string {
   if (role === 'SUPER_ADMIN' || role === 'ADMIN') return '/admin';
   if (['EDITOR', 'AUTHOR', 'CONTRIBUTOR'].includes(role)) return '/cms';
-  return '/';
+  return '/members';
 }

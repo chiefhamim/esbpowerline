@@ -17,7 +17,7 @@ export function resolvePostLoginPath(
   if (callbackUrl) return callbackUrl;
 
   if (audience === 'member' && (!role || role === 'SUBSCRIBER')) {
-    return '/';
+    return '/members';
   }
 
   const hostname = hostContext?.hostname ?? 'localhost';

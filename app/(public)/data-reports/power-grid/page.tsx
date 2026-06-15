@@ -1,7 +1,9 @@
 import Link from 'next/link';
-import { RefreshCw, Download } from 'lucide-react';
+import { RefreshCw } from 'lucide-react';
 import { getGridSettingsMap } from '@/lib/homepage-content';
 import { PowerGridExplorer } from '@/components/news/PowerGridExplorer';
+import { auth } from '@/lib/auth';
+import { DownloadGridButton } from '@/components/members/DownloadGridButton';
 
 export const metadata = {
   title: 'Power Grid Explorer — ESB PowerLine',
@@ -9,8 +11,8 @@ export const metadata = {
 };
 
 export default async function PowerGridExplorerPage() {
-  // Load dynamic grid data from database settings if available
-  const settings = await getGridSettingsMap();
+  const [settings, session] = await Promise.all([getGridSettingsMap(), auth()]);
+  const signedIn = !!session?.user?.id;
 
   return (
     <div className="container py-8">
@@ -24,9 +26,13 @@ export default async function PowerGridExplorerPage() {
           <button className="btn btn-secondary flex items-center gap-1.5 text-xs px-3.5 py-2 hover:bg-secondary transition-colors">
             <RefreshCw className="h-3.5 w-3.5" /> Refresh Data
           </button>
-          <button className="btn btn-secondary flex items-center gap-1.5 text-xs px-3.5 py-2 hover:bg-secondary transition-colors">
-            <Download className="h-3.5 w-3.5" /> Export CSV
-          </button>
+          {signedIn ? (
+            <DownloadGridButton />
+          ) : (
+            <Link href="/members/login?callbackUrl=/data-reports/power-grid" className="btn btn-secondary text-xs px-3.5 py-2">
+              Member login to export
+            </Link>
+          )}
           <Link href="/admin/analytics" className="text-primary hover:underline text-xs px-2 font-semibold transition-colors">Admin analytics →</Link>
         </div>
       </div>

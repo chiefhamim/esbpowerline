@@ -24,6 +24,9 @@ async function main() {
   await prisma.edge.deleteMany();
   await prisma.node.deleteMany();
   await prisma.dashboardStat.deleteMany();
+  await prisma.memberDownload.deleteMany();
+  await prisma.savedItem.deleteMany();
+  await prisma.comment.deleteMany();
   await prisma.newsletterSub.deleteMany();
   await prisma.ad.deleteMany();
   await prisma.user.deleteMany();
@@ -56,7 +59,7 @@ async function main() {
     },
   });
 
-  await prisma.user.create({
+  const demoMember = await prisma.user.create({
     data: {
       name: 'Demo Member',
       email: 'member@esbpowerline.com',
@@ -334,6 +337,48 @@ async function main() {
   });
   console.log('✓ Magazine issues seeded');
 
+  const [sampleArticle, sampleMagazine] = await Promise.all([
+    prisma.article.findFirst({ where: { status: 'PUBLISHED' }, orderBy: { publishedAt: 'desc' } }),
+    prisma.magazineIssue.findFirst({ orderBy: { issueDate: 'desc' } }),
+  ]);
+
+  if (sampleArticle && sampleMagazine) {
+    await prisma.savedItem.createMany({
+      data: [
+        { userId: demoMember.id, itemType: 'ARTICLE', targetId: sampleArticle.id },
+        { userId: demoMember.id, itemType: 'MAGAZINE', targetId: sampleMagazine.id },
+      ],
+    });
+    await prisma.memberDownload.create({
+      data: {
+        userId: demoMember.id,
+        label: 'Grid snapshot (CSV)',
+        fileUrl: '/api/members/grid-export',
+      },
+    });
+    await prisma.comment.createMany({
+      data: [
+        {
+          articleId: sampleArticle.id,
+          userId: demoMember.id,
+          authorName: demoMember.name,
+          authorEmail: demoMember.email,
+          content: 'Useful breakdown — the tariff implications for IPPs are especially clear.',
+          status: 'APPROVED',
+        },
+        {
+          articleId: sampleArticle.id,
+          userId: demoMember.id,
+          authorName: demoMember.name,
+          authorEmail: demoMember.email,
+          content: 'Would be helpful to see a follow-up on regional import pricing.',
+          status: 'PENDING',
+        },
+      ],
+    });
+    console.log('✓ Demo member library seeded');
+  }
+
   // === DASHBOARD STATS (energy numbers) ===
   const stats = [
     { statName: 'Total Installed Capacity', value: 28420, unit: 'MW', source: 'BPDB', lastVerified: '2026-06-13' },
@@ -502,6 +547,7 @@ async function main() {
   console.log('  admin@esbpowerline.com / esbpowerline007  (SUPER_ADMIN)');
   console.log('  editor@esbpowerline.com / esbpowerline007  (EDITOR)');
   console.log('  aminul@esbpowerline.com / esbpowerline007  (AUTHOR)');
+  console.log('  member@esbpowerline.com / esbpowerline007  (SUBSCRIBER)');
 }
 
 main()

@@ -10,7 +10,7 @@ export const ROLES = {
   EDITOR:      { name: 'Editor',      level: 60,  color: '#3b82f6' },
   AUTHOR:      { name: 'Author',      level: 40,  color: '#10b981' },
   CONTRIBUTOR: { name: 'Contributor', level: 20,  color: '#f59e0b' },
-  SUBSCRIBER:  { name: 'Subscriber',  level: 10,  color: '#6b7280' },
+  SUBSCRIBER:  { name: 'Subscriber',  level: 5,   color: '#6b7280' },
 } as const;
 
 export type Role = keyof typeof ROLES;

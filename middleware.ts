@@ -78,6 +78,17 @@ export default auth((request) => {
     }
   }
 
+  const isMemberLogin = pathname === '/members/login';
+  const isMemberPanel =
+    pathname === '/members' ||
+    (pathname.startsWith('/members/') && !isMemberLogin);
+
+  if (isMemberPanel && !session) {
+    const login = new URL('/members/login', request.url);
+    login.searchParams.set('callbackUrl', pathname);
+    return NextResponse.redirect(login);
+  }
+
   return NextResponse.next();
 });
 

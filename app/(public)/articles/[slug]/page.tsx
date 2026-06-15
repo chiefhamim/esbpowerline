@@ -6,6 +6,10 @@ import {
   getPublishedArticleBySlug,
   getRelatedPublishedArticles,
 } from '@/lib/category-content';
+import { auth } from '@/lib/auth';
+import { getArticleComments, getArticleSavedState } from '@/lib/actions/members';
+import { SaveArticleButton } from '@/components/members/SaveArticleButton';
+import { ArticleCommentSection } from '@/components/members/ArticleCommentSection';
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
@@ -28,7 +32,14 @@ export default async function ArticlePage({ params }: { params: Promise<{ slug: 
   const article = await getPublishedArticleBySlug(slug);
   if (!article) notFound();
 
-  const related = await getRelatedPublishedArticles(slug, article.category, article.tags, 3);
+  const [related, session, comments, saved] = await Promise.all([
+    getRelatedPublishedArticles(slug, article.category, article.tags, 3),
+    auth(),
+    getArticleComments(article.id),
+    getArticleSavedState(article.id),
+  ]);
+
+  const signedIn = !!session?.user?.id;
 
   const jsonLd = {
     '@context': 'https://schema.org',
@@ -62,6 +73,15 @@ export default async function ArticlePage({ params }: { params: Promise<{ slug: 
         </div>
       </div>
 
+      <div className="mt-5">
+        <SaveArticleButton
+          articleId={article.id}
+          articleSlug={slug}
+          initialSaved={saved}
+          signedIn={signedIn}
+        />
+      </div>
+
       <img src={article.imageUrl} alt={article.title} className="mt-6 rounded-xl w-full aspect-video object-cover border border-[#334155]" />
 
       <div className="prose prose-invert mt-8 max-w-none" dangerouslySetInnerHTML={{ __html: article.content }} />
@@ -70,6 +90,20 @@ export default async function ArticlePage({ params }: { params: Promise<{ slug: 
         {article.tags.map((t: string) => (
           <Link key={t} href={`/tags/${t}`} className="tag">#{t}</Link>
         ))}
+      </div>
+
+      <div className="mt-10 border-t border-[#334155] pt-8">
+        <ArticleCommentSection
+          articleId={article.id}
+          articleSlug={slug}
+          signedIn={signedIn}
+          initialComments={comments.map((c) => ({
+            id: c.id,
+            authorName: c.authorName,
+            content: c.content,
+            createdAt: c.createdAt,
+          }))}
+        />
       </div>
 
       <div className="mt-10 border-t border-[#334155] pt-8">
@@ -96,8 +130,6 @@ export default async function ArticlePage({ params }: { params: Promise<{ slug: 
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
-
-      <div className="mt-10 text-xs text-[#64748b]">Comments, newsletter, and full user accounts coming soon in the complete platform.</div>
     </div>
   );
 }
