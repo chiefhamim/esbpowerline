@@ -66,7 +66,7 @@ export function StaffLoginScreen() {
   }
 
   return (
-    <LoginFrame>
+    <LoginFrame audience="staff">
       <div className="login-access__body">
         <div className="login-access__staff">
           <span className="login-access__badge">Staff access</span>
@@ -126,7 +126,7 @@ export function StaffLoginScreen() {
               </div>
             )}
 
-            <Button type="submit" disabled={loading} size="lg" className="login-access__submit w-full">
+            <Button type="submit" disabled={loading} size="lg" variant="ghost" className="login-access__submit w-full">
               {loading ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin" />

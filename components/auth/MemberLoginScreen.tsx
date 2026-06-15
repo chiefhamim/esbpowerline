@@ -82,7 +82,7 @@ export function MemberLoginScreen() {
   const demoActive = email === DEMO_MEMBER.email;
 
   return (
-    <LoginFrame>
+    <LoginFrame audience="member">
       <div className="login-access__body">
         <div className="login-access__staff">
           <span className="login-access__badge">Member access</span>
@@ -142,7 +142,7 @@ export function MemberLoginScreen() {
               </div>
             )}
 
-            <Button type="submit" disabled={loading} size="lg" className="login-access__submit w-full">
+            <Button type="submit" disabled={loading} size="lg" variant="ghost" className="login-access__submit w-full">
               {loading ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin" />

@@ -290,6 +290,45 @@
 
 .login-shell {
   @apply relative min-h-screen flex items-center justify-center bg-background px-4 py-8 sm:px-6 sm:py-12;
+  --login-accent: 217 91% 60%;
+  --login-accent-soft: 217 45% 12%;
+  --login-accent-muted: 215 20% 70%;
+}
+
+.theme-midnight .login-shell--staff {
+  --login-accent: 217 91% 60%;
+  --login-accent-soft: 217 48% 11%;
+  --login-accent-muted: 215 24% 72%;
+}
+
+.theme-dark .login-shell--staff {
+  --login-accent: 220 85% 57%;
+  --login-accent-soft: 220 28% 12%;
+  --login-accent-muted: 240 6% 68%;
+}
+
+.theme-white .login-shell--staff {
+  --login-accent: 224 85% 42%;
+  --login-accent-soft: 214 58% 96%;
+  --login-accent-muted: 215 16% 40%;
+}
+
+.theme-midnight .login-shell--member {
+  --login-accent: 162 72% 46%;
+  --login-accent-soft: 165 38% 10%;
+  --login-accent-muted: 158 22% 68%;
+}
+
+.theme-dark .login-shell--member {
+  --login-accent: 158 62% 42%;
+  --login-accent-soft: 160 24% 11%;
+  --login-accent-muted: 156 14% 66%;
+}
+
+.theme-white .login-shell--member {
+  --login-accent: 162 76% 30%;
+  --login-accent-soft: 158 42% 95%;
+  --login-accent-muted: 160 18% 38%;
 }
 
 .login-shell--loading .login-frame {
@@ -298,11 +337,24 @@
 
 /* Single frame — one elevation, one border (Vercel/Linear pattern) */
 .login-frame {
-  @apply w-full max-w-[960px] rounded-2xl border border-border bg-card shadow-lg;
+  @apply w-full max-w-[960px] rounded-2xl border bg-card shadow-lg;
+  border-color: hsl(var(--login-accent) / 0.22);
+  box-shadow:
+    var(--shadow-lg),
+    0 0 0 1px hsl(var(--login-accent) / 0.06);
+}
+
+.login-shell--member .login-frame {
+  border-color: hsl(var(--login-accent) / 0.3);
+  box-shadow:
+    var(--shadow-lg),
+    0 12px 40px -16px hsl(var(--login-accent) / 0.22);
 }
 
 .login-frame__bar {
-  @apply relative z-10 flex items-center justify-between gap-4 overflow-visible rounded-t-2xl border-b border-border px-5 py-3 sm:px-6;
+  @apply relative z-10 flex items-center justify-between gap-4 overflow-visible rounded-t-2xl border-b px-5 py-3 sm:px-6;
+  border-bottom-color: hsl(var(--login-accent) / 0.14);
+  background: linear-gradient(180deg, hsl(var(--login-accent-soft) / 0.22) 0%, transparent 100%);
 }
 
 .login-frame__back {
@@ -315,14 +367,32 @@
 
 /* Brand column — editorial masthead, static texture */
 .login-brand {
-  @apply relative flex min-h-full flex-col overflow-hidden border-b border-border bg-muted/20 lg:border-b-0 lg:border-r;
+  @apply relative flex min-h-full flex-col overflow-hidden border-b border-border lg:border-b-0 lg:border-r;
+  background-color: hsl(var(--login-accent-soft) / 0.42);
+}
+
+.login-shell--staff .login-brand {
+  background-color: hsl(var(--muted) / 0.28);
+}
+
+.login-shell--member .login-brand {
+  background-color: hsl(var(--login-accent-soft) / 0.5);
 }
 
 .login-brand__wash {
   @apply absolute inset-0 pointer-events-none;
   background: linear-gradient(
     155deg,
-    hsl(var(--primary) / 0.07) 0%,
+    hsl(var(--login-accent) / 0.14) 0%,
+    transparent 44%,
+    hsl(var(--background) / 0.55) 100%
+  );
+}
+
+.login-shell--staff .login-brand__wash {
+  background: linear-gradient(
+    155deg,
+    hsl(var(--login-accent) / 0.1) 0%,
     transparent 42%,
     hsl(var(--background) / 0.55) 100%
   );
@@ -363,8 +433,15 @@
 
 .login-brand__rule {
   @apply -mt-1 block h-0.5 w-12 rounded-full;
-  background: linear-gradient(90deg, #e30613 0%, #008c45 100%);
-  opacity: 0.5;
+  opacity: 0.65;
+}
+
+.login-shell--staff .login-brand__rule {
+  background: linear-gradient(90deg, hsl(var(--login-accent)) 0%, hsl(217 91% 72%) 100%);
+}
+
+.login-shell--member .login-brand__rule {
+  background: linear-gradient(90deg, hsl(162 76% 36%) 0%, hsl(158 64% 52%) 100%);
 }
 
 /* Brand deck — shared login & footer editorial copy */
@@ -374,6 +451,10 @@
 
 .brand-deck__kicker {
   @apply font-display text-[11px] font-semibold uppercase tracking-[0.14em] text-primary;
+}
+
+.login-brand .brand-deck__kicker {
+  color: hsl(var(--login-accent));
 }
 
 .brand-deck__lede {
@@ -411,6 +492,22 @@
   @apply flex min-h-full flex-col bg-card;
 }
 
+.login-shell--member .login-access {
+  background: linear-gradient(
+    180deg,
+    hsl(var(--login-accent-soft) / 0.38) 0%,
+    hsl(var(--card)) 42%
+  );
+}
+
+.login-shell--staff .login-access {
+  background: linear-gradient(
+    180deg,
+    hsl(var(--login-accent-soft) / 0.18) 0%,
+    hsl(var(--card)) 36%
+  );
+}
+
 .login-access__body {
   @apply flex h-full flex-col p-8 sm:p-10;
 }
@@ -428,8 +525,14 @@
 }
 
 .login-access__badge {
-  @apply w-fit rounded-full border border-primary/25 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-primary;
-  background-color: hsl(var(--primary) / 0.1);
+  @apply w-fit rounded-full px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.14em];
+  color: hsl(var(--login-accent));
+  border: 1px solid hsl(var(--login-accent) / 0.28);
+  background-color: hsl(var(--login-accent) / 0.12);
+}
+
+.login-shell--member .login-access__badge {
+  letter-spacing: 0.16em;
 }
 
 .login-access__heading {
@@ -456,6 +559,12 @@
   @apply h-11 rounded-lg border-input bg-background px-3 py-0 text-sm leading-[2.75rem];
 }
 
+.login-access__input:focus-visible {
+  border-color: hsl(var(--login-accent) / 0.5);
+  box-shadow: 0 0 0 2px hsl(var(--login-accent) / 0.16);
+  outline: none;
+}
+
 .login-access__password {
   @apply relative;
 }
@@ -472,13 +581,24 @@
   @apply flex items-start gap-2 rounded-lg border border-destructive/25 bg-destructive/10 px-3 py-2.5 text-sm text-destructive;
 }
 
-.login-access__submit {
-  @apply mt-2 h-10 gap-2 text-sm font-semibold;
+.login-shell .login-access__submit {
+  @apply mt-2 h-10 gap-2 border-0 text-sm font-semibold shadow-sm;
+  background-color: hsl(var(--login-accent)) !important;
+  color: hsl(0 0% 100%) !important;
+}
+
+.login-shell .login-access__submit:hover:not(:disabled) {
+  background-color: hsl(var(--login-accent) / 0.9) !important;
+}
+
+.login-shell .login-access__submit:focus-visible {
+  box-shadow: 0 0 0 2px hsl(var(--background)), 0 0 0 4px hsl(var(--login-accent) / 0.45);
 }
 
 .login-contributors {
-  @apply rounded-xl border border-border p-4;
-  background-color: hsl(var(--muted) / 0.45);
+  @apply rounded-xl border p-4;
+  border-color: hsl(var(--login-accent) / 0.14);
+  background-color: hsl(var(--login-accent-soft) / 0.35);
 }
 
 .login-contributors__header {
@@ -508,19 +628,21 @@
 }
 
 .login-contributors__row:hover {
-  border-color: hsl(var(--primary) / 0.3);
-  background-color: hsl(var(--muted) / 0.55);
+  border-color: hsl(var(--login-accent) / 0.32);
+  background-color: hsl(var(--login-accent-soft) / 0.45);
 }
 
 .login-contributors__row--active {
-  border-color: hsl(var(--primary) / 0.45);
-  background-color: hsl(var(--muted) / 0.65);
+  border-color: hsl(var(--login-accent) / 0.48);
+  background-color: hsl(var(--login-accent-soft) / 0.55);
   box-shadow: var(--shadow-sm);
 }
 
 .login-contributors__icon {
-  @apply flex h-9 w-9 items-center justify-center self-center rounded-md border border-border text-primary;
-  background-color: hsl(var(--primary) / 0.1);
+  @apply flex h-9 w-9 items-center justify-center self-center rounded-md border;
+  color: hsl(var(--login-accent));
+  border-color: hsl(var(--login-accent) / 0.22);
+  background-color: hsl(var(--login-accent) / 0.1);
 }
 
 .login-contributors__icon svg {
@@ -532,7 +654,8 @@
 }
 
 .login-contributors__badge {
-  @apply leading-none text-[10px] font-semibold uppercase tracking-wide text-primary;
+  @apply leading-none text-[10px] font-semibold uppercase tracking-wide;
+  color: hsl(var(--login-accent));
 }
 
 .login-contributors__email {
@@ -549,16 +672,21 @@
 }
 
 .login-contributors__row--active .login-contributors__arrow {
-  @apply text-primary;
+  color: hsl(var(--login-accent));
 }
 
 .login-access__alt {
   @apply -mt-2;
 }
 
+.login-access__alt a {
+  color: hsl(var(--login-accent));
+}
+
 .login-member-panel {
-  @apply rounded-xl border border-border p-4;
-  background-color: hsl(var(--muted) / 0.45);
+  @apply rounded-xl border p-4;
+  border-color: hsl(var(--login-accent) / 0.16);
+  background-color: hsl(var(--login-accent-soft) / 0.32);
 }
 
 .login-member-panel__title {
@@ -577,8 +705,14 @@
 }
 
 .login-member-panel__icon {
-  @apply mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-md border border-border text-primary;
-  background-color: hsl(var(--primary) / 0.1);
+  @apply mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-md border;
+  color: hsl(var(--login-accent));
+  border-color: hsl(var(--login-accent) / 0.2);
+  background-color: hsl(var(--login-accent) / 0.1);
+}
+
+.login-shell--member .login-member-panel__benefit {
+  color: hsl(var(--login-accent-muted));
 }
 
 /* Official social — Facebook & YouTube */

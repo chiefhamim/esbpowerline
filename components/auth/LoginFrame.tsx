@@ -5,10 +5,19 @@ import { BrandDeck } from '@/components/shared/BrandDeck';
 import { BrandLogo } from '@/components/shared/BrandLogo';
 import { OfficialSocialLinks } from '@/components/shared/OfficialSocialLinks';
 import { SiteThemeToggle } from '@/components/shared/SiteThemeToggle';
+import { cn } from '@/lib/utils';
 
-export function LoginFrame({ children }: { children: ReactNode }) {
+export type LoginAudience = 'staff' | 'member';
+
+export function LoginFrame({
+  children,
+  audience = 'staff',
+}: {
+  children: ReactNode;
+  audience?: LoginAudience;
+}) {
   return (
-    <div className="login-shell">
+    <div className={cn('login-shell', audience === 'member' ? 'login-shell--member' : 'login-shell--staff')}>
       <div className="login-frame">
         <header className="login-frame__bar">
           <Link href="/" className="login-frame__back">

@@ -2,7 +2,7 @@ import { Suspense } from 'react';
 
 function LoginFallback() {
   return (
-    <div className="login-shell login-shell--loading">
+    <div className="login-shell login-shell--staff login-shell--loading">
       <div className="login-frame">
         <div className="login-access p-10 flex items-center justify-center min-h-[280px]">
           <div className="flex flex-col items-center gap-3">
