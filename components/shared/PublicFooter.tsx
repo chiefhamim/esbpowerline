@@ -138,20 +138,21 @@ export function PublicFooter({ categories = [] }: { categories?: PublicCategory[
           </section>
 
           <section className="lg:col-span-4">
-            <FooterHeading>Subscribers</FooterHeading>
+            <FooterHeading>Members</FooterHeading>
             <div className="card flex flex-col gap-4 p-5 sm:p-6">
               <p className="text-sm leading-relaxed text-foreground/85">
-                Institutional access, data packages and archives for professionals across the power sector.
+                Sign in to save articles and magazine issues, download data packages, join discussions, and unlock
+                in-depth analysis across the power sector.
               </p>
               <Link
                 href="/login"
                 className="btn btn-primary inline-flex w-fit items-center gap-1.5 text-sm"
               >
-                Login Portal
+                Member login
                 <ArrowUpRight className="h-4 w-4" />
               </Link>
               <p className="text-xs leading-relaxed text-foreground/60">
-                For editors, writers and administration portal.
+                Editorial staff and administrators use the same sign-in with assigned roles.
               </p>
             </div>
           </section>

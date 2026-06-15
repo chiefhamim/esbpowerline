@@ -38,7 +38,7 @@ export default async function PowerGridExplorerPage() {
       />
 
       <div className="mt-10 pt-6 border-t border-border/60 text-[11px] text-muted-foreground flex flex-wrap gap-x-5 gap-y-1.5 leading-relaxed">
-        Sources: BPDB, PGCB, SREDA, BERC, Petrobangla. Data shown is illustrative for demonstration. Real-time feeds available via institutional API.
+        Sources: BPDB, PGCB, SREDA, BERC, Petrobangla. Data shown is illustrative for demonstration. Real-time feeds available to members.
       </div>
     </div>
   );

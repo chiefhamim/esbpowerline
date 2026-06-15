@@ -288,7 +288,7 @@ export function PowerGridExplorer({ initialMix, initialLines, initialProjects }:
           </div>
           <div className="text-xs mt-5 text-muted-foreground flex items-center gap-1.5">
             <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-            Data refreshed from PGCB SCADA. Full GIS map available to institutional subscribers.
+            Data refreshed from PGCB SCADA. Full GIS map available to members.
           </div>
         </div>
       )}

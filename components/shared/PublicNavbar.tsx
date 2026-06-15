@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { Search, Menu, X, Newspaper, BookOpen, BarChart3, Home } from 'lucide-react';
+import { Search, Menu, X, Newspaper, BookOpen, BarChart3, Home, UserRound } from 'lucide-react';
 import { useState } from 'react';
 import { usePathname } from 'next/navigation';
 import type { PublicCategory } from '@/lib/category-types';
@@ -14,6 +14,7 @@ import {
 } from '@/lib/category-icons';
 import { CategoryIconDisplay } from '@/components/category/CategoryIconDisplay';
 import { LiveMarketTicker, type TickerItem } from '@/components/news/LiveMarketTicker';
+import { ModernTooltip } from '@/components/shared/ModernTooltip';
 import { SiteThemeToggle } from '@/components/shared/SiteThemeToggle';
 
 type NavCategory = {
@@ -140,6 +141,22 @@ export function PublicNavbar({
               <Search className="h-3.5 w-3.5" /> Search
             </Link>
 
+            <ModernTooltip
+              label="Member login"
+              hint="Save articles, magazine & data downloads; comment and access in-depth analysis."
+              fast
+            >
+              <Link
+                href="/login"
+                className={`inline-flex h-8 w-8 items-center justify-center rounded-xl border border-border/50 bg-muted/40 text-foreground/80 transition-colors hover:bg-muted/30 hover:text-foreground ${
+                  pathname === '/login' ? 'border-primary/40 text-primary' : ''
+                }`}
+                aria-label="Member login"
+              >
+                <UserRound className="h-4 w-4" strokeWidth={pathname === '/login' ? 2.5 : 2} />
+              </Link>
+            </ModernTooltip>
+
             <SiteThemeToggle className="flex pl-2 border-l border-border/50" />
 
             {/* Mobile hamburger */}
@@ -262,6 +279,7 @@ export function PublicNavbar({
             <Link href="/data-reports/power-grid" className="flex items-center gap-2 py-1.5"><BarChart3 className="h-4 w-4" /> Grid Explorer</Link>
             <Link href="/magazine" className="flex items-center gap-2 py-1.5 text-emerald-500"><BookOpen className="h-4 w-4" /> Monthly Magazine</Link>
             <Link href="/search" className="flex items-center gap-2 py-1.5"><Search className="h-4 w-4" /> Search Articles</Link>
+            <Link href="/login" className="flex items-center gap-2 py-1.5"><UserRound className="h-4 w-4" /> Member login</Link>
           </div>
         )}
       </nav>

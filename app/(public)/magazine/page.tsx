@@ -61,7 +61,7 @@ export default async function MagazinePage() {
 
           <div className="lg:w-3/5 flex flex-col items-center">
             <MagazineCoverMockup coverUrl={magazine.coverUrl} />
-            <div className="text-center mt-3 text-[10px] text-muted-foreground/70">Print • Digital • Archive access for subscribers</div>
+            <div className="text-center mt-3 text-[10px] text-muted-foreground/70">Print • Digital • Archive access for members</div>
           </div>
         </div>
 
