@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { LucideIcon } from 'lucide-react';
 import { Moon, MoonStar, Sun } from 'lucide-react';
 import {
@@ -38,8 +38,13 @@ function ThemePreview({ label, preview }: { label: string; preview: SiteThemePre
   );
 }
 
+const TIP_DISMISS_MS = 2000;
+
 export function SiteThemeToggle({ className = '' }: SiteThemeToggleProps) {
   const [theme, setTheme] = useState<SiteTheme>('midnight');
+  const [openTip, setOpenTip] = useState<SiteTheme | null>(null);
+  const lockedTipRef = useRef<SiteTheme | null>(null);
+  const hideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     const saved = getSavedSiteTheme();
@@ -47,9 +52,40 @@ export function SiteThemeToggle({ className = '' }: SiteThemeToggleProps) {
     applySiteTheme(saved);
   }, []);
 
-  function changeTheme(next: SiteTheme) {
+  useEffect(() => {
+    return () => {
+      if (hideTimerRef.current) clearTimeout(hideTimerRef.current);
+    };
+  }, []);
+
+  function clearTipLock() {
+    lockedTipRef.current = null;
+    setOpenTip(null);
+    hideTimerRef.current = null;
+  }
+
+  function scheduleTipDismiss(tipId: SiteTheme) {
+    if (hideTimerRef.current) clearTimeout(hideTimerRef.current);
+    lockedTipRef.current = tipId;
+    setOpenTip(tipId);
+    hideTimerRef.current = setTimeout(clearTipLock, TIP_DISMISS_MS);
+  }
+
+  function showTip(tipId: SiteTheme) {
+    if (lockedTipRef.current) return;
+    setOpenTip(tipId);
+  }
+
+  function hideTip() {
+    if (lockedTipRef.current) return;
+    setOpenTip(null);
+  }
+
+  function changeTheme(next: SiteTheme, button: HTMLButtonElement) {
     setTheme(next);
     applySiteTheme(next);
+    button.blur();
+    scheduleTipDismiss(next);
   }
 
   return (
@@ -61,10 +97,17 @@ export function SiteThemeToggle({ className = '' }: SiteThemeToggleProps) {
           const preview = SITE_THEME_PREVIEW[t.id];
 
           return (
-            <div key={t.id} className="site-theme-toggle__item group relative">
+            <div
+              key={t.id}
+              className="site-theme-toggle__item relative"
+              onMouseEnter={() => showTip(t.id)}
+              onMouseLeave={hideTip}
+            >
               <button
                 type="button"
-                onClick={() => changeTheme(t.id)}
+                onClick={(e) => changeTheme(t.id, e.currentTarget)}
+                onFocus={() => showTip(t.id)}
+                onBlur={hideTip}
                 className="site-theme-toggle__btn"
                 aria-label={`Switch to ${t.label} theme`}
                 aria-pressed={isActive}
@@ -77,7 +120,13 @@ export function SiteThemeToggle({ className = '' }: SiteThemeToggleProps) {
                   strokeWidth={isActive ? 2.5 : 2}
                 />
               </button>
-              <div className="site-theme-toggle__flyout" aria-hidden>
+              <div
+                className={cn(
+                  'site-theme-toggle__flyout',
+                  openTip === t.id && 'site-theme-toggle__flyout--visible',
+                )}
+                aria-hidden={openTip !== t.id}
+              >
                 <div
                   className="site-theme-toggle__tip"
                   style={
