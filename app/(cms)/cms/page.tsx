@@ -1,0 +1,185 @@
+import Link from 'next/link';
+import { auth } from '@/lib/auth';
+import { getAuthorArticleStats } from '@/lib/actions/articles';
+import { getMyNotices } from '@/lib/actions/notices';
+import { getCalendarArticles } from '@/lib/actions/articles';
+import { EditorialNoticesPanel } from '@/components/cms/EditorialNoticesPanel';
+import { publicArticleUrl } from '@/lib/public-site-url';
+import { formatNumber } from '@/lib/utils';
+import { can } from '@/lib/constants';
+import { isEditorLead } from '@/lib/cms-nav';
+import {
+  FileText, Eye, PenLine, Clock, BookOpen, Layers, Zap, Image as ImageIcon,
+  Calendar, BarChart3, MessageSquare, Flame, Star, Send, Hash,
+} from 'lucide-react';
+import {
+  CmsPageHeader, CmsStatCard, CmsCard, CmsActionPill, CmsCreateCapsule,
+  CmsListRow, CmsMetricRow, CmsActivityItem,
+  CmsSectionStack, CmsStatGrid, CmsCardGrid, CmsActionsGrid,
+  CmsListStack, CmsScheduleList, CmsCardFooter,
+} from '@/components/cms/CmsUI';
+import { StatusBadge } from '@/components/dashboard/StatusBadge';
+
+export default async function CMSDashboardPage() {
+  const session = await auth();
+  const authorId = session?.user?.id;
+  const role = session?.user?.role;
+  const editorLead = isEditorLead(role);
+
+  const [stats, notices, calendar] = await Promise.all([
+    authorId ? getAuthorArticleStats(authorId) : Promise.resolve({
+      total: 0, published: 0, drafts: 0, scheduled: 0, archived: 0, featured: 0, breaking: 0,
+      totalViews: 0, recent: [], topByViews: [], pendingNotices: 0,
+    }),
+    getMyNotices(),
+    getCalendarArticles({ authorId, allAuthors: editorLead }),
+  ]);
+
+  const {
+    total: articlesCount, published, drafts, scheduled, archived, featured, breaking,
+    totalViews, recent: articles, topByViews, pendingNotices,
+  } = stats;
+
+  return (
+    <CmsSectionStack>
+      <CmsPageHeader
+        title={`Welcome, ${session?.user?.name ?? 'Editor'}`}
+        description={
+          editorLead
+            ? 'Full editorial suite — write, schedule, promote, and publish power sector stories.'
+            : 'Your author workspace — craft and submit stories for the editorial team.'
+        }
+        icon={BookOpen}
+      />
+
+      <EditorialNoticesPanel
+        notices={notices.map((n) => ({
+          ...n,
+          createdAt: n.createdAt.toISOString(),
+        }))}
+      />
+
+      <CmsStatGrid>
+        <CmsStatCard title="My Articles" value={formatNumber(articlesCount)} icon={FileText} accent="sky" change={`${published} live`} />
+        <CmsStatCard title="Total Views" value={formatNumber(totalViews)} icon={Eye} accent="violet" />
+        <CmsStatCard title="Drafts" value={formatNumber(drafts)} icon={PenLine} accent="amber" change={scheduled > 0 ? `${scheduled} scheduled` : undefined} />
+        <CmsStatCard title="Published" value={formatNumber(published)} icon={Clock} accent="emerald" change={archived > 0 ? `${archived} archived` : undefined} />
+      </CmsStatGrid>
+
+      {(featured > 0 || breaking > 0 || pendingNotices > 0) && (
+        <CmsStatGrid cols={3}>
+          {featured > 0 && <CmsStatCard title="Featured" value={formatNumber(featured)} icon={Star} accent="amber" />}
+          {breaking > 0 && <CmsStatCard title="Breaking" value={formatNumber(breaking)} icon={Flame} accent="red" />}
+          {pendingNotices > 0 && <CmsStatCard title="Notices" value={formatNumber(pendingNotices)} icon={MessageSquare} accent="rose" change="Action needed" />}
+        </CmsStatGrid>
+      )}
+
+      <CmsCardGrid cols={3}>
+        <CmsCard title="Recent Articles" icon={Layers} className="lg:col-span-2">
+          <CmsListStack>
+            {articles.slice(0, 8).map((a) => (
+              <CmsListRow
+                key={a.id}
+                title={a.title}
+                href={`/cms/articles/${a.id}/edit`}
+                meta={a.status}
+                value={`${formatNumber(a.views)} views`}
+              />
+            ))}
+            {articlesCount === 0 && (
+              <div className="flex flex-wrap items-center gap-2 py-2 px-1">
+                <p className="text-[13px] text-muted-foreground">No articles yet.</p>
+                <CmsCreateCapsule href="/cms/articles/new" label="Create first story" />
+              </div>
+            )}
+          </CmsListStack>
+        </CmsCard>
+
+        <CmsCard title="Pipeline" icon={Zap}>
+          <CmsListStack>
+            <CmsMetricRow label="Drafts" value={formatNumber(drafts)} />
+            <CmsMetricRow label="Scheduled" value={formatNumber(scheduled)} highlight={scheduled > 0} />
+            <CmsMetricRow label="Published" value={formatNumber(published)} />
+            <CmsMetricRow label="Archived" value={formatNumber(archived)} />
+          </CmsListStack>
+          <CmsCardFooter href="/cms/calendar" className="admin-card-footer--link">
+            Open editorial calendar →
+          </CmsCardFooter>
+        </CmsCard>
+      </CmsCardGrid>
+
+      <CmsCardGrid cols={3}>
+        <CmsCard title="Top Performers" icon={BarChart3} className="lg:col-span-2">
+          <CmsListStack>
+            {topByViews.map((a, i) => (
+              <CmsListRow
+                key={a.id}
+                rank={i + 1}
+                title={a.title}
+                href={publicArticleUrl(a.slug)}
+                meta={a.category}
+                value={`${formatNumber(a.views)} views`}
+              />
+            ))}
+            {topByViews.length === 0 && (
+              <p className="text-[13px] text-muted-foreground py-2">Publish stories to track performance.</p>
+            )}
+          </CmsListStack>
+        </CmsCard>
+
+        <CmsCard title="Coming Up" icon={Calendar}>
+          <CmsScheduleList>
+            {calendar.scheduled.slice(0, 5).map((a) => (
+              <div key={a.id} className="flex items-center justify-between gap-2 text-[12px]">
+                <Link href={`/cms/articles/${a.id}/edit`} className="font-medium line-clamp-1 hover:text-sky-400 min-w-0">
+                  {a.title}
+                </Link>
+                <span className="text-muted-foreground shrink-0 tabular-nums text-[11px]">
+                  {a.publishedAt ? new Date(a.publishedAt).toLocaleDateString() : 'TBD'}
+                </span>
+              </div>
+            ))}
+            {calendar.scheduled.length === 0 && (
+              <p className="text-[13px] text-muted-foreground">Nothing scheduled.</p>
+            )}
+          </CmsScheduleList>
+        </CmsCard>
+      </CmsCardGrid>
+
+      <CmsCardGrid cols={2}>
+        <CmsCard title="Recently Published" icon={Send}>
+          <div>
+            {calendar.published.slice(0, 6).map((a) => (
+              <CmsActivityItem
+                key={a.id}
+                badge={<StatusBadge status="PUBLISHED" />}
+                date={a.publishedAt ? new Date(a.publishedAt).toLocaleDateString() : '—'}
+                message={
+                  <Link href={`/cms/articles/${a.id}/edit`} className="hover:text-sky-400">
+                    {a.title}
+                  </Link>
+                }
+              />
+            ))}
+          </div>
+        </CmsCard>
+
+        <CmsCard title="Quick Actions" icon={Zap}>
+          <CmsActionsGrid>
+            <CmsActionPill href="/cms/articles/new" label="New story" icon={PenLine} description="Start from scratch" accent="emerald" />
+            <CmsActionPill href="/cms/articles/drafts" label="Continue drafts" icon={FileText} description={`${drafts} in progress`} />
+            <CmsActionPill href="/cms/media" label="Media Library" icon={ImageIcon} description="Upload assets" />
+            <CmsActionPill href="/cms/calendar" label="Editorial calendar" icon={Calendar} description="Schedule posts" />
+            {can(role, 'analytics.view_own') && (
+              <CmsActionPill href="/cms/analytics" label="Performance" icon={BarChart3} description="Views & engagement" />
+            )}
+            {can(role, 'comment.moderate_any') && (
+              <CmsActionPill href="/cms/comments" label="Moderate comments" icon={MessageSquare} description="Review reader discussion" />
+            )}
+            <CmsActionPill href="/cms/tags" label="Browse tags" icon={Hash} description="Topic coverage" />
+          </CmsActionsGrid>
+        </CmsCard>
+      </CmsCardGrid>
+    </CmsSectionStack>
+  );
+}

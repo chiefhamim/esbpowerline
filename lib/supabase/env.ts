@@ -1,0 +1,1 @@
+export { getSupabaseEnv } from '@/utils/supabase/env';

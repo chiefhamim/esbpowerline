@@ -1,0 +1,1 @@
+export { applySupabaseCookies, updateSession, type UpdateSessionResult } from '@/utils/supabase/middleware';

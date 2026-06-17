@@ -1,0 +1,776 @@
+'use client';
+
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { cn } from '@/lib/utils';
+import { HOMEPAGE_DEFAULTS } from '@/lib/homepage-defaults';
+import { DEFAULT_COVERAGE_SLOTS, normalizeCoverageSlots } from '@/lib/coverage-defaults';
+import type { CoverageSlot } from '@/lib/coverage-types';
+import {
+  buildSettingsSnapshot,
+  useSettingsChangeSync,
+  type SettingsFormSnapshot,
+} from '@/hooks/useSettingsChangeSync';
+import { useAdminChangeQueue } from '@/components/admin/AdminChangeQueueProvider';
+import { AdminTimeFormatSetting } from '@/components/admin/AdminTimeFormatSetting';
+import {
+  Settings, TrendingUp, BarChart3, Play, Globe,
+  Database, ArrowUp, ArrowDown, Pin, LayoutGrid, Layers,
+} from 'lucide-react';
+
+type ArticlePickerItem = {
+  slug: string;
+  title: string;
+  category: string;
+  publishedAt: Date | null;
+};
+
+interface SettingsFormProps {
+  settings: Record<string, unknown>;
+  articlePickerList?: ArticlePickerItem[];
+}
+
+export function SettingsForm({ settings, articlePickerList = [] }: SettingsFormProps) {
+  const { count, setDockOpen } = useAdminChangeQueue();
+  const [activeTab, setActiveTab] = useState<'general' | 'markets' | 'snapshot' | 'interviews' | 'grid' | 'coverage'>('general');
+
+  // 1. General, SEO & Hero
+  const site = (settings.site as Record<string, string>) ?? {};
+  const seo = (settings.seo as Record<string, string>) ?? {};
+  const hero = (settings.hero as Record<string, string>) ?? {};
+
+  const [siteName, setSiteName] = useState(site.name ?? 'ESB PowerLine');
+  const [tagline, setTagline] = useState(site.tagline ?? "Bangladesh's premier energy news portal");
+  const [metaTitle, setMetaTitle] = useState(seo.metaTitle ?? '');
+  const [metaDescription, setMetaDescription] = useState(seo.metaDescription ?? '');
+  const [heroTitle, setHeroTitle] = useState(hero.title ?? '');
+  const [heroSubtitle, setHeroSubtitle] = useState(hero.subtitle ?? '');
+  const [heroImage, setHeroImage] = useState(hero.imageUrl ?? '');
+
+  const homepage = (settings.homepage as Record<string, unknown>) ?? {};
+  const professionalsDefault = HOMEPAGE_DEFAULTS.professionalsCta;
+  const professionals = (homepage.professionalsCta as typeof professionalsDefault) ?? professionalsDefault;
+
+  const [carouselMode, setCarouselMode] = useState<'demo' | 'managed'>(
+    homepage.carouselMode === 'managed' ? 'managed' : 'demo'
+  );
+  const [marketPulse, setMarketPulse] = useState(
+    (homepage.marketPulse as string) ?? HOMEPAGE_DEFAULTS.marketPulse
+  );
+  const [snapshotLabel, setSnapshotLabel] = useState(
+    (homepage.snapshotLabel as string) ?? HOMEPAGE_DEFAULTS.snapshotLabel
+  );
+  const [ctaLabel, setCtaLabel] = useState(professionals.label ?? professionalsDefault.label);
+  const [ctaTitle, setCtaTitle] = useState(professionals.title ?? professionalsDefault.title);
+  const [ctaPrimaryLabel, setCtaPrimaryLabel] = useState(professionals.primaryLabel ?? professionalsDefault.primaryLabel);
+  const [ctaPrimaryHref, setCtaPrimaryHref] = useState(professionals.primaryHref ?? professionalsDefault.primaryHref);
+  const [ctaSecondaryLabel, setCtaSecondaryLabel] = useState(professionals.secondaryLabel ?? professionalsDefault.secondaryLabel);
+  const [ctaSecondaryHref, setCtaSecondaryHref] = useState(professionals.secondaryHref ?? professionalsDefault.secondaryHref);
+
+  // 2. Live Markets Ticker
+  const [ticker, setTicker] = useState<any[]>(
+    (settings.ticker as any[]) ?? [
+      { id: 'lng', name: 'LNG (Spot)', value: 11.85, unit: '/mmbtu', change: 1.4, prefix: '$' },
+      { id: 'coal', name: 'Coal (API2)', value: 102.5, unit: '/t', change: -0.8, prefix: '$' },
+      { id: 'fx', name: 'USD/BDT', value: 117.65, unit: '', change: 0.12, prefix: '৳' },
+      { id: 'solar', name: 'Solar Module', value: 0.118, unit: '/W', change: -2.1, prefix: '$' },
+      { id: 'tariff', name: 'Bulk Tariff', value: 8.95, unit: 'Tk/kWh', change: 0.0, prefix: '' },
+      { id: 'gas', name: 'Petrobangla Gas', value: 1380, unit: 'MMcfd', change: -3.2, prefix: '' },
+    ]
+  );
+
+  // 3. System Snapshot Stats
+  const [snapshot, setSnapshot] = useState<any[]>(
+    (settings.snapshot as any[]) ?? [
+      { label: 'Generation Capacity', value: 28420, unit: 'MW', icon: 'Zap', color: '#3b82f6' },
+      { label: 'Current Demand', value: 15230, unit: 'MW', icon: 'Activity', color: '#ef4444' },
+      { label: 'Renewable Share', value: 4.8, unit: '%', isDecimal: true, icon: 'Leaf', color: '#10b981' },
+      { label: 'System Loss', value: 7.6, unit: '%', isDecimal: true, icon: 'Gauge', color: '#f59e0b' },
+      { label: 'Gas Supply', value: 1380, unit: 'MMcfd', icon: 'Flame', color: '#8b5cf6' },
+      { label: 'Peak Today', value: 16850, unit: 'MW', icon: 'TrendingUp', color: '#3b82f6' },
+    ]
+  );
+
+  // 4. Featured Interviews
+  const [interviews, setInterviews] = useState<any[]>(
+    (settings.interviews as any[]) ?? [
+      {
+        id: 'i1',
+        title: 'Powering the Future: SREDA’s 2030 Renewable Roadmap',
+        guest: 'Dr. Shahana Rahman',
+        role: 'Chairman, SREDA',
+        duration: '24:15',
+        date: 'Jun 11',
+        thumbnail: '/images/download (6).jfif',
+        youtubeId: 'dQw4w9wgxcQ',
+        excerpt: 'Inside the new solar + wind tender pipeline and grid integration challenges.',
+      },
+      {
+        id: 'i2',
+        title: 'Grid Modernization at PGCB: 400kV Backbone Update',
+        guest: 'Engr. Nasir Uddin',
+        role: 'Managing Director, PGCB',
+        duration: '18:40',
+        date: 'Jun 9',
+        thumbnail: '/images/download (7).jfif',
+        youtubeId: '3JZ_2t4vV3c',
+        excerpt: 'How the new transmission corridors are unlocking southern generation.',
+      },
+      {
+        id: 'i3',
+        title: 'Tariff Reform & Consumer Protection — A BERC Perspective',
+        guest: 'Barrister M. Rahman',
+        role: 'Member, BERC',
+        duration: '31:05',
+        date: 'Jun 5',
+        thumbnail: '/images/download (8).jfif',
+        youtubeId: '9bZkp7q19f0',
+        excerpt: 'Balancing cost recovery with affordability in the new bulk supply tariff.',
+      },
+      {
+        id: 'i4',
+        title: 'Rooppur Nuclear: First Fuel Loading & Safety First',
+        guest: 'Dr. A. K. M. Fazle Kabir',
+        role: 'Project Director, Rooppur NPP',
+        duration: '27:30',
+        date: 'Jun 3',
+        thumbnail: '/images/download (9).jfif',
+        youtubeId: 'jNQXAC9IVRw',
+        excerpt: 'Milestones, fuel cycle, and what it means for Bangladesh’s baseload.',
+      },
+    ]
+  );
+
+  // 5. Grid Explorer Data
+  const [gridMix, setGridMix] = useState<any[]>(
+    (settings.gridMix as any[]) ?? [
+      { name: 'Gas (CCGT + GT)', value: 52, mw: 14780 },
+      { name: 'Coal', value: 18, mw: 5110 },
+      { name: 'HFO / Diesel', value: 12, mw: 3410 },
+      { name: 'Hydro', value: 2, mw: 570 },
+      { name: 'Solar + Wind', value: 5, mw: 1420 },
+      { name: 'Imports', value: 8, mw: 2270 },
+      { name: 'Nuclear (Rooppur-1)', value: 3, mw: 850 },
+    ]
+  );
+
+  const [gridLines, setGridLines] = useState<any[]>(
+    (settings.gridLines as any[]) ?? [
+      { name: '400 kV Patuakhali–Gopalganj', status: 'Commissioned', capacity: '1800 MW', owner: 'PGCB', load: 74 },
+      { name: '400 kV Rooppur–Baghabari', status: 'Under Construction', capacity: '2400 MW', owner: 'PGCB', load: 0 },
+      { name: '230 kV Barisal–Khulna', status: 'Commissioned', capacity: '650 MW', owner: 'PGCB', load: 82 },
+      { name: '400 kV Bheramara HVDC (India)', status: 'Operational', capacity: '1000 MW', owner: 'PGCB/POWERGRID', load: 90 },
+    ]
+  );
+
+  const [coverageSlots, setCoverageSlots] = useState<CoverageSlot[]>(
+    normalizeCoverageSlots(settings.coverage ?? DEFAULT_COVERAGE_SLOTS)
+  );
+
+  const [gridProjects, setGridProjects] = useState<any[]>(
+    (settings.gridProjects as any[]) ?? [
+      { name: 'SREDA 1800 MW Solar+Wind', status: 'Tender', mw: '1800', date: 'Q3 2026' },
+      { name: 'Matarbari Phase-2 Coal', status: 'Construction', mw: '1200', date: '2027' },
+      { name: 'Payra 1320 MW Expansion', status: 'Planned', mw: '1320', date: '2028' },
+      { name: 'BREB 500k SHS + Mini-grid', status: 'Ongoing', mw: '—', date: '2026-27' },
+    ]
+  );
+
+  const currentSnapshot = useMemo(
+    () =>
+      buildSettingsSnapshot({
+        siteName,
+        tagline,
+        metaTitle,
+        metaDescription,
+        heroTitle,
+        heroSubtitle,
+        heroImage,
+        carouselMode,
+        marketPulse,
+        snapshotLabel,
+        professionals: {
+          label: ctaLabel,
+          title: ctaTitle,
+          primaryLabel: ctaPrimaryLabel,
+          primaryHref: ctaPrimaryHref,
+          secondaryLabel: ctaSecondaryLabel,
+          secondaryHref: ctaSecondaryHref,
+        },
+        ticker,
+        snapshot,
+        interviews,
+        gridMix,
+        gridLines,
+        gridProjects,
+        coverageSlots,
+      }),
+    [
+      siteName,
+      tagline,
+      metaTitle,
+      metaDescription,
+      heroTitle,
+      heroSubtitle,
+      heroImage,
+      carouselMode,
+      marketPulse,
+      snapshotLabel,
+      ctaLabel,
+      ctaTitle,
+      ctaPrimaryLabel,
+      ctaPrimaryHref,
+      ctaSecondaryLabel,
+      ctaSecondaryHref,
+      ticker,
+      snapshot,
+      interviews,
+      gridMix,
+      gridLines,
+      gridProjects,
+      coverageSlots,
+    ],
+  );
+
+  const baselineRef = useRef<SettingsFormSnapshot | null>(null);
+  const settingsRef = useRef(settings);
+
+  if (baselineRef.current === null) {
+    baselineRef.current = currentSnapshot;
+  }
+
+  useEffect(() => {
+    if (count === 0 && settings !== settingsRef.current) {
+      settingsRef.current = settings;
+      baselineRef.current = currentSnapshot;
+    }
+  }, [count, currentSnapshot, settings]);
+
+  useSettingsChangeSync(baselineRef.current, currentSnapshot, {
+    setSiteName,
+    setTagline,
+    setMetaTitle,
+    setMetaDescription,
+    setHeroTitle,
+    setHeroSubtitle,
+    setHeroImage,
+    setCarouselMode,
+    setMarketPulse,
+    setSnapshotLabel,
+    setCtaLabel,
+    setCtaTitle,
+    setCtaPrimaryLabel,
+    setCtaPrimaryHref,
+    setCtaSecondaryLabel,
+    setCtaSecondaryHref,
+    setTicker,
+    setSnapshot,
+    setInterviews,
+    setGridMix,
+    setGridLines,
+    setGridProjects,
+    setCoverageSlots,
+  });
+
+  // Ticker helpers
+  const updateTickerField = (index: number, field: string, val: any) => {
+    const next = [...ticker];
+    next[index] = { ...next[index], [field]: val };
+    setTicker(next);
+  };
+
+  // Snapshot helpers
+  const updateSnapshotField = (index: number, field: string, val: any) => {
+    const next = [...snapshot];
+    next[index] = { ...next[index], [field]: val };
+    setSnapshot(next);
+  };
+
+  // Interview helpers
+  const updateInterviewField = (index: number, field: string, val: any) => {
+    const next = [...interviews];
+    next[index] = { ...next[index], [field]: val };
+    setInterviews(next);
+  };
+
+  const moveInterview = (index: number, direction: 'up' | 'down' | 'first') => {
+    const next = [...interviews];
+    if (direction === 'first' && index > 0) {
+      const [item] = next.splice(index, 1);
+      next.unshift(item);
+    } else if (direction === 'up' && index > 0) {
+      [next[index - 1], next[index]] = [next[index], next[index - 1]];
+    } else if (direction === 'down' && index < next.length - 1) {
+      [next[index + 1], next[index]] = [next[index], next[index + 1]];
+    }
+    setInterviews(next);
+  };
+
+  // Grid Mix helpers
+  const updateGridMixField = (index: number, field: string, val: any) => {
+    const next = [...gridMix];
+    next[index] = { ...next[index], [field]: val };
+    setGridMix(next);
+  };
+
+  // Grid Lines helpers
+  const updateGridLinesField = (index: number, field: string, val: any) => {
+    const next = [...gridLines];
+    next[index] = { ...next[index], [field]: val };
+    setGridLines(next);
+  };
+
+  // Grid Projects helpers
+  const updateGridProjectsField = (index: number, field: string, val: any) => {
+    const next = [...gridProjects];
+    next[index] = { ...next[index], [field]: val };
+    setGridProjects(next);
+  };
+
+  const updateCoverageArticle = (index: number, articleSlug: string) => {
+    const next = [...coverageSlots];
+    next[index] = { ...next[index], articleSlug };
+    setCoverageSlots(next);
+  };
+
+  const tabs = [
+    { id: 'general', label: 'General & SEO', icon: Settings },
+    { id: 'markets', label: 'Live Markets', icon: TrendingUp },
+    { id: 'snapshot', label: 'System Snapshot', icon: BarChart3 },
+    { id: 'interviews', label: 'Interviews', icon: Play },
+    { id: 'grid', label: 'Grid Explorer', icon: Database },
+    { id: 'coverage', label: 'All Coverage', icon: LayoutGrid },
+  ] as const;
+
+  return (
+    <div className="admin-form-stack">
+      <div className="settings-tabs">
+        {tabs.map((tab) => {
+          const Icon = tab.icon;
+          const active = activeTab === tab.id;
+          return (
+            <button
+              key={tab.id}
+              type="button"
+              onClick={() => setActiveTab(tab.id)}
+              className={cn('settings-tab', active && 'settings-tab--active')}
+            >
+              <Icon className="h-3.5 w-3.5" strokeWidth={active ? 2.25 : 2} />
+              {tab.label}
+            </button>
+          );
+        })}
+      </div>
+
+      <div className="mt-4">
+        {/* Tab 1: General & SEO */}
+        {activeTab === 'general' && (
+          <div className="grid lg:grid-cols-2 gap-6">
+            <AdminTimeFormatSetting />
+
+            <div className="admin-card settings-panel p-6 space-y-4">
+              <h2 className="font-semibold flex items-center gap-2"><Globe className="h-4.5 w-4.5 text-primary" /> Site Configuration</h2>
+              <div>
+                <Label htmlFor="siteName">Site Name</Label>
+                <Input id="siteName" value={siteName} onChange={(e) => setSiteName(e.target.value)} className="mt-1" />
+              </div>
+              <div>
+                <Label htmlFor="tagline">Tagline</Label>
+                <Input id="tagline" value={tagline} onChange={(e) => setTagline(e.target.value)} className="mt-1" />
+              </div>
+            </div>
+
+            <div className="admin-card settings-panel p-6 space-y-4">
+              <h2 className="font-semibold flex items-center gap-2"><Globe className="h-4.5 w-4.5 text-primary" /> SEO Defaults</h2>
+              <div>
+                <Label htmlFor="metaTitle">Meta Title</Label>
+                <Input id="metaTitle" value={metaTitle} onChange={(e) => setMetaTitle(e.target.value)} className="mt-1" />
+              </div>
+              <div>
+                <Label htmlFor="metaDescription">Meta Description</Label>
+                <Textarea id="metaDescription" value={metaDescription} onChange={(e) => setMetaDescription(e.target.value)} className="mt-1" rows={3} />
+              </div>
+            </div>
+
+            <div className="admin-card settings-panel p-6 space-y-4 lg:col-span-2">
+              <h2 className="font-semibold flex items-center gap-2"><Globe className="h-4.5 w-4.5 text-primary" /> Homepage Controls</h2>
+              <div className="grid md:grid-cols-2 gap-4">
+                <div>
+                  <Label>Carousel mode</Label>
+                  <select
+                    value={carouselMode}
+                    onChange={(e) => setCarouselMode(e.target.value as 'demo' | 'managed')}
+                    className="mt-1 w-full border border-input rounded-xl h-9 px-3 text-sm bg-background"
+                  >
+                    <option value="demo">Demo (unchanged public homepage)</option>
+                    <option value="managed">Managed (pinned + featured articles)</option>
+                  </select>
+                </div>
+                <div>
+                  <Label>Snapshot sources label</Label>
+                  <Input value={snapshotLabel} onChange={(e) => setSnapshotLabel(e.target.value)} className="mt-1" />
+                </div>
+                <div className="md:col-span-2">
+                  <Label>Market pulse marquee</Label>
+                  <Textarea value={marketPulse} onChange={(e) => setMarketPulse(e.target.value)} className="mt-1" rows={2} />
+                </div>
+              </div>
+            </div>
+
+            <div className="admin-card settings-panel p-6 space-y-4 lg:col-span-2">
+              <h2 className="font-semibold flex items-center gap-2"><Globe className="h-4.5 w-4.5 text-primary" /> Professionals CTA Block</h2>
+              <div className="grid md:grid-cols-2 gap-4">
+                <div><Label>Section label</Label><Input value={ctaLabel} onChange={(e) => setCtaLabel(e.target.value)} className="mt-1" /></div>
+                <div className="md:col-span-2"><Label>Headline</Label><Input value={ctaTitle} onChange={(e) => setCtaTitle(e.target.value)} className="mt-1" /></div>
+                <div><Label>Primary button</Label><Input value={ctaPrimaryLabel} onChange={(e) => setCtaPrimaryLabel(e.target.value)} className="mt-1" /></div>
+                <div><Label>Primary link</Label><Input value={ctaPrimaryHref} onChange={(e) => setCtaPrimaryHref(e.target.value)} className="mt-1" /></div>
+                <div><Label>Secondary button</Label><Input value={ctaSecondaryLabel} onChange={(e) => setCtaSecondaryLabel(e.target.value)} className="mt-1" /></div>
+                <div><Label>Secondary link</Label><Input value={ctaSecondaryHref} onChange={(e) => setCtaSecondaryHref(e.target.value)} className="mt-1" /></div>
+              </div>
+            </div>
+
+            <div className="admin-card settings-panel p-6 space-y-4 lg:col-span-2">
+              <h2 className="font-semibold flex items-center gap-2"><Globe className="h-4.5 w-4.5 text-primary" /> Homepage Hero Section</h2>
+              <div className="grid md:grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="heroTitle">Hero Title</Label>
+                  <Input id="heroTitle" value={heroTitle} onChange={(e) => setHeroTitle(e.target.value)} className="mt-1" />
+                </div>
+                <div>
+                  <Label htmlFor="heroImage">Hero Image URL</Label>
+                  <Input id="heroImage" value={heroImage} onChange={(e) => setHeroImage(e.target.value)} className="mt-1" />
+                </div>
+                <div className="md:col-span-2">
+                  <Label htmlFor="heroSubtitle">Hero Subtitle</Label>
+                  <Textarea id="heroSubtitle" value={heroSubtitle} onChange={(e) => setHeroSubtitle(e.target.value)} className="mt-1" rows={2} />
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Tab 2: Live Markets */}
+        {activeTab === 'markets' && (
+          <div className="admin-card settings-panel p-6 space-y-5">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="font-semibold flex items-center gap-2"><TrendingUp className="h-4.5 w-4.5 text-primary" /> Live Markets Ticker</h2>
+                <p className="text-xs text-muted-foreground mt-0.5">Manage real-time commodities and currencies displayed in the top marquee</p>
+              </div>
+            </div>
+            
+            <div className="space-y-4">
+              <div className="grid grid-cols-12 gap-3 text-xs font-semibold text-muted-foreground border-b pb-2 px-1">
+                <div className="col-span-3">Item Name</div>
+                <div className="col-span-2">Value</div>
+                <div className="col-span-2">Unit</div>
+                <div className="col-span-2">Change (%)</div>
+                <div className="col-span-2">Prefix</div>
+                <div className="col-span-1">ID</div>
+              </div>
+              {ticker.map((item, idx) => (
+                <div key={item.id} className="grid grid-cols-12 gap-3 items-center hover:bg-muted/10 p-1 rounded-xl">
+                  <div className="col-span-3">
+                    <Input value={item.name} onChange={(e) => updateTickerField(idx, 'name', e.target.value)} />
+                  </div>
+                  <div className="col-span-2">
+                    <Input type="number" step="0.001" value={item.value} onChange={(e) => updateTickerField(idx, 'value', parseFloat(e.target.value) || 0)} />
+                  </div>
+                  <div className="col-span-2">
+                    <Input value={item.unit} onChange={(e) => updateTickerField(idx, 'unit', e.target.value)} placeholder="none" />
+                  </div>
+                  <div className="col-span-2">
+                    <Input type="number" step="0.1" value={item.change} onChange={(e) => updateTickerField(idx, 'change', parseFloat(e.target.value) || 0)} />
+                  </div>
+                  <div className="col-span-2">
+                    <Input value={item.prefix} onChange={(e) => updateTickerField(idx, 'prefix', e.target.value)} placeholder="none" />
+                  </div>
+                  <div className="col-span-1 font-mono text-xs text-muted-foreground select-none pl-1">
+                    {item.id}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Tab 3: System Snapshot */}
+        {activeTab === 'snapshot' && (
+          <div className="admin-card settings-panel p-6 space-y-5">
+            <div>
+              <h2 className="font-semibold flex items-center gap-2"><BarChart3 className="h-4.5 w-4.5 text-primary" /> Live System Snapshot</h2>
+              <p className="text-xs text-muted-foreground mt-0.5">Configure national power grid generation capacity, demand numbers, loss parameters, etc.</p>
+            </div>
+            
+            <div className="space-y-4">
+              <div className="grid grid-cols-12 gap-3 text-xs font-semibold text-muted-foreground border-b pb-2 px-1">
+                <div className="col-span-3">Label</div>
+                <div className="col-span-2">Value</div>
+                <div className="col-span-2">Unit</div>
+                <div className="col-span-2">Color (Hex)</div>
+                <div className="col-span-2">Icon</div>
+                <div className="col-span-1 text-center">Decimal?</div>
+              </div>
+              {snapshot.map((stat, idx) => (
+                <div key={idx} className="grid grid-cols-12 gap-3 items-center hover:bg-muted/10 p-1 rounded-xl">
+                  <div className="col-span-3">
+                    <Input value={stat.label} onChange={(e) => updateSnapshotField(idx, 'label', e.target.value)} />
+                  </div>
+                  <div className="col-span-2">
+                    <Input type="number" step="0.1" value={stat.value} onChange={(e) => updateSnapshotField(idx, 'value', parseFloat(e.target.value) || 0)} />
+                  </div>
+                  <div className="col-span-2">
+                    <Input value={stat.unit} onChange={(e) => updateSnapshotField(idx, 'unit', e.target.value)} />
+                  </div>
+                  <div className="col-span-2">
+                    <Input value={stat.color} onChange={(e) => updateSnapshotField(idx, 'color', e.target.value)} />
+                  </div>
+                  <div className="col-span-2">
+                    <select 
+                      value={stat.icon} 
+                      onChange={(e) => updateSnapshotField(idx, 'icon', e.target.value)}
+                      className="w-full bg-background border border-input rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                    >
+                      <option value="Zap">Zap</option>
+                      <option value="Activity">Activity</option>
+                      <option value="Leaf">Leaf</option>
+                      <option value="Gauge">Gauge</option>
+                      <option value="Flame">Flame</option>
+                      <option value="TrendingUp">TrendingUp</option>
+                    </select>
+                  </div>
+                  <div className="col-span-1 flex justify-center">
+                    <input 
+                      type="checkbox" 
+                      checked={!!stat.isDecimal} 
+                      onChange={(e) => updateSnapshotField(idx, 'isDecimal', e.target.checked)}
+                      className="h-4 w-4 rounded border-border text-primary focus:ring-primary"
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Tab 4: Latest Interviews */}
+        {activeTab === 'interviews' && (
+          <div className="admin-form-stack">
+            {interviews.map((iv, idx) => (
+              <div key={iv.id} className="admin-card settings-panel p-6 space-y-4">
+                <div className="flex items-center justify-between border-b pb-2 gap-2">
+                  <h3 className="font-semibold text-sm flex items-center gap-2 min-w-0">
+                    <Play className="h-4 w-4 text-accent shrink-0" />
+                    <span className="truncate">Interview #{idx + 1}: {iv.guest || 'Untitled'}</span>
+                    {idx === 0 && <span className="admin-role-pill shrink-0">Pinned first</span>}
+                  </h3>
+                  <div className="flex items-center gap-1 shrink-0">
+                    <button type="button" className="admin-category-delete opacity-100" title="Pin to first" onClick={() => moveInterview(idx, 'first')}>
+                      <Pin className="h-3.5 w-3.5" />
+                    </button>
+                    <button type="button" className="admin-category-delete opacity-100" title="Move up" onClick={() => moveInterview(idx, 'up')} disabled={idx === 0}>
+                      <ArrowUp className="h-3.5 w-3.5" />
+                    </button>
+                    <button type="button" className="admin-category-delete opacity-100" title="Move down" onClick={() => moveInterview(idx, 'down')} disabled={idx === interviews.length - 1}>
+                      <ArrowDown className="h-3.5 w-3.5" />
+                    </button>
+                    <span className="font-mono text-xs text-muted-foreground ml-1">{iv.id}</span>
+                  </div>
+                </div>
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div>
+                    <Label>Interview Title</Label>
+                    <Input value={iv.title} onChange={(e) => updateInterviewField(idx, 'title', e.target.value)} className="mt-1" />
+                  </div>
+                  <div>
+                    <Label>Guest Name</Label>
+                    <Input value={iv.guest} onChange={(e) => updateInterviewField(idx, 'guest', e.target.value)} className="mt-1" />
+                  </div>
+                  <div>
+                    <Label>Guest Role / Designation</Label>
+                    <Input value={iv.role} onChange={(e) => updateInterviewField(idx, 'role', e.target.value)} className="mt-1" />
+                  </div>
+                  <div>
+                    <Label>YouTube Video ID (embed)</Label>
+                    <Input value={iv.youtubeId} onChange={(e) => updateInterviewField(idx, 'youtubeId', e.target.value)} className="mt-1" />
+                  </div>
+                  <div>
+                    <Label>Thumbnail Image URL</Label>
+                    <Input value={iv.thumbnail} onChange={(e) => updateInterviewField(idx, 'thumbnail', e.target.value)} className="mt-1" />
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <Label>Duration (e.g. 24:15)</Label>
+                      <Input value={iv.duration} onChange={(e) => updateInterviewField(idx, 'duration', e.target.value)} className="mt-1" />
+                    </div>
+                    <div>
+                      <Label>Date / Display Label</Label>
+                      <Input value={iv.date} onChange={(e) => updateInterviewField(idx, 'date', e.target.value)} className="mt-1" />
+                    </div>
+                  </div>
+                  <div className="md:col-span-2">
+                    <Label>Excerpt Summary</Label>
+                    <Textarea value={iv.excerpt} onChange={(e) => updateInterviewField(idx, 'excerpt', e.target.value)} className="mt-1" rows={2} />
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Tab 6: All Coverage mosaic */}
+        {activeTab === 'coverage' && (
+          <div className="admin-card settings-panel p-6 space-y-5">
+            <div>
+              <h2 className="font-semibold flex items-center gap-2">
+                <LayoutGrid className="h-4.5 w-4.5 text-primary" /> All Coverage Mosaic
+              </h2>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Choose which nine published stories appear in the All Coverage grid on the homepage. Cards use the same uniform style.
+              </p>
+            </div>
+
+            <div className="space-y-3">
+              <div className="grid grid-cols-12 gap-3 text-xs font-semibold text-muted-foreground border-b pb-2 px-1">
+                <div className="col-span-1">#</div>
+                <div className="col-span-11">Article</div>
+              </div>
+              {coverageSlots.map((slot, idx) => (
+                <div key={slot.id} className="grid grid-cols-12 gap-3 items-center hover:bg-muted/10 p-1 rounded-xl">
+                  <div className="col-span-1 font-mono text-xs text-muted-foreground">{idx + 1}</div>
+                  <div className="col-span-11">
+                    <select
+                      value={slot.articleSlug}
+                      onChange={(e) => updateCoverageArticle(idx, e.target.value)}
+                      className="w-full bg-background border border-input rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                    >
+                      <option value="">— Select article —</option>
+                      {articlePickerList.map((article) => (
+                        <option key={article.slug} value={article.slug}>
+                          {article.title} ({article.category})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Tab 5: Grid Explorer Data */}
+        {activeTab === 'grid' && (
+          <div className="admin-form-stack">
+            {/* Grid Mix */}
+            <div className="admin-card settings-panel p-6 space-y-4">
+              <h2 className="font-semibold flex items-center gap-2"><Database className="h-4.5 w-4.5 text-primary" /> Generation Fuel Mix</h2>
+              <div className="space-y-3">
+                <div className="grid grid-cols-12 gap-3 text-xs font-semibold text-muted-foreground border-b pb-2 px-1">
+                  <div className="col-span-5">Fuel Source</div>
+                  <div className="col-span-3">Installed Share (%)</div>
+                  <div className="col-span-4">Installed Capacity (MW)</div>
+                </div>
+                {gridMix.map((mix, idx) => (
+                  <div key={idx} className="grid grid-cols-12 gap-3 items-center hover:bg-muted/10 p-0.5 rounded-lg">
+                    <div className="col-span-5">
+                      <Input value={mix.name} onChange={(e) => updateGridMixField(idx, 'name', e.target.value)} />
+                    </div>
+                    <div className="col-span-3">
+                      <Input type="number" value={mix.value} onChange={(e) => updateGridMixField(idx, 'value', parseInt(e.target.value) || 0)} />
+                    </div>
+                    <div className="col-span-4">
+                      <Input type="number" value={mix.mw} onChange={(e) => updateGridMixField(idx, 'mw', parseInt(e.target.value) || 0)} />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Grid Transmission Corridors */}
+            <div className="admin-card settings-panel p-6 space-y-4">
+              <h2 className="font-semibold flex items-center gap-2"><Database className="h-4.5 w-4.5 text-primary" /> Transmission Corridors</h2>
+              <div className="space-y-3">
+                <div className="grid grid-cols-12 gap-3 text-xs font-semibold text-muted-foreground border-b pb-2 px-1">
+                  <div className="col-span-4">Corridor / Line</div>
+                  <div className="col-span-3">Status</div>
+                  <div className="col-span-2">Capacity</div>
+                  <div className="col-span-2">Operator</div>
+                  <div className="col-span-1">Load %</div>
+                </div>
+                {gridLines.map((line, idx) => (
+                  <div key={idx} className="grid grid-cols-12 gap-3 items-center hover:bg-muted/10 p-0.5 rounded-lg">
+                    <div className="col-span-4">
+                      <Input value={line.name} onChange={(e) => updateGridLinesField(idx, 'name', e.target.value)} />
+                    </div>
+                    <div className="col-span-3">
+                      <Input value={line.status} onChange={(e) => updateGridLinesField(idx, 'status', e.target.value)} />
+                    </div>
+                    <div className="col-span-2">
+                      <Input value={line.capacity} onChange={(e) => updateGridLinesField(idx, 'capacity', e.target.value)} />
+                    </div>
+                    <div className="col-span-2">
+                      <Input value={line.owner} onChange={(e) => updateGridLinesField(idx, 'owner', e.target.value)} />
+                    </div>
+                    <div className="col-span-1">
+                      <Input type="number" value={line.load} onChange={(e) => updateGridLinesField(idx, 'load', parseInt(e.target.value) || 0)} />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Grid Projects */}
+            <div className="admin-card settings-panel p-6 space-y-4">
+              <h2 className="font-semibold flex items-center gap-2"><Database className="h-4.5 w-4.5 text-primary" /> Major Infrastructure Projects</h2>
+              <div className="space-y-3">
+                <div className="grid grid-cols-12 gap-3 text-xs font-semibold text-muted-foreground border-b pb-2 px-1">
+                  <div className="col-span-5">Project Name</div>
+                  <div className="col-span-2">Status</div>
+                  <div className="col-span-2">Capacity (MW)</div>
+                  <div className="col-span-3">Commissioning Year</div>
+                </div>
+                {gridProjects.map((proj, idx) => (
+                  <div key={idx} className="grid grid-cols-12 gap-3 items-center hover:bg-muted/10 p-0.5 rounded-lg">
+                    <div className="col-span-5">
+                      <Input value={proj.name} onChange={(e) => updateGridProjectsField(idx, 'name', e.target.value)} />
+                    </div>
+                    <div className="col-span-2">
+                      <Input value={proj.status} onChange={(e) => updateGridProjectsField(idx, 'status', e.target.value)} />
+                    </div>
+                    <div className="col-span-2">
+                      <Input value={proj.mw} onChange={(e) => updateGridProjectsField(idx, 'mw', e.target.value)} />
+                    </div>
+                    <div className="col-span-3">
+                      <Input value={proj.date} onChange={(e) => updateGridProjectsField(idx, 'date', e.target.value)} />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+
+      <div className="admin-settings-queue-hint mt-8">
+        <div className="admin-settings-queue-hint__copy">
+          <Layers className="h-4 w-4 shrink-0 text-primary" />
+          <p className="text-xs text-muted-foreground">
+            Edits stack in the <strong className="text-foreground font-medium">Changes</strong> panel on the right.
+            Review, remove mistakes, then save when ready — you&apos;ll be prompted before leaving with unsaved work.
+          </p>
+        </div>
+        {count > 0 && (
+          <button
+            type="button"
+            className="admin-settings-queue-hint__btn"
+            onClick={() => setDockOpen(true)}
+          >
+            {count} pending
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}

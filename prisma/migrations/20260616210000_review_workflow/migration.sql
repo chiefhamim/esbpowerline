@@ -1,0 +1,1 @@
+-- Review workflow: IN_REVIEW status + editorial notice types (SQLite stores enums as TEXT)
