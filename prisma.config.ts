@@ -1,10 +1,12 @@
-import { defineConfig } from 'prisma/config'
+import { defineConfig, env } from "prisma/config";
 
 export default defineConfig({
-  schema: 'prisma/schema.prisma',
-  // Provide the url here for Prisma 7+ commands (db push, migrate, etc.)
-  // The client in lib/prisma.ts will use process.env.DATABASE_URL at runtime
-  datasource: {
-    url: process.env.DATABASE_URL ?? 'file:./dev.db',
+  schema: "prisma/schema.prisma",
+  migrations: { 
+    path: "prisma/migrations" 
   },
-})
+  datasource: { 
+    url: env("DATABASE_URL"),
+    directUrl: env("DIRECT_URL")
+  },
+});
