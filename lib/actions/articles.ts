@@ -605,7 +605,6 @@ export async function getArticleRevisions(articleId: string) {
 
   return prisma.revision.findMany({
     where: { articleId },
-    include: { user: { select: { name: true } } },
     orderBy: { createdAt: 'desc' },
     take: 20,
   });
