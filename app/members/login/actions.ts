@@ -1,11 +1,10 @@
 'use server';
 
-import { AuthError } from 'next-auth';
 import { revalidatePath } from 'next/cache';
-import { signIn, signOut } from '@/lib/auth';
 import { registerMemberAction } from '@/lib/actions/member-register';
 import { ensureDemoMemberAccount } from '@/lib/ensure-demo-accounts';
 import { verifyUserCredentials } from '@/lib/verify-credentials';
+import { createClient } from '@/utils/supabase/server';
 
 export type MemberAuthResult = {
   error?: string;
@@ -32,8 +31,6 @@ async function establishMemberSession(
   identifier: string,
   password: string,
 ): Promise<MemberAuthResult | null> {
-  await signOut({ redirect: false });
-
   const user = await verifyUserCredentials(identifier, password);
   if (!user) {
     return memberLoginFailure(
@@ -45,19 +42,15 @@ async function establishMemberSession(
     return memberLoginFailure('This account is not a member account. Use staff sign in instead.');
   }
 
-  try {
-    await signIn('credentials', {
-      identifier,
-      password,
-      redirect: false,
-    });
-  } catch (error) {
-    if (error instanceof AuthError) {
-      return memberLoginFailure(
-        'Invalid phone, email, or password. Check your details and try again.',
-      );
-    }
-    throw error;
+  // Establish Supabase session
+  const supabase = await createClient();
+  const { error } = await supabase.auth.signInWithPassword({
+    email: user.email,
+    password,
+  });
+
+  if (error) {
+    return memberLoginFailure('Invalid phone, email, or password. Check your details and try again.');
   }
 
   return null;

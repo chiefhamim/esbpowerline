@@ -1,12 +1,12 @@
 'use client';
 
-import { SessionProvider } from 'next-auth/react';
+import { SupabaseAuthProvider } from '@/utils/supabase/auth-context';
 import { SiteThemeProvider } from '@/components/shared/SiteThemeProvider';
 
 export function Providers({ children }: { children: React.ReactNode }) {
   return (
-    <SessionProvider basePath="/api/auth" refetchOnWindowFocus={false} refetchInterval={5 * 60}>
+    <SupabaseAuthProvider>
       <SiteThemeProvider>{children}</SiteThemeProvider>
-    </SessionProvider>
+    </SupabaseAuthProvider>
   );
 }

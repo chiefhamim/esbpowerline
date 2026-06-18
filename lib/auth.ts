@@ -1,69 +1,74 @@
-import NextAuth from 'next-auth';
-import Credentials from 'next-auth/providers/credentials';
-import bcrypt from 'bcryptjs';
-import { normalizeBdPhone } from '@/lib/bd-phone';
+import { createClient } from '@/utils/supabase/server';
 import prisma from '@/lib/prisma';
-import { authConfig } from '@/lib/auth.config';
 import type { Role } from '@/lib/constants';
 
-async function findUserByLoginId(loginId: string) {
-  const trimmed = loginId.trim();
-  if (!trimmed) return null;
+export type AuthSession = {
+  user: {
+    id: string;
+    email: string;
+    name: string;
+    role: Role;
+    image?: string | null;
+  };
+} | null;
 
-  if (trimmed.includes('@')) {
-    return prisma.user.findUnique({ where: { email: trimmed.toLowerCase() } });
-  }
+/**
+ * Server-side auth check — replaces NextAuth's `auth()`.
+ * Returns a session-like object with user data from Supabase Auth + Prisma User table.
+ */
+export async function auth(): Promise<AuthSession> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
-  const phone = normalizeBdPhone(trimmed);
-  if (phone) {
-    return prisma.user.findUnique({ where: { phone } });
-  }
+  if (!user) return null;
 
-  return prisma.user.findUnique({ where: { email: trimmed.toLowerCase() } });
+  // Look up the Prisma User by email for role/name data
+  const dbUser = await prisma.user.findUnique({
+    where: { email: user.email ?? '' },
+    select: { id: true, name: true, email: true, role: true, avatar: true },
+  });
+
+  if (!dbUser) return null;
+
+  return {
+    user: {
+      id: dbUser.id,
+      email: dbUser.email,
+      name: dbUser.name,
+      role: dbUser.role as Role,
+      image: dbUser.avatar ?? null,
+    },
+  };
 }
 
-export const { handlers, auth, signIn, signOut } = NextAuth({
-  ...authConfig,
-  providers: [
-    Credentials({
-      name: 'credentials',
-      credentials: {
-        email: { label: 'Email', type: 'email' },
-        identifier: { label: 'Email or phone', type: 'text' },
-        password: { label: 'Password', type: 'password' },
-      },
-      async authorize(credentials) {
-        const loginId = (credentials?.identifier ?? credentials?.email) as string | undefined;
-        if (!loginId || !credentials?.password) return null;
+/**
+ * Server-side sign-out — clears Supabase session.
+ * Accepts options for compatibility with call sites that passed { redirect: false }.
+ */
+export async function signOut(_options?: { redirect?: boolean }) {
+  const supabase = await createClient();
+  await supabase.auth.signOut();
+}
 
-        const user = await findUserByLoginId(loginId);
-
-        if (!user || user.status !== 'ACTIVE') return null;
-
-        const valid = await bcrypt.compare(
-          credentials.password as string,
-          user.passwordHash
-        );
-        if (!valid) return null;
-
-        await prisma.user.update({
-          where: { id: user.id },
-          data: { lastLoginAt: new Date() },
-        });
-
-        return {
-          id: user.id,
-          email: user.email,
-          name: user.name,
-          role: user.role as Role,
-        };
-      },
-    }),
-  ],
-});
-
-export async function getServerSession() {
-  return auth();
+/**
+ * Server-side sign-in with email/password via Supabase Auth.
+ * Accepts a provider string (ignored — always uses password) and credentials.
+ */
+export async function signIn(
+  _provider: string,
+  credentials: { email?: string; identifier?: string; password: string; redirect?: boolean },
+) {
+  const email = credentials.email ?? credentials.identifier ?? '';
+  const supabase = await createClient();
+  const { error } = await supabase.auth.signInWithPassword({
+    email,
+    password: credentials.password,
+  });
+  if (error) {
+    throw error;
+  }
 }
 
 export { roleHomePath as getRedirectForRole } from '@/lib/auth-routing';

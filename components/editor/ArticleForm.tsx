@@ -10,7 +10,7 @@ import {
 } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useSession } from 'next-auth/react';
+import { useSession } from '@/utils/supabase/auth-context';
 import { toast } from 'sonner';
 import dynamic from 'next/dynamic';
 

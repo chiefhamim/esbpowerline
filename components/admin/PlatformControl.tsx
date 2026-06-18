@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useTransition } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useSession } from 'next-auth/react';
+import { useSession } from '@/utils/supabase/auth-context';
 import { useAdminChangeQueue } from '@/components/admin/AdminChangeQueueProvider';
 import { toast } from 'sonner';
 import {

@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useSession } from 'next-auth/react';
+import { useSession } from '@/utils/supabase/auth-context';
 import { useState, useEffect, useMemo, memo, type MouseEvent } from 'react';
 import { cn } from '@/lib/utils';
 import { resolveStaffWorkspaceUrls } from '@/lib/workspace-urls';

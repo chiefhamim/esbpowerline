@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useTransition, useMemo } from 'react';
 import Link from 'next/link';
-import { useSession } from 'next-auth/react';
+import { useSession } from '@/utils/supabase/auth-context';
 import {
   Bell, ChevronDown, CheckCircle2, X, MessageSquare, UserCog, FileWarning, Tags,
 } from 'lucide-react';

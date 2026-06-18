@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useSession } from 'next-auth/react';
+import { useSession } from '@/utils/supabase/auth-context';
 import { useWorkspaceHref } from '@/hooks/useWorkspaceHref';
 import {
   getAccountKind,

@@ -7,7 +7,9 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 // ============================================
@@ -349,3 +351,72 @@ model SiteSetting {
 }
 
 // (Pages model can be added later for About/Contact custom content)
+
+// ============================================
+// PROFILE (Supabase auth.users mirror — id matches UUID from auth.users)
+// ============================================
+model Profile {
+  id        String   @id // matches Supabase auth.users UUID exactly
+  fullName  String?
+  role      String   @default("MEMBER")
+  avatarUrl String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ============================================
+// TAGS (normalized tag lookup)
+// ============================================
+model Tag {
+  id   String @id @default(cuid())
+  name String @unique
+  slug String @unique
+}
+
+// ============================================
+// TICKER ITEMS (live market/news ticker on homepage)
+// ============================================
+model TickerItem {
+  id        String   @id @default(cuid())
+  text      String
+  url       String?
+  active    Boolean  @default(true)
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+}
+
+// ============================================
+// NOTIFICATIONS (user-targeted alerts)
+// ============================================
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String   // Profile.id
+  message   String
+  linkUrl   String?
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
+
+// ============================================
+// BOOKMARKS (user article saves — composite key)
+// ============================================
+model Bookmark {
+  userId    String
+  articleId String
+  createdAt DateTime @default(now())
+
+  @@id([userId, articleId])
+}
+
+// ============================================
+// ARTICLE HISTORY (status transition log)
+// ============================================
+model ArticleHistory {
+  id         String   @id @default(cuid())
+  articleId  String
+  fromStatus String
+  toStatus   String
+  changedBy  String   // Profile.id
+  comment    String?
+  createdAt  DateTime @default(now())
+}

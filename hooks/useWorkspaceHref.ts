@@ -1,9 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useSession } from 'next-auth/react';
 import type { Role } from '@/lib/constants';
-import { authContinuePath, needsAuthHandoff } from '@/lib/auth-handoff';
 import { roleHomePath, resolveWorkspaceUrl } from '@/lib/auth-routing';
 
 export function useWorkspaceHref(role: Role | undefined, signedIn: boolean, guestHref: string) {
@@ -21,11 +19,8 @@ export function useWorkspaceHref(role: Role | undefined, signedIn: boolean, gues
       protocol: window.location.protocol,
     };
     const destination = resolveWorkspaceUrl(roleHomePath(role), hostContext);
-    setHref(
-      needsAuthHandoff(destination, hostContext.host)
-        ? authContinuePath(destination)
-        : destination,
-    );
+    // With Supabase auth, cookies are same-origin — no handoff needed.
+    setHref(destination);
   }, [guestHref, role, signedIn]);
 
   return href;

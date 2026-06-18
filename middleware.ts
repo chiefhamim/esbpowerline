@@ -1,47 +1,52 @@
-import { NextResponse } from 'next/server';
-import type { NextRequest } from 'next/server';
-import { sanitizeAuthEnv } from '@/lib/auth-env';
-import { runEsbRouteGuard } from '@/lib/esb-route-guard';
-import { applySupabaseCookies, updateSession } from '@/utils/supabase/middleware';
+import { NextResponse, type NextRequest } from 'next/server';
+import { updateSession } from '@/utils/supabase/middleware';
+import { createServerClient } from '@supabase/ssr';
 
-sanitizeAuthEnv();
+const ADMIN_ROUTES = ['/admin'];
+const EDITOR_ROUTES = ['/cms', '/editor'];
+const MEMBER_ROUTES = ['/members'];
+const PUBLIC_ROUTES = ['/', '/articles', '/category', '/search', '/about', '/contact'];
 
-/** NextAuth + staff handoff — skip Supabase refresh (avoids edge noise on session fetches). */
-function usesNextAuthOnly(pathname: string): boolean {
-  return (
-    pathname.startsWith('/api/auth/') ||
-    pathname === '/cms' ||
-    pathname.startsWith('/cms/') ||
-    pathname === '/admin' ||
-    pathname.startsWith('/admin/') ||
-    pathname === '/editor' ||
-    pathname.startsWith('/editor/')
-  );
+async function getUserRole(supabase: ReturnType<typeof createServerClient>, userId: string) {
+  const { data } = await supabase
+    .from('profiles')
+    .select('role')
+    .eq('id', userId)
+    .single();
+  return data?.role as 'ADMIN' | 'EDITOR' | 'MEMBER' | null;
 }
 
-/**
- * 1. Refresh Supabase session cookies where staff login/handoff needs them.
- * 2. Protect /admin, /cms via NextAuth in route guard.
- * 3. Run ESB split-surface + legacy route rules.
- */
-export default async function middleware(request: NextRequest) {
+export async function middleware(request: NextRequest) {
+  const { response, supabase, user } = await updateSession(request);
   const { pathname } = request.nextUrl;
 
-  const supabaseResponse = usesNextAuthOnly(pathname)
-    ? NextResponse.next({ request: { headers: request.headers } })
-    : (await updateSession(request)).response;
+  const needsAdmin = ADMIN_ROUTES.some((r) => pathname.startsWith(r));
+  const needsEditor = EDITOR_ROUTES.some((r) => pathname.startsWith(r));
+  const needsMember = MEMBER_ROUTES.some((r) => pathname.startsWith(r));
 
-  const guarded = await runEsbRouteGuard(request);
-  if (guarded) {
-    return applySupabaseCookies(supabaseResponse, guarded);
+  if (!needsAdmin && !needsEditor && !needsMember) return response;
+
+  if (!user) {
+    const loginUrl = new URL('/login', request.url);
+    loginUrl.searchParams.set('redirectTo', pathname);
+    return NextResponse.redirect(loginUrl);
   }
 
-  return supabaseResponse;
+  const role = await getUserRole(supabase, user.id);
+
+  if (needsAdmin && role !== 'ADMIN') {
+    return NextResponse.redirect(new URL('/unauthorized', request.url));
+  }
+
+  if (needsEditor && role !== 'ADMIN' && role !== 'EDITOR') {
+    return NextResponse.redirect(new URL('/unauthorized', request.url));
+  }
+
+  return response;
 }
 
 export const config = {
   matcher: [
-    '/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)',
-    '/(api|trpc)(.*)',
+    '/((?!_next/static|_next/image|favicon.ico|api/auth|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
   ],
 };

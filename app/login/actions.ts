@@ -1,10 +1,8 @@
 'use server';
 
-import { AuthError } from 'next-auth';
 import { headers } from 'next/headers';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
-import { signIn, signOut } from '@/lib/auth';
 import { ensureDemoStaffAccounts } from '@/lib/ensure-demo-accounts';
 import {
   getAuthHandoffMessage,
@@ -12,7 +10,6 @@ import {
   isStaffRole,
   resolvePostLoginPath,
 } from '@/lib/auth-routing';
-import { authContinuePath, needsAuthHandoff } from '@/lib/auth-handoff';
 import type { Role } from '@/lib/constants';
 import { verifyUserCredentials } from '@/lib/verify-credentials';
 import { createClient } from '@/utils/supabase/server';
@@ -41,41 +38,6 @@ function friendlyAuthError(message: string) {
   return message;
 }
 
-type StaffSessionResult =
-  | { error: string }
-  | { ok: true; role: Role };
-
-async function establishStaffAppSession(
-  email: string,
-  password: string,
-): Promise<StaffSessionResult> {
-  await signOut({ redirect: false });
-
-  const user = await verifyUserCredentials(email, password);
-  if (!user) {
-    return { error: 'Invalid email or password. Check your credentials and try again.' };
-  }
-
-  if (!isStaffRole(user.role)) {
-    return { error: 'This account is not authorized for staff access. Use member sign in instead.' };
-  }
-
-  try {
-    await signIn('credentials', {
-      email,
-      password,
-      redirect: false,
-    });
-  } catch (error) {
-    if (error instanceof AuthError) {
-      return { error: 'Invalid email or password. Check your credentials and try again.' };
-    }
-    throw error;
-  }
-
-  return { ok: true, role: user.role };
-}
-
 /** Attach to staff login form: useActionState(loginAction, {}) */
 export async function loginAction(
   _prevState: AuthActionResult,
@@ -91,17 +53,22 @@ export async function loginAction(
 
     await ensureDemoStaffAccounts();
 
+    // Verify credentials against Prisma User table first (role check)
+    const user = await verifyUserCredentials(email, password);
+    if (!user) {
+      return { error: 'Invalid email or password. Check your credentials and try again.' };
+    }
+
+    if (!isStaffRole(user.role)) {
+      return { error: 'This account is not authorized for staff access. Use member sign in instead.' };
+    }
+
+    // Establish Supabase session
     const supabase = await createClient();
     const { error } = await supabase.auth.signInWithPassword({ email, password });
 
     if (error) {
       return { error: friendlyAuthError(error.message) };
-    }
-
-    const appSession = await establishStaffAppSession(email, password);
-    if ('error' in appSession) {
-      await supabase.auth.signOut();
-      return { error: appSession.error };
     }
 
     revalidatePath('/', 'layout');
@@ -112,24 +79,20 @@ export async function loginAction(
       headerStore.get('x-forwarded-proto'),
     );
     const callbackUrl = readField(formData, 'callbackUrl');
-    const destination = resolvePostLoginPath(appSession.role, {
+    const destination = resolvePostLoginPath(user.role as Role, {
       callbackUrl,
       audience: 'staff',
     }, hostContext);
 
-    const host = headerStore.get('host') ?? 'localhost:3000';
-    const redirectTo = needsAuthHandoff(destination, host)
-      ? authContinuePath(destination)
-      : destination;
-
-    const handoffMessage = getAuthHandoffMessage(
-      appSession.role,
-      'staff',
-      destination,
-      host,
-    );
-
-    return { redirectTo, handoffMessage };
+    return {
+      redirectTo: destination,
+      handoffMessage: getAuthHandoffMessage(
+        user.role as Role,
+        'staff',
+        destination,
+        headerStore.get('host') ?? 'localhost:3000',
+      ),
+    };
   } catch (error) {
     console.error('[loginAction]', error);
     return { error: 'Sign-in failed. Please try again in a moment.' };
@@ -176,7 +139,6 @@ export async function signupAction(
 export async function signOutAction() {
   const supabase = await createClient();
   await supabase.auth.signOut();
-  await signOut({ redirect: false });
   revalidatePath('/', 'layout');
   redirect('/login');
 }

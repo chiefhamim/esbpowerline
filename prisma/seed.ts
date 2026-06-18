@@ -7,18 +7,12 @@
 
 import 'dotenv/config';
 import bcrypt from 'bcryptjs';
-import { PrismaBetterSqlite3 } from '@prisma/adapter-better-sqlite3';
 import { PrismaClient } from '@prisma/client';
-import path from 'path';
 import { CATEGORIES, CATEGORY_DETAILS } from '../lib/constants';
 import { DEFAULT_COVERAGE_SLOTS } from '../lib/coverage-defaults';
 import { slugify } from '../lib/utils';
 
-const dbUrl = process.env.DATABASE_URL ?? 'file:./dev.db';
-const filePath = dbUrl.replace(/^file:/, '');
-const resolved = path.isAbsolute(filePath) ? filePath : path.join(process.cwd(), filePath);
-const adapter = new PrismaBetterSqlite3({ url: resolved });
-const prisma = new PrismaClient({ adapter });
+const prisma = new PrismaClient();
 
 async function main() {
   console.log('🌱 Seeding ESB PowerLine database...');
