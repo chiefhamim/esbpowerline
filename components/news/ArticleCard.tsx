@@ -1,3 +1,5 @@
+'use client';
+
 import Link from 'next/link';
 import Image from 'next/image';
 import { formatDistanceToNow } from 'date-fns';
@@ -7,8 +9,6 @@ import { CategoryLabel } from '@/components/i18n/CategoryLabel';
 import { NoImage } from '@/components/shared/NoImage';
 import { hasArticleImage } from '@/lib/article-image';
 import { useLocale } from '@/components/shared/LocaleProvider';
-
-'use client';
 
 interface ArticleCardProps {
   id: string;
