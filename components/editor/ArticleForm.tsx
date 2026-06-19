@@ -38,7 +38,6 @@ import { CmsPlacementSwitch } from '@/components/cms/CmsPlacementSwitch';
 import { PLACEMENT_FLAGS } from '@/lib/article-placement';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { createArticle, updateArticle } from '@/lib/actions/articles';
-import { isMockArticleSubmitEnabled, mockArticleSubmit } from '@/lib/test/mockArticleSubmit';
 import { submitDraftForAdminReview } from '@/lib/actions/review-workflow';
 import { can, type Role } from '@/lib/constants';
 import { canSubmitArticleForReview } from '@/lib/editorial-review';
@@ -289,20 +288,6 @@ export function ArticleForm({
     try {
       const data = buildSavePayload(finalStatus);
 
-      if (isMockArticleSubmitEnabled()) {
-        const mockResult = await mockArticleSubmit(data);
-        setStatus(finalStatus);
-        toast.success('Dry-run saved (check browser console for JSON payload)', {
-          description: `Mock ID: ${mockResult.mockId} · no database write`,
-        });
-        if (mode === 'create') {
-          router.push('/cms/articles/new');
-        } else {
-          router.refresh();
-        }
-        return;
-      }
-
       if (mode === 'create') {
         const created = await createArticle(data);
         setStatus(finalStatus);
@@ -342,7 +327,6 @@ export function ArticleForm({
   }, [editorCtx, handleSubmit]);
 
   useEffect(() => {
-    if (isMockArticleSubmitEnabled()) return;
     if (mode === 'edit' && status === 'DRAFT' && article) {
       const interval = setInterval(() => {
         updateArticle(article.id, buildSavePayload('DRAFT'))
@@ -650,7 +634,7 @@ export function ArticleForm({
                   <Archive className="h-4 w-4" /> Move to draft
                 </Button>
               )}
-              {canSubmitForReview && status !== 'IN_REVIEW' && (
+              {canSubmitForReview && article && status !== 'IN_REVIEW' && (
                 <Button
                   variant="outline"
                   onClick={() => setReviewDialogOpen(true)}

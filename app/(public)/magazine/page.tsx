@@ -21,7 +21,7 @@ export default async function MagazinePage() {
     id: '',
     title: 'ESB PowerLine Monthly',
     summary: 'In-depth analysis on Bangladesh power sector policy, projects and data.',
-    coverUrl: '/images/demo_magazine_cover.jpg',
+    coverUrl: '/images/banner.jpg',
     pdfUrl: null,
     issueDate: new Date(),
   };
