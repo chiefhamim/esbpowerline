@@ -1,26 +1,41 @@
 /**
- * Production migrate deploy — uses DIRECT_URL (:5432).
+ * Production migrate deploy — uses DIRECT_URL (true direct host, not pooler).
  * Auto-baselines when the DB already has tables (Prisma P3005).
  */
 import { spawnSync } from 'child_process';
 import { readdirSync } from 'fs';
 import path from 'path';
+import { resolveMigrationDatabaseUrl } from './resolve-migration-database-url.mjs';
 
-const direct = process.env.DIRECT_URL?.trim();
 const migrationsDir =
   process.env.PRISMA_MIGRATIONS_DIR?.trim() || 'prisma/migrations_postgresql';
 
-if (process.env.PRISMA_SCHEMA_PROVIDER === 'postgresql') {
-  if (!direct) {
-    console.error(
-      '❌ DIRECT_URL is required for production migrations (Supabase port 5432).',
-    );
-    process.exit(1);
+let migrationDatabaseUrl;
+try {
+  const resolved = resolveMigrationDatabaseUrl(
+    process.env.DIRECT_URL?.trim() || process.env.DATABASE_URL?.trim(),
+  );
+  migrationDatabaseUrl = resolved.url;
+  if (process.env.PRISMA_SCHEMA_PROVIDER === 'postgresql') {
+    if (!migrationDatabaseUrl) {
+      console.error(
+        '❌ DIRECT_URL is required for production migrations (Supabase db.[ref].supabase.co:5432).',
+      );
+      process.exit(1);
+    }
+    if (resolved.rewritten) {
+      console.warn(
+        `[migrate-deploy-prod] DIRECT_URL used session pooler — migrated to direct host ${resolved.host}`,
+      );
+    } else {
+      console.log(
+        `[migrate-deploy-prod] using migration URL host ${resolved.host ?? '(unknown)'}`,
+      );
+    }
   }
-  if (direct.includes(':6543')) {
-    console.error('❌ DIRECT_URL must use port 5432, not 6543 (pooler).');
-    process.exit(1);
-  }
+} catch (error) {
+  console.error(`❌ ${error instanceof Error ? error.message : String(error)}`);
+  process.exit(1);
 }
 
 function migrationNames() {
@@ -38,7 +53,7 @@ function runPrisma(args, { inherit = false } = {}) {
     encoding: 'utf8',
     env: {
       ...process.env,
-      DATABASE_URL: direct || process.env.DATABASE_URL,
+      DATABASE_URL: migrationDatabaseUrl,
       PRISMA_MIGRATIONS_DIR: migrationsDir,
     },
     shell: process.platform === 'win32',
@@ -68,8 +83,6 @@ function baselineExistingDatabase() {
     process.exit(resolved.status ?? 1);
   }
 }
-
-console.log('[migrate-deploy-prod] using DIRECT_URL for migrate deploy (not pooler)');
 
 let result = deploy();
 
