@@ -2,6 +2,7 @@
 
 import bcrypt from 'bcryptjs';
 import prisma from '@/lib/prisma';
+import { upsertSupabaseAuthUser } from '@/lib/supabase/sync-auth-user';
 import {
   formatBdPhoneDisplay,
   isValidBdPhone,
@@ -72,6 +73,19 @@ export async function registerMemberAction(input: {
       status: 'ACTIVE',
     },
   });
+
+  try {
+    await upsertSupabaseAuthUser({
+      email,
+      password,
+      name,
+      role: 'SUBSCRIBER',
+    });
+  } catch (error) {
+    await prisma.user.delete({ where: { email } }).catch(() => undefined);
+    console.error('[registerMemberAction] Supabase sync failed:', error);
+    return { ok: false, error: 'Could not create your account. Please try again.' };
+  }
 
   return { ok: true, email };
 }

@@ -8,7 +8,7 @@ import {
   needsAuthHandoff,
 } from '@/lib/auth-handoff';
 
-/** Resolve a post-login destination, adding a cross-origin handoff when needed. */
+/** Resolve a post-login destination, adding a cross-origin Supabase handoff when needed. */
 export async function resolveAuthDestinationAction(
   destination: string,
   currentHost: string,
@@ -16,17 +16,14 @@ export async function resolveAuthDestinationAction(
   if (!needsAuthHandoff(destination, currentHost)) return destination;
 
   const session = await auth();
-  const user = session?.user;
-  if (!user?.id || !user.email || !user.role) {
+  if (!session?.user?.id) {
     return authContinuePath(destination);
   }
 
-  const token = await createHandoffToken({
-    id: user.id,
-    email: user.email,
-    name: user.name ?? 'User',
-    role: user.role,
-  });
+  const token = await createHandoffToken();
+  if (!token) {
+    return authContinuePath(destination);
+  }
 
   return buildHandoffUrl(destination, token);
 }

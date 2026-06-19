@@ -3,8 +3,10 @@
 import { revalidatePath } from 'next/cache';
 import { registerMemberAction } from '@/lib/actions/member-register';
 import { ensureDemoMemberAccount } from '@/lib/ensure-demo-accounts';
-import { verifyUserCredentials } from '@/lib/verify-credentials';
+import { resolveRoleFromSupabaseUser } from '@/lib/supabase/resolve-role';
 import { createClient } from '@/utils/supabase/server';
+import prisma from '@/lib/prisma';
+import { normalizeBdPhone } from '@/lib/bd-phone';
 
 export type MemberAuthResult = {
   error?: string;
@@ -27,30 +29,64 @@ function memberLoginFailure(message: string): MemberAuthResult {
   return { error: message };
 }
 
+async function resolveMemberEmail(identifier: string): Promise<string | null> {
+  const trimmed = identifier.trim();
+  if (!trimmed) return null;
+  if (trimmed.includes('@')) return trimmed.toLowerCase();
+
+  const phone = normalizeBdPhone(trimmed);
+  if (!phone) return null;
+
+  const user = await prisma.user.findUnique({
+    where: { phone },
+    select: { email: true },
+  });
+  return user?.email?.toLowerCase() ?? null;
+}
+
 async function establishMemberSession(
   identifier: string,
   password: string,
 ): Promise<MemberAuthResult | null> {
-  const user = await verifyUserCredentials(identifier, password);
-  if (!user) {
+  const email = await resolveMemberEmail(identifier);
+  if (!email) {
     return memberLoginFailure(
       'Invalid phone, email, or password. Check your details and try again.',
     );
   }
 
-  if (user.role !== 'SUBSCRIBER') {
-    return memberLoginFailure('This account is not a member account. Use staff sign in instead.');
-  }
-
-  // Establish Supabase session
   const supabase = await createClient();
-  const { error } = await supabase.auth.signInWithPassword({
-    email: user.email,
-    password,
-  });
+  const { error } = await supabase.auth.signInWithPassword({ email, password });
 
   if (error) {
-    return memberLoginFailure('Invalid phone, email, or password. Check your details and try again.');
+    return memberLoginFailure(
+      'Invalid phone, email, or password. Check your details and try again.',
+    );
+  }
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) {
+    return memberLoginFailure('Sign-in failed. Please try again.');
+  }
+
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('role')
+    .eq('id', user.id)
+    .maybeSingle();
+
+  const role =
+    resolveRoleFromSupabaseUser(user, profile?.role ?? null) ??
+    ((await prisma.user.findUnique({
+      where: { email },
+      select: { role: true },
+    }))?.role as 'SUBSCRIBER' | undefined);
+
+  if (role !== 'SUBSCRIBER') {
+    await supabase.auth.signOut();
+    return memberLoginFailure('This account is not a member account. Use staff sign in instead.');
   }
 
   return null;

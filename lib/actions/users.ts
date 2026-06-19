@@ -5,6 +5,7 @@ import bcrypt from 'bcryptjs';
 import prisma from '@/lib/prisma';
 import { auth } from '@/lib/auth';
 import { can } from '@/lib/constants';
+import { upsertSupabaseAuthUser } from '@/lib/supabase/sync-auth-user';
 import { userSchema, type UserInput } from '@/lib/validations/user';
 
 async function requireAdmin() {
@@ -171,6 +172,18 @@ export async function createUser(data: UserInput) {
     },
   });
 
+  try {
+    await upsertSupabaseAuthUser({
+      email: parsed.email,
+      password: parsed.password!.trim(),
+      name: parsed.name,
+      role: parsed.role,
+    });
+  } catch (error) {
+    await prisma.user.delete({ where: { id: user.id } }).catch(() => undefined);
+    throw error;
+  }
+
   await prisma.auditLog.create({
     data: { type: 'user.create', message: `Created user: ${user.email}`, userId: admin.id },
   });
@@ -191,11 +204,26 @@ export async function updateUser(id: string, data: Partial<UserInput>) {
     updateData.passwordHash = await bcrypt.hash(parsed.password, 10);
   }
 
+  const existing = await prisma.user.findUnique({
+    where: { id },
+    select: { email: true, name: true, role: true },
+  });
+
   if (parsed.role && !can(admin.role, 'user.change_role')) {
     throw new Error('Cannot change role');
   }
 
   const user = await prisma.user.update({ where: { id }, data: updateData as any });
+
+  if (parsed.password && existing) {
+    await upsertSupabaseAuthUser({
+      email: existing.email,
+      password: parsed.password,
+      name: parsed.name ?? existing.name,
+      role: (parsed.role ?? existing.role) as UserInput['role'],
+    });
+  }
+
   revalidatePath('/admin/users');
   return user;
 }

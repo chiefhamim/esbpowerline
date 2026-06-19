@@ -3,6 +3,7 @@ import 'server-only';
 import bcrypt from 'bcryptjs';
 import prisma from '@/lib/prisma';
 import { DEMO_PASSWORD } from '@/lib/demo-auth';
+import { upsertSupabaseAuthUser } from '@/lib/supabase/sync-auth-user';
 
 const DEMO_MEMBER_EMAIL = 'member@esbpowerline.com';
 const DEMO_STAFF = [
@@ -14,11 +15,25 @@ function demoPassword() {
   return process.env.SEED_DEMO_PASSWORD?.trim() || DEMO_PASSWORD;
 }
 
-/** Upsert Prisma demo member — safe to call before member sign-in in development. */
+async function syncDemoAuthUser(
+  email: string,
+  name: string,
+  role: 'SUPER_ADMIN' | 'EDITOR' | 'SUBSCRIBER',
+  password: string,
+) {
+  try {
+    await upsertSupabaseAuthUser({ email, password, name, role });
+  } catch (error) {
+    console.warn(`[ensureDemoAccounts] Supabase sync skipped for ${email}:`, error);
+  }
+}
+
+/** Upsert Prisma demo member and mirror to Supabase Auth in development. */
 export async function ensureDemoMemberAccount() {
   if (process.env.NODE_ENV === 'production') return;
 
-  const passwordHash = await bcrypt.hash(demoPassword(), 10);
+  const password = demoPassword();
+  const passwordHash = await bcrypt.hash(password, 10);
 
   await prisma.user.upsert({
     where: { email: DEMO_MEMBER_EMAIL },
@@ -37,13 +52,16 @@ export async function ensureDemoMemberAccount() {
       status: 'ACTIVE',
     },
   });
+
+  await syncDemoAuthUser(DEMO_MEMBER_EMAIL, 'Demo Member', 'SUBSCRIBER', password);
 }
 
-/** Upsert Prisma demo staff rows used after Supabase staff sign-in. */
+/** Upsert Prisma demo staff rows and mirror to Supabase Auth in development. */
 export async function ensureDemoStaffAccounts() {
   if (process.env.NODE_ENV === 'production') return;
 
-  const passwordHash = await bcrypt.hash(demoPassword(), 10);
+  const password = demoPassword();
+  const passwordHash = await bcrypt.hash(password, 10);
 
   for (const account of DEMO_STAFF) {
     await prisma.user.upsert({
@@ -61,5 +79,7 @@ export async function ensureDemoStaffAccounts() {
         status: 'ACTIVE',
       },
     });
+
+    await syncDemoAuthUser(account.email, account.name, account.role, password);
   }
 }

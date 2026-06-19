@@ -11,8 +11,9 @@ import {
   resolvePostLoginPath,
 } from '@/lib/auth-routing';
 import type { Role } from '@/lib/constants';
-import { verifyUserCredentials } from '@/lib/verify-credentials';
+import { resolveRoleFromSupabaseUser } from '@/lib/supabase/resolve-role';
 import { createClient } from '@/utils/supabase/server';
+import prisma from '@/lib/prisma';
 
 export type AuthActionResult = {
   error?: string;
@@ -44,7 +45,7 @@ export async function loginAction(
   formData: FormData,
 ): Promise<AuthActionResult> {
   try {
-    const email = readField(formData, 'email');
+    const email = readField(formData, 'email').toLowerCase();
     const password = readField(formData, 'password');
 
     if (!email || !password) {
@@ -53,22 +54,41 @@ export async function loginAction(
 
     await ensureDemoStaffAccounts();
 
-    // Verify credentials against Prisma User table first (role check)
-    const user = await verifyUserCredentials(email, password);
-    if (!user) {
-      return { error: 'Invalid email or password. Check your credentials and try again.' };
-    }
-
-    if (!isStaffRole(user.role)) {
-      return { error: 'This account is not authorized for staff access. Use member sign in instead.' };
-    }
-
-    // Establish Supabase session
     const supabase = await createClient();
     const { error } = await supabase.auth.signInWithPassword({ email, password });
 
     if (error) {
       return { error: friendlyAuthError(error.message) };
+    }
+
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) {
+      return { error: 'Sign-in failed. Please try again.' };
+    }
+
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', user.id)
+      .maybeSingle();
+
+    const role =
+      resolveRoleFromSupabaseUser(user, profile?.role ?? null) ??
+      ((await prisma.user.findUnique({
+        where: { email },
+        select: { role: true, status: true },
+      }))?.role as Role | undefined);
+
+    if (!role) {
+      await supabase.auth.signOut();
+      return { error: 'Account is missing a role. Contact an administrator.' };
+    }
+
+    if (!isStaffRole(role)) {
+      await supabase.auth.signOut();
+      return { error: 'This account is not authorized for staff access. Use member sign in instead.' };
     }
 
     revalidatePath('/', 'layout');
@@ -79,7 +99,7 @@ export async function loginAction(
       headerStore.get('x-forwarded-proto'),
     );
     const callbackUrl = readField(formData, 'callbackUrl');
-    const destination = resolvePostLoginPath(user.role as Role, {
+    const destination = resolvePostLoginPath(role, {
       callbackUrl,
       audience: 'staff',
     }, hostContext);
@@ -87,7 +107,7 @@ export async function loginAction(
     return {
       redirectTo: destination,
       handoffMessage: getAuthHandoffMessage(
-        user.role as Role,
+        role,
         'staff',
         destination,
         headerStore.get('host') ?? 'localhost:3000',
@@ -104,7 +124,7 @@ export async function signupAction(
   _prevState: AuthActionResult,
   formData: FormData,
 ): Promise<AuthActionResult> {
-  const email = readField(formData, 'email');
+  const email = readField(formData, 'email').toLowerCase();
   const password = readField(formData, 'password');
   const name = readField(formData, 'name');
 
@@ -121,7 +141,7 @@ export async function signupAction(
     email,
     password,
     options: {
-      data: name ? { full_name: name, name } : undefined,
+      data: name ? { full_name: name, name, role: 'AUTHOR' } : { role: 'AUTHOR' },
     },
   });
 

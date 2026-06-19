@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useEffect, useState, useCallback, type ReactNode } from 'react';
 import { createClient } from '@/utils/supabase/client';
+import { resolveRoleFromSupabaseUser } from '@/lib/supabase/resolve-role';
 import type { User } from '@supabase/supabase-js';
 
 type AuthUser = {
@@ -58,7 +59,7 @@ export function SupabaseAuthProvider({ children }: { children: ReactNode }) {
       id: supaUser.id,
       email: supaUser.email ?? '',
       name: profile?.full_name ?? supaUser.user_metadata?.name ?? supaUser.email ?? '',
-      role: profile?.role ?? supaUser.user_metadata?.role ?? 'MEMBER',
+      role: resolveRoleFromSupabaseUser(supaUser, profile?.role ?? null) ?? 'SUBSCRIBER',
       image: profile?.avatar_url ?? null,
     };
 

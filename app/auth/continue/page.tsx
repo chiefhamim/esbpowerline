@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation';
 import { auth } from '@/lib/auth';
 import {
+  authContinuePath,
   buildHandoffUrl,
   createHandoffToken,
   needsAuthHandoff,
@@ -50,12 +51,10 @@ export default async function AuthContinuePage({ searchParams }: Props) {
     redirect(redirectUrlForRequest(destination, `${proto}://${host}`) as string);
   }
 
-  const token = await createHandoffToken({
-    id: session.user.id,
-    email: session.user.email,
-    name: session.user.name ?? 'User',
-    role: session.user.role,
-  });
+  const token = await createHandoffToken();
+  if (!token) {
+    redirect(authContinuePath(destination));
+  }
 
   redirect(buildHandoffUrl(destination, token));
 }

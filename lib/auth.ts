@@ -1,6 +1,7 @@
 import { createClient } from '@/utils/supabase/server';
 import prisma from '@/lib/prisma';
 import type { Role } from '@/lib/constants';
+import { resolveRoleFromSupabaseUser } from '@/lib/supabase/resolve-role';
 
 export type AuthSession = {
   user: {
@@ -12,10 +13,48 @@ export type AuthSession = {
   };
 } | null;
 
-/**
- * Server-side auth check — replaces NextAuth's `auth()`.
- * Returns a session-like object with user data from Supabase Auth + Prisma User table.
- */
+async function resolveAppUser(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  supabaseUser: {
+    id: string;
+    email?: string | null;
+    user_metadata?: Record<string, unknown>;
+    app_metadata?: Record<string, unknown>;
+  },
+) {
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('role, full_name, avatar_url')
+    .eq('id', supabaseUser.id)
+    .maybeSingle();
+
+  const role = resolveRoleFromSupabaseUser(supabaseUser, profile?.role ?? null);
+
+  const email = supabaseUser.email?.toLowerCase() ?? '';
+  const dbUser = email
+    ? await prisma.user.findUnique({
+        where: { email },
+        select: { id: true, name: true, email: true, role: true, avatar: true, status: true },
+      })
+    : null;
+
+  const resolvedRole = (role ?? (dbUser?.role as Role | undefined)) ?? null;
+  if (!resolvedRole || dbUser?.status === 'SUSPENDED') return null;
+
+  return {
+    id: dbUser?.id ?? supabaseUser.id,
+    email: dbUser?.email ?? email,
+    name:
+      profile?.full_name ??
+      dbUser?.name ??
+      (typeof supabaseUser.user_metadata?.name === 'string' ? supabaseUser.user_metadata.name : '') ??
+      email,
+    role: resolvedRole,
+    image: profile?.avatar_url ?? dbUser?.avatar ?? null,
+  };
+}
+
+/** Server-side session from Supabase Auth (replaces NextAuth `auth()`). */
 export async function auth(): Promise<AuthSession> {
   const supabase = await createClient();
   const {
@@ -24,38 +63,17 @@ export async function auth(): Promise<AuthSession> {
 
   if (!user) return null;
 
-  // Look up the Prisma User by email for role/name data
-  const dbUser = await prisma.user.findUnique({
-    where: { email: user.email ?? '' },
-    select: { id: true, name: true, email: true, role: true, avatar: true },
-  });
+  const appUser = await resolveAppUser(supabase, user);
+  if (!appUser) return null;
 
-  if (!dbUser) return null;
-
-  return {
-    user: {
-      id: dbUser.id,
-      email: dbUser.email,
-      name: dbUser.name,
-      role: dbUser.role as Role,
-      image: dbUser.avatar ?? null,
-    },
-  };
+  return { user: appUser };
 }
 
-/**
- * Server-side sign-out — clears Supabase session.
- * Accepts options for compatibility with call sites that passed { redirect: false }.
- */
 export async function signOut(_options?: { redirect?: boolean }) {
   const supabase = await createClient();
   await supabase.auth.signOut();
 }
 
-/**
- * Server-side sign-in with email/password via Supabase Auth.
- * Accepts a provider string (ignored — always uses password) and credentials.
- */
 export async function signIn(
   _provider: string,
   credentials: { email?: string; identifier?: string; password: string; redirect?: boolean },
@@ -66,9 +84,7 @@ export async function signIn(
     email,
     password: credentials.password,
   });
-  if (error) {
-    throw error;
-  }
+  if (error) throw error;
 }
 
 export { roleHomePath as getRedirectForRole } from '@/lib/auth-routing';

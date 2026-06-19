@@ -1,4 +1,4 @@
-import { auth as nextAuth } from '@/lib/auth';
+import { auth as getAuthSession } from '@/lib/auth';
 import { isMemberRole, roleHomePath } from '@/lib/auth-routing';
 import { getMemberSession } from '@/lib/member-session';
 import type { Role } from '@/lib/constants';
@@ -15,7 +15,7 @@ export async function requireMemberSession(callbackPath?: string) {
     ? `/members/login?callbackUrl=${encodeURIComponent(callbackPath)}`
     : '/members/login';
 
-  const session = await nextAuth();
+  const session = await getAuthSession();
   if (session?.user?.id) {
     const role = session.user.role as Role;
     if (isMemberRole(role)) {
@@ -26,7 +26,6 @@ export async function requireMemberSession(callbackPath?: string) {
           name: session.user.name ?? 'Member',
           role: 'SUBSCRIBER' as const,
         },
-        expires: session.expires ?? '',
       };
     }
     if (role) {
