@@ -18,9 +18,20 @@ export default function PublicError({
       <div className="mx-auto max-w-lg rounded-2xl border border-border/60 bg-card p-8 text-center shadow-sm">
         <h1 className="text-2xl font-display font-bold tracking-tight">Something went wrong</h1>
         <p className="mt-3 text-sm text-muted-foreground leading-relaxed">
-          The page hit a server error while loading. This is often a missing{' '}
-          <code className="text-xs">DATABASE_URL</code> in production, or a stale dev database after
-          schema changes.
+          The page hit a server error while loading. On production this is usually a missing or
+          invalid <code className="text-xs">DATABASE_URL</code>, failed migrations, or an empty
+          database that was never bootstrapped. Sign-in also requires Supabase Auth users — Prisma
+          seed data alone is not enough.
+        </p>
+        <p className="mt-2 text-xs text-muted-foreground/90">
+          Diagnostics:{' '}
+          <a href="/api/db/health" className="underline underline-offset-2 hover:text-foreground">
+            /api/db/health
+          </a>
+          {' · '}
+          <a href="/api/supabase/health" className="underline underline-offset-2 hover:text-foreground">
+            /api/supabase/health
+          </a>
         </p>
         {error.digest ? (
           <p className="mt-2 font-mono text-[10px] text-muted-foreground/80">Ref: {error.digest}</p>
