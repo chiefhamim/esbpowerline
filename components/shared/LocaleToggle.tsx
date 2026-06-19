@@ -14,6 +14,7 @@ export function LocaleToggle({ className = '' }: LocaleToggleProps) {
   return (
     <div
       className={cn('locale-toggle', className)}
+      data-active={locale}
       role="group"
       aria-label={t('locale.toggle')}
     >
@@ -26,6 +27,7 @@ export function LocaleToggle({ className = '' }: LocaleToggleProps) {
             onClick={() => setLocale(item.id as SiteLocale)}
             className={cn(
               'locale-toggle__btn',
+              `locale-toggle__btn--${item.id}`,
               active && 'locale-toggle__btn--active',
               item.id === 'bn' && 'font-bengali',
             )}

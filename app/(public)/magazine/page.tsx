@@ -37,8 +37,8 @@ export default async function MagazinePage() {
 
   return (
     <div className="min-h-screen">
-      <div className="container py-10">
-        <div className="flex flex-col lg:flex-row gap-10">
+      <div className="container container--shell py-10 md:py-12">
+        <div className="flex flex-col lg:flex-row gap-10 xl:gap-14">
           <div className="lg:w-2/5">
             <div className="sticky top-8">
               <div className="uppercase text-xs tracking-[2px] text-accent font-medium mb-1.5 flex items-center gap-2">
@@ -89,7 +89,7 @@ export default async function MagazinePage() {
             <Link href="/articles" className="text-xs text-primary hover:underline flex items-center gap-1">All power sector features <ArrowRight className="h-3.5 w-3.5" /></Link>
           </div>
 
-          <div className="grid md:grid-cols-2 gap-4">
+          <div className="grid sm:grid-cols-2 xl:grid-cols-4 gap-4 md:gap-5">
             {features.map((f, idx) => (
               <div key={idx} className="card p-6 group hover:border-primary/50 transition-all duration-200">
                 <div className="uppercase text-accent text-xs tracking-widest font-semibold mb-1.5">FEATURE</div>

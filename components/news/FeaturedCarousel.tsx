@@ -28,9 +28,11 @@ interface FeaturedItem {
 export function FeaturedCarousel({
   items,
   tickerItems,
+  inBand = false,
 }: {
   items?: FeaturedItem[];
   tickerItems?: TickerItem[];
+  inBand?: boolean;
 }) {
   const { t } = useLocale();
   const featured: FeaturedItem[] = items ?? [];
@@ -89,14 +91,19 @@ export function FeaturedCarousel({
   }, []);
 
   const currentItem = featured[current];
+  const shellClass = inBand ? '' : 'container container--shell';
+  const sectionPad = inBand ? '' : ' py-4';
+
+  const emptyCard = (
+    <div className="featured-hero-card relative overflow-hidden rounded-2xl border border-border/40 p-12 text-center text-muted-foreground bg-muted/10">
+      {t('carousel.noFeatured')}
+    </div>
+  );
+
   if (!currentItem) {
     return (
-      <section className="featured-hero-section w-full py-4">
-        <div className="container">
-          <div className="featured-hero-card relative overflow-hidden rounded-2xl border border-border/40 p-12 text-center text-muted-foreground bg-muted/10">
-            {t('carousel.noFeatured')}
-          </div>
-        </div>
+      <section className={`featured-hero-section w-full${sectionPad}`}>
+        {inBand ? emptyCard : <div className={shellClass}>{emptyCard}</div>}
       </section>
     );
   }
@@ -129,97 +136,101 @@ export function FeaturedCarousel({
     </div>
   );
 
-  const getCategoryBadgeClasses = (cat: string): string => {
-    const lower = cat.toLowerCase();
-    if (lower.includes('generation')) return 'border-blue-500/25 text-blue-600 dark:text-blue-400 bg-blue-500/5';
-    if (lower.includes('renewable')) return 'border-emerald-500/25 text-emerald-600 dark:text-emerald-400 bg-emerald-500/5';
-    if (lower.includes('lng') || lower.includes('gas')) return 'border-amber-500/25 text-amber-600 dark:text-amber-400 bg-amber-500/5';
-    if (lower.includes('nuclear')) return 'border-violet-500/25 text-violet-600 dark:text-violet-400 bg-violet-500/5';
-    if (lower.includes('grid') || lower.includes('transmission')) return 'border-cyan-500/25 text-cyan-600 dark:text-cyan-400 bg-cyan-500/5';
-    if (lower.includes('policy')) return 'border-indigo-500/25 text-indigo-600 dark:text-indigo-400 bg-indigo-500/5';
-    if (lower.includes('rural')) return 'border-lime-500/25 text-lime-600 dark:text-lime-400 bg-lime-500/5';
-    if (lower.includes('efficiency')) return 'border-teal-500/25 text-teal-600 dark:text-teal-400 bg-teal-500/5';
-    if (lower.includes('international')) return 'border-sky-500/25 text-sky-600 dark:text-sky-400 bg-sky-500/5';
-    if (lower.includes('market') || lower.includes('finance')) return 'border-rose-500/25 text-rose-600 dark:text-rose-400 bg-rose-500/5';
-    return 'border-border text-muted-foreground bg-muted/5';
-  };
-
-  return (
-    <section className="featured-hero-section w-full py-4">
-      <div className="container">
+  const heroCard = (
         <div
           className="featured-hero-card hero-dot-pattern relative overflow-hidden rounded-2xl border border-border/40"
           aria-roledescription="carousel"
           aria-label="Featured stories"
         >
-          <div className="featured-hero__body relative px-6 py-10 md:px-12 md:py-14">
+          <div
+            className={`featured-hero__body relative ${
+              inBand ? 'py-0 featured-hero__body--band' : 'py-10 md:py-14'
+            }`}
+          >
             <div
-              className={`grid gap-x-8 gap-y-5 md:grid-cols-12 md:items-start transition-opacity duration-300 ease-out ${
+              className={`featured-hero__split transition-opacity duration-300 ease-out ${
                 isTransitioning ? 'opacity-0' : 'opacity-100'
               }`}
             >
-              {/* Meta row — badge left, progress right (same line, aligned to columns below) */}
-              <div className="grid gap-x-8 md:col-span-12 md:grid-cols-12">
-                <div className="flex flex-wrap items-center gap-2 md:col-span-7">
-                  <div
-                    className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-wider transition-colors duration-300 ${getCategoryBadgeClasses(currentItem.category)}`}
-                  >
-                    <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-current opacity-75" />
-                    <CategoryLabel name={currentItem.category} />
+              <div className="featured-hero__content min-w-0">
+                <div className="featured-hero__meta flex items-center justify-between gap-x-3 overflow-hidden">
+                  <div className="flex min-w-0 flex-1 items-center gap-2 overflow-hidden">
+                    <CategoryLabel
+                      name={currentItem.category}
+                      className="featured-hero__category text-[10px] font-semibold uppercase tracking-wider text-muted-foreground shrink-0"
+                    />
+                    {currentItem.isFeatured ? <ArticlePlacementBadge type="featured" /> : null}
+                    {currentItem.isBreaking ? <ArticlePlacementBadge type="breaking" /> : null}
                   </div>
-                  {currentItem.isFeatured ? <ArticlePlacementBadge type="featured" /> : null}
-                  {currentItem.isBreaking ? <ArticlePlacementBadge type="breaking" /> : null}
-                </div>
 
-                <div className="relative mt-3 flex min-h-8 items-center justify-end md:col-span-5 md:mt-0">
-                  <div className="group/transport absolute left-1/2 flex w-1/2 min-w-[9.5rem] -translate-x-1/2 items-center gap-1 opacity-45 transition-opacity duration-150 hover:opacity-100 focus-within:opacity-100">
-                    <div className="flex min-w-0 flex-1 items-center gap-0.5">
-                      <button
-                        onClick={prev}
-                        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground"
-                        aria-label={t('carousel.previous')}
-                      >
-                        <ChevronLeft className="h-3.5 w-3.5" />
-                      </button>
-                      {storyProgress}
-                      <button
-                        onClick={next}
-                        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground"
-                        aria-label={t('carousel.next')}
-                      >
-                        <ChevronRight className="h-3.5 w-3.5" />
-                      </button>
+                  <div className="relative flex min-h-8 min-w-[9.5rem] flex-1 items-center justify-end sm:flex-none">
+                    <div className="group/transport flex w-full max-w-[11rem] items-center gap-1 opacity-45 transition-opacity duration-150 hover:opacity-100 focus-within:opacity-100 sm:max-w-none">
+                      <div className="flex min-w-0 flex-1 items-center gap-0.5">
+                        <button
+                          onClick={prev}
+                          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground"
+                          aria-label={t('carousel.previous')}
+                        >
+                          <ChevronLeft className="h-3.5 w-3.5" />
+                        </button>
+                        {storyProgress}
+                        <button
+                          onClick={next}
+                          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground"
+                          aria-label={t('carousel.next')}
+                        >
+                          <ChevronRight className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+                      <span className="shrink-0 font-mono text-[10px] font-medium tabular-nums text-muted-foreground">
+                        {current + 1}/{featured.length}
+                      </span>
                     </div>
-                    <span className="shrink-0 font-mono text-[10px] font-medium tabular-nums text-muted-foreground">
-                      {current + 1}/{featured.length}
-                    </span>
-                  </div>
 
-                  <ModernTooltip
-                    label={isPlaying ? t('carousel.pause') : t('carousel.play')}
-                    hint={t('carousel.storiesMarkets')}
-                    side="top"
-                    fast
-                  >
-                    <button
-                      onClick={() => setIsPlaying(!isPlaying)}
-                      className="relative z-10 flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-muted-foreground opacity-45 transition-all duration-150 hover:bg-muted/50 hover:text-foreground hover:opacity-100 focus-visible:opacity-100"
-                      aria-label={isPlaying ? t('carousel.pause') : t('carousel.play')}
+                    <ModernTooltip
+                      label={isPlaying ? t('carousel.pause') : t('carousel.play')}
+                      hint={t('carousel.storiesMarkets')}
+                      side="top"
+                      fast
                     >
-                      {isPlaying ? <Pause className="h-3 w-3" /> : <Play className="h-3 w-3" />}
-                    </button>
-                  </ModernTooltip>
+                      <button
+                        onClick={() => setIsPlaying(!isPlaying)}
+                        className="relative z-10 ml-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-muted-foreground opacity-45 transition-all duration-150 hover:bg-muted/50 hover:text-foreground hover:opacity-100 focus-visible:opacity-100"
+                        aria-label={isPlaying ? t('carousel.pause') : t('carousel.play')}
+                      >
+                        {isPlaying ? <Pause className="h-3 w-3" /> : <Play className="h-3 w-3" />}
+                      </button>
+                    </ModernTooltip>
+                  </div>
+                </div>
+
+                <div className="featured-hero__title-slot">
+                  <h1 className="featured-hero__title">{currentItem.title}</h1>
+                </div>
+
+                <div className="featured-hero__excerpt-slot">
+                  <p className="featured-hero__excerpt text-lg leading-relaxed text-muted-foreground md:text-xl">
+                    {currentItem.excerpt || '\u00A0'}
+                  </p>
+                </div>
+
+                <div className="featured-hero__actions flex items-center gap-3 overflow-hidden">
+                  <Link href={`/articles/${currentItem.slug}`} className="btn btn-primary gap-2 px-7 py-3 text-[15px]">
+                    {t('carousel.readStory')} <ArrowRight className="h-4 w-4" />
+                  </Link>
+                  <Link href="/articles" className="btn btn-secondary gap-2 px-6 py-3 text-[15px]">
+                    {t('carousel.browseAll')}
+                  </Link>
+                </div>
+
+                <div className="featured-hero__byline text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  {t('carousel.byAuthor', { author: currentItem.author })} •{' '}
+                  {t('carousel.minRead', { minutes: currentItem.readTime })}
                 </div>
               </div>
 
-              <div className="featured-hero__title-slot md:col-span-7">
-                <h1 className="h1 featured-hero__title line-clamp-4 text-balance pr-2 font-display text-5xl font-extrabold leading-[1.05] tracking-tight md:text-6xl">
-                  {currentItem.title}
-                </h1>
-              </div>
-
-              <div className="relative md:col-span-5">
-                <div className="featured-hero__image relative aspect-[16/10] w-full overflow-hidden rounded-2xl border border-border/60 bg-muted/20 shadow-lg md:aspect-auto">
+              <div className="featured-hero__image-wrap relative">
+                <div className="featured-hero__image relative w-full overflow-hidden rounded-2xl border border-border/60 bg-muted/20 shadow-lg">
                   {featured.map((item, idx) =>
                     hasArticleImage(item.imageUrl) ? (
                       <Image
@@ -249,29 +260,14 @@ export function FeaturedCarousel({
                   <div className="pointer-events-none absolute inset-0 rounded-2xl border border-white/5" />
                 </div>
               </div>
-
-              <div className="featured-hero__copy md:col-span-7">
-                <p className="featured-hero__excerpt mb-6 max-w-2xl text-lg leading-relaxed text-muted-foreground md:text-xl">
-                  {currentItem.excerpt}
-                </p>
-
-                <div className="flex flex-wrap items-center gap-3">
-                  <Link href={`/articles/${currentItem.slug}`} className="btn btn-primary gap-2 px-7 py-3 text-[15px]">
-                    {t('carousel.readStory')} <ArrowRight className="h-4 w-4" />
-                  </Link>
-                  <Link href="/articles" className="btn btn-secondary gap-2 px-6 py-3 text-[15px]">
-                    {t('carousel.browseAll')}
-                  </Link>
-                </div>
-
-                <div className="mt-6 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                  {t('carousel.byAuthor', { author: currentItem.author })} • {t('carousel.minRead', { minutes: currentItem.readTime })}
-                </div>
-              </div>
             </div>
           </div>
         </div>
-      </div>
+  );
+
+  return (
+    <section className={`featured-hero-section w-full${sectionPad}`}>
+      {inBand ? heroCard : <div className={shellClass}>{heroCard}</div>}
     </section>
   );
 }

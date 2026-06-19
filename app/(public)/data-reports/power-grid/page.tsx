@@ -16,7 +16,7 @@ export default async function PowerGridExplorerPage() {
   const grid = normalizeGridSettings(settings);
 
   return (
-    <div className="container py-8">
+    <div className="container container--shell py-8 md:py-10">
       <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-3 mb-8">
         <div>
           <div className="uppercase tracking-[2.5px] text-[10px] text-primary font-bold mb-1.5">INTERACTIVE DATA • POWER SECTOR</div>

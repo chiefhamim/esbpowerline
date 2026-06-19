@@ -465,6 +465,8 @@ async function main() {
           { label: 'System Loss', value: 7.6, unit: '%', isDecimal: true, icon: 'Gauge', color: '#f59e0b' },
           { label: 'Gas Supply', value: 1380, unit: 'MMcfd', icon: 'Flame', color: '#8b5cf6' },
           { label: 'Peak Today', value: 16850, unit: 'MW', icon: 'TrendingUp', color: '#3b82f6' },
+          { label: 'India Grid Import', value: 1160, unit: 'MW', icon: 'Cable', color: '#06b6d4' },
+          { label: 'Solar Installed', value: 1020, unit: 'MW', icon: 'Sun', color: '#f59e0b' },
         ],
       },
       {

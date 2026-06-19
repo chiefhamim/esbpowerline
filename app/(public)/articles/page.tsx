@@ -1,7 +1,8 @@
 import Link from 'next/link';
 import { ArticleCard } from '@/components/news/ArticleCard';
+import { HomeTrendingSection } from '@/components/home/HomeTrendingSection';
 import { getPublicCategories, getPublishedArticlesForPublic, getTrendingPublishedArticles } from '@/lib/category-content';
-import { localizeCategoryFields, localizeCategoryName } from '@/lib/i18n/categories';
+import { localizeCategoryFields } from '@/lib/i18n/categories';
 import { createTranslator } from '@/lib/i18n/messages';
 import { getServerSiteLocale } from '@/lib/locale-server';
 import { SortSelect } from '@/components/news/SortSelect';
@@ -30,7 +31,7 @@ export default async function ArticlesPage({ searchParams }: ArticlesPageProps) 
   const [categories, allArticles, trending] = await Promise.all([
     getPublicCategories(),
     getPublishedArticlesForPublic(120),
-    getTrendingPublishedArticles(4),
+    getTrendingPublishedArticles(5),
   ]);
 
   let articles = allArticles;
@@ -48,26 +49,29 @@ export default async function ArticlesPage({ searchParams }: ArticlesPageProps) 
     articles = [...articles].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   }
 
-  const perPage = 6;
+  const perPage = 9;
   const totalPages = Math.ceil(articles.length / perPage);
   const paginatedArticles = articles.slice(0, currentPage * perPage);
 
   return (
-    <div className="container py-8">
-      <div className="flex flex-col md:flex-row md:items-end md:justify-between mb-8">
+    <div className="container container--shell articles-page py-8 md:py-10">
+      <header className="articles-page__header flex flex-col md:flex-row md:items-end md:justify-between gap-4 mb-6 md:mb-8">
         <div>
-          <h1 className="text-4xl font-display font-bold tracking-tight">{t('articles.title')}</h1>
-          <p className="text-muted-foreground mt-2">{t('articles.subtitle')}</p>
+          <div className="articles-page__kicker section-kicker text-[10px] text-rose-600/80 dark:text-rose-400/90 font-bold mb-1.5">
+            {t('nav.latestNews')}
+          </div>
+          <h1 className="text-3xl md:text-4xl font-display font-bold tracking-tight">{t('articles.title')}</h1>
+          <p className="text-muted-foreground mt-2 text-sm md:text-base">{t('articles.subtitle')}</p>
         </div>
-        <div className="mt-4 md:mt-0 flex items-center gap-3 text-sm">
+        <div className="flex items-center gap-3 text-sm shrink-0">
           <Link href="/search" className="btn btn-secondary px-4 py-2">
             {t('articles.advancedSearch')}
           </Link>
           <SortSelect currentSort={sort} />
         </div>
-      </div>
+      </header>
 
-      <div className="flex flex-wrap gap-2 mb-8">
+      <div className="articles-page__filters mb-6 md:mb-8">
         <Link
           href={sort === 'views' ? '/articles?sort=views' : '/articles'}
           className={`category-pill ${!categoryParam ? 'active' : ''}`}
@@ -92,12 +96,12 @@ export default async function ArticlesPage({ searchParams }: ArticlesPageProps) 
         })}
       </div>
 
-      <div className="grid lg:grid-cols-3 gap-8">
-        <div className="lg:col-span-2">
+      <div className="articles-editorial__grid">
+        <div className="articles-editorial__main min-w-0">
           {paginatedArticles.length === 0 ? (
-            <p className="text-muted-foreground">{t('coverage.noArticles')}</p>
+            <p className="text-muted-foreground py-12 text-center">{t('coverage.noArticles')}</p>
           ) : (
-            <div className="grid sm:grid-cols-2 gap-6" id="articles-grid">
+            <div className="articles-grid" id="articles-grid">
               {paginatedArticles.map((article) => (
                 <ArticleCard
                   key={article.id}
@@ -132,25 +136,9 @@ export default async function ArticlesPage({ searchParams }: ArticlesPageProps) 
           )}
         </div>
 
-        <div className="lg:pl-6">
-          <div className="sticky top-20">
-            <h3 className="font-semibold mb-4 text-lg">{t('articles.trending')}</h3>
-            <div className="space-y-4">
-              {trending.length === 0 ? (
-                <p className="text-sm text-muted-foreground">{t('coverage.noArticles')}</p>
-              ) : (
-                trending.map((a) => (
-                  <Link key={a.slug} href={`/articles/${a.slug}`} className="block group">
-                    <div className="text-sm font-medium group-hover:text-primary line-clamp-2">{a.title}</div>
-                    <div className="text-xs text-muted-foreground mt-1">
-                      {localizeCategoryName(locale, a.category)} · {a.views.toLocaleString()} views
-                    </div>
-                  </Link>
-                ))
-              )}
-            </div>
-          </div>
-        </div>
+        <aside className="articles-editorial__rail" aria-label={t('articles.trending')}>
+          <HomeTrendingSection trending={trending} layout="rail" />
+        </aside>
       </div>
     </div>
   );

@@ -96,15 +96,15 @@ export function PublicNavbar({
   return (
     <PublicHrefProvider>
       <div className="site-banner-shell w-full flex justify-center">
-        <div className="container px-0">
+        <div className="container container--shell px-0">
           <div className="site-banner-frame border-l border-r border-b border-border/40 overflow-hidden">
             <PublicNavLink href="/" className="w-full block transition-opacity hover:opacity-95">
               <Image
                 src={bannerSrc}
                 alt="ESB PowerLine Banner"
-                className="w-full h-auto object-contain block mx-auto"
-                width={1200}
-                height={160}
+                className="site-banner__image block mx-auto"
+                width={1760}
+                height={250}
                 priority
                 onError={() => {
                   if (bannerSrc !== 'https://i.ibb.co/VKq8pgw/001.jpg') {
@@ -119,86 +119,89 @@ export function PublicNavbar({
 
       <PublicMarketStrip energyItems={tickerItems} />
 
-      <nav className="public-nav-bar sticky top-0 z-50 mb-2">
-        <div className="container flex h-14 items-center justify-between">
-          <div className="flex md:w-1/4 justify-start">
+      <nav className="public-nav-bar sticky top-0 z-50" aria-label="Primary">
+        <div className="container container--shell public-nav-bar__shell">
+        <div className="public-nav-bar__hub-band">
+        <div className="public-nav-bar__main">
+          <div className="public-nav-bar__start">
             <PublicNavLink
               href="/"
-              className={`hover:text-primary flex items-center gap-1.5 transition-colors text-sm font-semibold select-none ${
-                pathname === '/' ? 'text-primary font-bold' : 'text-foreground/80'
-              }`}
+              className={`public-nav-bar__home${pathname === '/' ? ' public-nav-bar__home--active' : ''}`}
             >
-              <Home className="h-4 w-4" /> {t('nav.home')}
+              <Home className="h-4 w-4 shrink-0" aria-hidden />
+              <span className="public-nav-bar__home-label">{t('nav.home')}</span>
             </PublicNavLink>
           </div>
 
-          <div className="hidden md:flex flex-1 justify-center">
-            <div className="bg-muted/55 border border-border/55 p-1 rounded-full flex items-center gap-1 shadow-inner">
+          <div className="public-nav-bar__center hidden md:flex">
+            <div className="public-nav-bar__hub" role="group" aria-label="Primary sections">
               <PublicNavLink
                 href="/articles"
-                className={`px-4 py-1.5 rounded-full transition-all duration-200 text-xs font-semibold flex items-center gap-1.5 select-none ${
-                  pathname === '/articles'
-                    ? 'bg-primary text-primary-foreground shadow-sm'
-                    : 'text-muted-foreground hover:text-foreground hover:bg-muted/30'
+                className={`public-nav-bar__hub-link public-nav-bar__hub-link--latest${
+                  pathname === '/articles' ? ' public-nav-bar__hub-link--active' : ''
                 }`}
               >
-                <Newspaper className="h-3.5 w-3.5" /> {t('nav.latest')}
+                <Newspaper className="h-3.5 w-3.5 shrink-0" aria-hidden />
+                <span>{t('nav.latest')}</span>
               </PublicNavLink>
 
               <PublicNavLink
                 href="/data-reports/power-grid"
-                className={`px-4 py-1.5 rounded-full transition-all duration-200 text-xs font-semibold flex items-center gap-1.5 select-none ${
-                  pathname.includes('/power-grid')
-                    ? 'bg-primary text-primary-foreground shadow-sm'
-                    : 'text-muted-foreground hover:text-foreground hover:bg-muted/30'
+                className={`public-nav-bar__hub-link public-nav-bar__hub-link--grid${
+                  pathname.includes('/power-grid') ? ' public-nav-bar__hub-link--active' : ''
                 }`}
               >
-                <BarChart3 className="h-3.5 w-3.5" /> {t('nav.gridExplorer')}
+                <BarChart3 className="h-3.5 w-3.5 shrink-0" aria-hidden />
+                <span>{t('nav.gridExplorer')}</span>
               </PublicNavLink>
 
               <PublicNavLink
                 href="/magazine"
-                className={`px-4 py-1.5 transition-all duration-200 text-xs font-semibold flex items-center gap-1.5 select-none ${
-                  pathname === '/magazine'
-                    ? 'text-emerald-600 dark:text-emerald-400 font-bold'
-                    : 'text-emerald-600/75 dark:text-emerald-400/75 hover:text-emerald-600 dark:hover:text-emerald-400'
+                className={`public-nav-bar__hub-link public-nav-bar__hub-link--magazine${
+                  pathname === '/magazine' ? ' public-nav-bar__hub-link--active' : ''
                 }`}
               >
-                <BookOpen className="h-3.5 w-3.5" />
-                {t('nav.magazine')}
+                <BookOpen className="h-3.5 w-3.5 shrink-0" aria-hidden />
+                <span>{t('nav.magazine')}</span>
               </PublicNavLink>
             </div>
           </div>
 
-          <div className="flex md:w-1/4 justify-end items-center gap-3 overflow-visible">
-            <PublicNavLink
-              href="/search"
-              className="btn btn-secondary flex items-center gap-1.5 text-xs font-normal px-3 py-1 rounded-xl h-8 text-muted-foreground/80 hover:text-foreground/90"
-              aria-label={t('nav.search')}
-            >
-              <Search className="h-3.5 w-3.5 opacity-80" strokeWidth={2} />
-              <span className="hidden sm:inline">{t('nav.search')}</span>
-            </PublicNavLink>
+          <div className="public-nav-bar__end">
+            <div className="public-nav-bar__utilities">
+              <PublicNavLink
+                href="/search"
+                className="public-nav-bar__utility-btn"
+                aria-label={t('nav.search')}
+              >
+                <Search className="h-3.5 w-3.5 shrink-0 opacity-80" strokeWidth={2} aria-hidden />
+                <span className="public-nav-bar__utility-label">{t('nav.search')}</span>
+              </PublicNavLink>
 
-            <MemberAuthButton />
+              <MemberAuthButton />
 
-            <LocaleToggle className="flex pl-2 border-l border-border/50" />
+              <span className="public-nav-bar__utility-divider hidden sm:block" aria-hidden />
 
-            <SiteThemeToggle className="flex pl-2 border-l border-border/50" />
+              <LocaleToggle className="public-nav-bar__locale" />
 
-            <button
-              onClick={() => setMobileOpen(!mobileOpen)}
-              className="md:hidden p-2 text-foreground/80 hover:text-foreground"
-              aria-label="Toggle menu"
-            >
-              {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-            </button>
+              <SiteThemeToggle className="public-nav-bar__themes" />
+
+              <button
+                type="button"
+                onClick={() => setMobileOpen(!mobileOpen)}
+                className="public-nav-bar__menu-btn md:hidden"
+                aria-label="Toggle menu"
+              >
+                {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+              </button>
+            </div>
           </div>
         </div>
+        </div>
 
-        <div className={`public-nav-bar__categories hidden md:block container pb-0 pt-2`}>
+        <div className="public-nav-bar__categories hidden md:block">
           <div
-            className="category-nav-ribbon grid divide-x divide-border/40"
+            className="category-nav-ribbon category-nav-ribbon--desktop grid divide-x divide-border/40"
             style={{ gridTemplateColumns: `repeat(${navCategories.length}, minmax(0, 1fr))` }}
           >
             {navCategories.map((c) => {
@@ -211,37 +214,40 @@ export function PublicNavbar({
                   key={c.slug}
                   href={href}
                   style={categoryColorVars(c.color)}
-                  className={`group relative flex flex-col items-center justify-center py-2.5 px-1 text-center transition-all duration-200 select-none w-full ${
+                  className={`category-nav-cell group relative flex flex-col items-center justify-center py-2.5 px-1 text-center transition-all duration-200 select-none w-full overflow-hidden ${
                     isActive
-                      ? 'bg-muted/15 font-semibold text-foreground'
-                      : 'hover:bg-muted/30 font-medium text-muted-foreground/85 hover:text-foreground'
+                      ? `${colors.activeBg} font-semibold text-foreground`
+                      : `${colors.hoverBg} font-medium text-muted-foreground/85 hover:text-foreground`
                   }`}
                 >
                   <span
-                    className={`absolute top-0 left-0 right-0 h-[2px] transition-transform duration-200 origin-center scale-x-0 group-hover:scale-x-100 ${colors.useCustom ? 'category-nav-underline--custom' : colors.underline}`}
+                    className={`absolute top-0 left-0 z-[2] h-[2px] w-full transition-transform duration-200 origin-left ${
+                      isActive ? 'scale-x-100' : 'scale-x-0 group-hover:scale-x-100'
+                    } ${colors.useCustom ? 'category-nav-underline--custom' : colors.underline}`}
                     style={colors.useCustom ? categoryUnderlineStyle(c.color) : undefined}
+                    aria-hidden
                   />
                   <CategoryIconDisplay
                     icon={c.icon}
                     iconImageUrl={c.iconImageUrl}
                     name={c.name}
                     size={14}
-                    className={`h-3.5 w-3.5 mb-1 transition-transform duration-200 group-hover:scale-110 ${colors.useCustom ? 'category-nav--custom' : colors.text}`}
+                    className={`relative z-[1] h-3.5 w-3.5 mb-1 transition-transform duration-200 group-hover:scale-110 ${
+                      colors.useCustom ? 'category-nav--custom' : colors.text
+                    }`}
                     style={colors.useCustom ? categoryTextStyle(c.color) : undefined}
                   />
-                  <span className="text-[11px] md:text-xs tracking-tight leading-snug font-sans">{c.name}</span>
+                  <span className="category-nav-label relative z-[1] text-[11px] md:text-xs tracking-tight leading-snug font-sans">
+                    {c.name}
+                  </span>
                 </PublicNavLink>
               );
             })}
           </div>
         </div>
 
-        <div className="public-nav-bar__categories md:hidden container pb-0 pt-1.5">
-          <div className="category-nav-ribbon category-nav-ribbon--mobile relative">
-            <div className="public-nav-bar__mobile-fade-l absolute left-0 top-0 bottom-0 w-8 pointer-events-none z-10" />
-            <div className="public-nav-bar__mobile-fade-r absolute right-0 top-0 bottom-0 w-8 pointer-events-none z-10" />
-
-            <div className="flex items-center h-10 overflow-x-auto no-scrollbar gap-5 w-full px-4">
+        <div className="public-nav-bar__categories md:hidden">
+          <div className="category-nav-ribbon category-nav-ribbon--mobile category-nav-ribbon--mobile-grid">
               {navCategories.map((c) => {
                 const href = `/categories/${c.slug}`;
                 const isActive = pathname === `/categories/${c.slug}`;
@@ -252,10 +258,10 @@ export function PublicNavbar({
                     key={c.slug}
                     href={href}
                     style={categoryColorVars(c.color)}
-                    className={`group relative flex items-center gap-1.5 px-0.5 py-2.5 text-[10.5px] font-semibold uppercase tracking-wider transition-all duration-200 shrink-0 select-none ${
+                    className={`category-nav-cell group relative flex items-center justify-center gap-1.5 px-1 py-2 text-[10px] font-semibold uppercase tracking-wider transition-all duration-200 select-none min-w-0 ${
                       isActive
-                        ? (colors.useCustom ? 'category-nav--custom' : colors.text)
-                        : 'text-muted-foreground hover:text-foreground'
+                        ? `${colors.activeBg} ${colors.useCustom ? 'category-nav--custom' : colors.text}`
+                        : `${colors.hoverBg} text-muted-foreground hover:text-foreground`
                     }`}
                   >
                     <CategoryIconDisplay
@@ -263,33 +269,39 @@ export function PublicNavbar({
                       iconImageUrl={c.iconImageUrl}
                       name={c.name}
                       size={12}
-                      className={`h-3 w-3 shrink-0 transition-transform duration-200 ${
+                      className={`relative z-[1] h-3 w-3 shrink-0 transition-transform duration-200 ${
                         isActive
                           ? 'scale-110'
                           : 'opacity-70 group-hover:opacity-100 group-hover:scale-110'
                       } ${colors.useCustom ? 'category-nav--custom' : ''}`}
                       style={colors.useCustom ? categoryTextStyle(c.color) : undefined}
                     />
-                    <span style={colors.useCustom && isActive ? categoryTextStyle(c.color) : undefined}>{c.name}</span>
                     <span
-                      className={`absolute bottom-0 left-0 h-[2px] w-full transition-transform duration-200 origin-left ${colors.useCustom ? 'category-nav-underline--custom' : colors.underline} ${
+                      className="category-nav-label category-nav-label--mobile relative z-[1]"
+                      style={colors.useCustom && isActive ? categoryTextStyle(c.color) : undefined}
+                    >
+                      {c.name}
+                    </span>
+                    <span
+                      className={`absolute bottom-0 left-0 z-[2] h-[2px] w-full transition-transform duration-200 origin-left ${
                         isActive ? 'scale-x-100' : 'scale-x-0 group-hover:scale-x-100'
-                      }`}
+                      } ${colors.useCustom ? 'category-nav-underline--custom' : colors.underline}`}
                       style={colors.useCustom ? categoryUnderlineStyle(c.color) : undefined}
+                      aria-hidden
                     />
                   </PublicNavLink>
                 );
               })}
-            </div>
           </div>
+        </div>
         </div>
 
         {mobileOpen && (
           <div className="md:hidden border-t border-border/70 public-nav-bar px-4 py-4 text-sm space-y-1">
-            <PublicNavLink href="/articles" className="flex items-center gap-2 py-1.5">
+            <PublicNavLink href="/articles" className="flex items-center gap-2 py-1.5 text-rose-600/85 dark:text-rose-400/90">
               <Newspaper className="h-4 w-4" /> {t('nav.latestNews')}
             </PublicNavLink>
-            <PublicNavLink href="/data-reports/power-grid" className="flex items-center gap-2 py-1.5">
+            <PublicNavLink href="/data-reports/power-grid" className="flex items-center gap-2 py-1.5 text-sky-600/85 dark:text-sky-400/90">
               <BarChart3 className="h-4 w-4" /> {t('nav.gridExplorer')}
             </PublicNavLink>
             <PublicNavLink href="/magazine" className="flex items-center gap-2 py-1.5 text-emerald-600/90 dark:text-emerald-400/90">

@@ -15,13 +15,20 @@ export function PublicMarketStrip({ energyItems }: { energyItems?: TickerItem[] 
   );
 
   return (
-    <div className="public-market-strip w-full border-b border-border/45 bg-[var(--bg)]/95 backdrop-blur-sm">
-      <div className="container px-4">
-        <div className="border-b border-border/30 py-1">
-          <LiveMarketTicker variant="embedded" compact initialItems={localizedEnergy} />
-        </div>
-        <div className="py-1">
-          <BdStockTicker />
+    <div className="public-market-strip w-full">
+      <div className="container container--shell">
+        <div className="public-market-strip__grid">
+          <div className="public-market-strip__lane public-market-strip__lane--energy">
+            <LiveMarketTicker
+              variant="embedded"
+              compact
+              labelClassName="market-ticker-label market-ticker-label--energy"
+              initialItems={localizedEnergy}
+            />
+          </div>
+          <div className="public-market-strip__lane public-market-strip__lane--dse">
+            <BdStockTicker labelClassName="market-ticker-label market-ticker-label--dse" />
+          </div>
         </div>
       </div>
     </div>

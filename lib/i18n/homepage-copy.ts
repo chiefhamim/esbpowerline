@@ -17,6 +17,8 @@ const ENERGY_STAT_LABELS_BN: Record<string, string> = {
   'System Loss': 'সিস্টেম লস',
   'Gas Supply': 'গ্যাস সরবরাহ',
   'Peak Today': 'আজকের পিক',
+  'India Grid Import': 'ভারত থেকে আমদানি',
+  'Solar Installed': 'সোলার স্থাপিত',
 };
 
 const PROFESSIONALS_CTA_BN = {
@@ -27,6 +29,9 @@ const PROFESSIONALS_CTA_BN = {
 };
 
 const SNAPSHOT_LABEL_BN = 'লাইভ • বিপিডিবি • পিজিসিবি • এসআরইডিএ • পেট্রোবাংলা';
+
+const MARKET_PULSE_BN =
+  'এলএনজি স্পট দাম বাড়ছে • সোলার মডিউল -২.১% সাপ্তাহিক • ডলার/টাকা ওঠানামায় আইপিপি মার্জিনে চাপ • কয়লা API২ $১০২ এ স্থির • ৮.৯৫ টাকা/ইউনিট বাল্ক ট্যারিফ কার্যকর';
 
 export function localizeTickerItem(item: TickerItem, locale: SiteLocale): TickerItem {
   if (locale === 'en') return item;
@@ -42,6 +47,11 @@ export function localizeEnergyStatLabel(label: string, locale: SiteLocale): stri
 export function localizeSnapshotLabel(label: string, locale: SiteLocale): string {
   if (locale === 'en') return label;
   return SNAPSHOT_LABEL_BN;
+}
+
+export function localizeMarketPulse(text: string, locale: SiteLocale): string {
+  if (locale === 'en') return text;
+  return MARKET_PULSE_BN;
 }
 
 export function localizeProfessionalsCta<

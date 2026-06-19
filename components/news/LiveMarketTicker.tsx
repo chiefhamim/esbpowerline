@@ -31,12 +31,14 @@ export function LiveMarketTicker({
   playing = true,
   compact = false,
   className,
+  labelClassName,
 }: {
   initialItems?: TickerItem[];
   variant?: 'chrome' | 'card' | 'embedded';
   playing?: boolean;
   compact?: boolean;
   className?: string;
+  labelClassName?: string;
 }) {
   const { locale, t } = useLocale();
   const sourceItems = propItems?.length ? propItems : defaultItems;
@@ -90,7 +92,10 @@ export function LiveMarketTicker({
 
   const track = (
     <div
-      className={cn('flex w-max items-center whitespace-nowrap gap-7 md:gap-8 animate-[marquee_32s_linear_infinite]', textSize)}
+      className={cn(
+        'market-ticker__track flex w-max items-center whitespace-nowrap gap-7 md:gap-8 animate-[marquee_32s_linear_infinite]',
+        textSize,
+      )}
       style={{ animationPlayState: playing ? 'running' : 'paused' }}
     >
       {[...items, ...items].map((item, idx) => {
@@ -124,7 +129,12 @@ export function LiveMarketTicker({
   );
 
   const label = (
-    <div className={cn('flex shrink-0 items-center gap-1.5 text-muted-foreground', compact ? 'pr-2.5' : 'border-r border-border/60 pr-3')}>
+    <div
+      className={cn(
+        'flex shrink-0 items-center gap-1.5 text-muted-foreground',
+        labelClassName ?? (compact ? 'pr-2.5' : 'border-r border-border/60 pr-3'),
+      )}
+    >
       <span
         className={cn(
           'h-1.5 w-1.5 shrink-0 rounded-full',
@@ -132,18 +142,22 @@ export function LiveMarketTicker({
         )}
         aria-hidden
       />
-      <span className={cn('font-semibold uppercase tracking-[0.1em]', labelSize)}>
+      <span className={cn(!labelClassName && 'font-semibold uppercase tracking-[0.1em]', labelSize)}>
         {simulateLive ? t('ticker.energyMarkets') : t('ticker.indicative')}
       </span>
     </div>
   );
 
   const marqueeRow = (
-    <div className={cn('flex items-center', compact ? 'h-8 md:h-9' : 'h-9 md:h-10', textSize)}>
+    <div
+      className={cn(
+        'market-ticker__row flex w-full min-w-0 items-center',
+        compact ? 'h-8' : 'h-9 md:h-10',
+        textSize,
+      )}
+    >
       {label}
-      <div className={cn('relative min-w-0 flex-1 overflow-hidden mask-fade', compact ? 'ml-2' : 'ml-3')}>
-        {track}
-      </div>
+      <div className={cn('market-ticker__viewport mask-fade', compact ? 'ml-2' : 'ml-3')}>{track}</div>
     </div>
   );
 

@@ -7,9 +7,9 @@ export const HOMEPAGE_DEFAULTS = {
   professionalsCta: {
     label: 'MEMBER ACCESS',
     title: 'Save articles & magazine issues, download data, comment, and unlock in-depth analysis.',
-    primaryLabel: 'Open Grid Explorer',
-    primaryHref: '/data-reports/power-grid',
-    secondaryLabel: 'Member login',
+    primaryLabel: 'Member sign in',
+    primaryHref: '/members/login',
+    secondaryLabel: 'Create account',
     secondaryHref: '/members/login',
   },
   magazineCtaTemplate: 'Read {month} {year} Issue',

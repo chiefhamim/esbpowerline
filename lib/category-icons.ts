@@ -158,19 +158,83 @@ export function getCategoryAccentColor(name: string, color?: string | null): str
 
 export function getNavbarColorClasses(name: string, color?: string | null) {
   if (hasCategoryColor(color)) {
-    return { text: 'category-nav--custom', underline: 'category-nav-underline--custom', useCustom: true as const };
+    return {
+      text: 'category-nav--custom',
+      underline: 'category-nav-underline--custom',
+      hoverBg: 'category-nav-cell--custom',
+      activeBg: 'category-nav-cell--custom category-nav-cell--active',
+      useCustom: true as const,
+    };
   }
-  const CATEGORY_COLORS: Record<string, { text: string; underline: string }> = {
-    'Energy Policy & Regulators': { text: 'text-indigo-600 dark:text-indigo-400', underline: 'bg-indigo-500' },
-    'Power Generation': { text: 'text-blue-600 dark:text-blue-400', underline: 'bg-blue-500' },
-    'Fossil Fuels & Commodities': { text: 'text-amber-600 dark:text-amber-400', underline: 'bg-amber-500' },
-    'Renewables & Nuclear': { text: 'text-emerald-600 dark:text-emerald-400', underline: 'bg-emerald-500' },
-    'Grid & Transmission': { text: 'text-cyan-600 dark:text-cyan-400', underline: 'bg-cyan-500' },
-    'Distribution & Utilities': { text: 'text-lime-600 dark:text-lime-450', underline: 'bg-lime-500' },
-    'Consumers & Tariffs': { text: 'text-red-600 dark:text-red-400', underline: 'bg-red-500' },
-    'Market, Finance & Subsidies': { text: 'text-rose-600 dark:text-rose-455', underline: 'bg-rose-500' },
-    'International & Cross-Border': { text: 'text-sky-600 dark:text-sky-400', underline: 'bg-sky-500' },
-    'Environment & Efficiency': { text: 'text-teal-600 dark:text-teal-400', underline: 'bg-teal-500' },
+  const CATEGORY_COLORS: Record<string, { text: string; underline: string; hoverBg: string; activeBg: string }> = {
+    'Energy Policy & Regulators': {
+      text: 'text-indigo-600 dark:text-indigo-400',
+      underline: 'bg-indigo-500',
+      hoverBg: 'hover:bg-indigo-500/30',
+      activeBg: 'bg-indigo-500/20',
+    },
+    'Power Generation': {
+      text: 'text-blue-600 dark:text-blue-400',
+      underline: 'bg-blue-500',
+      hoverBg: 'hover:bg-blue-500/30',
+      activeBg: 'bg-blue-500/20',
+    },
+    'Fossil Fuels & Commodities': {
+      text: 'text-amber-600 dark:text-amber-400',
+      underline: 'bg-amber-500',
+      hoverBg: 'hover:bg-amber-500/30',
+      activeBg: 'bg-amber-500/20',
+    },
+    'Renewables & Nuclear': {
+      text: 'text-emerald-600 dark:text-emerald-400',
+      underline: 'bg-emerald-500',
+      hoverBg: 'hover:bg-emerald-500/30',
+      activeBg: 'bg-emerald-500/20',
+    },
+    'Grid & Transmission': {
+      text: 'text-cyan-600 dark:text-cyan-400',
+      underline: 'bg-cyan-500',
+      hoverBg: 'hover:bg-cyan-500/30',
+      activeBg: 'bg-cyan-500/20',
+    },
+    'Distribution & Utilities': {
+      text: 'text-lime-600 dark:text-lime-600',
+      underline: 'bg-lime-500',
+      hoverBg: 'hover:bg-lime-500/30',
+      activeBg: 'bg-lime-500/20',
+    },
+    'Consumers & Tariffs': {
+      text: 'text-red-600 dark:text-red-400',
+      underline: 'bg-red-500',
+      hoverBg: 'hover:bg-red-500/30',
+      activeBg: 'bg-red-500/20',
+    },
+    'Market, Finance & Subsidies': {
+      text: 'text-rose-600 dark:text-rose-400',
+      underline: 'bg-rose-500',
+      hoverBg: 'hover:bg-rose-500/30',
+      activeBg: 'bg-rose-500/20',
+    },
+    'International & Cross-Border': {
+      text: 'text-sky-600 dark:text-sky-400',
+      underline: 'bg-sky-500',
+      hoverBg: 'hover:bg-sky-500/30',
+      activeBg: 'bg-sky-500/20',
+    },
+    'Environment & Efficiency': {
+      text: 'text-teal-600 dark:text-teal-400',
+      underline: 'bg-teal-500',
+      hoverBg: 'hover:bg-teal-500/30',
+      activeBg: 'bg-teal-500/20',
+    },
   };
-  return { ...(CATEGORY_COLORS[name] ?? { text: 'text-primary', underline: 'bg-primary' }), useCustom: false as const };
+  return {
+    ...(CATEGORY_COLORS[name] ?? {
+      text: 'text-primary',
+      underline: 'bg-primary',
+      hoverBg: 'hover:bg-primary/30',
+      activeBg: 'bg-primary/20',
+    }),
+    useCustom: false as const,
+  };
 }

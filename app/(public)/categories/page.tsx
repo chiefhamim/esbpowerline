@@ -19,7 +19,7 @@ export default async function CategoriesIndex() {
   const categories = await getPublicCategories();
 
   return (
-    <div className="container py-10">
+    <div className="container container--shell py-8 md:py-10">
       <div className="mb-8">
         <h1 className="h2 mb-2">{t('categories.title')}</h1>
         <p className="text-muted-foreground max-w-prose">{t('categories.subtitle')}</p>

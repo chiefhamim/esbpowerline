@@ -38,7 +38,7 @@ export default async function CategoryPage({ params }: Props) {
   const articles = await getPublishedArticlesByCategory(category.name);
 
   return (
-    <div className="container py-8">
+    <div className="container container--shell py-8 md:py-10">
       <div className="mb-6">
         <Link href="/categories" className="inline-flex items-center text-sm text-primary">
           {t('categories.allCategories')}
@@ -67,7 +67,7 @@ export default async function CategoryPage({ params }: Props) {
       {articles.length === 0 ? (
         <p className="text-muted-foreground">{t('categories.noPublished')}</p>
       ) : (
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="articles-grid">
           {articles.map((article) => (
             <ArticleCard
               key={article.id}

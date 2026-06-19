@@ -64,9 +64,17 @@ export type MessageKey =
   | 'search.title'
   | 'search.subtitle'
   | 'home.trendingWeek'
+  | 'home.trendingKicker'
+  | 'home.trendingViewAll'
   | 'home.noTrending'
   | 'home.monthlyMagazine'
   | 'home.readIssue'
+  | 'home.trendingAlso'
+  | 'home.trendingWindow'
+  | 'home.trendingWeekShort'
+  | 'home.gridExplorerBlurb'
+  | 'home.gridExplorerCta'
+  | 'home.browseAllNews'
   | 'common.min'
   | 'common.views'
   | 'common.esbStaff'
@@ -112,7 +120,22 @@ export type MessageKey =
   | 'member.manageAccount'
   | 'member.staffSignIn'
   | 'energy.simulated'
-  | 'energy.indicative';
+  | 'energy.indicative'
+  | 'portal.todayEdition'
+  | 'portal.mastheadTagline'
+  | 'portal.breaking'
+  | 'portal.latestHeadlines'
+  | 'portal.marketPulse'
+  | 'portal.topStories'
+  | 'portal.viewAllNews'
+  | 'portal.energyDeskKicker'
+  | 'portal.sectorWatchKicker'
+  | 'portal.sectorWatch'
+  | 'portal.allSectors'
+  | 'portal.newsWireKicker'
+  | 'portal.newsWire'
+  | 'portal.newsWireSub'
+  | 'portal.emptySlot';
 
 const EN: Record<MessageKey, string> = {
   'nav.home': 'Home',
@@ -150,7 +173,7 @@ const EN: Record<MessageKey, string> = {
   'brand.ledeEmMagazine': 'ESB PowerLine monthly magazine',
   'home.systemSnapshot': 'System Snapshot',
   'home.powerSector': 'Power Sector',
-  'home.powerSectorSub': 'Browse coverage across all sectors or filter to a specific one.',
+  'home.powerSectorSub': 'Latest stories across all sectors — browse by category from the navigation bar above.',
   'coverage.title': 'Power Sector Coverage',
   'coverage.allCoverage': 'All Coverage',
   'coverage.allDescription': 'Latest stories across all {count} power sector categories.',
@@ -181,9 +204,18 @@ const EN: Record<MessageKey, string> = {
   'search.title': 'Search',
   'search.subtitle': 'Search titles, excerpts, and categories from live published content.',
   'home.trendingWeek': 'Trending this week',
+  'home.trendingKicker': 'Most read',
+  'home.trendingViewAll': 'All stories',
   'home.noTrending': 'No trending articles yet — publish stories to populate this list.',
   'home.monthlyMagazine': 'Monthly Magazine',
   'home.readIssue': 'Read {label} Issue',
+  'home.trendingAlso': 'Also trending',
+  'home.trendingWindow': '7-day reads',
+  'home.trendingWeekShort': 'Trending',
+  'home.gridExplorerBlurb':
+    'Generation mix, transmission corridors, demand curves and project pipelines — interactive sector data.',
+  'home.gridExplorerCta': 'Open Grid Explorer',
+  'home.browseAllNews': 'Browse archive',
   'common.min': 'min',
   'common.views': 'views',
   'common.esbStaff': 'ESB Staff',
@@ -233,6 +265,22 @@ const EN: Record<MessageKey, string> = {
   'member.staffSignIn': 'Staff sign in',
   'energy.simulated': 'Simulated telemetry (dev)',
   'energy.indicative': 'Indicative snapshot',
+  'portal.todayEdition': "Today's edition",
+  'portal.mastheadTagline':
+    'Energy-first reporting with markets, policy, grid data — and the stories beyond the sector that keep Bangladesh reading.',
+  'portal.breaking': 'Breaking',
+  'portal.latestHeadlines': 'Latest headlines',
+  'portal.marketPulse': 'Market pulse',
+  'portal.topStories': 'Top stories',
+  'portal.viewAllNews': 'View all news',
+  'portal.energyDeskKicker': 'Energy desk',
+  'portal.sectorWatchKicker': 'Sector watch',
+  'portal.sectorWatch': 'Across the power value chain',
+  'portal.allSectors': 'All sectors',
+  'portal.newsWireKicker': 'News wire',
+  'portal.newsWire': 'Latest from the desk',
+  'portal.newsWireSub': 'Recent stories across the power sector and beyond.',
+  'portal.emptySlot': 'Assign a story in admin → Coverage',
 };
 
 const BN: Record<MessageKey, string> = {
@@ -271,7 +319,7 @@ const BN: Record<MessageKey, string> = {
   'brand.ledeEmMagazine': 'ইএসবি পাওয়ারলাইন মাসিক ম্যাগাজিন',
   'home.systemSnapshot': 'সিস্টেম স্ন্যাপশট',
   'home.powerSector': 'বিদ্যুৎ খাত',
-  'home.powerSectorSub': 'সব খাতের কভারেজ দেখুন অথবা নির্দিষ্ট একটি খাত বেছে নিন।',
+  'home.powerSectorSub': 'সব খাতের সর্বশেষ প্রতিবেদন — উপরের ক্যাটাগরি বার থেকে খাত বেছে নিন।',
   'coverage.title': 'বিদ্যুৎ খাতের কভারেজ',
   'coverage.allCoverage': 'সমগ্র কভারেজ',
   'coverage.allDescription': 'সব {count}টি বিদ্যুৎ খাতের সর্বশেষ প্রতিবেদন।',
@@ -302,9 +350,18 @@ const BN: Record<MessageKey, string> = {
   'search.title': 'অনুসন্ধান',
   'search.subtitle': 'প্রকাশিত শিরোনাম, সারাংশ ও বিভাগ থেকে অনুসন্ধান করুন।',
   'home.trendingWeek': 'এই সপ্তাহের জনপ্রিয়',
+  'home.trendingKicker': 'সর্বাধিক পঠিত',
+  'home.trendingViewAll': 'সব দেখুন',
   'home.noTrending': 'এখনও কোনো জনপ্রিয় নিবন্ধ নেই।',
   'home.monthlyMagazine': 'মাসিক ম্যাগাজিন',
   'home.readIssue': '{label} সংখ্যা পড়ুন',
+  'home.trendingAlso': 'আরও জনপ্রিয়',
+  'home.trendingWindow': '৭ দিন',
+  'home.trendingWeekShort': 'জনপ্রিয়',
+  'home.gridExplorerBlurb':
+    'উৎপাদন মিক্স, ট্রান্সমিশন করিডর, চাহিদা ও প্রকল্প পাইপলাইন — ইন্টারঅ্যাক্টিভ খাতভিত্তিক তথ্য।',
+  'home.gridExplorerCta': 'গ্রিড এক্সপ্লোরার খুলুন',
+  'home.browseAllNews': 'আর্কাইভ দেখুন',
   'common.min': 'মিনিট',
   'common.views': 'ভিউ',
   'common.esbStaff': 'ইএসবি স্টাফ',
@@ -354,6 +411,22 @@ const BN: Record<MessageKey, string> = {
   'member.staffSignIn': 'স্টাফ সাইন ইন',
   'energy.simulated': 'সিমুলেটেড টেলিমেট্রি (ডেভ)',
   'energy.indicative': 'আনুমানিক স্ন্যাপশট',
+  'portal.todayEdition': 'আজকের সংখ্যা',
+  'portal.mastheadTagline':
+    'শক্তি-কেন্দ্রিক রিপোর্টিং — বাজার, নীতি, গ্রিড তথ্য এবং খাতের বাইরের গল্প যা পাঠককে ফিরিয়ে আনে।',
+  'portal.breaking': 'ব্রেকিং',
+  'portal.latestHeadlines': 'সর্বশেষ শিরোনাম',
+  'portal.marketPulse': 'বাজার পালস',
+  'portal.topStories': 'শীর্ষ প্রতিবেদন',
+  'portal.viewAllNews': 'সব সংবাদ দেখুন',
+  'portal.energyDeskKicker': 'এনার্জি ডেস্ক',
+  'portal.sectorWatchKicker': 'খাত পর্যবেক্ষণ',
+  'portal.sectorWatch': 'বিদ্যুৎ মূল্যশৃঙ্খল জুড়ে',
+  'portal.allSectors': 'সব খাত',
+  'portal.newsWireKicker': 'নিউজ ওয়্যার',
+  'portal.newsWire': 'ডেস্ক থেকে সর্বশেষ',
+  'portal.newsWireSub': 'বিদ্যুৎ খাত ও তার বাইরের সাম্প্রতিক প্রতিবেদন।',
+  'portal.emptySlot': 'অ্যাডমিন → কভারেজ থেকে নিবন্ধ বেছে নিন',
 };
 
 const MESSAGES: Record<SiteLocale, Record<MessageKey, string>> = { en: EN, bn: BN };

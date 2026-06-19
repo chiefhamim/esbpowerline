@@ -12,8 +12,15 @@ import {
 } from '@/lib/interview-content';
 import { ESB_YOUTUBE_CHANNEL_URL } from '@/lib/youtube-channel';
 import { useLocale } from '@/components/shared/LocaleProvider';
+import { cn } from '@/lib/utils';
 
-export function InterviewsSection({ initialInterviews }: { initialInterviews?: Interview[] | unknown }) {
+export function InterviewsSection({
+  initialInterviews,
+  className,
+}: {
+  initialInterviews?: Interview[] | unknown;
+  className?: string;
+}) {
   const { t } = useLocale();
   const [selected, setSelected] = useState<Interview | null>(null);
   const [mounted, setMounted] = useState(false);
@@ -44,6 +51,7 @@ export function InterviewsSection({ initialInterviews }: { initialInterviews?: I
   }, [selected]);
 
   const embedSrc = selected ? youtubeEmbedUrl(selected.youtubeId) : '';
+  const isEditorial = className?.includes('home-editorial__interviews');
 
   const modal = selected ? (
     <div
@@ -101,14 +109,19 @@ export function InterviewsSection({ initialInterviews }: { initialInterviews?: I
   ) : null;
 
   return (
-    <div className="relative z-0 container py-8">
-      <div className="flex items-center justify-between mb-6">
-        <div>
+    <div className={cn('relative z-0', className ?? 'container py-8')}>
+      <div
+        className={cn(
+          'flex items-end justify-between gap-3 mb-3.5 md:mb-4',
+          isEditorial && 'home-editorial__section-head',
+        )}
+      >
+        <div className="min-w-0">
           <div className="uppercase tracking-[2.5px] text-[10px] text-emerald-500 dark:text-emerald-400 font-bold mb-1.5">
             {t('interviews.kicker').toUpperCase()}
           </div>
           <div className="flex items-center gap-2">
-            <Users className="h-6 w-6 text-primary" />
+            <Users className="h-6 w-6 text-primary shrink-0" aria-hidden />
             <h2 className="text-2xl md:text-3xl font-display font-bold tracking-tight">{t('interviews.title')}</h2>
           </div>
         </div>
@@ -116,13 +129,13 @@ export function InterviewsSection({ initialInterviews }: { initialInterviews?: I
           href={ESB_YOUTUBE_CHANNEL_URL}
           target="_blank"
           rel="noopener noreferrer"
-          className="text-sm text-primary flex items-center gap-1 hover:underline font-medium"
+          className="text-sm text-primary flex items-center gap-1 hover:underline font-medium shrink-0"
         >
           {t('interviews.watchAll')} <span>→</span>
         </a>
       </div>
 
-      <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="home-editorial__interview-grid grid gap-3 md:gap-3.5">
         {interviewsList.map((iv) => (
           <button
             key={iv.id}

@@ -7,7 +7,13 @@ import { DEFAULT_DSE_TICKER } from '@/lib/bd-stock-market';
 import { useLocale } from '@/components/shared/LocaleProvider';
 import { cn } from '@/lib/utils';
 
-export function BdStockTicker({ className }: { className?: string }) {
+export function BdStockTicker({
+  className,
+  labelClassName,
+}: {
+  className?: string;
+  labelClassName?: string;
+}) {
   const { locale, t } = useLocale();
   const [items, setItems] = useState<DseTickerItem[]>(DEFAULT_DSE_TICKER);
   const [mounted, setMounted] = useState(false);
@@ -49,16 +55,26 @@ export function BdStockTicker({ className }: { className?: string }) {
   }
 
   return (
-    <div className={cn('flex items-center h-9 text-[12px] md:text-[13px]', className)}>
-      <div className="flex shrink-0 items-center gap-1.5 border-r border-border/60 pr-3 text-muted-foreground">
+    <div
+      className={cn(
+        'market-ticker__row flex w-full min-w-0 items-center h-full min-h-8 text-[12px] md:text-[13px]',
+        className,
+      )}
+    >
+      <div
+        className={cn(
+          'flex shrink-0 items-center gap-1.5 text-muted-foreground',
+          labelClassName ?? 'border-r border-border/60 pr-3',
+        )}
+      >
         <span className="h-1.5 w-1.5 shrink-0 animate-pulse rounded-full bg-sky-500" aria-hidden />
-        <span className="font-semibold uppercase tracking-[0.1em] text-[10px] md:text-[11px]">
+        <span className={cn(!labelClassName && 'font-semibold uppercase tracking-[0.1em] text-[10px] md:text-[11px]')}>
           {t('ticker.dseLive')}
         </span>
       </div>
-      <div className="relative min-w-0 flex-1 overflow-hidden mask-fade ml-3">
+      <div className="market-ticker__viewport mask-fade ml-2 md:ml-3">
         <div
-          className="flex w-max items-center gap-7 whitespace-nowrap animate-[marquee_38s_linear_infinite]"
+          className="market-ticker__track flex w-max items-center gap-7 whitespace-nowrap animate-[marquee_38s_linear_infinite]"
           style={{ animationPlayState: 'running' }}
         >
           {[...displayItems, ...displayItems].map((item, idx) => {

@@ -1,6 +1,7 @@
 'use client';
 
 import { BarChart3, Zap } from 'lucide-react';
+import { SnapshotSourcesLine } from '@/components/home/SnapshotSourcesLine';
 import { InterviewsSection } from '@/components/news/InterviewsSection';
 import { EnergyDashboard } from '@/components/news/EnergyDashboard';
 import { SectorCoverage } from '@/components/news/SectorCoverage';
@@ -34,23 +35,24 @@ export function HomeDeferredSections({
 
   return (
     <>
-      <InterviewsSection initialInterviews={normalizeInterviews(interviews)} />
+      <InterviewsSection
+        className="home-block"
+        initialInterviews={normalizeInterviews(interviews)}
+      />
 
-      <div className="container py-8">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-5">
+      <div className="container home-block">
+        <div className="home-section-head home-section-head--row flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
           <div className="flex items-center gap-2">
             <BarChart3 className="h-6 w-6 text-primary" />
             <h2 className="text-2xl md:text-3xl font-display font-bold tracking-tight">{t('home.systemSnapshot')}</h2>
           </div>
-          <span className="text-[10px] text-muted-foreground uppercase tracking-widest font-semibold">
-            {localizedSnapshotLabel}
-          </span>
+          <SnapshotSourcesLine label={localizedSnapshotLabel} />
         </div>
         <EnergyDashboard initialStats={snapshotStats as never} />
       </div>
 
-      <div className="container py-8">
-        <div className="mb-6">
+      <div className="container home-block">
+        <div className="home-section-head">
           <div className="flex items-center gap-2">
             <Zap className="h-6 w-6 text-primary" />
             <h2 className="text-2xl md:text-3xl font-display font-bold tracking-tight">{t('home.powerSector')}</h2>

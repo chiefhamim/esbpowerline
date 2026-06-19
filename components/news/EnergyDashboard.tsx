@@ -45,12 +45,29 @@ const initial: Stat[] = [
   { label: 'System Loss', value: 7.6, unit: '%', isDecimal: true, icon: 'Gauge' },
   { label: 'Gas Supply', value: 1380, unit: 'MMcfd', icon: 'Flame' },
   { label: 'Peak Today', value: 16850, unit: 'MW', icon: 'TrendingUp' },
+  { label: 'India Grid Import', value: 1160, unit: 'MW', icon: 'Cable' },
+  { label: 'Solar Installed', value: 1020, unit: 'MW', icon: 'Sun' },
 ];
 
-export function EnergyDashboard({ initialStats }: { initialStats?: any[] }) {
+function mergeSnapshotStats(incoming?: Stat[]): Stat[] {
+  const raw = incoming?.length ? [...incoming] : [...initial];
+  const labels = new Set(raw.map((s) => s.label));
+  for (const stat of initial) {
+    if (!labels.has(stat.label)) raw.push(stat);
+  }
+  return raw;
+}
+
+export function EnergyDashboard({
+  initialStats,
+  compact = false,
+}: {
+  initialStats?: Stat[];
+  compact?: boolean;
+}) {
   const { locale, t } = useLocale();
   const [stats, setStats] = useState<Stat[]>(() => {
-    const raw = initialStats || initial;
+    const raw = mergeSnapshotStats(initialStats);
     return raw.map(s => {
       const iconKey = typeof s.icon === 'string' ? s.icon : 'Zap';
       return {
@@ -68,12 +85,15 @@ export function EnergyDashboard({ initialStats }: { initialStats?: any[] }) {
 
     const interval = setInterval(() => {
       setStats(prev => prev.map((s, idx) => {
-        const range = idx === 0 || idx === 1 || idx === 5 ? 160 : (idx === 4 ? 35 : 0.2);
+        const mwSwing = idx === 0 || idx === 1 || idx === 5 || idx === 6;
+        const range = mwSwing ? (idx === 6 ? 90 : 160) : idx === 4 ? 35 : idx === 7 ? 12 : 0.2;
         const variation = (Math.random() - 0.5) * range;
-        const next = Math.max(idx === 2 || idx === 3 ? 0.5 : 100, s.value + variation);
-        return { 
-          ...s, 
-          value: (idx === 2 || idx === 3) ? parseFloat(next.toFixed(1)) : Math.round(next) 
+        const isDecimal = idx === 2 || idx === 3;
+        const floor = isDecimal ? 0.5 : 100;
+        const next = Math.max(floor, s.value + variation);
+        return {
+          ...s,
+          value: isDecimal ? parseFloat(next.toFixed(1)) : Math.round(next),
         };
       }));
     }, 24000);
@@ -81,11 +101,22 @@ export function EnergyDashboard({ initialStats }: { initialStats?: any[] }) {
   }, [simulateLive]);
 
   return (
-    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+    <div
+      className={
+        compact
+          ? 'grid grid-cols-2 gap-2.5'
+          : 'grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3'
+      }
+    >
       {stats.map((s, i) => {
         const Icon = s.icon;
         return (
-          <div key={i} className="stat group relative overflow-hidden flex flex-col items-center text-center pt-6 pb-5 px-3">
+          <div
+            key={i}
+            className={`stat group relative overflow-hidden flex flex-col items-center text-center px-3 ${
+              compact ? 'pt-4 pb-4' : 'pt-6 pb-5'
+            }`}
+          >
             {/* Live SCADA Radar Ping */}
             <span
               className="absolute top-2.5 right-2.5 flex h-1.5 w-1.5"
