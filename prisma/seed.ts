@@ -9,6 +9,7 @@ import 'dotenv/config';
 import bcrypt from 'bcryptjs';
 import { createScriptPrismaClient } from './client';
 import { CATEGORIES, CATEGORY_DETAILS } from '../lib/constants';
+import { EDITOR_EMAIL, EDITOR_NAME } from '../lib/staff-accounts';
 import { DEFAULT_COVERAGE_SLOTS } from '../lib/coverage-defaults';
 import { slugify } from '../lib/utils';
 
@@ -58,13 +59,14 @@ async function main() {
 
   const editor = await prisma.user.create({
     data: {
-      name: 'Mehedi Hasan Hamim',
-      email: 'editor@esbpowerline.com',
+      name: EDITOR_NAME,
+      email: EDITOR_EMAIL,
       passwordHash,
       role: 'EDITOR',
       status: 'ACTIVE',
-      bio: 'Senior Energy Correspondent',
-      articlesCount: 12,
+      bio: 'Senior Energy Correspondent — ESB PowerLine',
+      articlesCount: 0,
+      totalviews: 0,
     },
   });
 
@@ -80,13 +82,7 @@ async function main() {
     },
   });
 
-  const authors = await Promise.all([
-    prisma.user.create({ data: { name: 'Dr. Aminul Haque', email: 'aminul@esbpowerline.com', passwordHash, role: 'AUTHOR', bio: 'Power Systems Specialist', articlesCount: 7 } }),
-    prisma.user.create({ data: { name: 'Farhana Rahman', email: 'farhana@esbpowerline.com', passwordHash, role: 'AUTHOR', bio: 'Renewables & Climate Reporter', articlesCount: 5 } }),
-    prisma.user.create({ data: { name: 'Rafiq Islam', email: 'rafiq@esbpowerline.com', passwordHash, role: 'AUTHOR', bio: 'Policy & Regulation Desk', articlesCount: 9 } }),
-  ]);
-
-  console.log('✓ Users seeded');
+  console.log('✓ Users seeded (admin, editor, member)');
 
   // === CATEGORIES (optimized 10) ===
   const catRecords = await Promise.all(
@@ -116,8 +112,8 @@ async function main() {
       cat: 'Market, Finance & Subsidies',
       featured: true,
       breaking: true,
-      views: 18400,
-      author: authors[2].id,
+      views: 0,
+      author: editor.id,
       publishedAt: new Date('2026-06-10T09:36:00'),
       imageUrl: '/images/download (6).jfif',
       excerpt: "Primary energy imports rose to 62.5% and generation costs surged 83% in four years, an IEEFA report finds, while renewables account for only 2.3% of grid output.",
@@ -138,8 +134,8 @@ async function main() {
       cat: 'Fossil Fuels & Commodities',
       featured: true,
       breaking: true,
-      views: 16200,
-      author: authors[0].id,
+      views: 0,
+      author: editor.id,
       publishedAt: new Date('2026-06-10T09:33:00'),
       imageUrl: '/images/download (7).jfif',
       excerpt: 'The Cabinet Committee on Government Purchase approved five LNG cargoes—including three spot purchases—to meet summer demand amid Middle East supply uncertainty.',
@@ -156,8 +152,8 @@ async function main() {
       cat: 'Consumers & Tariffs',
       featured: true,
       breaking: true,
-      views: 22100,
-      author: authors[2].id,
+      views: 0,
+      author: editor.id,
       publishedAt: new Date('2026-06-04T10:00:00'),
       imageUrl: '/images/download (8).jfif',
       excerpt: 'BERC has raised average electricity prices by 16.68%, pushing up costs for households and export-oriented industries already under margin pressure.',
@@ -174,8 +170,8 @@ async function main() {
       cat: 'Consumers & Tariffs',
       featured: false,
       breaking: true,
-      views: 19800,
-      author: authors[2].id,
+      views: 0,
+      author: editor.id,
       publishedAt: new Date('2026-06-03T14:30:00'),
       imageUrl: '/images/download (9).jfif',
       excerpt: 'BERC announced simultaneous increases at wholesale and retail levels, publishing revised tariffs at a press conference attended by utility executives and consumer representatives.',
@@ -191,8 +187,8 @@ async function main() {
       cat: 'Energy Policy & Regulators',
       featured: true,
       breaking: false,
-      views: 9400,
-      author: authors[1].id,
+      views: 0,
+      author: editor.id,
       publishedAt: new Date('2026-05-24T11:00:00'),
       imageUrl: '/images/download (10).jfif',
       excerpt: 'Chief Whip Md. Nurul Islam said expanding renewables is central to long-term power stability and reducing dependence on imported fossil fuels.',
@@ -208,8 +204,8 @@ async function main() {
       cat: 'Fossil Fuels & Commodities',
       featured: false,
       breaking: false,
-      views: 11800,
-      author: authors[0].id,
+      views: 0,
+      author: editor.id,
       publishedAt: new Date('2026-05-24T09:15:00'),
       imageUrl: '/images/download (11).jfif',
       excerpt: 'At least Tk 35,000 crore in private investment across economic zones is stalled as factories await gas connections amid chronic supply deficits.',
@@ -225,8 +221,8 @@ async function main() {
       cat: 'Fossil Fuels & Commodities',
       featured: false,
       breaking: false,
-      views: 8700,
-      author: authors[0].id,
+      views: 0,
+      author: editor.id,
       publishedAt: new Date('2026-05-23T16:00:00'),
       imageUrl: '/images/download (12).jfif',
       excerpt: 'Petrobangla will invite international tenders for offshore blocks in the Bay of Bengal under revised fiscal terms aimed at attracting foreign explorers.',
@@ -242,8 +238,8 @@ async function main() {
       cat: 'Market, Finance & Subsidies',
       featured: false,
       breaking: false,
-      views: 10200,
-      author: authors[1].id,
+      views: 0,
+      author: editor.id,
       publishedAt: new Date('2026-05-18T12:00:00'),
       imageUrl: '/images/download (13).jfif',
       excerpt: 'The World Bank approved $350 million in additional financing to help Bangladesh secure LNG supplies and stabilise the gas grid during peak demand.',
@@ -259,8 +255,8 @@ async function main() {
       cat: 'Renewables & Nuclear',
       featured: false,
       breaking: false,
-      views: 7600,
-      author: authors[1].id,
+      views: 0,
+      author: editor.id,
       publishedAt: new Date('2026-05-18T10:30:00'),
       imageUrl: '/images/download (14).jfif',
       excerpt: 'Smaller RMG exporters are installing rooftop solar to meet European buyer sustainability requirements and hedge against rising grid tariffs.',
@@ -298,22 +294,22 @@ async function main() {
 
   // === ARTICLES (additional sector coverage) ===
   const articlesData = [
-    { title: 'BPDB hits 28.4 GW installed capacity milestone', cat: 'Power Generation', featured: true, breaking: false, views: 14200, author: authors[0].id, excerpt: 'New IPP additions and Rooppur nuclear progress drive record total generation capacity.', content: '<p>State-owned and private generation assets have pushed Bangladesh past the 28 GW mark...</p>', status: 'PUBLISHED' },
-    { title: 'SREDA opens 1,800 MW solar + wind tender', cat: 'Renewables & Nuclear', featured: true, breaking: true, views: 9800, author: authors[1].id, excerpt: 'Competitive bidding for utility-scale projects expected to accelerate the 10% RE target by 2030.', content: '<p>The Sustainable and Renewable Energy Development Authority (SREDA) has floated a major tender...</p>', status: 'PUBLISHED' },
-    { title: 'BERC approves 8.95 Tk/kWh bulk supply tariff', cat: 'Energy Policy & Regulators', featured: false, breaking: true, views: 15300, author: authors[2].id, excerpt: 'Adjustment balances generator cost recovery with measures to protect residential consumers.', content: '<p>The Bangladesh Energy Regulatory Commission published the gazette notification yesterday...</p>', status: 'PUBLISHED' },
-    { title: 'Petrobangla gas supply shortfall hits 650 MMcfd', cat: 'Fossil Fuels & Commodities', featured: false, breaking: false, views: 7100, author: authors[0].id, excerpt: 'Power plants on alternative fuel as domestic production and LNG imports lag summer demand.', content: '<p>RPGCL and Petrobangla have declared a supply deficit...</p>', status: 'PUBLISHED' },
-    { title: 'Rooppur Unit-1 fuel loading begins', cat: 'Renewables & Nuclear', featured: true, breaking: false, views: 11200, author: authors[2].id, excerpt: 'First fuel assemblies loaded at Bangladesh’s maiden nuclear power plant; commercial operation targeted late 2026.', content: '<p>Russian and Bangladeshi engineers completed initial fuel loading procedures...</p>', status: 'PUBLISHED' },
-    { title: 'PGCB completes 400 kV Patuakhali–Gopalganj line', cat: 'Grid & Transmission', featured: false, breaking: false, views: 5400, author: authors[0].id, excerpt: 'New backbone strengthens evacuation from southern generation clusters.', content: '<p>The 170 km double-circuit line increases transfer capacity by 1,800 MW...</p>', status: 'PUBLISHED' },
-    { title: 'BREB solar home systems surpass 6.5 million installations', cat: 'Distribution & Utilities', featured: false, breaking: false, views: 6300, author: authors[1].id, excerpt: 'Off-grid households continue to benefit from the world’s largest SHS program.', content: '<p>Cumulative installations have delivered clean lighting and phone charging to over 25 million people...</p>', status: 'PUBLISHED' },
-    { title: 'Industrial efficiency program saves 420 MW peak', cat: 'Environment & Efficiency', featured: false, breaking: false, views: 4100, author: authors[2].id, excerpt: 'BEA and ADB-backed motor and pump replacement drive yields rapid demand-side results.', content: '<p>Over 1,200 industrial units participated in the first phase...</p>', status: 'PUBLISHED' },
-    { title: 'Adani Godda import row heads to BERC arbitration', cat: 'International & Cross-Border', featured: false, breaking: true, views: 8900, author: authors[0].id, excerpt: 'Tariff dispute and transmission charges dominate talks between Bangladesh and Indian supplier.', content: '<p>Both sides have submitted written submissions to the regulator...</p>', status: 'PUBLISHED' },
-    { title: 'IPPs report record quarterly earnings on capacity payments', cat: 'Power Generation', featured: false, breaking: false, views: 5200, author: authors[1].id, excerpt: 'Summit, United, and Confidence Power post strong results despite fuel cost volatility.', content: '<p>Capacity charge revenue remained robust even as energy dispatch varied...</p>', status: 'PUBLISHED' },
+    { title: 'BPDB hits 28.4 GW installed capacity milestone', cat: 'Power Generation', featured: true, breaking: false, views: 0, author: editor.id, excerpt: 'New IPP additions and Rooppur nuclear progress drive record total generation capacity.', content: '<p>State-owned and private generation assets have pushed Bangladesh past the 28 GW mark...</p>', status: 'PUBLISHED' },
+    { title: 'SREDA opens 1,800 MW solar + wind tender', cat: 'Renewables & Nuclear', featured: true, breaking: true, views: 0, author: editor.id, excerpt: 'Competitive bidding for utility-scale projects expected to accelerate the 10% RE target by 2030.', content: '<p>The Sustainable and Renewable Energy Development Authority (SREDA) has floated a major tender...</p>', status: 'PUBLISHED' },
+    { title: 'BERC approves 8.95 Tk/kWh bulk supply tariff', cat: 'Energy Policy & Regulators', featured: false, breaking: true, views: 0, author: editor.id, excerpt: 'Adjustment balances generator cost recovery with measures to protect residential consumers.', content: '<p>The Bangladesh Energy Regulatory Commission published the gazette notification yesterday...</p>', status: 'PUBLISHED' },
+    { title: 'Petrobangla gas supply shortfall hits 650 MMcfd', cat: 'Fossil Fuels & Commodities', featured: false, breaking: false, views: 0, author: editor.id, excerpt: 'Power plants on alternative fuel as domestic production and LNG imports lag summer demand.', content: '<p>RPGCL and Petrobangla have declared a supply deficit...</p>', status: 'PUBLISHED' },
+    { title: 'Rooppur Unit-1 fuel loading begins', cat: 'Renewables & Nuclear', featured: true, breaking: false, views: 0, author: editor.id, excerpt: 'First fuel assemblies loaded at Bangladesh’s maiden nuclear power plant; commercial operation targeted late 2026.', content: '<p>Russian and Bangladeshi engineers completed initial fuel loading procedures...</p>', status: 'PUBLISHED' },
+    { title: 'PGCB completes 400 kV Patuakhali–Gopalganj line', cat: 'Grid & Transmission', featured: false, breaking: false, views: 0, author: editor.id, excerpt: 'New backbone strengthens evacuation from southern generation clusters.', content: '<p>The 170 km double-circuit line increases transfer capacity by 1,800 MW...</p>', status: 'PUBLISHED' },
+    { title: 'BREB solar home systems surpass 6.5 million installations', cat: 'Distribution & Utilities', featured: false, breaking: false, views: 0, author: editor.id, excerpt: 'Off-grid households continue to benefit from the world’s largest SHS program.', content: '<p>Cumulative installations have delivered clean lighting and phone charging to over 25 million people...</p>', status: 'PUBLISHED' },
+    { title: 'Industrial efficiency program saves 420 MW peak', cat: 'Environment & Efficiency', featured: false, breaking: false, views: 0, author: editor.id, excerpt: 'BEA and ADB-backed motor and pump replacement drive yields rapid demand-side results.', content: '<p>Over 1,200 industrial units participated in the first phase...</p>', status: 'PUBLISHED' },
+    { title: 'Adani Godda import row heads to BERC arbitration', cat: 'International & Cross-Border', featured: false, breaking: true, views: 0, author: editor.id, excerpt: 'Tariff dispute and transmission charges dominate talks between Bangladesh and Indian supplier.', content: '<p>Both sides have submitted written submissions to the regulator...</p>', status: 'PUBLISHED' },
+    { title: 'IPPs report record quarterly earnings on capacity payments', cat: 'Power Generation', featured: false, breaking: false, views: 0, author: editor.id, excerpt: 'Summit, United, and Confidence Power post strong results despite fuel cost volatility.', content: '<p>Capacity charge revenue remained robust even as energy dispatch varied...</p>', status: 'PUBLISHED' },
     // 10 more for volume
-    { title: 'DESCO peak demand reaches 3,180 MW new record', cat: 'Distribution & Utilities', featured: false, breaking: false, views: 4700, author: authors[2].id, excerpt: 'Dhaka distribution utility prepares summer contingency with additional 132 kV bays.', content: '<p>Load shedding was avoided through careful demand management...</p>', status: 'PUBLISHED' },
-    { title: 'New 225 MW wind project at Cox’s Bazar gets environmental clearance', cat: 'Renewables & Nuclear', featured: false, breaking: false, views: 6100, author: authors[1].id, excerpt: 'First utility-scale wind farm moves closer to financial close.', content: '<p>The 50-turbine project is expected online by 2028...</p>', status: 'PUBLISHED' },
-    { title: 'Government mulls 3,000 MW cross-border hydro import from Nepal & Bhutan', cat: 'International & Cross-Border', featured: false, breaking: false, views: 7300, author: authors[0].id, excerpt: 'Tripartite talks advance on firm power contracts and transmission corridors.', content: '<p>A high-level technical committee has been formed...</p>', status: 'DRAFT' },
-    { title: 'BERC proposes time-of-use tariffs for large industrial consumers', cat: 'Energy Policy & Regulators', featured: false, breaking: false, views: 3900, author: authors[2].id, excerpt: 'Peak/off-peak pricing aimed at flattening the national load curve.', content: '<p>Consultation paper published; comments due by end of month...</p>', status: 'PUBLISHED' },
-    { title: 'LNG spot cargoes arrive at 12% discount to long-term contracts', cat: 'Fossil Fuels & Commodities', featured: false, breaking: false, views: 2800, author: authors[0].id, excerpt: 'Relief for power sector fuel costs as global prices soften.', content: '<p>Three spot cargoes discharged at Moheshkhali this week...</p>', status: 'PUBLISHED' },
+    { title: 'DESCO peak demand reaches 3,180 MW new record', cat: 'Distribution & Utilities', featured: false, breaking: false, views: 0, author: editor.id, excerpt: 'Dhaka distribution utility prepares summer contingency with additional 132 kV bays.', content: '<p>Load shedding was avoided through careful demand management...</p>', status: 'PUBLISHED' },
+    { title: 'New 225 MW wind project at Cox’s Bazar gets environmental clearance', cat: 'Renewables & Nuclear', featured: false, breaking: false, views: 0, author: editor.id, excerpt: 'First utility-scale wind farm moves closer to financial close.', content: '<p>The 50-turbine project is expected online by 2028...</p>', status: 'PUBLISHED' },
+    { title: 'Government mulls 3,000 MW cross-border hydro import from Nepal & Bhutan', cat: 'International & Cross-Border', featured: false, breaking: false, views: 0, author: editor.id, excerpt: 'Tripartite talks advance on firm power contracts and transmission corridors.', content: '<p>A high-level technical committee has been formed...</p>', status: 'DRAFT' },
+    { title: 'BERC proposes time-of-use tariffs for large industrial consumers', cat: 'Energy Policy & Regulators', featured: false, breaking: false, views: 0, author: editor.id, excerpt: 'Peak/off-peak pricing aimed at flattening the national load curve.', content: '<p>Consultation paper published; comments due by end of month...</p>', status: 'PUBLISHED' },
+    { title: 'LNG spot cargoes arrive at 12% discount to long-term contracts', cat: 'Fossil Fuels & Commodities', featured: false, breaking: false, views: 0, author: editor.id, excerpt: 'Relief for power sector fuel costs as global prices soften.', content: '<p>Three spot cargoes discharged at Moheshkhali this week...</p>', status: 'PUBLISHED' },
   ];
 
   for (let i = 0; i < articlesData.length; i++) {
@@ -562,8 +558,7 @@ async function main() {
 
   console.log('\n✅ Seed complete. Demo accounts (use SEED_DEMO_PASSWORD from .env.local):');
   console.log('  admin@esbpowerline.com  (SUPER_ADMIN)');
-  console.log('  editor@esbpowerline.com  (EDITOR)');
-  console.log('  aminul@esbpowerline.com  (AUTHOR)');
+  console.log(`  ${EDITOR_EMAIL}  (EDITOR)`);
   console.log('  member@esbpowerline.com  (SUBSCRIBER)');
 }
 

@@ -8,7 +8,7 @@ import {
   getPublishedArticleBySlug,
   getRelatedPublishedArticles,
 } from '@/lib/category-content';
-import { incrementArticleView } from '@/lib/actions/articles';
+import { ArticleViewTracker } from '@/components/analytics/ArticleViewTracker';
 import { auth } from '@/lib/auth';
 import { can, type Role } from '@/lib/constants';
 import { getArticleComments, getArticleSavedState } from '@/lib/actions/members';
@@ -38,8 +38,6 @@ export default async function ArticlePage({ params }: { params: Promise<{ slug: 
   const { slug } = await params;
   const article = await getPublishedArticleBySlug(slug);
   if (!article) notFound();
-
-  await incrementArticleView(article.id);
 
   const [related, session, comments, saved] = await Promise.all([
     getRelatedPublishedArticles(slug, article.category, article.tags, 3),
@@ -72,6 +70,7 @@ export default async function ArticlePage({ params }: { params: Promise<{ slug: 
 
   return (
     <div className="container py-10 max-w-3xl article-page--with-sticky-author">
+      <ArticleViewTracker articleId={article.id} />
       <Link href="/articles" className="text-sm text-primary hover:underline">← Back to news</Link>
 
       <div className="mt-4">

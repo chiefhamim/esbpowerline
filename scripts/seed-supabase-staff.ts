@@ -1,5 +1,11 @@
 import { config } from 'dotenv';
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
+import {
+  EDITOR_EMAIL,
+  EDITOR_NAME,
+  MASTER_ADMIN_EMAIL,
+  MASTER_ADMIN_NAME,
+} from '../lib/staff-accounts';
 
 config({ path: '.env.local' });
 config();
@@ -11,8 +17,8 @@ type StaffSeedAccount = {
 };
 
 const STAFF_ACCOUNTS: StaffSeedAccount[] = [
-  { email: 'admin@esbpowerline.com', name: 'System Admin', role: 'SUPER_ADMIN' },
-  { email: 'editor@esbpowerline.com', name: 'Mehedi Hasan Hamim', role: 'EDITOR' },
+  { email: MASTER_ADMIN_EMAIL, name: MASTER_ADMIN_NAME, role: 'SUPER_ADMIN' },
+  { email: EDITOR_EMAIL, name: EDITOR_NAME, role: 'EDITOR' },
 ];
 
 async function findUserIdByEmail(admin: SupabaseClient, email: string): Promise<string | null> {

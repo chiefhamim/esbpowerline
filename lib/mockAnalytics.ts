@@ -250,7 +250,7 @@ export function getMockAnalytics(options?: MockAnalyticsOptions): MockAnalyticsP
     recentLogs: [
       { id: 'log-1', type: 'ARTICLE_PUBLISHED', message: 'Published: BERC approves revised bulk tariff for FY2026', timestamp: '2026-06-19T09:14:00.000Z' },
       { id: 'log-2', type: 'COMMENT_MODERATED', message: 'Approved 3 pending comments on Rooppur coverage', timestamp: '2026-06-19T08:42:00.000Z' },
-      { id: 'log-3', type: 'USER_ROLE_CHANGED', message: 'Promoted Nadia Karim to Editor', timestamp: '2026-06-18T16:20:00.000Z' },
+      { id: 'log-3', type: 'USER_ROLE_CHANGED', message: 'Editor role assigned to Mehedi Hasan Hamim', timestamp: '2026-06-18T16:20:00.000Z' },
       { id: 'log-4', type: 'SETTINGS_UPDATED', message: 'Homepage carousel switched to managed mode', timestamp: '2026-06-18T11:05:00.000Z' },
     ],
     topArticles: buildTopArticles(),
@@ -264,11 +264,7 @@ export function getMockAnalytics(options?: MockAnalyticsOptions): MockAnalyticsP
       { role: 'SUPER_ADMIN', _count: 2 },
     ],
     topAuthors: [
-      { id: 'author-1', name: 'Nadia Karim', role: 'EDITOR', articles: 24, views: 48200 },
-      { id: 'author-2', name: 'Rafiq Ahmed', role: 'AUTHOR', articles: 18, views: 36400 },
-      { id: 'author-3', name: 'Saima Hossain', role: 'AUTHOR', articles: 15, views: 29100 },
-      { id: 'author-4', name: 'Tanvir Islam', role: 'CONTRIBUTOR', articles: 11, views: 21800 },
-      { id: 'author-5', name: 'Farhana Begum', role: 'AUTHOR', articles: 9, views: 17600 },
+      { id: 'author-1', name: 'Mehedi Hasan Hamim', role: 'EDITOR', articles: 20, views: 0 },
     ],
     contentPipeline: [
       { status: 'Published', count: publishedCount, color: '#10b981' },

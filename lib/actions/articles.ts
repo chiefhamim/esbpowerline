@@ -719,12 +719,12 @@ export async function bulkOwnArticleAction(ids: string[], action: OwnBulkAction)
   return { affected, action };
 }
 
-/** Increment view count when a published article is read (once per server render). */
-export async function incrementArticleView(articleId: string) {
-  await prisma.article.updateMany({
-    where: { id: articleId, status: 'PUBLISHED' },
-    data: { views: { increment: 1 } },
-  });
+/**
+ * @deprecated Views are recorded via POST /api/articles/[id]/view (ArticleView ledger).
+ * Kept as a no-op so legacy imports do not break; never increments directly.
+ */
+export async function incrementArticleView(_articleId: string) {
+  return;
 }
 
 export type PublishScheduledResult = {

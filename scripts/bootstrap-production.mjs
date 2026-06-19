@@ -59,6 +59,6 @@ run('Seed Prisma content (articles, categories, settings)', 'db:seed');
 run('Seed Supabase staff (admin + editor)', 'supabase:seed-staff');
 run('Seed Supabase member', 'supabase:seed-member');
 console.log('\n✅ Bootstrap complete.');
-console.log('   Staff:  admin@esbpowerline.com / editor@esbpowerline.com');
+console.log('   Staff:  admin@esbpowerline.com / hamim2964@gmail.com');
 console.log('   Member: member@esbpowerline.com');
 console.log(`   Password: (your SEED_DEMO_PASSWORD)`);

@@ -89,6 +89,20 @@ model Article {
 
   revisions Revision[]
   notices   EditorialNotice[]
+  viewEvents ArticleView[]
+}
+
+/** Append-only pageview ledger — Article.views increments only via recordArticleView(). */
+model ArticleView {
+  id         String   @id @default(cuid())
+  articleId  String
+  article    Article  @relation(fields: [articleId], references: [id], onDelete: Cascade)
+  visitorKey String
+  viewedAt   DateTime @default(now())
+  referrer   String?
+
+  @@index([articleId, viewedAt])
+  @@index([visitorKey, articleId])
 }
 
 enum ArticleStatus {

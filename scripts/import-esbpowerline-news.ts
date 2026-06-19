@@ -11,6 +11,7 @@ import { config, parse } from 'dotenv';
 import { existsSync, readFileSync } from 'fs';
 import type { PrismaClient } from '@prisma/client';
 import { CATEGORIES, CATEGORY_DETAILS } from '../lib/constants';
+import { EDITOR_EMAIL, EDITOR_NAME } from '../lib/staff-accounts';
 import { slugify } from '../lib/utils';
 
 /** Preserve npm/cross-env targets — .env.production.local can contain empty placeholders. */
@@ -71,8 +72,7 @@ if (!process.env.DATABASE_URL?.trim()) {
 
 const WP_BASE = 'https://esbpowerline.com/wp-json/wp/v2';
 const POST_COUNT = 20;
-const EDITOR_EMAIL = 'editor@esbpowerline.com';
-const EDITOR_NAME = 'Mehedi Hasan Hamim';
+
 
 /** WordPress category slug → app category name */
 const WP_CATEGORY_MAP: Record<string, (typeof CATEGORIES)[number]> = {
@@ -376,7 +376,8 @@ async function importArticles(
         readTime,
         isFeatured,
         isBreaking,
-        views: Math.floor(800 + Math.random() * 4200),
+        views: 0,
+        likes: 0,
         createdAt: wpImportedAt,
         updatedAt: wpImportedAt,
       },
@@ -435,20 +436,15 @@ async function importArticles(
     data: { name: EDITOR_NAME, articlesCount: articleCount },
   });
 
-  // Demote leftover demo author accounts so CMS never shows fake bylines.
-  await prisma.user.updateMany({
-    where: {
-      email: {
-        in: [
-          'aminul@esbpowerline.com',
-          'farhana@esbpowerline.com',
-          'rafiq@esbpowerline.com',
-          'nadia@esbpowerline.com',
-        ],
-      },
-    },
-    data: { articlesCount: 0 },
+  const { REMOVED_DEMO_AUTHOR_EMAILS } = await import('../lib/staff-accounts');
+  const stale = await prisma.user.findMany({
+    where: { email: { in: [...REMOVED_DEMO_AUTHOR_EMAILS] }, id: { not: authorId } },
+    select: { id: true, email: true },
   });
+  for (const user of stale) {
+    await prisma.user.delete({ where: { id: user.id } });
+    console.log(`✓ Removed stale account ${user.email}`);
+  }
 
   return imported;
 }

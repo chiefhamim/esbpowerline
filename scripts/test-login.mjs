@@ -12,7 +12,7 @@ const password = process.env.SEED_DEMO_PASSWORD?.trim() || 'esbpowerline007';
 
 const accounts = [
   { label: 'admin', email: 'admin@esbpowerline.com' },
-  { label: 'editor', email: 'editor@esbpowerline.com' },
+  { label: 'editor', email: 'hamim2964@gmail.com' },
   { label: 'member', email: 'member@esbpowerline.com' },
 ];
 

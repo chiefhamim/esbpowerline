@@ -3,12 +3,10 @@ import 'server-only';
 import bcrypt from 'bcryptjs';
 import prisma from '@/lib/prisma';
 import { getDevBootstrapPassword } from '@/lib/dev-login-hints';
+import { EDITOR_EMAIL, EDITOR_NAME } from '@/lib/staff-accounts';
 import { upsertSupabaseAuthUser } from '@/lib/supabase/sync-auth-user';
 
 const DEMO_MEMBER_EMAIL = 'member@esbpowerline.com';
-
-/** Optional dev-only sample editor — not the master admin. */
-const DEMO_EDITOR_EMAIL = 'editor@esbpowerline.com';
 
 function demoPassword() {
   return getDevBootstrapPassword() ?? 'esbpowerline007';
@@ -63,14 +61,14 @@ export async function ensureDemoMemberAccount() {
 }
 
 /**
- * Optional dev sample editor account. Skips if the email already exists
- * (e.g. created by the master admin via /admin/users/new).
+ * Dev-only: ensure the sole editor account exists (Mehedi Hasan Hamim).
+ * Skips if the account already exists.
  */
 export async function ensureDemoEditorAccount() {
   if (process.env.NODE_ENV === 'production') return;
 
   const existing = await prisma.user.findUnique({
-    where: { email: DEMO_EDITOR_EMAIL },
+    where: { email: EDITOR_EMAIL },
     select: { id: true },
   });
   if (existing) return;
@@ -80,15 +78,16 @@ export async function ensureDemoEditorAccount() {
 
   await prisma.user.create({
     data: {
-      name: 'Nadia Karim',
-      email: DEMO_EDITOR_EMAIL,
+      name: EDITOR_NAME,
+      email: EDITOR_EMAIL,
       passwordHash,
       role: 'EDITOR',
       status: 'ACTIVE',
+      bio: 'Senior Energy Correspondent — ESB PowerLine',
     },
   });
 
-  await syncDemoAuthUser(DEMO_EDITOR_EMAIL, 'Nadia Karim', 'EDITOR', password);
+  await syncDemoAuthUser(EDITOR_EMAIL, EDITOR_NAME, 'EDITOR', password);
 }
 
 /** @deprecated Use ensureMasterAdminAccount — kept for scripts that still import this name. */
