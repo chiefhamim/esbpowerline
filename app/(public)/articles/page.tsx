@@ -1,6 +1,9 @@
 import Link from 'next/link';
 import { ArticleCard } from '@/components/news/ArticleCard';
 import { getPublicCategories, getPublishedArticlesForPublic, getTrendingPublishedArticles } from '@/lib/category-content';
+import { localizeCategoryFields, localizeCategoryName } from '@/lib/i18n/categories';
+import { createTranslator } from '@/lib/i18n/messages';
+import { getServerSiteLocale } from '@/lib/locale-server';
 import { SortSelect } from '@/components/news/SortSelect';
 
 export const metadata = {
@@ -17,6 +20,8 @@ interface ArticlesPageProps {
 }
 
 export default async function ArticlesPage({ searchParams }: ArticlesPageProps) {
+  const locale = await getServerSiteLocale();
+  const t = createTranslator(locale);
   const resolvedParams = await searchParams;
   const categoryParam = resolvedParams.category;
   const sort = resolvedParams.sort || 'latest';
@@ -51,11 +56,13 @@ export default async function ArticlesPage({ searchParams }: ArticlesPageProps) 
     <div className="container py-8">
       <div className="flex flex-col md:flex-row md:items-end md:justify-between mb-8">
         <div>
-          <h1 className="text-4xl font-display font-bold tracking-tight">Latest News</h1>
-          <p className="text-muted-foreground mt-2">Power &amp; energy sector coverage for Bangladesh</p>
+          <h1 className="text-4xl font-display font-bold tracking-tight">{t('articles.title')}</h1>
+          <p className="text-muted-foreground mt-2">{t('articles.subtitle')}</p>
         </div>
         <div className="mt-4 md:mt-0 flex items-center gap-3 text-sm">
-          <Link href="/search" className="btn btn-secondary px-4 py-2">Advanced Search</Link>
+          <Link href="/search" className="btn btn-secondary px-4 py-2">
+            {t('articles.advancedSearch')}
+          </Link>
           <SortSelect currentSort={sort} />
         </div>
       </div>
@@ -65,20 +72,21 @@ export default async function ArticlesPage({ searchParams }: ArticlesPageProps) 
           href={sort === 'views' ? '/articles?sort=views' : '/articles'}
           className={`category-pill ${!categoryParam ? 'active' : ''}`}
         >
-          All
+          {t('articles.allCategories')}
         </Link>
         {categories.map((cat) => {
           const isActive = categoryParam === cat.slug;
           const href = sort === 'views'
             ? `/articles?category=${cat.slug}&sort=views`
             : `/articles?category=${cat.slug}`;
+          const localized = localizeCategoryFields(locale, cat);
           return (
             <Link
               key={cat.id}
               href={href}
               className={`category-pill ${isActive ? 'active' : ''}`}
             >
-              {cat.name}
+              {localized.name}
             </Link>
           );
         })}
@@ -87,7 +95,7 @@ export default async function ArticlesPage({ searchParams }: ArticlesPageProps) 
       <div className="grid lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2">
           {paginatedArticles.length === 0 ? (
-            <p className="text-muted-foreground">No articles found for this filter.</p>
+            <p className="text-muted-foreground">{t('coverage.noArticles')}</p>
           ) : (
             <div className="grid sm:grid-cols-2 gap-6" id="articles-grid">
               {paginatedArticles.map((article) => (
@@ -118,35 +126,28 @@ export default async function ArticlesPage({ searchParams }: ArticlesPageProps) 
                 className="btn btn-primary px-8"
                 scroll={false}
               >
-                Load more articles
+                {t('articles.loadMore')}
               </Link>
             </div>
-          )}
-
-          {currentPage >= totalPages && paginatedArticles.length > 0 && (
-            <p className="text-center text-sm text-muted-foreground mt-8">You&apos;ve reached the end.</p>
           )}
         </div>
 
         <div className="lg:pl-6">
           <div className="sticky top-20">
-            <h3 className="font-semibold mb-4 text-lg">Trending</h3>
+            <h3 className="font-semibold mb-4 text-lg">{t('articles.trending')}</h3>
             <div className="space-y-4">
               {trending.length === 0 ? (
-                <p className="text-sm text-muted-foreground">No trending articles yet.</p>
+                <p className="text-sm text-muted-foreground">{t('coverage.noArticles')}</p>
               ) : (
-                trending.map((a, i) => (
+                trending.map((a) => (
                   <Link key={a.slug} href={`/articles/${a.slug}`} className="block group">
                     <div className="text-sm font-medium group-hover:text-primary line-clamp-2">{a.title}</div>
-                    <div className="text-xs text-muted-foreground mt-1">{a.category} · {a.views.toLocaleString()} views</div>
+                    <div className="text-xs text-muted-foreground mt-1">
+                      {localizeCategoryName(locale, a.category)} · {a.views.toLocaleString()} views
+                    </div>
                   </Link>
                 ))
               )}
-            </div>
-
-            <div className="mt-8 p-4 rounded-lg border border-border bg-muted/50 text-sm">
-              <div className="font-medium mb-1">Pro tip</div>
-              <p className="text-muted-foreground">Use the category pills above or visit individual category pages for focused reading.</p>
             </div>
           </div>
         </div>

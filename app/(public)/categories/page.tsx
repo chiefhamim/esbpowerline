@@ -1,5 +1,8 @@
 import Link from 'next/link';
 import { getPublicCategories } from '@/lib/category-content';
+import { localizeCategoryFields } from '@/lib/i18n/categories';
+import { createTranslator } from '@/lib/i18n/messages';
+import { getServerSiteLocale } from '@/lib/locale-server';
 import {
   categoryColorVars,
   categoryIconWrapStyle,
@@ -11,19 +14,20 @@ import {
 import { CategoryIconDisplay } from '@/components/category/CategoryIconDisplay';
 
 export default async function CategoriesIndex() {
+  const locale = await getServerSiteLocale();
+  const t = createTranslator(locale);
   const categories = await getPublicCategories();
 
   return (
     <div className="container py-10">
       <div className="mb-8">
-        <h1 className="h2 mb-2">Power Sector Categories</h1>
-        <p className="text-muted-foreground max-w-prose">
-          Focused coverage across Bangladesh&apos;s energy value chain. Click any sector for dedicated reporting, analysis and data.
-        </p>
+        <h1 className="h2 mb-2">{t('categories.title')}</h1>
+        <p className="text-muted-foreground max-w-prose">{t('categories.subtitle')}</p>
       </div>
 
       <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3">
         {categories.map((cat) => {
+          const localized = localizeCategoryFields(locale, cat);
           const defaultTextClass = getCategoryTextClass(cat.name, cat.color);
           const hoverBorderClass = getCategoryHoverBorderClass(cat.name, cat.color);
           const hoverTextClass = getCategoryHoverTextClass(cat.name, cat.color);
@@ -45,7 +49,7 @@ export default async function CategoriesIndex() {
                   <CategoryIconDisplay
                     icon={cat.icon}
                     iconImageUrl={cat.iconImageUrl}
-                    name={cat.name}
+                    name={localized.name}
                     size={16}
                     className="h-4 w-4"
                     style={textStyle}
@@ -55,14 +59,16 @@ export default async function CategoriesIndex() {
                   className={`font-semibold text-[15px] leading-tight tracking-tight transition-colors ${defaultTextClass}`}
                   style={textStyle}
                 >
-                  {cat.name}
+                  {localized.name}
                 </div>
               </div>
               <p className="text-xs text-muted-foreground leading-snug line-clamp-2 flex-1">
-                {cat.description ?? `Latest ${cat.name.toLowerCase()} coverage for Bangladesh's energy sector.`}
+                {localized.description ??
+                  t('coverage.categoryDescription', { category: localized.name })}
               </p>
               <div className={`mt-2.5 text-[10px] text-muted-foreground inline-flex items-center gap-1 transition-colors ${hoverTextClass}`}>
-                {cat.articleCount ?? 0} articles <span className="group-hover:translate-x-0.5 transition">→</span>
+                {t('categories.articles', { count: cat.articleCount ?? 0 })}{' '}
+                <span className="group-hover:translate-x-0.5 transition">→</span>
               </div>
             </Link>
           );
@@ -70,11 +76,11 @@ export default async function CategoriesIndex() {
       </div>
 
       {categories.length === 0 && (
-        <p className="text-muted-foreground text-center py-12">No categories configured yet.</p>
+        <p className="text-muted-foreground text-center py-12">{t('categories.empty')}</p>
       )}
 
       <div className="mt-8 text-center text-xs text-muted-foreground">
-        {categories.length} sectors • Daily updates • In-depth analysis and project trackers
+        {t('categories.footer', { count: categories.length })}
       </div>
     </div>
   );

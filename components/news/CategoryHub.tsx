@@ -6,6 +6,8 @@ import {
   Building2, Lightbulb, Leaf,
 } from 'lucide-react';
 import { CATEGORIES, CATEGORY_DETAILS } from '@/lib/constants';
+import { localizeCategoryName } from '@/lib/i18n/categories';
+import { useLocale } from '@/components/shared/LocaleProvider';
 import { slugify } from '@/lib/utils';
 
 const ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
@@ -22,12 +24,15 @@ const ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
 };
 
 export function CategoryHub() {
+  const { locale } = useLocale();
+
   return (
     <div className="flex flex-wrap gap-2">
       {CATEGORIES.map((cat) => {
         const meta = CATEGORY_DETAILS[cat];
         const Icon = ICONS[meta.icon] || Zap;
         const slug = slugify(cat);
+        const label = localizeCategoryName(locale, cat);
 
         return (
           <Link
@@ -39,7 +44,7 @@ export function CategoryHub() {
               <Icon className="h-3.5 w-3.5" />
             </div>
             <span className="font-medium leading-tight tracking-tight group-hover:text-primary transition-colors text-[12.5px] whitespace-nowrap">
-              {cat}
+              {label}
             </span>
           </Link>
         );

@@ -5,6 +5,8 @@ import Link from 'next/link';
 import { ArrowRight, Zap } from 'lucide-react';
 import { ArticleCard } from './ArticleCard';
 import { CATEGORIES } from '@/lib/constants';
+import { localizeCategoryFields } from '@/lib/i18n/categories';
+import { useLocale } from '@/components/shared/LocaleProvider';
 import { slugify } from '@/lib/utils';
 import type { PublicArticleCard, PublicCategory } from '@/lib/category-types';
 import type { ResolvedCoverageSlot } from '@/lib/coverage-types';
@@ -29,7 +31,11 @@ type SectorTab = {
   description: string;
 };
 
-function buildTabs(categories: PublicCategory[]): SectorTab[] {
+function buildTabs(
+  categories: PublicCategory[],
+  locale: 'en' | 'bn',
+  t: (key: import('@/lib/i18n/messages').MessageKey, vars?: Record<string, string | number>) => string,
+): SectorTab[] {
   const source = categories.length
     ? categories
     : CATEGORIES.map((name, order) => ({
@@ -46,23 +52,29 @@ function buildTabs(categories: PublicCategory[]): SectorTab[] {
   return [
     {
       id: 'all',
-      label: 'All Coverage',
+      label: t('coverage.allCoverage'),
       icon: Zap,
       category: null,
       slug: null,
-      description: `Latest stories across all ${source.length} power sector categories.`,
+      description: t('coverage.allDescription', { count: source.length }),
     },
-    ...source.map((cat) => ({
-      id: cat.slug,
-      label: cat.name,
-      icon: resolveCategoryIcon(cat.icon, cat.name),
-      iconKey: cat.icon,
-      iconImageUrl: cat.iconImageUrl,
-      category: cat.name,
-      slug: cat.slug,
-      color: cat.color,
-      description: cat.description ?? `Latest ${cat.name.toLowerCase()} coverage and analysis.`,
-    })),
+    ...source.map((cat) => {
+      const localized = localizeCategoryFields(locale, cat);
+      const englishName = cat.name;
+      return {
+        id: cat.slug,
+        label: localized.name,
+        icon: resolveCategoryIcon(cat.icon, englishName),
+        iconKey: cat.icon,
+        iconImageUrl: cat.iconImageUrl,
+        category: englishName,
+        slug: cat.slug,
+        color: cat.color,
+        description:
+          localized.description ??
+          t('coverage.categoryDescription', { category: localized.name }),
+      };
+    }),
   ];
 }
 
@@ -79,8 +91,9 @@ export function SectorCoverage({
   coverageSlots?: ResolvedCoverageSlot[];
   pinnedArticles?: PublicArticleCard[];
 }) {
+  const { locale, t } = useLocale();
   const [activeTab, setActiveTab] = useState('all');
-  const sectorTabs = useMemo(() => buildTabs(categories), [categories]);
+  const sectorTabs = useMemo(() => buildTabs(categories, locale, t), [categories, locale, t]);
 
   const articlePool = articles;
   const active = sectorTabs.find((t) => t.id === activeTab) ?? sectorTabs[0];
@@ -126,14 +139,16 @@ export function SectorCoverage({
       {!hideHeader && (
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-3">
-            <h2 className="text-xl font-semibold tracking-[-0.015em]">Power Sector Coverage</h2>
+            <h2 className="text-xl font-semibold tracking-[-0.015em]">{t('coverage.title')}</h2>
             <div className="hidden sm:flex items-center text-[10px] px-2 py-0.5 rounded-full border bg-muted text-muted-foreground">
               <ActiveIcon className="h-3 w-3 mr-1" />
-              {active.category ? '1 category' : `${sectorTabs.length - 1} categories`}
+              {active.category
+                ? t('coverage.oneCategory')
+                : t('coverage.nCategories', { count: sectorTabs.length - 1 })}
             </div>
           </div>
           <Link href="/articles" className="text-xs font-medium text-primary flex items-center gap-1 hover:underline">
-            Browse full archive <ArrowRight className="h-3.5 w-3.5" />
+            {t('coverage.browseArchive')} <ArrowRight className="h-3.5 w-3.5" />
           </Link>
         </div>
       )}
@@ -213,7 +228,7 @@ export function SectorCoverage({
             />
           ))
         ) : (
-          <p className="text-muted-foreground col-span-full py-8 text-center">No recent articles in this category.</p>
+          <p className="text-muted-foreground col-span-full py-8 text-center">{t('coverage.noArticles')}</p>
         )}
       </div>
 
@@ -222,7 +237,7 @@ export function SectorCoverage({
           href={active.slug ? `/categories/${active.slug}` : '/articles'}
           className="text-xs font-medium text-muted-foreground hover:text-primary transition-colors inline-flex items-center gap-1"
         >
-          View all in {active.label} <ArrowRight className="h-3 w-3" />
+          {t('coverage.viewAllIn', { label: active.label })} <ArrowRight className="h-3 w-3" />
         </Link>
       </div>
     </div>

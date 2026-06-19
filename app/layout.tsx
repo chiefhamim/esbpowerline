@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import Script from 'next/script';
-import { Inter, Space_Grotesk, JetBrains_Mono } from 'next/font/google';
+import { Inter, Noto_Sans_Bengali, Space_Grotesk, JetBrains_Mono } from 'next/font/google';
 import './globals.css';
 import { Toaster } from 'sonner';
 import { Providers } from './providers';
@@ -10,6 +10,8 @@ import {
   SITE_THEME_PAINT,
 } from '@/lib/site-theme';
 import { getServerSiteTheme, siteThemeHtmlClass } from '@/lib/site-theme-server';
+import { SITE_LOCALE_INIT_SCRIPT } from '@/lib/locale';
+import { getServerSiteLocale } from '@/lib/locale-server';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -29,6 +31,12 @@ const jetbrainsMono = JetBrains_Mono({
   display: 'swap',
 });
 
+const notoSansBengali = Noto_Sans_Bengali({
+  subsets: ['bengali'],
+  variable: '--font-bengali',
+  display: 'swap',
+});
+
 export const metadata: Metadata = {
   title: {
     default: 'ESB PowerLine — Bangladesh Energy & Power News',
@@ -44,13 +52,15 @@ export const metadata: Metadata = {
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const theme = await getServerSiteTheme();
+  const locale = await getServerSiteLocale();
   const paint = SITE_THEME_PAINT[theme];
 
   return (
     <html
-      lang="en"
-      className={siteThemeHtmlClass(theme)}
+      lang={locale}
+      className={`${siteThemeHtmlClass(theme)}${locale === 'bn' ? ' locale-bn' : ''}`}
       data-site-theme={theme}
+      data-site-locale={locale}
       style={{ backgroundColor: paint.background, color: paint.foreground }}
       suppressHydrationWarning
     >
@@ -59,13 +69,18 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       </head>
       <body
         suppressHydrationWarning
-        className={`${inter.variable} ${spaceGrotesk.variable} ${jetbrainsMono.variable} min-h-screen bg-background text-foreground antialiased font-sans`}
+        className={`${inter.variable} ${spaceGrotesk.variable} ${jetbrainsMono.variable} ${notoSansBengali.variable} min-h-screen bg-background text-foreground antialiased font-sans`}
         style={{ backgroundColor: paint.background, color: paint.foreground }}
       >
         <Script
           id="site-theme-init"
           strategy="beforeInteractive"
           dangerouslySetInnerHTML={{ __html: SITE_THEME_INIT_SCRIPT }}
+        />
+        <Script
+          id="site-locale-init"
+          strategy="beforeInteractive"
+          dangerouslySetInnerHTML={{ __html: SITE_LOCALE_INIT_SCRIPT }}
         />
         <Providers>
           {children}

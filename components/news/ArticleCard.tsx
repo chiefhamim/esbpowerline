@@ -1,9 +1,14 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { formatDistanceToNow } from 'date-fns';
+import { bn } from 'date-fns/locale';
 import { ArticlePlacementBadge } from '@/components/shared/ArticlePlacementBadge';
+import { CategoryLabel } from '@/components/i18n/CategoryLabel';
 import { NoImage } from '@/components/shared/NoImage';
 import { hasArticleImage } from '@/lib/article-image';
+import { useLocale } from '@/components/shared/LocaleProvider';
+
+'use client';
 
 interface ArticleCardProps {
   id: string;
@@ -34,7 +39,13 @@ export function ArticleCard({
   isBreaking,
   isPinned,
 }: ArticleCardProps) {
-  const timeAgo = date ? formatDistanceToNow(new Date(date), { addSuffix: true }) : '';
+  const { locale, t } = useLocale();
+  const timeAgo = date
+    ? formatDistanceToNow(new Date(date), {
+        addSuffix: true,
+        locale: locale === 'bn' ? bn : undefined,
+      })
+    : '';
 
   return (
     <Link href={`/articles/${id}`} className="article-card group block">
@@ -51,7 +62,7 @@ export function ArticleCard({
           <NoImage className="article-card__image h-48 w-full" compact />
         )}
         <div className="absolute top-2.5 left-2.5 flex flex-wrap items-center gap-1">
-          <span className="category-pill text-[10px] font-medium tracking-wide">{category}</span>
+          <CategoryLabel name={category} className="category-pill text-[10px] font-medium tracking-wide" />
           {isPinned ? <ArticlePlacementBadge type="pin" compact /> : null}
           {!isPinned && isFeatured ? <ArticlePlacementBadge type="featured" compact /> : null}
           {isBreaking ? <ArticlePlacementBadge type="breaking" compact /> : null}
@@ -61,8 +72,8 @@ export function ArticleCard({
         <h3 className="font-semibold tracking-[-0.015em] leading-tight line-clamp-2 group-hover:text-primary transition-colors">{title}</h3>
         {excerpt && <p className="mt-2.5 text-[13px] text-muted-foreground line-clamp-2 leading-snug">{excerpt}</p>}
         <div className="mt-4 flex items-center justify-between text-[11px] text-muted-foreground">
-          <span className="font-medium">{author || 'ESB Staff'}</span>
-          <span>{timeAgo} {readTime ? `· ${readTime} min` : ''}</span>
+          <span className="font-medium">{author || t('common.esbStaff')}</span>
+          <span>{timeAgo} {readTime ? `· ${readTime} ${t('common.min')}` : ''}</span>
         </div>
       </div>
     </Link>

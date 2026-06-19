@@ -1795,6 +1795,28 @@ html[data-site-theme='white'],
   @apply gap-2.5;
 }
 
+/* Bengali locale — Noto Sans Bengali for body copy when BN is active */
+html.locale-bn body {
+  font-family: var(--font-bengali), var(--font-sans), ui-sans-serif, system-ui, sans-serif;
+}
+
+.font-bengali {
+  font-family: var(--font-bengali), var(--font-sans), ui-sans-serif, system-ui, sans-serif;
+}
+
+/* Language toggle — public navbar */
+.locale-toggle {
+  @apply inline-flex items-center rounded-full border border-border/60 bg-muted/40 p-0.5;
+}
+
+.locale-toggle__btn {
+  @apply min-w-[2rem] rounded-full px-2 py-1 text-[10px] font-bold uppercase tracking-wide text-muted-foreground transition-all;
+}
+
+.locale-toggle__btn--active {
+  @apply bg-primary text-primary-foreground shadow-sm;
+}
+
 /* Theme swatches — shared by public navbar & login */
 .site-theme-toggle {
   @apply flex items-center gap-1.5;
