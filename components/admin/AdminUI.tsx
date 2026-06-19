@@ -169,19 +169,28 @@ export function AdminListRow({
   href,
   meta,
   value,
+  valueLabel,
 }: {
   rank?: number;
   title: string;
   href?: string;
   meta?: string;
   value?: string | number;
+  valueLabel?: string;
 }) {
   const content = (
     <>
       {rank !== undefined && <span className="admin-rank">{rank}</span>}
-      <span className="flex-1 min-w-0 truncate admin-list-title">{title}</span>
-      {meta && <span className="admin-list-meta hidden sm:inline">{meta}</span>}
-      {value !== undefined && <span className="admin-list-value tabular-nums">{value}</span>}
+      <span className="flex-1 min-w-0 admin-list-title-wrap">
+        <span className="truncate admin-list-title">{title}</span>
+        {meta && <span className="admin-list-meta">{meta}</span>}
+      </span>
+      {value !== undefined && (
+        <span className="admin-list-stat">
+          <span className="admin-list-value tabular-nums">{value}</span>
+          {valueLabel && <span className="admin-list-value-label">{valueLabel}</span>}
+        </span>
+      )}
     </>
   );
 

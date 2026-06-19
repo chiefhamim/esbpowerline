@@ -365,11 +365,11 @@ export async function getAnalytics(options?: AnalyticsOptions) {
   const carouselMode = 'managed' as const;
 
   const contentPipeline = [
-    { status: 'Published', count: publishedCount, color: '#10b981' },
-    { status: 'Draft', count: draftCount, color: '#f59e0b' },
-    { status: 'Scheduled', count: scheduledCount, color: '#3b82f6' },
-    { status: 'Archived', count: archivedCount, color: '#8b5cf6' },
-    { status: 'Trash', count: trashCount, color: '#64748b' },
+    { status: 'Published', count: publishedCount, color: 'hsl(160 84% 39%)' },
+    { status: 'Draft', count: draftCount, color: 'hsl(38 92% 50%)' },
+    { status: 'Scheduled', count: scheduledCount, color: 'hsl(217 91% 60%)' },
+    { status: 'Archived', count: archivedCount, color: 'hsl(262 72% 62%)' },
+    { status: 'Trash', count: trashCount, color: 'hsl(215 16% 52%)' },
   ];
 
   const publishingTrend = buildPublishingTrendWithViews(allPublishedInWindow, period, range, month);

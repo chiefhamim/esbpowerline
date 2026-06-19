@@ -13,7 +13,7 @@ import { BarChart3, PieChart as PieIcon, TrendingUp, Layers, CalendarRange } fro
 import { cn } from '@/lib/utils';
 import { formatNumber } from '@/lib/utils';
 import { AdminContentPipelinePanel } from '@/components/admin/AdminContentPipelinePanel';
-import { ROLES, type Role } from '@/lib/constants';
+import { ROLES, USER_ROLE_LABELS, type Role } from '@/lib/constants';
 import { formatDelta, PERIOD_ACCENTS } from '@/lib/analytics-period';
 import { LiveArticleTextLink } from '@/components/shared/LiveArticleLink';
 import type { AnalyticsPeriod } from '@/lib/analytics-period';
@@ -36,12 +36,10 @@ const FALLBACK_COLORS = [
   'hsl(199 89% 48%)',
 ];
 
-const tooltipStyle = {
-  borderRadius: '8px',
-  border: '1px solid hsl(var(--border))',
-  background: 'hsl(var(--card))',
-  fontSize: '11px',
-  padding: '6px 10px',
+const tooltipWrapperStyle = {
+  zIndex: 40,
+  outline: 'none',
+  pointerEvents: 'none' as const,
 };
 
 type ChartProps = {
@@ -68,7 +66,7 @@ type ChartProps = {
 };
 
 function roleLabel(role: string) {
-  return ROLES[role as Role]?.name ?? role.replace(/_/g, ' ');
+  return USER_ROLE_LABELS[role as Role] ?? ROLES[role as Role]?.name ?? role.replace(/_/g, ' ');
 }
 
 function roleColor(role: string, index: number) {
@@ -77,40 +75,19 @@ function roleColor(role: string, index: number) {
 
 type RoleDatum = { key: string; name: string; value: number };
 
-function RoleDonutTooltip({
-  active,
-  payload,
-  total,
-}: {
-  active?: boolean;
-  payload?: { payload?: RoleDatum & { fill?: string } }[];
-  total: number;
-}) {
-  if (!active || !payload?.length) return null;
-  const row = payload[0]?.payload;
-  if (!row) return null;
-  const color = row.fill ?? roleColor(row.key, 0);
-  const pct = total > 0 ? ((row.value / total) * 100).toFixed(1) : '0';
-  return (
-    <div className="admin-analytics-role-tooltip" style={{ '--role-accent': color } as React.CSSProperties}>
-      <div className="admin-analytics-role-tooltip-head">
-        <span className="admin-analytics-role-tooltip-swatch" />
-        <span className="admin-analytics-role-tooltip-name">{row.name}</span>
-      </div>
-      <div className="admin-analytics-role-tooltip-meta">
-        <span><strong>{formatNumber(row.value)}</strong> users</span>
-        <span><strong>{pct}%</strong> of total</span>
-      </div>
-    </div>
-  );
-}
-
 function UsersByRolePanel({ roleData, totalUsers }: { roleData: RoleDatum[]; totalUsers: number }) {
   const [hoveredKey, setHoveredKey] = useState<string | null>(null);
 
   if (roleData.length === 0) {
     return <p className="admin-analytics-empty">No users.</p>;
   }
+
+  const hoveredRole = hoveredKey ? roleData.find((role) => role.key === hoveredKey) : null;
+  const hoveredIndex = hoveredRole ? roleData.findIndex((role) => role.key === hoveredKey) : -1;
+  const hoveredColor = hoveredRole ? roleColor(hoveredRole.key, Math.max(hoveredIndex, 0)) : null;
+  const hoveredPct = hoveredRole && totalUsers > 0
+    ? ((hoveredRole.value / totalUsers) * 100).toFixed(1)
+    : null;
 
   return (
     <div className="admin-analytics-role-panel">
@@ -120,16 +97,42 @@ function UsersByRolePanel({ roleData, totalUsers }: { roleData: RoleDatum[]; tot
           const width = totalUsers > 0 ? (role.value / totalUsers) * 100 : 0;
           const isDimmed = hoveredKey !== null && hoveredKey !== role.key;
           return (
-            <div
+            <button
               key={role.key}
+              type="button"
               className={cn('admin-analytics-role-stack-seg', isDimmed && 'admin-analytics-role-stack-seg--dim')}
               style={{ width: `${width}%`, backgroundColor: color }}
               onMouseEnter={() => setHoveredKey(role.key)}
               onMouseLeave={() => setHoveredKey(null)}
-              title={`${role.name}: ${width.toFixed(1)}%`}
+              onFocus={() => setHoveredKey(role.key)}
+              onBlur={() => setHoveredKey(null)}
+              aria-label={`${role.name}: ${formatNumber(role.value)} users, ${width.toFixed(1)}%`}
             />
           );
         })}
+      </div>
+
+      <div
+        className={cn(
+          'admin-analytics-role-focus',
+          !hoveredRole && 'admin-analytics-role-focus--idle',
+        )}
+        style={hoveredColor ? ({ '--role-accent': hoveredColor } as React.CSSProperties) : undefined}
+        aria-live="polite"
+      >
+        {hoveredRole ? (
+          <>
+            <span className="admin-analytics-role-focus-swatch" aria-hidden />
+            <span className="admin-analytics-role-focus-name">{hoveredRole.name}</span>
+            <span className="admin-analytics-role-focus-meta">
+              <strong>{formatNumber(hoveredRole.value)}</strong> users
+              <span className="admin-analytics-role-focus-sep">·</span>
+              <strong>{hoveredPct}%</strong> of total
+            </span>
+          </>
+        ) : (
+          <span className="admin-analytics-role-focus-hint">Hover a segment or legend row for role details</span>
+        )}
       </div>
 
       <div className="admin-analytics-role-hero">
@@ -148,6 +151,7 @@ function UsersByRolePanel({ roleData, totalUsers }: { roleData: RoleDatum[]; tot
                 cornerRadius={4}
                 stroke="hsl(var(--card))"
                 strokeWidth={2}
+                isAnimationActive={false}
                 onMouseEnter={(_, i) => setHoveredKey(roleData[i]?.key ?? null)}
                 onMouseLeave={() => setHoveredKey(null)}
               >
@@ -164,7 +168,6 @@ function UsersByRolePanel({ roleData, totalUsers }: { roleData: RoleDatum[]; tot
                   );
                 })}
               </Pie>
-              <Tooltip content={<RoleDonutTooltip total={totalUsers} />} />
             </PieChart>
           </ResponsiveContainer>
           <div className="admin-analytics-donut-center">
@@ -180,17 +183,20 @@ function UsersByRolePanel({ roleData, totalUsers }: { roleData: RoleDatum[]; tot
           const pct = totalUsers > 0 ? ((role.value / totalUsers) * 100).toFixed(1) : '0';
           const isActive = hoveredKey === role.key;
           return (
-            <div
+            <button
               key={role.key}
+              type="button"
               className={cn('admin-analytics-role-legend-row', isActive && 'admin-analytics-role-legend-row--active')}
               onMouseEnter={() => setHoveredKey(role.key)}
               onMouseLeave={() => setHoveredKey(null)}
+              onFocus={() => setHoveredKey(role.key)}
+              onBlur={() => setHoveredKey(null)}
             >
               <span className="admin-analytics-role-swatch" style={{ backgroundColor: color }} />
               <span className="admin-analytics-role-legend-name">{role.name}</span>
               <span className="admin-analytics-role-legend-pct">{pct}%</span>
               <span className="admin-analytics-role-legend-count">{formatNumber(role.value)}</span>
-            </div>
+            </button>
           );
         })}
       </div>
@@ -375,7 +381,17 @@ export function AdminAnalyticsCharts({
                       tickLine={false}
                     />
                     <YAxis allowDecimals={false} tick={{ fontSize: 8, fill: chartTheme.axisTick }} width={22} axisLine={false} tickLine={false} />
-                    <Tooltip contentStyle={tooltipStyle} />
+                    <Tooltip
+                      contentStyle={{
+                        borderRadius: '8px',
+                        border: '1px solid hsl(var(--border))',
+                        background: 'hsl(var(--card))',
+                        fontSize: '11px',
+                        padding: '6px 10px',
+                      }}
+                      wrapperStyle={tooltipWrapperStyle}
+                      allowEscapeViewBox={{ x: true, y: true }}
+                    />
                     <Legend
                       verticalAlign="bottom"
                       align="center"
@@ -449,7 +465,7 @@ export function AdminAnalyticsCharts({
           icon={TrendingUp}
           className="admin-analytics-card-fill"
           bodyClassName="admin-card-body--dense admin-card-body--fill"
-          action={<span className="admin-analytics-summary">Bars = published posts · line = views on those posts</span>}
+          action={<span className="admin-analytics-summary">Posts &amp; views</span>}
         >
           <div className="admin-analytics-chart-area admin-analytics-chart-area--md">
             <ResponsiveContainer width="100%" height="100%">
@@ -482,7 +498,11 @@ export function AdminAnalyticsCharts({
                   tickLine={false}
                   tickFormatter={(v) => (v >= 1000 ? `${formatNumber(Math.round(v / 1000))}K` : formatNumber(v))}
                 />
-                <Tooltip content={<PublishingTooltip />} />
+                <Tooltip
+                  content={<PublishingTooltip />}
+                  wrapperStyle={tooltipWrapperStyle}
+                  allowEscapeViewBox={{ x: true, y: true }}
+                />
                 <Legend wrapperStyle={{ fontSize: 9 }} iconSize={8} />
                 <Bar
                   yAxisId="posts"
@@ -521,10 +541,12 @@ export function AdminAnalyticsCharts({
               <BarChart data={categories} layout="vertical" margin={{ top: 0, right: 12, left: 4, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="2 4" stroke="hsl(var(--border) / 0.3)" horizontal={false} />
                 <XAxis type="number" tick={{ fontSize: 8 }} tickFormatter={(v) => formatNumber(v)} axisLine={false} tickLine={false} />
-                <YAxis type="category" dataKey="shortName" width={72} tick={{ fontSize: 9 }} axisLine={false} tickLine={false} />
+                <YAxis type="category" dataKey="shortName" width={88} tick={{ fontSize: 9 }} axisLine={false} tickLine={false} />
                 <Tooltip
                   cursor={{ fill: chartTheme.hoverFill }}
                   content={<CategoryTrafficTooltip totalViews={totalCategoryViews} />}
+                  wrapperStyle={tooltipWrapperStyle}
+                  allowEscapeViewBox={{ x: true, y: true }}
                 />
                 <Bar dataKey="views" radius={[0, 3, 3, 0]} maxBarSize={14} activeBar={{ fillOpacity: 0.88 }}>
                   {categories.map((cat, i) => (
@@ -544,7 +566,7 @@ export function AdminAnalyticsCharts({
           <UsersByRolePanel roleData={roleData} totalUsers={totalUsers} />
         </AdminCard>
 
-        <AdminCard title="Pipeline" icon={BarChart3} className="admin-pipeline-card" bodyClassName="admin-card-body--dense admin-card-body--pipeline">
+        <AdminCard title="Pipeline" icon={BarChart3} className="admin-pipeline-card" bodyClassName="admin-card-body--dense admin-card-body--pipeline-v2">
           <AdminContentPipelinePanel items={contentPipeline} />
         </AdminCard>
       </div>

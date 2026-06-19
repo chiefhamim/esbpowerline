@@ -9,60 +9,59 @@ export type ContentPipelineItem = {
   color: string;
 };
 
-const STAGE_SHORT_LABELS: Record<string, string> = {
-  Published: 'Live',
+const STAGE_LABELS: Record<string, string> = {
+  Published: 'Published',
   Draft: 'Draft',
-  Scheduled: 'Sched',
-  Archived: 'Arch',
+  Scheduled: 'Scheduled',
+  Archived: 'Archived',
   Trash: 'Trash',
 };
 
-const METER_HEIGHT_PX = 52;
-
-function stageLabel(status: string) {
-  return STAGE_SHORT_LABELS[status] ?? status;
-}
-
 export function AdminContentPipelinePanel({ items }: { items: ContentPipelineItem[] }) {
   const pipelineTotal = items.reduce((sum, item) => sum + item.count, 0) || 1;
-  const maxCount = Math.max(...items.map((item) => item.count), 1);
 
   if (items.length === 0) {
-    return <p className="admin-pipeline__empty">No pipeline data.</p>;
+    return <p className="admin-analytics-empty">No pipeline data.</p>;
   }
 
   return (
-    <div className="admin-pipeline">
-      <div className="admin-pipeline__grid" role="list">
+    <div className="admin-pipeline-v2">
+      <div className="admin-pipeline-v2__bar" aria-label="Content pipeline composition">
         {items.map((item) => {
-          const fillPx = Math.max(4, Math.round((item.count / maxCount) * METER_HEIGHT_PX));
-          const share = pipelineTotal > 0 ? ((item.count / pipelineTotal) * 100).toFixed(0) : '0';
-
+          const width = pipelineTotal > 0 ? (item.count / pipelineTotal) * 100 : 0;
+          if (width <= 0) return null;
           return (
-            <article
+            <div
               key={item.status}
-              className="admin-pipeline__stage"
-              role="listitem"
-              style={{ '--stage-color': item.color } as CSSProperties}
-              title={`${item.status}: ${formatNumber(item.count)} articles (${share}%)`}
-            >
-              <div className="admin-pipeline__stage-inner">
-                <span className="admin-pipeline__count">{formatNumber(item.count)}</span>
-                <div className="admin-pipeline__meter" aria-hidden>
-                  <div
-                    className="admin-pipeline__meter-fill"
-                    style={{ height: `${fillPx}px`, backgroundColor: item.color }}
-                  />
-                </div>
-                <span className="admin-pipeline__label">{stageLabel(item.status)}</span>
-                <span className="admin-pipeline__share">{share}%</span>
-              </div>
-            </article>
+              className="admin-pipeline-v2__bar-seg"
+              style={{ width: `${width}%`, backgroundColor: item.color }}
+              title={`${STAGE_LABELS[item.status] ?? item.status}: ${formatNumber(item.count)}`}
+            />
           );
         })}
       </div>
-      <p className="admin-pipeline__foot">
-        {formatNumber(pipelineTotal)} total · all-time
+
+      <div className="admin-pipeline-v2__stages" role="list">
+        {items.map((item) => {
+          const share = pipelineTotal > 0 ? ((item.count / pipelineTotal) * 100).toFixed(1) : '0.0';
+          return (
+            <div
+              key={item.status}
+              className="admin-pipeline-v2__stage"
+              role="listitem"
+              style={{ '--stage-color': item.color } as CSSProperties}
+            >
+              <span className="admin-pipeline-v2__dot" aria-hidden />
+              <span className="admin-pipeline-v2__label">{STAGE_LABELS[item.status] ?? item.status}</span>
+              <span className="admin-pipeline-v2__count">{formatNumber(item.count)}</span>
+              <span className="admin-pipeline-v2__share">{share}%</span>
+            </div>
+          );
+        })}
+      </div>
+
+      <p className="admin-pipeline-v2__foot">
+        {formatNumber(pipelineTotal)} articles · all-time inventory
       </p>
     </div>
   );

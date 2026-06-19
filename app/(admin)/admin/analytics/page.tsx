@@ -130,9 +130,21 @@ export default async function AdminAnalyticsPage({ searchParams }: PageProps) {
           <Link href="/admin/settings" className="admin-analytics-link">Settings →</Link>
         </AdminCard>
 
-        <AdminCard title="Authors" icon={PenLine} bodyClassName="admin-card-body--dense">
+        <AdminCard
+          title="Authors"
+          icon={PenLine}
+          bodyClassName="admin-card-body--dense"
+          action={<span className="admin-analytics-summary">Published · views</span>}
+        >
           {stats.topAuthors.length > 0 ? stats.topAuthors.map((author, i) => (
-            <AdminListRow key={author.id} rank={i + 1} title={author.name} meta={`${author.articles}p`} value={formatNumber(author.views)} />
+            <AdminListRow
+              key={author.id}
+              rank={i + 1}
+              title={author.name}
+              meta={`${formatNumber(author.articles)} published`}
+              value={formatNumber(author.views)}
+              valueLabel="views"
+            />
           )) : (
             <p className="admin-analytics-empty">No authors in period.</p>
           )}
