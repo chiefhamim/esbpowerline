@@ -2,10 +2,28 @@ import { describe, expect, it } from 'vitest';
 import { resolveMigrationDatabaseUrl } from '../../scripts/resolve-migration-database-url.mjs';
 
 describe('resolveMigrationDatabaseUrl', () => {
-  it('rewrites Supabase session pooler to direct db host', () => {
+  it('normalizes Supabase session pooler with connection_limit=1 (Vercel default)', () => {
     const pooler =
       'postgresql://postgres.sxgokpmrbgdndstygapc:secret@aws-1-ap-northeast-1.pooler.supabase.com:5432/postgres';
-    const { url, rewritten, host } = resolveMigrationDatabaseUrl(pooler);
+    const { url, rewritten, host, mode } = resolveMigrationDatabaseUrl(pooler, {
+      useDirectHost: false,
+    });
+    expect(mode).toBe('session-pooler');
+    expect(rewritten).toBe(true);
+    expect(host).toBe('aws-1-ap-northeast-1.pooler.supabase.com');
+    expect(url).toContain('pooler.supabase.com:5432/postgres');
+    expect(url).toContain('postgres.sxgokpmrbgdndstygapc');
+    expect(url).toContain('connection_limit=1');
+    expect(url).toContain('connect_timeout=30');
+  });
+
+  it('can rewrite to direct db host when explicitly enabled', () => {
+    const pooler =
+      'postgresql://postgres.sxgokpmrbgdndstygapc:secret@aws-1-ap-northeast-1.pooler.supabase.com:5432/postgres';
+    const { url, rewritten, host, mode } = resolveMigrationDatabaseUrl(pooler, {
+      useDirectHost: true,
+    });
+    expect(mode).toBe('direct');
     expect(rewritten).toBe(true);
     expect(host).toBe('db.sxgokpmrbgdndstygapc.supabase.co');
     expect(url).toContain('db.sxgokpmrbgdndstygapc.supabase.co:5432/postgres');
@@ -16,7 +34,8 @@ describe('resolveMigrationDatabaseUrl', () => {
   it('leaves direct Supabase host unchanged', () => {
     const direct =
       'postgresql://postgres:secret@db.sxgokpmrbgdndstygapc.supabase.co:5432/postgres';
-    const { url, rewritten, host } = resolveMigrationDatabaseUrl(direct);
+    const { url, rewritten, host, mode } = resolveMigrationDatabaseUrl(direct);
+    expect(mode).toBe('direct');
     expect(rewritten).toBe(false);
     expect(host).toBe('db.sxgokpmrbgdndstygapc.supabase.co');
     expect(url).toBe(direct);
