@@ -268,103 +268,103 @@ export function TipTapEditor({
       <div className="tiptap-toolbar tiptap-toolbar--ribbon tiptap-toolbar--sticky">
         <div className="tiptap-toolbar__group" role="group" aria-label="Text style">
           <ToolbarButton toolKey="bold" active={editor.isActive('bold')} onClick={() => editor.chain().focus().toggleBold().run()}>
-            <Bold className="h-3 w-3" />
+            <Bold className="h-4 w-4" />
           </ToolbarButton>
           <ToolbarButton toolKey="italic" active={editor.isActive('italic')} onClick={() => editor.chain().focus().toggleItalic().run()}>
-            <Italic className="h-3 w-3" />
+            <Italic className="h-4 w-4" />
           </ToolbarButton>
           <ToolbarButton toolKey="underline" active={editor.isActive('underline')} onClick={() => editor.chain().focus().toggleUnderline().run()}>
-            <UnderlineIcon className="h-3 w-3" />
+            <UnderlineIcon className="h-4 w-4" />
           </ToolbarButton>
           <ToolbarButton toolKey="strike" active={editor.isActive('strike')} onClick={() => editor.chain().focus().toggleStrike().run()}>
-            <Strikethrough className="h-3 w-3" />
+            <Strikethrough className="h-4 w-4" />
           </ToolbarButton>
         </div>
         <Divider />
         <div className="tiptap-toolbar__group" role="group" aria-label="Structure">
           <ToolbarButton toolKey="paragraph" active={editor.isActive('paragraph')} onClick={() => editor.chain().focus().setParagraph().run()}>
-            <Pilcrow className="h-3 w-3" />
+            <Pilcrow className="h-4 w-4" />
           </ToolbarButton>
           <ToolbarButton toolKey="h1" active={editor.isActive('heading', { level: 1 })} onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}>
-            <Heading1 className="h-3 w-3" />
+            <Heading1 className="h-4 w-4" />
           </ToolbarButton>
           <ToolbarButton toolKey="h2" active={editor.isActive('heading', { level: 2 })} onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}>
-            <Heading2 className="h-3 w-3" />
+            <Heading2 className="h-4 w-4" />
           </ToolbarButton>
           <ToolbarButton toolKey="h3" active={editor.isActive('heading', { level: 3 })} onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}>
-            <Heading3 className="h-3 w-3" />
+            <Heading3 className="h-4 w-4" />
           </ToolbarButton>
         </div>
         <Divider />
         <div className="tiptap-toolbar__group" role="group" aria-label="Alignment">
           <ToolbarButton toolKey="alignLeft" active={editor.isActive({ textAlign: 'left' })} onClick={() => editor.chain().focus().setTextAlign('left').run()}>
-            <AlignLeft className="h-3 w-3" />
+            <AlignLeft className="h-4 w-4" />
           </ToolbarButton>
           <ToolbarButton toolKey="alignCenter" active={editor.isActive({ textAlign: 'center' })} onClick={() => editor.chain().focus().setTextAlign('center').run()}>
-            <AlignCenter className="h-3 w-3" />
+            <AlignCenter className="h-4 w-4" />
           </ToolbarButton>
           <ToolbarButton toolKey="alignRight" active={editor.isActive({ textAlign: 'right' })} onClick={() => editor.chain().focus().setTextAlign('right').run()}>
-            <AlignRight className="h-3 w-3" />
+            <AlignRight className="h-4 w-4" />
           </ToolbarButton>
           <ToolbarButton toolKey="alignJustify" active={editor.isActive({ textAlign: 'justify' })} onClick={() => editor.chain().focus().setTextAlign('justify').run()}>
-            <AlignJustify className="h-3 w-3" />
+            <AlignJustify className="h-4 w-4" />
           </ToolbarButton>
         </div>
         <Divider />
         <div className="tiptap-toolbar__group" role="group" aria-label="Lists">
           <ToolbarButton toolKey="bulletList" active={editor.isActive('bulletList')} onClick={() => editor.chain().focus().toggleBulletList().run()}>
-            <List className="h-3 w-3" />
+            <List className="h-4 w-4" />
           </ToolbarButton>
           <ToolbarButton toolKey="orderedList" active={editor.isActive('orderedList')} onClick={() => editor.chain().focus().toggleOrderedList().run()}>
-            <ListOrdered className="h-3 w-3" />
+            <ListOrdered className="h-4 w-4" />
           </ToolbarButton>
           <ToolbarButton toolKey="indent" onClick={() => editor.chain().focus().sinkListItem('listItem').run()}>
-            <IndentIncrease className="h-3 w-3" />
+            <IndentIncrease className="h-4 w-4" />
           </ToolbarButton>
           <ToolbarButton toolKey="outdent" onClick={() => editor.chain().focus().liftListItem('listItem').run()}>
-            <IndentDecrease className="h-3 w-3" />
+            <IndentDecrease className="h-4 w-4" />
           </ToolbarButton>
         </div>
         <Divider />
         <div className="tiptap-toolbar__group" role="group" aria-label="Rich blocks">
           <ToolbarButton toolKey="blockquote" active={editor.isActive('blockquote')} onClick={() => editor.chain().focus().toggleBlockquote().run()}>
-            <Quote className="h-3 w-3" />
+            <Quote className="h-4 w-4" />
           </ToolbarButton>
           <ToolbarButton toolKey="codeBlock" active={editor.isActive('codeBlock')} onClick={() => editor.chain().focus().toggleCodeBlock().run()}>
-            <Code className="h-3 w-3" />
+            <Code className="h-4 w-4" />
           </ToolbarButton>
           <ToolbarButton toolKey="inlineCode" active={editor.isActive('code')} onClick={() => editor.chain().focus().toggleCode().run()}>
-            <Code2 className="h-3 w-3" />
+            <Code2 className="h-4 w-4" />
           </ToolbarButton>
           <ToolbarButton toolKey="hardBreak" onClick={() => editor.chain().focus().setHardBreak().run()}>
-            <CornerDownLeft className="h-3 w-3" />
+            <CornerDownLeft className="h-4 w-4" />
           </ToolbarButton>
         </div>
         <Divider />
         <div className="tiptap-toolbar__group" role="group" aria-label="Insert">
           <ToolbarButton toolKey="link" active={editor.isActive('link')} onClick={setLink}>
-            <LinkIcon className="h-3 w-3" />
+            <LinkIcon className="h-4 w-4" />
           </ToolbarButton>
           <ToolbarButton toolKey="image" onClick={addImage}>
-            <ImageIcon className="h-3 w-3" />
+            <ImageIcon className="h-4 w-4" />
           </ToolbarButton>
           <ToolbarButton toolKey="table" onClick={insertTable}>
-            <TableIcon className="h-3 w-3" />
+            <TableIcon className="h-4 w-4" />
           </ToolbarButton>
           <ToolbarButton toolKey="hr" onClick={() => editor.chain().focus().setHorizontalRule().run()}>
-            <Minus className="h-3 w-3" />
+            <Minus className="h-4 w-4" />
           </ToolbarButton>
         </div>
         <Divider />
         <div className="tiptap-toolbar__group tiptap-toolbar__group--end" role="group" aria-label="History">
           <ToolbarButton toolKey="clear" onClick={() => editor.chain().focus().clearNodes().unsetAllMarks().run()}>
-            <RemoveFormatting className="h-3 w-3" />
+            <RemoveFormatting className="h-4 w-4" />
           </ToolbarButton>
           <ToolbarButton toolKey="undo" disabled={!editor.can().undo()} onClick={() => editor.chain().focus().undo().run()}>
-            <Undo className="h-3 w-3" />
+            <Undo className="h-4 w-4" />
           </ToolbarButton>
           <ToolbarButton toolKey="redo" disabled={!editor.can().redo()} onClick={() => editor.chain().focus().redo().run()}>
-            <Redo className="h-3 w-3" />
+            <Redo className="h-4 w-4" />
           </ToolbarButton>
         </div>
       </div>

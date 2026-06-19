@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
-import { toast } from 'sonner';
+import { cmsToast } from '@/lib/cms-toast';
 import { History, RotateCcw, ChevronDown, ChevronUp } from 'lucide-react';
 import { restoreArticleRevision } from '@/lib/actions/articles';
 import { Button } from '@/components/ui/button';
@@ -35,10 +35,16 @@ export function RevisionHistory({
     startTransition(async () => {
       try {
         await restoreArticleRevision(articleId, revisionId);
-        toast.success('Revision restored');
+        cmsToast.success(
+          'Revision restored',
+          'The selected version replaced the current story body.',
+        );
         router.refresh();
       } catch (e: unknown) {
-        toast.error(e instanceof Error ? e.message : 'Failed to restore');
+        cmsToast.error(
+          'Could not restore revision',
+          e instanceof Error ? e.message : undefined,
+        );
       }
     });
   }

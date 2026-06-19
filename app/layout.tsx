@@ -84,7 +84,21 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         />
         <Providers>
           {children}
-          <Toaster position="top-center" richColors closeButton />
+          <Toaster
+            position="top-center"
+            closeButton
+            toastOptions={{
+              classNames: {
+                toast: 'cms-toast',
+                title: 'cms-toast__title',
+                description: 'cms-toast__description',
+                success: 'cms-toast--success',
+                error: 'cms-toast--error',
+                info: 'cms-toast--info',
+                closeButton: 'cms-toast__close',
+              },
+            }}
+          />
         </Providers>
       </body>
     </html>

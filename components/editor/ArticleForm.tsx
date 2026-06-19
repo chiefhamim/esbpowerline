@@ -11,7 +11,7 @@ import {
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useSession } from '@/utils/supabase/auth-context';
-import { toast } from 'sonner';
+import { cmsToast, resolveArticleSaveIntent } from '@/lib/cms-toast';
 import dynamic from 'next/dynamic';
 
 const TipTapEditor = dynamic(
@@ -247,10 +247,16 @@ export function ArticleForm({
       setStatus('IN_REVIEW');
       setReviewDialogOpen(false);
       setReviewNote('');
-      toast.success('Draft saved and sent to admin for review');
+      cmsToast.success(
+        'Sent for admin review',
+        'Your draft was saved and submitted to the editorial desk.',
+      );
       router.refresh();
     } catch (e: unknown) {
-      toast.error(e instanceof Error ? e.message : 'Could not submit for review');
+      cmsToast.error(
+        'Could not submit for review',
+        e instanceof Error ? e.message : undefined,
+      );
     } finally {
       setLoading(false);
     }
@@ -267,17 +273,22 @@ export function ArticleForm({
   }, []);
 
   const handleSubmit = useCallback(async (publishStatus?: string) => {
+    const previousStatus = status;
     const finalStatus = (publishStatus ?? status) as string;
+    const intent = resolveArticleSaveIntent(publishStatus, previousStatus);
 
     if (!hasCategories || !category.trim()) {
-      toast.error('Choose a category from the admin list before saving.');
+      cmsToast.error(
+        'Category required',
+        'Choose a category from the admin list before saving.',
+      );
       return;
     }
 
     if (requiresPublishValidation(finalStatus)) {
       const blockers = getPublishBlockers({ title, excerpt, content });
       if (blockers.length > 0) {
-        toast.error(formatPublishBlockerMessage(blockers), {
+        cmsToast.error(formatPublishBlockerMessage(blockers), {
           description: 'Add a headline, deck, and story body before publishing or scheduling.',
         });
         return;
@@ -292,8 +303,8 @@ export function ArticleForm({
       if (isMockArticleSubmitEnabled()) {
         const mockResult = await mockArticleSubmit(data);
         setStatus(finalStatus);
-        toast.success('Dry-run saved (check browser console for JSON payload)', {
-          description: `Mock ID: ${mockResult.mockId} · no database write`,
+        cmsToast.success('Dry-run saved', {
+          description: `Mock ID: ${mockResult.mockId} · check the browser console · no database write`,
         });
         if (mode === 'create') {
           router.push('/cms/articles/new');
@@ -303,37 +314,30 @@ export function ArticleForm({
         return;
       }
 
+      const toastIntent = mode === 'create' && intent === 'save' ? 'create' : intent;
+
       if (mode === 'create') {
         const created = await createArticle(data);
         setStatus(finalStatus);
-        toast.success(
-          finalStatus === 'PUBLISHED'
-            ? 'Article published'
-            : finalStatus === 'SCHEDULED'
-              ? 'Article scheduled'
-              : 'Article created',
-        );
+        cmsToast.articleSaved(toastIntent, 'create', finalStatus, previousStatus);
         router.push(`/cms/articles/${created.id}/edit`);
       } else if (article) {
         await updateArticle(article.id, data);
         setStatus(finalStatus);
-        toast.success(
-          finalStatus === 'PUBLISHED'
-            ? 'Article published'
-            : finalStatus === 'SCHEDULED'
-              ? 'Article scheduled'
-              : 'Article saved',
-        );
+        cmsToast.articleSaved(intent, 'edit', finalStatus, previousStatus);
         router.refresh();
       }
     } catch (e: unknown) {
-      toast.error(e instanceof Error ? e.message : 'Failed to save');
+      cmsToast.error(
+        'Could not save article',
+        e instanceof Error ? e.message : undefined,
+      );
     } finally {
       setLoading(false);
       editorCtx?.setLoading(false);
     }
   }, [
-    article, buildSavePayload, editorCtx, mode, router, status,
+    article, buildSavePayload, content, editorCtx, excerpt, hasCategories, category, mode, router, status, title,
   ]);
 
   useEffect(() => {

@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { Image as ImageIcon, Upload, X, Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
-import { toast } from 'sonner';
+import { cmsToast } from '@/lib/cms-toast';
 
 export type MediaItem = {
   id: string;
@@ -43,10 +43,10 @@ export function MediaPicker({
         if (!res.ok) throw new Error('Upload failed');
         const data = await res.json();
         onChange(data.url ?? data.path ?? '');
-        toast.success('Image uploaded');
+        cmsToast.success('Image uploaded', 'The file is ready to use as your featured image.');
         setOpen(false);
       } catch {
-        toast.error('Upload failed');
+        cmsToast.error('Upload failed', 'Check the file type and size, then try again.');
       } finally {
         setUploading(false);
       }

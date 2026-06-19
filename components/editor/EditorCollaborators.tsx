@@ -34,7 +34,9 @@ export function EditorCollaborators({ authorName, collaboratorIds, onChange }: E
           const data = await getStaffForCollaboration();
           setStaff(data);
         } catch (e) {
-          toast.error('Failed to load editors');
+          toast.error('Could not load editors', {
+            description: 'Refresh the page and try again.',
+          });
         } finally {
           setLoading(false);
         }
@@ -47,7 +49,9 @@ export function EditorCollaborators({ authorName, collaboratorIds, onChange }: E
       onChange(collaboratorIds.filter(c => c !== id));
     } else {
       onChange([...collaboratorIds, id]);
-      toast.success('Editor added for collaboration. Notification sent.');
+      toast.success('Collaborator added', {
+        description: 'They can now co-edit this story in the editorial workspace.',
+      });
       // In a full implementation, we'd fire an EditorialNotice here via a server action.
     }
   };

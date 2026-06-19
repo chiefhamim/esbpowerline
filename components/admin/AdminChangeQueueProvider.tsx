@@ -96,14 +96,17 @@ export function AdminChangeQueueProvider({ children }: { children: ReactNode }) 
       setChanges([]);
       setDockOpen(false);
       toast.success(
-        pending.length === 1
-          ? '1 change saved'
-          : `${pending.length} changes saved`,
+        pending.length === 1 ? 'Change saved' : `${pending.length} changes saved`,
+        {
+          description: 'Platform settings were updated successfully.',
+        },
       );
       router.refresh();
       return true;
     } catch (err: unknown) {
-      toast.error(err instanceof Error ? err.message : 'Failed to save changes');
+      toast.error('Could not save changes', {
+        description: err instanceof Error ? err.message : undefined,
+      });
       return false;
     } finally {
       setSaving(false);

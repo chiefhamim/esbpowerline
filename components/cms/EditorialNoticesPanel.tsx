@@ -146,18 +146,22 @@ export function EditorialNoticesPanel({
         else if (action === 'resolve') await resolveNotice(id);
         else if (action === 'trash') await trashNotice(id);
         else await dismissNotice(id);
-        toast.success(
+        const title =
           action === 'ack'
-            ? 'Marked as seen'
+            ? 'Notice marked as seen'
             : action === 'resolve'
-              ? 'Marked as resolved'
+              ? 'Notice resolved'
               : action === 'trash'
-                ? 'Moved to trash'
-                : 'Moved to archive',
-        );
+                ? 'Notice moved to trash'
+                : 'Notice archived';
+        toast.success(title, {
+          description: 'Your editorial inbox has been updated.',
+        });
         router.refresh();
       } catch (e: unknown) {
-        toast.error(e instanceof Error ? e.message : 'Failed');
+        toast.error('Could not update notice', {
+          description: e instanceof Error ? e.message : undefined,
+        });
       }
     });
   }

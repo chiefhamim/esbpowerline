@@ -11,7 +11,7 @@ export function CmsWriteHeaderActions() {
   const { loading, save } = ctx;
 
   return (
-    <ModernTooltip label="Save draft" hint="Keeps your story in the editorial workspace" variant="editor" fast side="bottom">
+    <ModernTooltip label="Save changes" hint="Saves your story without changing its publish status" variant="editor" fast side="bottom">
       <button
         type="button"
         className="cms-header-save"

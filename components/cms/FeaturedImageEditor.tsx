@@ -7,7 +7,7 @@ import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { toast } from 'sonner';
+import { cmsToast } from '@/lib/cms-toast';
 import { useBodyScrollLock } from '@/hooks/useBodyScrollLock';
 import type { MediaItem } from '@/components/cms/MediaPicker';
 import {
@@ -62,10 +62,10 @@ export function FeaturedImageEditor({
         if (!res.ok) throw new Error('Upload failed');
         const data = await res.json();
         onChange(data.url ?? data.path ?? '');
-        toast.success('Image uploaded');
+        cmsToast.success('Featured image uploaded', 'Adjust crop and filters before publishing.');
         setShowAdjust(true);
       } catch {
-        toast.error('Upload failed');
+        cmsToast.error('Upload failed', 'Check the file type and size, then try again.');
       } finally {
         setUploading(false);
       }

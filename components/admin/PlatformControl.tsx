@@ -124,19 +124,30 @@ export function PlatformControl() {
       try {
         if (reviewAction === 'return') {
           await returnReviewSubmission(articleId, note);
-          toast.success('Returned to author with notes');
+          toast.success('Returned to author', {
+            description: 'Your notes were sent with the story for revision.',
+          });
         } else {
           const res = await approveReviewSubmission(articleId, {
             note: note || undefined,
             publish: reviewAction === 'publish',
           });
-          toast.success(res.published ? 'Approved and published' : 'Approved for publication');
+          toast.success(
+            res.published ? 'Approved and published' : 'Approved for publication',
+            {
+              description: res.published
+                ? 'The story is now live on the site.'
+                : 'The author can publish when ready.',
+            },
+          );
         }
         await dismissReviewNotice(reviewTarget.id);
         closeReviewDialog();
         await loadSnapshot();
       } catch (e: unknown) {
-        toast.error(e instanceof Error ? e.message : 'Review action failed');
+        toast.error('Review action failed', {
+          description: e instanceof Error ? e.message : undefined,
+        });
       }
     });
   }

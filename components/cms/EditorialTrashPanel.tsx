@@ -161,15 +161,17 @@ export function EditorialTrashPanel({
   const [confirmEmpty, setConfirmEmpty] = useState(false);
   const total = articles.length + notices.length;
 
-  function run(action: () => Promise<unknown>, success: string) {
+  function run(action: () => Promise<unknown>, success: string, description?: string) {
     startTransition(async () => {
       try {
         await action();
-        toast.success(success);
+        toast.success(success, { description });
         setConfirmEmpty(false);
         router.refresh();
       } catch (e: unknown) {
-        toast.error(e instanceof Error ? e.message : 'Action failed');
+        toast.error('Action could not be completed', {
+          description: e instanceof Error ? e.message : undefined,
+        });
       }
     });
   }
