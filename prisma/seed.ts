@@ -66,7 +66,7 @@ async function main() {
       status: 'ACTIVE',
       bio: 'Senior Energy Correspondent — ESB PowerLine',
       articlesCount: 0,
-      totalviews: 0,
+      totalViews: 0,
     },
   });
 
