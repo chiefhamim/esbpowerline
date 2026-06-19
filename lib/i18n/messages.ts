@@ -70,7 +70,49 @@ export type MessageKey =
   | 'common.min'
   | 'common.views'
   | 'common.esbStaff'
-  | 'locale.toggle';
+  | 'common.all'
+  | 'common.close'
+  | 'locale.toggle'
+  | 'ticker.energyMarkets'
+  | 'ticker.dseLive'
+  | 'ticker.live'
+  | 'ticker.indicative'
+  | 'sort.label'
+  | 'sort.latest'
+  | 'sort.mostViewed'
+  | 'search.placeholder'
+  | 'search.resultsFor'
+  | 'search.publishedCount'
+  | 'search.noResults'
+  | 'carousel.noFeatured'
+  | 'carousel.readStory'
+  | 'carousel.previous'
+  | 'carousel.next'
+  | 'carousel.pause'
+  | 'carousel.play'
+  | 'carousel.browseAll'
+  | 'carousel.byAuthor'
+  | 'carousel.minRead'
+  | 'carousel.storiesMarkets'
+  | 'placement.featured'
+  | 'placement.breaking'
+  | 'placement.pinned'
+  | 'interviews.kicker'
+  | 'interviews.title'
+  | 'interviews.watchAll'
+  | 'interviews.close'
+  | 'interviews.noVideo'
+  | 'interviews.watchFull'
+  | 'member.loading'
+  | 'member.guestPitch'
+  | 'member.login'
+  | 'member.staffNote'
+  | 'member.signedInMember'
+  | 'member.signedInStaff'
+  | 'member.manageAccount'
+  | 'member.staffSignIn'
+  | 'energy.simulated'
+  | 'energy.indicative';
 
 const EN: Record<MessageKey, string> = {
   'nav.home': 'Home',
@@ -145,7 +187,52 @@ const EN: Record<MessageKey, string> = {
   'common.min': 'min',
   'common.views': 'views',
   'common.esbStaff': 'ESB Staff',
+  'common.all': 'All',
+  'common.close': 'Close',
   'locale.toggle': 'Language',
+  'ticker.energyMarkets': 'Energy Markets',
+  'ticker.dseLive': 'DSE Live',
+  'ticker.live': 'Live',
+  'ticker.indicative': 'Indicative',
+  'sort.label': 'Sort',
+  'sort.latest': 'Latest First',
+  'sort.mostViewed': 'Most Viewed',
+  'search.placeholder': 'Search power sector news...',
+  'search.resultsFor': '{count} results for “{query}”',
+  'search.publishedCount': '{count} published articles',
+  'search.noResults': 'No articles match your search.',
+  'carousel.noFeatured': 'No featured stories currently available.',
+  'carousel.readStory': 'Read story',
+  'carousel.previous': 'Previous story',
+  'carousel.next': 'Next story',
+  'carousel.pause': 'Pause carousel',
+  'carousel.play': 'Play carousel',
+  'carousel.browseAll': 'Browse all news',
+  'carousel.byAuthor': 'By {author}',
+  'carousel.minRead': '{minutes} min read',
+  'carousel.storiesMarkets': 'Stories & markets',
+  'placement.featured': 'Featured',
+  'placement.breaking': 'Breaking',
+  'placement.pinned': 'Pinned',
+  'interviews.kicker': 'In conversation',
+  'interviews.title': 'Latest Interviews',
+  'interviews.watchAll': 'Watch all on YouTube',
+  'interviews.close': 'Close interview player',
+  'interviews.noVideo': 'This interview does not have a valid YouTube video ID yet.',
+  'interviews.watchFull': 'Watch the full conversation on our YouTube channel.',
+  'member.loading': 'Loading member access…',
+  'member.guestPitch':
+    'Sign in to save articles and magazine issues, download data packages, join discussions, and unlock in-depth analysis across the power sector.',
+  'member.login': 'Member login',
+  'member.staffNote': 'Editorial staff and administrators use the same sign-in with assigned roles.',
+  'member.signedInMember':
+    "You're signed in as {name}. Open your library for saved articles, magazine archive, downloads, and comments.",
+  'member.signedInStaff':
+    'Signed in as {name} (staff). Member library is for subscriber accounts — use your staff workspace for editorial tools.',
+  'member.manageAccount': 'Manage your account from the library → Account section.',
+  'member.staffSignIn': 'Staff sign in',
+  'energy.simulated': 'Simulated telemetry (dev)',
+  'energy.indicative': 'Indicative snapshot',
 };
 
 const BN: Record<MessageKey, string> = {
@@ -221,7 +308,52 @@ const BN: Record<MessageKey, string> = {
   'common.min': 'মিনিট',
   'common.views': 'ভিউ',
   'common.esbStaff': 'ইএসবি স্টাফ',
+  'common.all': 'সব',
+  'common.close': 'বন্ধ করুন',
   'locale.toggle': 'ভাষা',
+  'ticker.energyMarkets': 'শক্তি বাজার',
+  'ticker.dseLive': 'ডিএসই লাইভ',
+  'ticker.live': 'লাইভ',
+  'ticker.indicative': 'আনুমানিক',
+  'sort.label': 'সাজান',
+  'sort.latest': 'সর্বশেষ আগে',
+  'sort.mostViewed': 'সর্বাধিক পঠিত',
+  'search.placeholder': 'বিদ্যুৎ খাতের সংবাদ খুঁজুন...',
+  'search.resultsFor': '“{query}” — {count}টি ফলাফল',
+  'search.publishedCount': '{count}টি প্রকাশিত নিবন্ধ',
+  'search.noResults': 'আপনার অনুসন্ধানের সাথে মিলে এমন নিবন্ধ নেই।',
+  'carousel.noFeatured': 'এখন কোনো ফিচার্ড প্রতিবেদন নেই।',
+  'carousel.readStory': 'প্রতিবেদন পড়ুন',
+  'carousel.previous': 'আগের প্রতিবেদন',
+  'carousel.next': 'পরের প্রতিবেদন',
+  'carousel.pause': 'ক্যারোসেল বিরতি',
+  'carousel.play': 'ক্যারোসেল চালু',
+  'carousel.browseAll': 'সব সংবাদ দেখুন',
+  'carousel.byAuthor': '{author}',
+  'carousel.minRead': '{minutes} মিনিট পড়ার সময়',
+  'carousel.storiesMarkets': 'প্রতিবেদন ও বাজার',
+  'placement.featured': 'বিশেষ',
+  'placement.breaking': 'ব্রেকিং',
+  'placement.pinned': 'পিন করা',
+  'interviews.kicker': 'সাক্ষাৎকার',
+  'interviews.title': 'সর্বশেষ সাক্ষাৎকার',
+  'interviews.watchAll': 'ইউটিউবে সব দেখুন',
+  'interviews.close': 'সাক্ষাৎকার বন্ধ করুন',
+  'interviews.noVideo': 'এই সাক্ষাৎকারের জন্য এখনও বৈধ ইউটিউব ভিডিও আইডি নেই।',
+  'interviews.watchFull': 'সম্পূর্ণ আলোচনা আমাদের ইউটিউব চ্যানেলে দেখুন।',
+  'member.loading': 'সদস্য অ্যাক্সেস লোড হচ্ছে…',
+  'member.guestPitch':
+    'নিবন্ধ ও ম্যাগাজিন সংরক্ষণ, ডেটা ডাউনলোড, আলোচনায় অংশ নেওয়া ও গভীর বিশ্লেষণের জন্য সাইন ইন করুন।',
+  'member.login': 'সদস্য লগইন',
+  'member.staffNote': 'সম্পাদকীয় স্টাফ ও অ্যাডমিন একই সাইন-ইন ব্যবহার করেন।',
+  'member.signedInMember':
+    'আপনি {name} হিসেবে সাইন ইন আছেন। সংরক্ষিত নিবন্ধ, ম্যাগাজিন, ডাউনলোড ও মন্তব্যের জন্য লাইব্রেরি খুলুন।',
+  'member.signedInStaff':
+    '{name} (স্টাফ) হিসেবে সাইন ইন। সদস্য লাইব্রেরি সাবস্ক্রাইবারদের জন্য — সম্পাদনার কাজ স্টাফ ওয়ার্কস্পেসে করুন।',
+  'member.manageAccount': 'লাইব্রেরি → অ্যাকাউন্ট থেকে সেটিংস পরিচালনা করুন।',
+  'member.staffSignIn': 'স্টাফ সাইন ইন',
+  'energy.simulated': 'সিমুলেটেড টেলিমেট্রি (ডেভ)',
+  'energy.indicative': 'আনুমানিক স্ন্যাপশট',
 };
 
 const MESSAGES: Record<SiteLocale, Record<MessageKey, string>> = { en: EN, bn: BN };

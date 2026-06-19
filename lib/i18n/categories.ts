@@ -7,47 +7,50 @@ export type CategoryTranslation = {
   description: string;
 };
 
-/** Professional Bengali labels keyed by canonical English category name. */
+/**
+ * Bengali sector labels — terminology used in Bangladesh's power/energy press
+ * (বিদ্যুৎ বিভাগ, বিইআরসি, পিজিসিবি, বিআরইবি context), not literal translation.
+ */
 export const CATEGORY_TRANSLATIONS_BN: Record<CategoryName, CategoryTranslation> = {
   'Energy Policy & Regulators': {
-    name: 'শক্তি নীতি ও নিয়ন্ত্রক',
-    description: 'মন্ত্রণালয়ের মাস্টার প্ল্যান, বিইআরসি ট্যারিফ শুনানি ও নিয়ন্ত্রক সিদ্ধান্ত',
+    name: 'নীতি, আইন ও নিয়ন্ত্রক',
+    description: 'বিদ্যুৎ বিভাগের মাস্টার প্ল্যান, বিইআরসি শুনানি ও নিয়ন্ত্রক সিদ্ধান্ত',
   },
   'Power Generation': {
     name: 'বিদ্যুৎ উৎপাদন',
-    description: 'রাষ্ট্রীয় বিদ্যুৎ কেন্দ্র, আইপিপি ও ক্যাপাসিটি চার্জ সংক্রান্ত বিষয়',
+    description: 'সরকারি কেন্দ্র, আইপিপি, ক্যাপাসিটি চার্জ ও উৎপাদন ব্যয়',
   },
   'Fossil Fuels & Commodities': {
-    name: 'জীবাশ্ম জ্বালানি ও কমোডিটি',
-    description: 'এলএনজি, প্রাকৃতিক গ্যাস, তেল ও কয়লা',
+    name: 'জ্বালানি ও কমোডিটি বাজার',
+    description: 'এলএনজি, গ্যাস, তেল-গ্যাস ও কয়লা',
   },
   'Renewables & Nuclear': {
     name: 'নবায়নযোগ্য ও পারমাণবিক',
-    description: 'সৌর, বায়ু শক্তি এবং রূপপুর পারমাণবিক প্রকল্প',
+    description: 'সৌর-বায়ু, রূপপুর ও ক্লিন এনার্জি প্রকল্প',
   },
   'Grid & Transmission': {
-    name: 'গ্রিড ও সঞ্চালন',
-    description: 'পিজিসিবি, উচ্চভোল্টেজ লাইন ও হুইলিং চার্জ',
+    name: 'ট্রান্সমিশন ও জাতীয় গ্রিড',
+    description: 'পিজিসিবি, ভিএইচভি লাইন, হুইলিং চার্জ ও গ্রিড স্থিতিশীলতা',
   },
   'Distribution & Utilities': {
-    name: 'বিতরণ ও ইউটিলিটি',
-    description: 'বিআরইবি, ডেসকো, ডিপিডিসি ও শহুরে বিতরণ ব্যবস্থা',
+    name: 'বিতরণ কোম্পানি',
+    description: 'বিআরইবি, ডেসকো, ডিপিডিসি ও শহর-গ্রামের বিতরণ ব্যবস্থা',
   },
   'Consumers & Tariffs': {
-    name: 'ভোক্তা ও ট্যারিফ',
-    description: 'খুচরা মূল্য নির্ধারণ ও জনগণের ওপর প্রভাব',
+    name: 'ভোক্তা ও বিদ্যুৎ দর',
+    description: 'খুচরা দর, গ্রাহক প্রভাব ও বিইআরসির দর সমন্বয়',
   },
   'Market, Finance & Subsidies': {
-    name: 'বাজার, অর্থায়ন ও ভর্তুকি',
-    description: 'বিপিডিবির ঘাটতি, বিপিসির মুনাফা ও সরকারি ভর্তুকির বোঝা',
+    name: 'অর্থ, বাজার ও ভর্তুকি',
+    description: 'বিপিডিবি ঘাটতি, বিপিসি-সরকারি ভর্তুকি ও খাতীয় অর্থায়ন',
   },
   'International & Cross-Border': {
-    name: 'আন্তর্জাতিক ও সীমান্তপার্ণ',
-    description: 'আমদানি বিদ্যুৎ ও বিশ্ব জ্বালানি বাজারের পরিবর্তন',
+    name: 'আমদানি বিদ্যুৎ ও আন্তর্জাতিক বাজার',
+    description: 'ভারত থেকে আমদানি, আঞ্চলিক জ্বালানি বাজার ও সীমান্ত সংযোগ',
   },
   'Environment & Efficiency': {
-    name: 'পরিবেশ ও দক্ষতা',
-    description: 'কার্বন নিঃসরণ, শক্তি দক্ষতা ও পরিবেশগত প্রভাব',
+    name: 'পরিবেশ ও শক্তি সাশ্রয়',
+    description: 'কার্বন নিঃসরণ, দক্ষতা ও পরিবেশগত প্রভাব বিশ্লেষণ',
   },
 };
 

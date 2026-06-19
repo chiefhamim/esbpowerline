@@ -6,6 +6,7 @@ import { EnergyDashboard } from '@/components/news/EnergyDashboard';
 import { SectorCoverage } from '@/components/news/SectorCoverage';
 import { normalizeInterviews } from '@/lib/interview-content';
 import { useLocale } from '@/components/shared/LocaleProvider';
+import { localizeSnapshotLabel } from '@/lib/i18n/homepage-copy';
 import type { PublicArticleCard, PublicCategory } from '@/lib/category-types';
 import type { ResolvedCoverageSlot } from '@/lib/coverage-types';
 
@@ -28,7 +29,8 @@ export function HomeDeferredSections({
   coverageSlots,
   pinnedArticles,
 }: HomeDeferredSectionsProps) {
-  const { t } = useLocale();
+  const { locale, t } = useLocale();
+  const localizedSnapshotLabel = localizeSnapshotLabel(snapshotLabel, locale);
 
   return (
     <>
@@ -41,7 +43,7 @@ export function HomeDeferredSections({
             <h2 className="text-2xl md:text-3xl font-display font-bold tracking-tight">{t('home.systemSnapshot')}</h2>
           </div>
           <span className="text-[10px] text-muted-foreground uppercase tracking-widest font-semibold">
-            {snapshotLabel}
+            {localizedSnapshotLabel}
           </span>
         </div>
         <EnergyDashboard initialStats={snapshotStats as never} />

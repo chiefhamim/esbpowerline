@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
-import dynamic from 'next/dynamic';
+
 import { Search, Menu, X, Newspaper, BookOpen, BarChart3, Home } from 'lucide-react';
 import { useMemo, useState, type CSSProperties, type ReactNode } from 'react';
 import { usePathname } from 'next/navigation';
@@ -20,10 +20,7 @@ import {
 import { CategoryIconDisplay } from '@/components/category/CategoryIconDisplay';
 import type { TickerItem } from '@/components/news/LiveMarketTicker';
 
-const LiveMarketTicker = dynamic(
-  () => import('@/components/news/LiveMarketTicker').then((mod) => mod.LiveMarketTicker),
-  { ssr: false },
-);
+import { PublicMarketStrip } from '@/components/news/PublicMarketStrip';
 import { MemberAuthButton } from '@/components/members/MemberAuthButton';
 import { MemberNavMenuLinks } from '@/components/members/MemberNavMenuLinks';
 import { LocaleToggle } from '@/components/shared/LocaleToggle';
@@ -120,6 +117,8 @@ export function PublicNavbar({
         </div>
       </div>
 
+      <PublicMarketStrip energyItems={tickerItems} />
+
       <nav className="public-nav-bar sticky top-0 z-50 mb-2">
         <div className="container flex h-14 items-center justify-between">
           <div className="flex md:w-1/4 justify-start">
@@ -197,11 +196,7 @@ export function PublicNavbar({
           </div>
         </div>
 
-        {pathname !== '/' && (
-          <LiveMarketTicker initialItems={tickerItems} variant="chrome" />
-        )}
-
-        <div className={`public-nav-bar__categories hidden md:block container pb-0 ${pathname !== '/' ? 'pt-1' : 'pt-2'}`}>
+        <div className={`public-nav-bar__categories hidden md:block container pb-0 pt-2`}>
           <div
             className="category-nav-ribbon grid divide-x divide-border/40"
             style={{ gridTemplateColumns: `repeat(${navCategories.length}, minmax(0, 1fr))` }}
@@ -234,14 +229,14 @@ export function PublicNavbar({
                     className={`h-3.5 w-3.5 mb-1 transition-transform duration-200 group-hover:scale-110 ${colors.useCustom ? 'category-nav--custom' : colors.text}`}
                     style={colors.useCustom ? categoryTextStyle(c.color) : undefined}
                   />
-                  <span className="text-[10px] tracking-tight leading-snug font-sans">{c.name}</span>
+                  <span className="text-[11px] md:text-xs tracking-tight leading-snug font-sans">{c.name}</span>
                 </PublicNavLink>
               );
             })}
           </div>
         </div>
 
-        <div className={`public-nav-bar__categories md:hidden container pb-0 ${pathname !== '/' ? 'pt-0.5' : 'pt-1.5'}`}>
+        <div className="public-nav-bar__categories md:hidden container pb-0 pt-1.5">
           <div className="category-nav-ribbon category-nav-ribbon--mobile relative">
             <div className="public-nav-bar__mobile-fade-l absolute left-0 top-0 bottom-0 w-8 pointer-events-none z-10" />
             <div className="public-nav-bar__mobile-fade-r absolute right-0 top-0 bottom-0 w-8 pointer-events-none z-10" />

@@ -6,6 +6,7 @@ import { ArrowRight, BookOpen, Briefcase, TrendingUp } from 'lucide-react';
 import { MemberAccessCta } from '@/components/members/MemberAccessCta';
 import { useLocale } from '@/components/shared/LocaleProvider';
 import { localizeCategoryName } from '@/lib/i18n/categories';
+import { localizeProfessionalsCta } from '@/lib/i18n/homepage-copy';
 import type { PublicArticleCard } from '@/lib/category-types';
 
 type HomeBottomRowProps = {
@@ -33,6 +34,7 @@ export function HomeBottomRow({
   professionalsCta,
 }: HomeBottomRowProps) {
   const { locale, t } = useLocale();
+  const cta = localizeProfessionalsCta(professionalsCta, locale);
 
   return (
     <div className="container py-8">
@@ -109,17 +111,17 @@ export function HomeBottomRow({
             <div>
               <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-[2px] text-muted-foreground font-bold mb-3">
                 <Briefcase className="h-4 w-4 text-primary" />
-                {professionalsCta.label}
+                {cta.label}
               </div>
-              <div className="text-lg font-display font-semibold leading-snug mb-2">{professionalsCta.title}</div>
+              <div className="text-lg font-display font-semibold leading-snug mb-2">{cta.title}</div>
             </div>
             <div className="flex flex-col gap-2 mt-6">
-              <Link href={professionalsCta.primaryHref} className="btn btn-secondary w-full justify-center text-sm">
-                {professionalsCta.primaryLabel}
+              <Link href={cta.primaryHref} className="btn btn-secondary w-full justify-center text-sm">
+                {cta.primaryLabel}
               </Link>
               <MemberAccessCta
-                guestLabel={professionalsCta.secondaryLabel}
-                guestHref={professionalsCta.secondaryHref}
+                guestLabel={cta.secondaryLabel}
+                guestHref={cta.secondaryHref}
               />
             </div>
           </div>

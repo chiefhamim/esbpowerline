@@ -72,7 +72,7 @@ export default async function ArticlesPage({ searchParams }: ArticlesPageProps) 
           href={sort === 'views' ? '/articles?sort=views' : '/articles'}
           className={`category-pill ${!categoryParam ? 'active' : ''}`}
         >
-          {t('articles.allCategories')}
+          {t('common.all')}
         </Link>
         {categories.map((cat) => {
           const isActive = categoryParam === cat.slug;

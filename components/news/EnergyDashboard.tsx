@@ -4,6 +4,8 @@ import { useEffect, useState } from 'react';
 import { formatNumber } from '@/lib/utils';
 import { Zap, Activity, Leaf, Gauge, Flame, Cable, Sun, TrendingUp } from 'lucide-react';
 import { isSimulatedTelemetryEnabled } from '@/lib/telemetry-mode';
+import { useLocale } from '@/components/shared/LocaleProvider';
+import { localizeEnergyStatLabel } from '@/lib/i18n/homepage-copy';
 
 const IconMap: Record<string, any> = {
   Zap,
@@ -46,6 +48,7 @@ const initial: Stat[] = [
 ];
 
 export function EnergyDashboard({ initialStats }: { initialStats?: any[] }) {
+  const { locale, t } = useLocale();
   const [stats, setStats] = useState<Stat[]>(() => {
     const raw = initialStats || initial;
     return raw.map(s => {
@@ -86,7 +89,7 @@ export function EnergyDashboard({ initialStats }: { initialStats?: any[] }) {
             {/* Live SCADA Radar Ping */}
             <span
               className="absolute top-2.5 right-2.5 flex h-1.5 w-1.5"
-              title={simulateLive ? 'Simulated telemetry (dev)' : 'Indicative snapshot'}
+              title={simulateLive ? t('energy.simulated') : t('energy.indicative')}
             >
               {simulateLive ? (
                 <>
@@ -98,8 +101,8 @@ export function EnergyDashboard({ initialStats }: { initialStats?: any[] }) {
               )}
             </span>
             <Icon className={`h-6 w-6 mb-2 shrink-0 ${s.iconClass ?? 'text-primary'}`} />
-            <div className="text-[11px] font-medium tracking-wide text-muted-foreground mb-1">
-              {s.label}
+            <div className="text-xs md:text-sm font-medium tracking-wide text-muted-foreground mb-1">
+              {localizeEnergyStatLabel(s.label, locale)}
             </div>
             <div className="stat-value tabular-nums leading-none">
               {s.isDecimal ? s.value.toFixed(1) : formatNumber(Math.round(s.value))}

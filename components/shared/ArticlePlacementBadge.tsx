@@ -1,11 +1,21 @@
+'use client';
+
 import { Flame, Pin, Star, type LucideIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { PLACEMENT_FLAGS, type PlacementFlagId } from '@/lib/article-placement';
+import { useLocale } from '@/components/shared/LocaleProvider';
+import type { MessageKey } from '@/lib/i18n/messages';
 
 const PLACEMENT_ICONS: Record<PlacementFlagId, LucideIcon> = {
   featured: Star,
   breaking: Flame,
   pin: Pin,
+};
+
+const PLACEMENT_MESSAGE_KEYS: Record<PlacementFlagId, MessageKey> = {
+  featured: 'placement.featured',
+  breaking: 'placement.breaking',
+  pin: 'placement.pinned',
 };
 
 export function ArticlePlacementBadge({
@@ -15,9 +25,9 @@ export function ArticlePlacementBadge({
 }: {
   type: PlacementFlagId;
   className?: string;
-  /** Smaller badge for dense listings */
   compact?: boolean;
 }) {
+  const { t } = useLocale();
   const config = PLACEMENT_FLAGS[type];
   const Icon = PLACEMENT_ICONS[type];
 
@@ -36,7 +46,7 @@ export function ArticlePlacementBadge({
         strokeWidth={compact ? 2 : 2.25}
         aria-hidden
       />
-      <span>{config.shortLabel}</span>
+      <span>{t(PLACEMENT_MESSAGE_KEYS[type])}</span>
     </span>
   );
 }

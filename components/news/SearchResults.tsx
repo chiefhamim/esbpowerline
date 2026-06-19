@@ -3,8 +3,10 @@
 import { useState } from 'react';
 import { ArticleCard } from '@/components/news/ArticleCard';
 import type { PublicArticleCard } from '@/lib/category-types';
+import { useLocale } from '@/components/shared/LocaleProvider';
 
 export function SearchResults({ articles }: { articles: PublicArticleCard[] }) {
+  const { t } = useLocale();
   const [q, setQ] = useState('');
 
   const results = !q.trim()
@@ -23,13 +25,15 @@ export function SearchResults({ articles }: { articles: PublicArticleCard[] }) {
       <input
         value={q}
         onChange={(e) => setQ(e.target.value)}
-        placeholder="Search power sector news..."
+        placeholder={t('search.placeholder')}
         className="mt-2 w-full max-w-lg bg-card border border-border rounded-xl px-4 py-3 text-lg focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"
         autoFocus
       />
 
       <div className="mt-8 text-sm text-muted-foreground mb-3">
-        {q ? `${results.length} result${results.length === 1 ? '' : 's'} for “${q}”` : `${articles.length} published articles`}
+        {q
+          ? t('search.resultsFor', { count: results.length, query: q })
+          : t('search.publishedCount', { count: articles.length })}
       </div>
 
       <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -49,8 +53,8 @@ export function SearchResults({ articles }: { articles: PublicArticleCard[] }) {
         ))}
       </div>
 
-      {results.length === 0 && q && (
-        <p className="text-muted-foreground mt-6">No matches. Try “solar”, “tariff”, or “grid”.</p>
+      {q && results.length === 0 && (
+        <p className="text-muted-foreground mt-8 text-center">{t('search.noResults')}</p>
       )}
     </>
   );

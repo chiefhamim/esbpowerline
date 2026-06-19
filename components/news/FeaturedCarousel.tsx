@@ -5,7 +5,9 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { ArrowRight, ChevronLeft, ChevronRight, Play, Pause } from 'lucide-react';
 import { ArticlePlacementBadge } from '@/components/shared/ArticlePlacementBadge';
-import { LiveMarketTicker, type TickerItem } from '@/components/news/LiveMarketTicker';
+import type { TickerItem } from '@/components/news/LiveMarketTicker';
+import { CategoryLabel } from '@/components/i18n/CategoryLabel';
+import { useLocale } from '@/components/shared/LocaleProvider';
 import { ModernTooltip } from '@/components/shared/ModernTooltip';
 import { NoImage } from '@/components/shared/NoImage';
 import { hasArticleImage } from '@/lib/article-image';
@@ -30,6 +32,7 @@ export function FeaturedCarousel({
   items?: FeaturedItem[];
   tickerItems?: TickerItem[];
 }) {
+  const { t } = useLocale();
   const featured: FeaturedItem[] = items ?? [];
 
   const [current, setCurrent] = useState(0);
@@ -91,14 +94,12 @@ export function FeaturedCarousel({
       <section className="featured-hero-section w-full py-4">
         <div className="container">
           <div className="featured-hero-card relative overflow-hidden rounded-2xl border border-border/40 p-12 text-center text-muted-foreground bg-muted/10">
-            No featured stories currently available.
+            {t('carousel.noFeatured')}
           </div>
         </div>
       </section>
     );
   }
-
-  const hasTicker = tickerItems && tickerItems.length > 0;
 
   const storyProgress = (
     <div className="flex min-w-0 flex-1 items-center gap-1" role="tablist" aria-label="Featured stories">
@@ -151,12 +152,6 @@ export function FeaturedCarousel({
           aria-roledescription="carousel"
           aria-label="Featured stories"
         >
-          {hasTicker && (
-            <div className="featured-hero__ticker border-b border-border/25 px-4 py-2 md:px-6">
-              <LiveMarketTicker variant="embedded" compact initialItems={tickerItems} playing={isPlaying} />
-            </div>
-          )}
-
           <div className="featured-hero__body relative px-6 py-10 md:px-12 md:py-14">
             <div
               className={`grid gap-x-8 gap-y-5 md:grid-cols-12 md:items-start transition-opacity duration-300 ease-out ${
@@ -170,7 +165,7 @@ export function FeaturedCarousel({
                     className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-wider transition-colors duration-300 ${getCategoryBadgeClasses(currentItem.category)}`}
                   >
                     <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-current opacity-75" />
-                    {currentItem.category}
+                    <CategoryLabel name={currentItem.category} />
                   </div>
                   {currentItem.isFeatured ? <ArticlePlacementBadge type="featured" /> : null}
                   {currentItem.isBreaking ? <ArticlePlacementBadge type="breaking" /> : null}
@@ -182,7 +177,7 @@ export function FeaturedCarousel({
                       <button
                         onClick={prev}
                         className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground"
-                        aria-label="Previous story"
+                        aria-label={t('carousel.previous')}
                       >
                         <ChevronLeft className="h-3.5 w-3.5" />
                       </button>
@@ -190,7 +185,7 @@ export function FeaturedCarousel({
                       <button
                         onClick={next}
                         className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground"
-                        aria-label="Next story"
+                        aria-label={t('carousel.next')}
                       >
                         <ChevronRight className="h-3.5 w-3.5" />
                       </button>
@@ -201,15 +196,15 @@ export function FeaturedCarousel({
                   </div>
 
                   <ModernTooltip
-                    label={isPlaying ? 'Pause' : 'Play'}
-                    hint="Stories & markets"
+                    label={isPlaying ? t('carousel.pause') : t('carousel.play')}
+                    hint={t('carousel.storiesMarkets')}
                     side="top"
                     fast
                   >
                     <button
                       onClick={() => setIsPlaying(!isPlaying)}
                       className="relative z-10 flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-muted-foreground opacity-45 transition-all duration-150 hover:bg-muted/50 hover:text-foreground hover:opacity-100 focus-visible:opacity-100"
-                      aria-label={isPlaying ? 'Pause stories and markets' : 'Resume stories and markets'}
+                      aria-label={isPlaying ? t('carousel.pause') : t('carousel.play')}
                     >
                       {isPlaying ? <Pause className="h-3 w-3" /> : <Play className="h-3 w-3" />}
                     </button>
@@ -262,15 +257,15 @@ export function FeaturedCarousel({
 
                 <div className="flex flex-wrap items-center gap-3">
                   <Link href={`/articles/${currentItem.slug}`} className="btn btn-primary gap-2 px-7 py-3 text-[15px]">
-                    Read full story <ArrowRight className="h-4 w-4" />
+                    {t('carousel.readStory')} <ArrowRight className="h-4 w-4" />
                   </Link>
                   <Link href="/articles" className="btn btn-secondary gap-2 px-6 py-3 text-[15px]">
-                    Browse all news
+                    {t('carousel.browseAll')}
                   </Link>
                 </div>
 
                 <div className="mt-6 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                  By <span className="text-foreground">{currentItem.author}</span> • {currentItem.readTime} min read
+                  {t('carousel.byAuthor', { author: currentItem.author })} • {t('carousel.minRead', { minutes: currentItem.readTime })}
                 </div>
               </div>
             </div>

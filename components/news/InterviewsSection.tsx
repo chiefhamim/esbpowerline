@@ -11,8 +11,10 @@ import {
   type Interview,
 } from '@/lib/interview-content';
 import { ESB_YOUTUBE_CHANNEL_URL } from '@/lib/youtube-channel';
+import { useLocale } from '@/components/shared/LocaleProvider';
 
 export function InterviewsSection({ initialInterviews }: { initialInterviews?: Interview[] | unknown }) {
+  const { t } = useLocale();
   const [selected, setSelected] = useState<Interview | null>(null);
   const [mounted, setMounted] = useState(false);
   const interviewsList = useMemo(
@@ -68,7 +70,7 @@ export function InterviewsSection({ initialInterviews }: { initialInterviews?: I
             type="button"
             onClick={() => setSelected(null)}
             className="p-2 text-muted-foreground hover:text-foreground shrink-0"
-            aria-label="Close interview player"
+            aria-label={t('interviews.close')}
           >
             <X className="h-5 w-5" />
           </button>
@@ -86,13 +88,13 @@ export function InterviewsSection({ initialInterviews }: { initialInterviews?: I
             />
           ) : (
             <div className="flex h-full items-center justify-center px-6 text-center text-sm text-muted-foreground">
-              This interview does not have a valid YouTube video ID yet. Add one in Admin → Settings → Interviews.
+              {t('interviews.noVideo')}
             </div>
           )}
         </div>
 
         <div className="p-5 text-sm text-muted-foreground">
-          {selected.excerpt} — Watch the full conversation on our YouTube channel.
+          {selected.excerpt} — {t('interviews.watchFull')}
         </div>
       </div>
     </div>
@@ -103,11 +105,11 @@ export function InterviewsSection({ initialInterviews }: { initialInterviews?: I
       <div className="flex items-center justify-between mb-6">
         <div>
           <div className="uppercase tracking-[2.5px] text-[10px] text-emerald-500 dark:text-emerald-400 font-bold mb-1.5">
-            IN CONVERSATION
+            {t('interviews.kicker').toUpperCase()}
           </div>
           <div className="flex items-center gap-2">
             <Users className="h-6 w-6 text-primary" />
-            <h2 className="text-2xl md:text-3xl font-display font-bold tracking-tight">Latest Interviews</h2>
+            <h2 className="text-2xl md:text-3xl font-display font-bold tracking-tight">{t('interviews.title')}</h2>
           </div>
         </div>
         <a
@@ -116,7 +118,7 @@ export function InterviewsSection({ initialInterviews }: { initialInterviews?: I
           rel="noopener noreferrer"
           className="text-sm text-primary flex items-center gap-1 hover:underline font-medium"
         >
-          Watch all on YouTube <span>→</span>
+          {t('interviews.watchAll')} <span>→</span>
         </a>
       </div>
 

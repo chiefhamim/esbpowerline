@@ -1795,9 +1795,41 @@ html[data-site-theme='white'],
   @apply gap-2.5;
 }
 
-/* Bengali locale — Noto Sans Bengali for body copy when BN is active */
+/* Bengali locale — larger, readable type with Noto Sans Bengali */
+html.locale-bn {
+  font-size: 106.25%;
+}
+
 html.locale-bn body {
   font-family: var(--font-bengali), var(--font-sans), ui-sans-serif, system-ui, sans-serif;
+  line-height: 1.65;
+}
+
+html.locale-bn .public-nav-bar {
+  font-size: 1.02rem;
+}
+
+html.locale-bn .category-nav-ribbon span,
+html.locale-bn .category-pill {
+  font-size: 0.8125rem !important;
+}
+
+html.locale-bn .text-xs {
+  font-size: 0.8125rem;
+  line-height: 1.35rem;
+}
+
+html.locale-bn .text-sm {
+  font-size: 0.9375rem;
+  line-height: 1.45rem;
+}
+
+html.locale-bn .text-\[10px\] {
+  font-size: 0.75rem !important;
+}
+
+html.locale-bn .text-\[11px\] {
+  font-size: 0.8125rem !important;
 }
 
 .font-bengali {

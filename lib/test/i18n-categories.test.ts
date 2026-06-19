@@ -19,7 +19,7 @@ describe('category localization', () => {
   });
 
   it('returns Bengali for bn locale', () => {
-    expect(localizeCategoryName('bn', 'Grid & Transmission')).toBe('গ্রিড ও সঞ্চালন');
+    expect(localizeCategoryName('bn', 'Grid & Transmission')).toBe('ট্রান্সমিশন ও জাতীয় গ্রিড');
   });
 
   it('localizes category fields for display', () => {
@@ -28,6 +28,6 @@ describe('category localization', () => {
       description: 'State plants',
     });
     expect(result.name).toBe('বিদ্যুৎ উৎপাদন');
-    expect(result.description).toContain('রাষ্ট্রীয়');
+    expect(result.description).toContain('সরকারি');
   });
 });

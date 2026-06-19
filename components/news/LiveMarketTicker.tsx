@@ -1,9 +1,11 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { TrendingUp, TrendingDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { isSimulatedTelemetryEnabled } from '@/lib/telemetry-mode';
+import { useLocale } from '@/components/shared/LocaleProvider';
+import { localizeTickerItem } from '@/lib/i18n/homepage-copy';
 
 export interface TickerItem {
   id: string;
@@ -14,7 +16,7 @@ export interface TickerItem {
   prefix: string;
 }
 
-const initialItems: TickerItem[] = [
+const defaultItems: TickerItem[] = [
   { id: 'lng', name: 'LNG (Spot)', value: 11.85, unit: '/mmbtu', change: 1.4, prefix: '$' },
   { id: 'coal', name: 'Coal (API2)', value: 102.5, unit: '/t', change: -0.8, prefix: '$' },
   { id: 'fx', name: 'USD/BDT', value: 117.65, unit: '', change: 0.12, prefix: '৳' },
@@ -36,10 +38,21 @@ export function LiveMarketTicker({
   compact?: boolean;
   className?: string;
 }) {
-  const [items, setItems] = useState<TickerItem[]>(propItems || initialItems);
+  const { locale, t } = useLocale();
+  const sourceItems = propItems?.length ? propItems : defaultItems;
+  const localizedSeed = useMemo(
+    () => sourceItems.map((item) => localizeTickerItem(item, locale)),
+    [sourceItems, locale],
+  );
+
+  const [items, setItems] = useState<TickerItem[]>(localizedSeed);
   const [mounted, setMounted] = useState(false);
 
   const simulateLive = isSimulatedTelemetryEnabled();
+
+  useEffect(() => {
+    setItems(localizedSeed);
+  }, [localizedSeed]);
 
   useEffect(() => {
     setMounted(true);
@@ -55,12 +68,12 @@ export function LiveMarketTicker({
               (item.id === 'fx' || item.id === 'tariff' ? 0.15 : item.value > 50 ? 1.2 : 0.008);
             const newVal = Math.max(0.01, parseFloat((item.value + delta).toFixed(item.value > 100 ? 1 : 2)));
             const newChange = parseFloat(
-              (((newVal - item.value) / item.value) * 100 * (item.id === 'fx' ? 5 : 1)).toFixed(1)
+              (((newVal - item.value) / item.value) * 100 * (item.id === 'fx' ? 5 : 1)).toFixed(1),
             );
             return { ...item, value: newVal, change: newChange };
           }
           return item;
-        })
+        }),
       );
     }, 25000);
 
@@ -68,36 +81,41 @@ export function LiveMarketTicker({
   }, [simulateLive]);
 
   if (!mounted) {
-    return (
-      <div
-        className={compact ? 'h-7' : 'h-8'}
-        aria-hidden
-      />
-    );
+    return <div className={compact ? 'h-8' : 'h-9'} aria-hidden />;
   }
+
+  const textSize = compact ? 'text-[12px] md:text-[13px]' : 'text-[13px] md:text-sm';
+  const badgeSize = compact ? 'text-[10px] md:text-[11px]' : 'text-[11px] md:text-xs';
+  const labelSize = compact ? 'text-[10px] md:text-[11px]' : 'text-[11px] md:text-xs';
 
   const track = (
     <div
-      className={`flex w-max items-center whitespace-nowrap ${compact ? 'gap-6' : 'gap-8'} animate-[marquee_32s_linear_infinite]`}
+      className={cn('flex w-max items-center whitespace-nowrap gap-7 md:gap-8 animate-[marquee_32s_linear_infinite]', textSize)}
       style={{ animationPlayState: playing ? 'running' : 'paused' }}
     >
       {[...items, ...items].map((item, idx) => {
         const isPositive = item.change >= 0;
         const ChangeIcon = isPositive ? TrendingUp : TrendingDown;
         return (
-          <div key={`${item.id}-${idx}`} className="flex shrink-0 items-center gap-1.5 text-muted-foreground">
-            <span className={`font-medium text-foreground/90 ${compact ? 'text-[10px]' : ''}`}>{item.name}</span>
-            <span className={`font-mono tabular-nums text-foreground ${compact ? 'text-[10px]' : ''}`}>
+          <div key={`${item.id}-${idx}`} className="flex shrink-0 items-center gap-2 text-muted-foreground">
+            <span className={cn('font-medium text-foreground/90', textSize)}>{item.name}</span>
+            <span className={cn('font-mono tabular-nums text-foreground', textSize)}>
               {item.prefix}
-              {item.value.toLocaleString()}
+              {item.value.toLocaleString(locale === 'bn' ? 'bn-BD' : 'en-US')}
               {item.unit && <span className="ml-0.5 text-muted-foreground/80">{item.unit}</span>}
             </span>
             <span
-              className={`inline-flex items-center gap-0.5 rounded px-1 py-px font-semibold ${compact ? 'text-[9px]' : 'text-[10px]'} ${isPositive ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400' : 'bg-rose-500/10 text-rose-600 dark:text-rose-400'}`}
+              className={cn(
+                'inline-flex items-center gap-0.5 rounded px-1.5 py-0.5 font-semibold',
+                badgeSize,
+                isPositive
+                  ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
+                  : 'bg-rose-500/10 text-rose-600 dark:text-rose-400',
+              )}
             >
               {isPositive ? '+' : ''}
               {item.change}%
-              <ChangeIcon className={compact ? 'h-2.5 w-2.5' : 'h-3 w-3'} />
+              <ChangeIcon className="h-3 w-3" />
             </span>
           </div>
         );
@@ -106,7 +124,7 @@ export function LiveMarketTicker({
   );
 
   const label = (
-    <div className={`flex shrink-0 items-center gap-1.5 text-muted-foreground ${compact ? 'pr-2.5' : 'border-r border-border/60 pr-3'}`}>
+    <div className={cn('flex shrink-0 items-center gap-1.5 text-muted-foreground', compact ? 'pr-2.5' : 'border-r border-border/60 pr-3')}>
       <span
         className={cn(
           'h-1.5 w-1.5 shrink-0 rounded-full',
@@ -114,16 +132,18 @@ export function LiveMarketTicker({
         )}
         aria-hidden
       />
-      <span className={`font-semibold uppercase tracking-[0.12em] ${compact ? 'text-[9px]' : 'text-[10px]'}`}>
-        {simulateLive ? 'Markets' : 'Indicative'}
+      <span className={cn('font-semibold uppercase tracking-[0.1em]', labelSize)}>
+        {simulateLive ? t('ticker.energyMarkets') : t('ticker.indicative')}
       </span>
     </div>
   );
 
   const marqueeRow = (
-    <div className={`flex items-center ${compact ? 'h-7 text-[10px]' : 'h-8 text-[11px]'}`}>
+    <div className={cn('flex items-center', compact ? 'h-8 md:h-9' : 'h-9 md:h-10', textSize)}>
       {label}
-      <div className={`relative min-w-0 flex-1 overflow-hidden mask-fade ${compact ? 'ml-2' : 'ml-3'}`}>{track}</div>
+      <div className={cn('relative min-w-0 flex-1 overflow-hidden mask-fade', compact ? 'ml-2' : 'ml-3')}>
+        {track}
+      </div>
     </div>
   );
 
