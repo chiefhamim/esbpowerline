@@ -10,7 +10,7 @@ import {
   syncSupabaseAuthUserMetadata,
   syncSupabaseAuthUserStatus,
 } from '@/lib/supabase/sync-auth-user';
-import type { Role } from '@/lib/constants';
+import { ADMIN_ASSIGNABLE_ROLES, type Role } from '@/lib/constants';
 import { userSchema, type UserInput } from '@/lib/validations/user';
 
 async function requireAdmin() {
@@ -19,7 +19,7 @@ async function requireAdmin() {
   return session.user;
 }
 
-export type UserListFilter = 'all' | 'members' | 'staff';
+export type UserListFilter = 'all' | 'admin' | 'editor' | 'members';
 
 export type UserMemberActivity = {
   savedItems: { id: string; itemType: string; label: string; createdAt: Date }[];
@@ -45,9 +45,11 @@ export async function getUsers(filter: UserListFilter = 'all') {
   const where =
     filter === 'members'
       ? { role: 'SUBSCRIBER' as const }
-      : filter === 'staff'
-        ? { role: { in: [...STAFF_ROLES] } }
-        : {};
+      : filter === 'admin'
+        ? { role: 'ADMIN' as const }
+        : filter === 'editor'
+          ? { role: 'EDITOR' as const }
+          : {};
 
   const users = await prisma.user.findMany({
     where,
@@ -154,11 +156,10 @@ export async function getUser(id: string) {
   });
 }
 
-const PRIVILEGED_ROLES: Role[] = ['SUPER_ADMIN', 'ADMIN'];
-
-function assertRoleAssignment(actorRole: Role, targetRole: Role) {
-  if (PRIVILEGED_ROLES.includes(targetRole) && actorRole !== 'SUPER_ADMIN') {
-    throw new Error('Only the master admin can assign admin-level roles');
+function assertRoleAssignment(_actorRole: Role, targetRole: Role, existingRole?: Role) {
+  if (existingRole && existingRole === targetRole) return;
+  if (!ADMIN_ASSIGNABLE_ROLES.includes(targetRole as (typeof ADMIN_ASSIGNABLE_ROLES)[number])) {
+    throw new Error('Only Admin, Editor, and Member roles can be assigned');
   }
 }
 
@@ -247,7 +248,7 @@ export async function updateUser(id: string, data: Partial<UserInput>) {
     if (!can(admin.role, 'user.change_role')) {
       throw new Error('Cannot change role');
     }
-    assertRoleAssignment(admin.role as Role, parsed.role as Role);
+    assertRoleAssignment(admin.role as Role, parsed.role as Role, existing.role as Role);
   }
 
   const user = await prisma.user.update({ where: { id }, data: updateData as any });

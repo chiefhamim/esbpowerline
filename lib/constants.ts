@@ -15,6 +15,21 @@ export const ROLES = {
 
 export type Role = keyof typeof ROLES;
 
+/** Roles an admin may assign when creating or editing users */
+export const ADMIN_ASSIGNABLE_ROLES = ['ADMIN', 'EDITOR', 'SUBSCRIBER'] as const satisfies readonly Role[];
+
+export type AdminAssignableRole = (typeof ADMIN_ASSIGNABLE_ROLES)[number];
+
+/** Display labels for user-management UI (Member = public-site subscriber) */
+export const USER_ROLE_LABELS: Record<Role, string> = {
+  SUPER_ADMIN: 'Super Admin',
+  ADMIN: 'Admin',
+  EDITOR: 'Editor',
+  AUTHOR: 'Author',
+  CONTRIBUTOR: 'Contributor',
+  SUBSCRIBER: 'Member',
+};
+
 export const PERMISSIONS: Record<string, number> = {
   // Article permissions
   'article.create':       10,
@@ -46,7 +61,7 @@ export const PERMISSIONS: Record<string, number> = {
   'user.create':          80,
   'user.edit':            80,
   'user.delete':          100,
-  'user.change_role':     100,
+  'user.change_role':     80,
 
   // Settings / Admin
   'settings.view':        80,

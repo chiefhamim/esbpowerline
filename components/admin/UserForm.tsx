@@ -1,16 +1,60 @@
 'use client';
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
+import { Shield, UserCog } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { createUser, updateUser } from '@/lib/actions/users';
-import type { Role } from '@/lib/constants';
+import {
+  ADMIN_ASSIGNABLE_ROLES,
+  ROLES,
+  USER_ROLE_LABELS,
+  type Role,
+} from '@/lib/constants';
+import { AdminFormSelect } from '@/components/admin/AdminFormSelect';
+import type { AdminSelectOption } from '@/components/admin/AdminSelectMenu';
 import { AdminFormCard } from './AdminUI';
+
+const STATUS_OPTIONS: AdminSelectOption[] = [
+  { value: 'ACTIVE', label: 'Active', dot: 'hsl(160 84% 39%)', description: 'Full access per role' },
+  { value: 'SUSPENDED', label: 'Suspended', dot: 'hsl(0 72% 51%)', description: 'Sign-in blocked' },
+  { value: 'PENDING', label: 'Pending', dot: 'hsl(38 92% 50%)', description: 'Awaiting activation' },
+];
+
+const ROLE_OPTION_ORDER: Role[] = [
+  'ADMIN',
+  'EDITOR',
+  'SUBSCRIBER',
+  'SUPER_ADMIN',
+  'AUTHOR',
+  'CONTRIBUTOR',
+];
+
+function buildRoleOptions(currentRole?: Role): AdminSelectOption[] {
+  return ROLE_OPTION_ORDER.map((roleKey) => {
+    const assignable = ADMIN_ASSIGNABLE_ROLES.includes(roleKey as (typeof ADMIN_ASSIGNABLE_ROLES)[number]);
+    const isCurrentLegacy = !assignable && currentRole === roleKey;
+    return {
+      value: roleKey,
+      label: USER_ROLE_LABELS[roleKey],
+      dot: ROLES[roleKey].color,
+      description: assignable
+        ? roleKey === 'ADMIN'
+          ? 'Platform admin panel access'
+          : roleKey === 'EDITOR'
+            ? 'CMS workspace and publishing'
+            : 'Public member account'
+        : isCurrentLegacy
+          ? 'Current role · change to Admin, Editor, or Member'
+          : 'System role · not assignable',
+      disabled: !assignable && !isCurrentLegacy,
+    };
+  });
+}
 
 interface UserFormProps {
   mode: 'create' | 'edit';
@@ -30,9 +74,18 @@ export function UserForm({ mode, user }: UserFormProps) {
   const [name, setName] = useState(user?.name ?? '');
   const [email, setEmail] = useState(user?.email ?? '');
   const [password, setPassword] = useState('');
-  const [role, setRole] = useState<Role>(user?.role ?? (mode === 'create' ? 'EDITOR' : 'AUTHOR'));
-  const [status, setStatus] = useState<'ACTIVE' | 'SUSPENDED' | 'PENDING'>((user?.status as 'ACTIVE' | 'SUSPENDED' | 'PENDING') ?? 'ACTIVE');
+  const [role, setRole] = useState<Role>(user?.role ?? 'EDITOR');
+  const [status, setStatus] = useState<'ACTIVE' | 'SUSPENDED' | 'PENDING'>(
+    (user?.status as 'ACTIVE' | 'SUSPENDED' | 'PENDING') ?? 'ACTIVE',
+  );
   const [bio, setBio] = useState(user?.bio ?? '');
+
+  const roleOptions = useMemo(() => buildRoleOptions(user?.role), [user?.role]);
+
+  function handleRoleChange(nextRole: string) {
+    if (!ADMIN_ASSIGNABLE_ROLES.includes(nextRole as (typeof ADMIN_ASSIGNABLE_ROLES)[number])) return;
+    setRole(nextRole as Role);
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -52,7 +105,9 @@ export function UserForm({ mode, user }: UserFormProps) {
         toast.success(
           role === 'EDITOR'
             ? 'Editor created — they can sign in at Staff login with this email and password'
-            : 'User created',
+            : role === 'ADMIN'
+              ? 'Admin created — they can sign in at Staff login with this email and password'
+              : 'Member created',
         );
         router.push('/admin/users');
       } else if (user) {
@@ -96,22 +151,25 @@ export function UserForm({ mode, user }: UserFormProps) {
         </div>
         <div className="space-y-1.5">
           <Label>Role</Label>
-          <Select value={role} onChange={(e) => setRole(e.target.value as Role)}>
-            <option value="SUPER_ADMIN">Super Admin</option>
-            <option value="ADMIN">Admin</option>
-            <option value="EDITOR">Editor</option>
-            <option value="AUTHOR">Author</option>
-            <option value="CONTRIBUTOR">Contributor</option>
-            <option value="SUBSCRIBER">Subscriber</option>
-          </Select>
+          <AdminFormSelect
+            value={role}
+            onChange={handleRoleChange}
+            options={roleOptions}
+            icon={UserCog}
+            placeholder="Select role"
+            menuTitle="Assign role"
+          />
         </div>
         <div className="space-y-1.5">
           <Label>Status</Label>
-          <Select value={status} onChange={(e) => setStatus(e.target.value as 'ACTIVE' | 'SUSPENDED' | 'PENDING')}>
-            <option value="ACTIVE">Active</option>
-            <option value="SUSPENDED">Suspended</option>
-            <option value="PENDING">Pending</option>
-          </Select>
+          <AdminFormSelect
+            value={status}
+            onChange={(value) => setStatus(value as 'ACTIVE' | 'SUSPENDED' | 'PENDING')}
+            options={STATUS_OPTIONS}
+            icon={Shield}
+            placeholder="Select status"
+            menuTitle="Account status"
+          />
         </div>
         <div className="space-y-1.5">
           <Label>Bio</Label>

@@ -16,8 +16,9 @@ type PageProps = {
 
 const FILTERS: { id: UserListFilter; label: string }[] = [
   { id: 'all', label: 'All users' },
+  { id: 'admin', label: 'Admin' },
+  { id: 'editor', label: 'Editor' },
   { id: 'members', label: 'Members' },
-  { id: 'staff', label: 'Staff' },
 ];
 
 export default async function AdminUsersPage({ searchParams }: PageProps) {
@@ -31,7 +32,7 @@ export default async function AdminUsersPage({ searchParams }: PageProps) {
       <AdminPageHeader
         icon={Users}
         title="User Management"
-        description="Manage members, editorial staff, and platform access."
+        description="Manage admins, editors, members, and platform access."
       >
         {canCreate && (
           <Link href="/admin/users/new">

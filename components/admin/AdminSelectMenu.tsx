@@ -27,6 +27,8 @@ export type AdminSelectOption = {
   accent?: string;
   /** Subtle highlight (e.g. current year in date pickers) */
   marked?: boolean;
+  /** Non-interactive option (e.g. legacy roles) */
+  disabled?: boolean;
 };
 
 const STATUS_DOTS: Record<string, string> = {
@@ -154,8 +156,11 @@ export function AdminSelectMenu({
                 type="button"
                 role="menuitemradio"
                 aria-checked={active}
+                aria-disabled={opt.disabled || undefined}
+                disabled={opt.disabled}
                 title={isGrid ? (opt.description ?? opt.label) : undefined}
                 onClick={() => {
+                  if (opt.disabled) return;
                   onChange(opt.value);
                   close();
                 }}
@@ -164,6 +169,7 @@ export function AdminSelectMenu({
                   isGrid && 'admin-select-option--grid',
                   optionClassName,
                   opt.marked && 'admin-select-option--marked',
+                  opt.disabled && 'admin-select-option--disabled',
                   active && 'admin-select-option--active',
                 )}
                 style={

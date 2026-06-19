@@ -6587,6 +6587,39 @@ html.theme-white {
   gap: var(--shell-gap);
 }
 
+.admin-form-select {
+  width: 100%;
+  position: relative;
+}
+
+.admin-form-select > .relative {
+  width: 100%;
+  min-width: 0 !important;
+}
+
+.admin-form-select .admin-dropdown-trigger {
+  width: 100%;
+  justify-content: flex-start;
+  min-height: 2.5rem;
+  padding: 0 0.75rem;
+  font-size: 13px;
+  font-weight: 500;
+  background: hsl(var(--card) / 0.55) !important;
+  border-color: hsl(var(--border) / 0.55) !important;
+}
+
+.admin-form-select .admin-dropdown-trigger:hover,
+.admin-form-select .admin-dropdown-trigger--open {
+  background: hsl(var(--muted) / 0.4) !important;
+  color: hsl(var(--foreground)) !important;
+  border-color: hsl(var(--admin-rose) / 0.35) !important;
+  box-shadow: 0 0 0 1px hsl(var(--admin-rose) / 0.08) !important;
+}
+
+.admin-form-select .admin-select-menu--portal {
+  min-width: 14rem;
+}
+
 .admin-chip-grid {
   display: flex;
   flex-wrap: wrap;
@@ -8861,6 +8894,18 @@ html.theme-white {
 .admin-select-option--active {
   background: hsl(var(--admin-rose) / 0.1);
   color: hsl(var(--foreground));
+}
+
+.admin-select-option--disabled,
+.admin-select-option--disabled:hover {
+  opacity: 0.42;
+  cursor: not-allowed;
+  background: transparent;
+  color: hsl(var(--muted-foreground) / 0.75);
+}
+
+.admin-select-option--disabled .admin-select-option-desc {
+  opacity: 0.85;
 }
 
 .admin-select-option-body {
