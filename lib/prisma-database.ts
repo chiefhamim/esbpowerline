@@ -1,7 +1,16 @@
 import path from 'path';
 
 export function resolveDatabaseUrl() {
-  const raw = process.env.DATABASE_URL?.trim() || 'file:./dev.db';
+  const raw = process.env.DATABASE_URL?.trim();
+  if (!raw) {
+    if (process.env.NODE_ENV === 'production') {
+      throw new Error(
+        'DATABASE_URL is not set. Add your Supabase transaction pooler URL to production environment variables.',
+      );
+    }
+    const devPath = path.join(process.cwd(), 'dev.db');
+    return `file:${devPath}`;
+  }
   if (raw.startsWith('file:')) {
     const filePath = raw.replace(/^file:/, '');
     const absolute = path.isAbsolute(filePath)

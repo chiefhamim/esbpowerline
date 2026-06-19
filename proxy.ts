@@ -11,29 +11,33 @@ const MEMBER_ROUTES = ['/members'];
 type StaffStatus = 'ACTIVE' | 'SUSPENDED' | 'PENDING';
 
 async function getUserAccess(
-  supabase: Awaited<ReturnType<typeof updateSession>>['supabase'],
+  supabase: NonNullable<Awaited<ReturnType<typeof updateSession>>['supabase']>,
   user: NonNullable<Awaited<ReturnType<typeof updateSession>>['user']>,
 ): Promise<{ role: Role | null; status: StaffStatus }> {
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('role, status')
-    .eq('id', user.id)
-    .maybeSingle();
+  try {
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('role, status')
+      .eq('id', user.id)
+      .maybeSingle();
 
-  const metadataStatus = user.user_metadata?.status;
-  const status = (
-    profile?.status ??
-    (typeof metadataStatus === 'string' ? metadataStatus : null) ??
-    'ACTIVE'
-  ) as StaffStatus;
+    const metadataStatus = user.user_metadata?.status;
+    const status = (
+      profile?.status ??
+      (typeof metadataStatus === 'string' ? metadataStatus : null) ??
+      'ACTIVE'
+    ) as StaffStatus;
 
-  const role = resolveRoleFromSupabaseUser(user, profile?.role ?? null);
+    const role = resolveRoleFromSupabaseUser(user, profile?.role ?? null);
 
-  return { role, status };
+    return { role, status };
+  } catch {
+    const role = resolveRoleFromSupabaseUser(user, null);
+    return { role, status: 'ACTIVE' };
+  }
 }
 
-export async function middleware(request: NextRequest) {
-  const { response, supabase, user } = await updateSession(request);
+export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   const needsAdmin = ADMIN_ROUTES.some((r) => pathname.startsWith(r));
@@ -41,9 +45,12 @@ export async function middleware(request: NextRequest) {
   const needsMember =
     MEMBER_ROUTES.some((r) => pathname.startsWith(r)) && !pathname.startsWith('/members/login');
 
+  const session = await updateSession(request);
+  const { response, supabase, user } = session;
+
   if (!needsAdmin && !needsEditor && !needsMember) return response;
 
-  if (!user) {
+  if (!user || !supabase) {
     const loginUrl = new URL(needsMember ? '/members/login' : '/login', request.url);
     loginUrl.searchParams.set('callbackUrl', pathname);
     return NextResponse.redirect(loginUrl);
@@ -82,8 +89,7 @@ export async function middleware(request: NextRequest) {
   return response;
 }
 
+/** Only run auth proxy on protected app surfaces — public pages skip Supabase entirely. */
 export const config = {
-  matcher: [
-    '/((?!_next/static|_next/image|favicon.ico|api/auth|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
-  ],
+  matcher: ['/admin/:path*', '/cms/:path*', '/editor/:path*', '/members/:path*'],
 };
