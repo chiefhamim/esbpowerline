@@ -32,18 +32,29 @@ export function isPostgresUrl(url: string) {
 /** Supabase pooler TLS needs relaxed cert verification in serverless Node runtimes. */
 export function createPgPoolConfig(connectionString: string) {
   let remote = true;
+  let poolUrl = connectionString;
+
   try {
     const normalized = connectionString
       .replace(/^postgresql:\/\//, 'https://')
       .replace(/^postgres:\/\//, 'https://');
-    const host = new URL(normalized).hostname;
+    const parsed = new URL(normalized);
+    const host = parsed.hostname;
     remote = host !== 'localhost' && host !== '127.0.0.1';
+
+    if (remote) {
+      // sslmode=require in the URL forces strict verification — strip it and use Pool.ssl instead.
+      parsed.searchParams.delete('sslmode');
+      parsed.searchParams.delete('supa');
+      const search = parsed.searchParams.toString();
+      poolUrl = `postgresql://${parsed.username}:${parsed.password}@${parsed.host}${parsed.pathname}${search ? `?${search}` : ''}`;
+    }
   } catch {
     remote = true;
   }
 
   return {
-    connectionString,
+    connectionString: poolUrl,
     ssl: remote ? { rejectUnauthorized: false as const } : undefined,
   };
 }
