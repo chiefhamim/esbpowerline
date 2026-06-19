@@ -3,6 +3,7 @@ import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import {
   EDITOR_EMAIL,
   EDITOR_NAME,
+  LEGACY_EDITOR_EMAIL,
   MASTER_ADMIN_EMAIL,
   MASTER_ADMIN_NAME,
 } from '../lib/staff-accounts';
@@ -19,6 +20,7 @@ type StaffSeedAccount = {
 const STAFF_ACCOUNTS: StaffSeedAccount[] = [
   { email: MASTER_ADMIN_EMAIL, name: MASTER_ADMIN_NAME, role: 'SUPER_ADMIN' },
   { email: EDITOR_EMAIL, name: EDITOR_NAME, role: 'EDITOR' },
+  { email: LEGACY_EDITOR_EMAIL, name: EDITOR_NAME, role: 'EDITOR' },
 ];
 
 async function findUserIdByEmail(admin: SupabaseClient, email: string): Promise<string | null> {

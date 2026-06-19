@@ -4,6 +4,20 @@ import { createContext, useContext, useEffect, useState, useCallback, type React
 import { createClient } from '@/utils/supabase/client';
 import { resolveRoleFromSupabaseUser } from '@/lib/supabase/resolve-role';
 import type { Role } from '@/lib/constants';
+import {
+  EDITOR_EMAIL,
+  EDITOR_NAME,
+  LEGACY_EDITOR_EMAIL,
+  MASTER_ADMIN_EMAIL,
+  MASTER_ADMIN_NAME,
+} from '@/lib/staff-accounts';
+
+function resolveStaffDisplayName(email: string, fallback: string): string {
+  const normalized = email.toLowerCase();
+  if (normalized === EDITOR_EMAIL || normalized === LEGACY_EDITOR_EMAIL) return EDITOR_NAME;
+  if (normalized === MASTER_ADMIN_EMAIL) return MASTER_ADMIN_NAME;
+  return fallback;
+}
 import type { User } from '@supabase/supabase-js';
 
 type AuthUser = {
@@ -56,10 +70,16 @@ export function SupabaseAuthProvider({ children }: { children: ReactNode }) {
       .single();
 
     // Fall back to user_metadata if profile table isn't populated yet
+    const email = supaUser.email ?? '';
+    const rawName =
+      (typeof profile?.full_name === 'string' ? profile.full_name : '') ||
+      (typeof supaUser.user_metadata?.name === 'string' ? supaUser.user_metadata.name : '') ||
+      email;
+
     const resolvedUser: AuthUser = {
       id: supaUser.id,
-      email: supaUser.email ?? '',
-      name: profile?.full_name ?? supaUser.user_metadata?.name ?? supaUser.email ?? '',
+      email,
+      name: resolveStaffDisplayName(email, rawName),
       role: (resolveRoleFromSupabaseUser(supaUser, profile?.role ?? null) ?? 'SUBSCRIBER') as Role,
       image: profile?.avatar_url ?? null,
     };

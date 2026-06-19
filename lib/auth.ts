@@ -1,7 +1,22 @@
 import { createClient } from '@/utils/supabase/server';
 import prisma from '@/lib/prisma';
 import type { Role } from '@/lib/constants';
+import {
+  EDITOR_EMAIL,
+  EDITOR_NAME,
+  LEGACY_EDITOR_EMAIL,
+  MASTER_ADMIN_EMAIL,
+  MASTER_ADMIN_NAME,
+} from '@/lib/staff-accounts';
 import { resolveRoleFromSupabaseUser } from '@/lib/supabase/resolve-role';
+
+/** Canonical staff display names — overrides stale Supabase profile/metadata. */
+function resolveStaffDisplayName(email: string, fallback: string): string {
+  const normalized = email.toLowerCase();
+  if (normalized === EDITOR_EMAIL || normalized === LEGACY_EDITOR_EMAIL) return EDITOR_NAME;
+  if (normalized === MASTER_ADMIN_EMAIL) return MASTER_ADMIN_NAME;
+  return fallback;
+}
 
 export type AuthSession = {
   user: {
@@ -64,14 +79,15 @@ async function resolveAppUser(
       .catch(() => undefined);
   }
 
+  const metadataName =
+    typeof supabaseUser.user_metadata?.name === 'string' ? supabaseUser.user_metadata.name : '';
+  const rawName = dbUser?.name ?? profile?.full_name ?? metadataName ?? email;
+  const loginEmail = dbUser?.email ?? email;
+
   return {
     id: dbUser?.id ?? supabaseUser.id,
-    email: dbUser?.email ?? email,
-    name:
-      profile?.full_name ??
-      dbUser?.name ??
-      (typeof supabaseUser.user_metadata?.name === 'string' ? supabaseUser.user_metadata.name : '') ??
-      email,
+    email: loginEmail,
+    name: resolveStaffDisplayName(loginEmail, rawName),
     role: resolvedRole,
     image: profile?.avatar_url ?? dbUser?.avatar ?? null,
   };

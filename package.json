@@ -32,6 +32,8 @@
     "reset:analytics": "tsx scripts/reset-analytics-and-staff.ts",
     "reset:analytics:prod": "cross-env PRISMA_SCHEMA_PROVIDER=postgresql ALLOW_PRODUCTION_SEED=true tsx scripts/reset-analytics-and-staff.ts",
     "reset:analytics:local": "cross-env PRISMA_SCHEMA_PROVIDER=sqlite DATABASE_URL=file:./dev.db tsx scripts/reset-analytics-and-staff.ts",
+    "sync:editor": "tsx scripts/sync-editor-identity.ts",
+    "sync:editor:prod": "cross-env PRISMA_SCHEMA_PROVIDER=postgresql ALLOW_PRODUCTION_SEED=true tsx scripts/sync-editor-identity.ts",
     "env:pull": "node scripts/env-pull-vercel.mjs",
     "setup:agents": "scripts/setup-agent-integrations.cmd",
     "db:reset": "prisma migrate reset --force",
