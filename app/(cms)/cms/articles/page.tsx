@@ -20,7 +20,6 @@ function serializeArticles(articles: Awaited<ReturnType<typeof getArticles>>) {
     isPinned: a.isPinned,
     isFeatured: a.isFeatured,
     isBreaking: a.isBreaking,
-    tags: Array.isArray(a.tags) ? (a.tags as string[]) : [],
   }));
 }
 

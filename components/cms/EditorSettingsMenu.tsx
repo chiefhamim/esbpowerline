@@ -51,31 +51,31 @@ export function EditorSettingsMenu({ variant = 'default' }: EditorSettingsMenuPr
               <div className="space-y-1">
                 <button
                   type="button"
-                  onClick={() => setGuidanceMode('guided')}
+                  onClick={() => setGuidanceMode('noob')}
                   className={cn(
                     'w-full text-left px-2.5 py-1.5 rounded-lg text-xs flex items-center justify-between transition-colors hover:bg-muted/50',
-                    preferences.guidanceMode === 'guided' && 'bg-sky-500/10 text-sky-400 font-medium'
+                    preferences.guidanceMode === 'noob' && 'bg-sky-500/10 text-sky-400 font-medium'
                   )}
                 >
                   <div className="flex flex-col">
-                    <span>Guided</span>
-                    <span className="text-[10px] opacity-75">Show hints, tooltips, and field help</span>
+                    <span>Beginner (Noob)</span>
+                    <span className="text-[10px] opacity-75">Show hints, tooltips & help</span>
                   </div>
-                  {preferences.guidanceMode === 'guided' && <Check className="h-3.5 w-3.5" />}
+                  {preferences.guidanceMode === 'noob' && <Check className="h-3.5 w-3.5" />}
                 </button>
                 <button
                   type="button"
-                  onClick={() => setGuidanceMode('compact')}
+                  onClick={() => setGuidanceMode('pro')}
                   className={cn(
                     'w-full text-left px-2.5 py-1.5 rounded-lg text-xs flex items-center justify-between transition-colors hover:bg-muted/50',
-                    preferences.guidanceMode === 'compact' && 'bg-sky-500/10 text-sky-400 font-medium'
+                    preferences.guidanceMode === 'pro' && 'bg-sky-500/10 text-sky-400 font-medium'
                   )}
                 >
                   <div className="flex flex-col">
-                    <span>Compact</span>
-                    <span className="text-[10px] opacity-75">Headings only, minimal chrome</span>
+                    <span>Professional (Pro)</span>
+                    <span className="text-[10px] opacity-75">Headings only, clean view</span>
                   </div>
-                  {preferences.guidanceMode === 'compact' && <Check className="h-3.5 w-3.5" />}
+                  {preferences.guidanceMode === 'pro' && <Check className="h-3.5 w-3.5" />}
                 </button>
               </div>
             </div>

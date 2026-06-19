@@ -5881,9 +5881,9 @@ html.theme-white {
 
 .admin-nav-group-label {
   padding: 0 0.75rem 0.375rem 0.875rem;
-  font-size: 12px;
+  font-size: 10px;
   font-weight: 600;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
   color: hsl(var(--muted-foreground) / 0.55);
 }
@@ -5892,10 +5892,10 @@ html.theme-white {
   display: flex;
   align-items: center;
   gap: 0.625rem;
-  padding: 0.5625rem 0.75rem;
+  padding: 0.5rem 0.75rem;
   margin: 0 0.25rem;
   border-radius: 9999px;
-  font-size: 15px;
+  font-size: 13px;
   font-weight: 500;
   letter-spacing: -0.01em;
   color: hsl(var(--muted-foreground));
@@ -5947,8 +5947,8 @@ html.theme-white {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 2rem;
-  height: 2rem;
+  width: 1.75rem;
+  height: 1.75rem;
   border-radius: 9999px;
   background: hsl(var(--muted) / 0.5);
   color: hsl(var(--muted-foreground));
@@ -6014,7 +6014,7 @@ html.theme-white {
 
 .admin-user-capsule__name {
   width: 100%;
-  font-size: 15px;
+  font-size: 13px;
   font-weight: 500;
   line-height: 1.2;
   letter-spacing: -0.01em;
@@ -6349,8 +6349,8 @@ html.theme-white {
   }
 
   .admin-nav-item {
-    padding: 0.45rem 0.65rem;
-    font-size: 14px;
+    padding: 0.4rem 0.65rem;
+    font-size: 12px;
   }
 
   .admin-nav-group-label {
@@ -9537,25 +9537,15 @@ html.theme-white .modern-tooltip--editor .modern-tooltip-arrow {
 }
 
 /* Pro guidance — hide subtitles, hints, and non-essential tooltips */
-html[data-editor-guidance='compact'] .cms-editor-panel__desc,
 html[data-editor-guidance='pro'] .cms-editor-panel__desc,
-html[data-editor-guidance='compact'] .cms-write-hero__desc,
 html[data-editor-guidance='pro'] .cms-write-hero__desc,
-html[data-editor-guidance='compact'] .cms-placement-strip__desc,
 html[data-editor-guidance='pro'] .cms-placement-strip__desc,
-html[data-editor-guidance='compact'] .cms-field__hint:not(.cms-field__hint--keep),
 html[data-editor-guidance='pro'] .cms-field__hint:not(.cms-field__hint--keep),
-html[data-editor-guidance='compact'] .featured-image-editor__fit-hint,
 html[data-editor-guidance='pro'] .featured-image-editor__fit-hint,
-html[data-editor-guidance='compact'] .media-library__hint,
 html[data-editor-guidance='pro'] .media-library__hint,
-html[data-editor-guidance='compact'] .admin-page-desc,
 html[data-editor-guidance='pro'] .admin-page-desc,
-html[data-editor-guidance='compact'] .editorial-calendar__legend,
 html[data-editor-guidance='pro'] .editorial-calendar__legend,
-html[data-editor-guidance='compact'] .editorial-calendar__stat small,
 html[data-editor-guidance='pro'] .editorial-calendar__stat small,
-html[data-editor-guidance='compact'] .editor-settings-section__hint,
 html[data-editor-guidance='pro'] .editor-settings-section__hint {
   display: none !important;
 }

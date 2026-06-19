@@ -209,7 +209,7 @@ export const getLatestMagazineIssue = cache(async (): Promise<PublicMagazineIssu
     id: issue.id,
     title: issue.title,
     issueDate: issue.issueDate,
-    coverUrl: issue.coverUrl ?? '/images/banner.jpg',
+    coverUrl: issue.coverUrl ?? '/images/demo_magazine_cover.jpg',
     pdfUrl: issue.pdfUrl,
     summary: issue.summary ?? '',
   };

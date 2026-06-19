@@ -1,9 +1,8 @@
-export type EditorGuidanceMode = 'guided' | 'compact';
-
+export type EditorGuidanceMode = 'noob' | 'pro';
 export type EditorClockFormat = '12' | '24';
 
 export type EditorPreferences = {
-  /** guided = tooltips, panel subtitles, and field hints; compact = headings only */
+  /** noob = tooltips, panel subtitles, and field hints; pro = headings only */
   guidanceMode: EditorGuidanceMode;
   /** Keep author byline pinned while writing long stories */
   stickyAuthorByline: boolean;
@@ -14,17 +13,17 @@ export const EDITOR_PREFERENCES_STORAGE_KEY = 'esb-editor-preferences';
 export const EDITOR_CLOCK_FORMAT_KEY = 'cms-editor-clock-format';
 
 export const DEFAULT_EDITOR_PREFERENCES: EditorPreferences = {
-  guidanceMode: 'guided',
+  guidanceMode: 'noob',
   stickyAuthorByline: true,
   clockFormat: '12',
 };
 
 export function showEditorTooltips(mode: EditorGuidanceMode) {
-  return mode === 'guided';
+  return mode === 'noob';
 }
 
 export function showEditorGuidanceHints(mode: EditorGuidanceMode) {
-  return mode === 'guided';
+  return mode === 'noob';
 }
 
 function normalizeClockFormat(value: unknown): EditorClockFormat {
@@ -32,8 +31,7 @@ function normalizeClockFormat(value: unknown): EditorClockFormat {
 }
 
 function normalizeGuidanceMode(value: unknown): EditorGuidanceMode {
-  if (value === 'compact' || value === 'pro') return 'compact';
-  return 'guided';
+  return value === 'pro' ? 'pro' : 'noob';
 }
 
 export function parseEditorPreferences(raw: unknown): EditorPreferences {

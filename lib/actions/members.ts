@@ -246,7 +246,7 @@ export async function getMemberSavedMagazines(userId: string): Promise<PublicMag
       id: issue.id,
       title: issue.title,
       issueDate: issue.issueDate,
-      coverUrl: issue.coverUrl ?? '/images/banner.jpg',
+      coverUrl: issue.coverUrl ?? '/images/demo_magazine_cover.jpg',
       pdfUrl: issue.pdfUrl,
       summary: issue.summary ?? '',
     }));
@@ -262,7 +262,7 @@ export async function getAllMagazineIssues(): Promise<PublicMagazineIssue[]> {
     id: issue.id,
     title: issue.title,
     issueDate: issue.issueDate,
-    coverUrl: issue.coverUrl ?? '/images/banner.jpg',
+    coverUrl: issue.coverUrl ?? '/images/demo_magazine_cover.jpg',
     pdfUrl: issue.pdfUrl,
     summary: issue.summary ?? '',
   }));

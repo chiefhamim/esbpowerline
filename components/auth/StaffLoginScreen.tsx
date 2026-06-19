@@ -154,35 +154,33 @@ export function StaffLoginScreen() {
             </Button>
           </form>
 
-          {process.env.NODE_ENV !== 'production' && (
-            <div className="login-contributors">
-              <div className="login-contributors__header">
-                <p className="login-contributors__title">Dev shortcut</p>
-                <p className="login-contributors__hint">Local only — fills master admin credentials</p>
-              </div>
-              <ul className="login-contributors__rows">
-                <li>
-                  <button
-                    type="button"
-                    className={cn(
-                      'login-contributors__row',
-                      isMasterAdminSelected && 'login-contributors__row--active',
-                    )}
-                    onClick={selectMasterAdminEmail}
-                  >
-                    <span className="login-contributors__icon" aria-hidden>
-                      <Shield />
-                    </span>
-                    <span className="login-contributors__meta">
-                      <span className="login-contributors__badge">Super Admin</span>
-                      <span className="login-contributors__email">{MASTER_ADMIN_EMAIL}</span>
-                    </span>
-                    <ArrowRight className="login-contributors__arrow" aria-hidden />
-                  </button>
-                </li>
-              </ul>
+          <div className="login-contributors">
+            <div className="login-contributors__header">
+              <p className="login-contributors__title">Master admin</p>
+              <p className="login-contributors__hint">Tap to fill master admin email (dev fills bootstrap password)</p>
             </div>
-          )}
+            <ul className="login-contributors__rows">
+              <li>
+                <button
+                  type="button"
+                  className={cn(
+                    'login-contributors__row',
+                    isMasterAdminSelected && 'login-contributors__row--active',
+                  )}
+                  onClick={selectMasterAdminEmail}
+                >
+                  <span className="login-contributors__icon" aria-hidden>
+                    <Shield />
+                  </span>
+                  <span className="login-contributors__meta">
+                    <span className="login-contributors__badge">Super Admin</span>
+                    <span className="login-contributors__email">{MASTER_ADMIN_EMAIL}</span>
+                  </span>
+                  <ArrowRight className="login-contributors__arrow" aria-hidden />
+                </button>
+              </li>
+            </ul>
+          </div>
 
           <p className="login-access__alt login-staff-access__footer text-center text-xs text-muted-foreground">
             Looking for member access?{' '}

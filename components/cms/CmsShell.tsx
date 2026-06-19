@@ -195,7 +195,7 @@ export function CmsShell({ children }: { children: React.ReactNode }) {
             <Feather className="h-[17px] w-[17px]" strokeWidth={2.25} />
           </div>
           <div className="min-w-0">
-            <div className="font-bold text-[17px] tracking-[0.04em] uppercase text-foreground/90 leading-tight">Editorial Suite</div>
+            <div className="font-bold text-[14px] tracking-[0.05em] uppercase text-foreground/90 leading-tight">Editorial Suite</div>
           </div>
         </Link>
       </div>

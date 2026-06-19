@@ -1,12 +1,11 @@
 'use client';
 
-import { useMemo, useState, useTransition, useEffect } from 'react';
+import { useMemo, useState, useTransition } from 'react';
 import Link from 'next/link';
-import { useSearchParams } from 'next/navigation';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import {
-  Search, ArrowUpDown, Tag, Hash, User, Star, Pin,
+  Search, ArrowUpDown, Tag, User, Star, Pin,
   Trash2, RotateCcw, Send, FileEdit, Archive, Flame, X, Check,
   MoreHorizontal, Pencil, Eye, MessageSquare,
 } from 'lucide-react';
@@ -42,7 +41,6 @@ export type AdminArticleRow = {
   isPinned?: boolean;
   isFeatured?: boolean;
   isBreaking?: boolean;
-  tags?: string[];
 };
 
 type SortKey =
@@ -249,19 +247,12 @@ export function AdminArticleManager({
     useOwnBulkActions = false,
   } = options;
   const router = useRouter();
-  const searchParams = useSearchParams();
   const [pending, startTransition] = useTransition();
   const [query, setQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('ALL');
   const [categoryFilter, setCategoryFilter] = useState('ALL');
   const [authorFilter, setAuthorFilter] = useState('ALL');
-  const [tagFilter, setTagFilter] = useState('ALL');
   const [flagFilter, setFlagFilter] = useState('ALL');
-
-  useEffect(() => {
-    const tag = searchParams.get('tag')?.trim();
-    if (tag) setTagFilter(tag);
-  }, [searchParams]);
   const [sort, setSort] = useState<SortKey>('updated_desc');
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [secureAction, setSecureAction] = useState<{ action: BulkArticleAction; ids: string[] } | null>(null);
@@ -282,16 +273,6 @@ export function AdminArticleManager({
     return Array.from(map.entries()).sort((a, b) => a[1].localeCompare(b[1]));
   }, [articles]);
 
-  const tags = useMemo(() => {
-    const set = new Set<string>();
-    for (const a of articles) {
-      for (const tag of a.tags ?? []) {
-        if (tag.trim()) set.add(tag);
-      }
-    }
-    return Array.from(set).sort((a, b) => a.localeCompare(b));
-  }, [articles]);
-
   const filtered = useMemo(() => {
     let list = articles.filter((a) => {
       const q = query.toLowerCase();
@@ -299,21 +280,19 @@ export function AdminArticleManager({
         || a.title.toLowerCase().includes(q)
         || a.slug.toLowerCase().includes(q)
         || a.category.toLowerCase().includes(q)
-        || authorName(a).toLowerCase().includes(q)
-        || (a.tags ?? []).some((tag) => tag.toLowerCase().includes(q));
+        || authorName(a).toLowerCase().includes(q);
       const matchesStatus = statusFilter === 'ALL' || a.status === statusFilter;
       const matchesCategory = categoryFilter === 'ALL' || a.category === categoryFilter;
       const matchesAuthor = authorFilter === 'ALL' || authorId(a) === authorFilter;
-      const matchesTag = tagFilter === 'ALL' || (a.tags ?? []).includes(tagFilter);
       const matchesFlag =
         flagFilter === 'ALL'
         || (flagFilter === 'featured' && a.isFeatured)
         || (flagFilter === 'pinned' && a.isPinned)
         || (flagFilter === 'breaking' && a.isBreaking);
-      return matchesQ && matchesStatus && matchesCategory && matchesAuthor && matchesTag && matchesFlag;
+      return matchesQ && matchesStatus && matchesCategory && matchesAuthor && matchesFlag;
     });
     return sortArticles(list, sort);
-  }, [articles, query, statusFilter, categoryFilter, authorFilter, tagFilter, flagFilter, sort]);
+  }, [articles, query, statusFilter, categoryFilter, authorFilter, flagFilter, sort]);
 
   const filteredIds = useMemo(() => new Set(filtered.map((a) => a.id)), [filtered]);
   const selectedCount = selected.size;
@@ -429,23 +408,6 @@ export function AdminArticleManager({
     ];
   }, [articles, authors]);
 
-  const tagOptions = useMemo(() => {
-    const counts = new Map<string, number>();
-    for (const article of articles) {
-      for (const tag of article.tags ?? []) {
-        counts.set(tag, (counts.get(tag) ?? 0) + 1);
-      }
-    }
-    return [
-      { value: 'ALL', label: 'All tags', count: articles.length },
-      ...tags.map((tag) => ({
-        value: tag,
-        label: tag,
-        count: counts.get(tag) ?? 0,
-      })),
-    ];
-  }, [articles, tags]);
-
   const flagOptions = useMemo(() => {
     let featured = 0;
     let pinned = 0;
@@ -494,9 +456,6 @@ export function AdminArticleManager({
         <AdminSelectMenu value={categoryFilter} onChange={setCategoryFilter} options={categoryOptions} icon={Tag} placeholder="Category" minWidth="9.5rem" />
         {showAuthorFilter && (
           <AdminSelectMenu value={authorFilter} onChange={setAuthorFilter} options={authorOptions} icon={User} placeholder="Author" minWidth="9.5rem" />
-        )}
-        {tags.length > 0 && (
-          <AdminSelectMenu value={tagFilter} onChange={setTagFilter} options={tagOptions} icon={Hash} placeholder="Tag" minWidth="9rem" />
         )}
         {showBulkFlags && (
           <AdminSelectMenu value={flagFilter} onChange={setFlagFilter} options={flagOptions} icon={Star} placeholder="Flags" minWidth="8.5rem" />
