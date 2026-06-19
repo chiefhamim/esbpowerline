@@ -26,6 +26,8 @@
     "supabase:seed-staff": "tsx scripts/seed-supabase-staff.ts",
     "supabase:seed-member": "node scripts/seed-supabase-member.mjs",
     "bootstrap:prod": "cross-env PRISMA_SCHEMA_PROVIDER=postgresql node scripts/bootstrap-production.mjs",
+    "env:pull": "node scripts/env-pull-vercel.mjs",
+    "setup:agents": "scripts/setup-agent-integrations.cmd",
     "db:reset": "prisma migrate reset --force",
     "db:studio": "prisma studio",
     "test": "vitest run",
@@ -88,9 +90,11 @@
     "eslint": "^9.27.0",
     "eslint-config-next": "15.3.3",
     "postcss": "^8.4.49",
+    "supabase": "^2.107.0",
     "tailwindcss": "^3.4.17",
     "tsx": "^4.19.4",
     "typescript": "^5.8.3",
+    "vercel": "^54.14.2",
     "vitest": "^3.2.4"
   },
   "allowScripts": {
