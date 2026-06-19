@@ -1,16 +1,21 @@
 /**
- * One-shot production bootstrap (run locally with production env in .env.local):
+ * One-shot production bootstrap (run locally with production env in .env.production.local):
  *
- *   ALLOW_PRODUCTION_SEED=true \
- *   SEED_DEMO_PASSWORD=your-password \
- *   MASTER_ADMIN_PASSWORD=your-password \
- *   PRISMA_SCHEMA_PROVIDER=postgresql \
- *   npm run bootstrap:prod
+ *   1. Copy .env.production.local and replace YOUR_SUPABASE_DB_PASSWORD
+ *   2. npm run bootstrap:prod
  *
  * Requires: DATABASE_URL, DIRECT_URL, Supabase keys (see .env.example).
  * WARNING: db:seed wipes existing Prisma rows — use only on empty/staging DBs.
  */
+import { config } from 'dotenv';
+import { existsSync } from 'fs';
 import { spawnSync } from 'child_process';
+
+if (existsSync('.env.production.local')) {
+  config({ path: '.env.production.local', override: true });
+} else {
+  config();
+}
 
 const required = ['DATABASE_URL', 'DIRECT_URL', 'NEXT_PUBLIC_SUPABASE_URL', 'SUPABASE_SERVICE_ROLE_KEY'];
 const missing = required.filter((key) => !process.env[key]?.trim());
