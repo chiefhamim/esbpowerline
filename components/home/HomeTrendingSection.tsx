@@ -64,13 +64,11 @@ function TrendingListItem({
 }
 
 const TRENDING_WAVE_MS = 5500;
-const TRENDING_QUEUE_ROW_REM = 2.75;
 
 function TrendingHeroRailWave({ trending }: { trending: PublicArticleCard[] }) {
   const { locale, t } = useLocale();
   const [active, setActive] = useState(0);
   const [hovered, setHovered] = useState<number | null>(null);
-  const [cycleRemainderMs, setCycleRemainderMs] = useState(TRENDING_WAVE_MS);
   const hoveredRef = useRef<number | null>(null);
   const rotationAnchorRef = useRef(0);
   const rotationAnchorTimeRef = useRef(Date.now());
@@ -105,7 +103,6 @@ function TrendingHeroRailWave({ trending }: { trending: PublicArticleCard[] }) {
     if (hoveredRef.current !== null || trending.length <= 1) return;
 
     const remainder = getCycleRemainder();
-    setCycleRemainderMs(remainder);
 
     timerRef.current = setTimeout(() => {
       const newActive = (rotationAnchorRef.current + 1) % trending.length;
@@ -143,7 +140,6 @@ function TrendingHeroRailWave({ trending }: { trending: PublicArticleCard[] }) {
 
   const handleQueueLeave = () => {
     applyElapsedSteps();
-    setCycleRemainderMs(getCycleRemainder());
     hoveredRef.current = null;
     setHovered(null);
     scheduleNext();
@@ -156,7 +152,6 @@ function TrendingHeroRailWave({ trending }: { trending: PublicArticleCard[] }) {
     setActive(index);
     hoveredRef.current = null;
     setHovered(null);
-    setCycleRemainderMs(TRENDING_WAVE_MS);
     scheduleNext();
   };
 
@@ -190,7 +185,7 @@ function TrendingHeroRailWave({ trending }: { trending: PublicArticleCard[] }) {
               </div>
               <CategoryLabel
                 name={article.category}
-                className="home-trending-wave__category section-category-label text-[10px] font-semibold text-muted-foreground truncate"
+                className="home-trending-wave__category section-category-label text-muted-foreground truncate"
               />
             </div>
             <div className="home-trending-wave__image">
@@ -208,7 +203,7 @@ function TrendingHeroRailWave({ trending }: { trending: PublicArticleCard[] }) {
                 )}
               </div>
             </div>
-            <h3 className="home-trending-wave__title mt-1 group-hover:text-primary transition-colors">
+            <h3 className="home-trending-wave__title group-hover:text-primary transition-colors">
               {article.title}
             </h3>
             <p className="home-trending-wave__excerpt">{article.excerpt ?? '\u00A0'}</p>
@@ -220,16 +215,11 @@ function TrendingHeroRailWave({ trending }: { trending: PublicArticleCard[] }) {
         </div>
 
         <div
-          className={`home-trending-wave__queue${isHovering ? ' home-trending-wave__queue--hovering' : ''}`}
+          className="home-trending-wave__queue"
           role="tablist"
           aria-label={t('home.trendingWeek')}
           onMouseLeave={handleQueueLeave}
         >
-          <div
-            className="home-trending-wave__queue-wave"
-            style={{ transform: `translateY(calc(${displayIndex} * ${TRENDING_QUEUE_ROW_REM}rem))` }}
-            aria-hidden
-          />
           {trending.map((item, index) => (
             <button
               key={item.slug}
@@ -248,28 +238,98 @@ function TrendingHeroRailWave({ trending }: { trending: PublicArticleCard[] }) {
             </button>
           ))}
         </div>
-
-        <div className="home-trending-wave__progress" aria-hidden>
-          {trending.map((item, index) => (
-            <span
-              key={item.slug}
-              className={`home-trending-wave__dot${index === displayIndex ? ' home-trending-wave__dot--active' : ''}${
-                isHovering && index === displayIndex ? ' home-trending-wave__dot--paused' : ''
-              }`}
-            >
-              <span
-                key={index === displayIndex && !isHovering ? `fill-${displayIndex}-${cycleRemainderMs}` : 'idle'}
-                className="home-trending-wave__dot-fill"
-                style={
-                  index === displayIndex && !isHovering
-                    ? { animationDuration: `${cycleRemainderMs}ms` }
-                    : undefined
-                }
-              />
-            </span>
-          ))}
-        </div>
       </div>
+    </section>
+  );
+}
+
+function ArticlesTrendingRailItem({
+  article,
+  rank,
+}: {
+  article: PublicArticleCard;
+  rank: number;
+}) {
+  const { locale, t } = useLocale();
+  const timeAgo = formatTrendingTime(article.date, locale);
+  const isLead = rank === 1;
+
+  return (
+    <li className={`articles-trending-rail__item${isLead ? ' articles-trending-rail__item--lead' : ''}`}>
+      <Link href={`/articles/${article.slug}`} className="articles-trending-rail__link group">
+        <span
+          className={`articles-trending-rail__rank${isLead ? ' articles-trending-rail__rank--hot' : ''}`}
+          aria-hidden
+        >
+          {rank.toString().padStart(2, '0')}
+        </span>
+        <span className="articles-trending-rail__copy">
+          <span className="articles-trending-rail__title group-hover:text-primary transition-colors">
+            {article.title}
+          </span>
+          <span className="articles-trending-rail__meta">
+            <CategoryLabel name={article.category} />
+            <span className="articles-trending-rail__meta-sep" aria-hidden>
+              ·
+            </span>
+            <span>{timeAgo}</span>
+            <span className="articles-trending-rail__meta-sep" aria-hidden>
+              ·
+            </span>
+            <span>
+              {article.views.toLocaleString(locale === 'bn' ? 'bn-BD' : 'en-US')} {t('common.views')}
+            </span>
+          </span>
+        </span>
+      </Link>
+    </li>
+  );
+}
+
+function ArticlesTrendingRail({ trending }: { trending: PublicArticleCard[] }) {
+  const { t } = useLocale();
+
+  if (trending.length === 0) {
+    return (
+      <section className="articles-trending-rail" aria-labelledby="articles-trending-title">
+        <header className="articles-trending-rail__head">
+          <p className="articles-trending-rail__kicker section-kicker">{t('home.trendingKicker')}</p>
+          <div className="articles-trending-rail__title-row">
+            <div className="articles-trending-rail__title-wrap">
+              <TrendingUp className="articles-trending-rail__icon" aria-hidden />
+              <h2 id="articles-trending-title" className="articles-trending-rail__heading">
+                {t('home.trendingWeek')}
+              </h2>
+            </div>
+          </div>
+        </header>
+        <p className="articles-trending-rail__empty">{t('home.noTrending')}</p>
+      </section>
+    );
+  }
+
+  return (
+    <section className="articles-trending-rail" aria-labelledby="articles-trending-title">
+      <header className="articles-trending-rail__head">
+        <p className="articles-trending-rail__kicker section-kicker">{t('home.trendingKicker')}</p>
+        <div className="articles-trending-rail__title-row">
+          <div className="articles-trending-rail__title-wrap">
+            <TrendingUp className="articles-trending-rail__icon" aria-hidden />
+            <h2 id="articles-trending-title" className="articles-trending-rail__heading">
+              {t('home.trendingWeek')}
+            </h2>
+          </div>
+          <Link href="/articles" className="articles-trending-rail__view-all section-inline-link">
+            {t('home.trendingViewAll')}
+            <ArrowRight className="h-2.5 w-2.5 shrink-0" aria-hidden />
+          </Link>
+        </div>
+      </header>
+      <ol className="articles-trending-rail__list">
+        {trending.map((article, index) => (
+          <ArticlesTrendingRailItem key={article.slug} article={article} rank={index + 1} />
+        ))}
+      </ol>
     </section>
   );
 }
@@ -278,28 +338,23 @@ function TrendingHeroRailHeader() {
   const { t } = useLocale();
 
   return (
-    <div className="home-trending-hero-rail__header w-full min-w-0">
-      <div className="section-kicker text-[10px] text-emerald-500 dark:text-emerald-400 font-bold">
-        {t('home.trendingKicker')}
-      </div>
-      <div className="home-trending-hero-rail__title-row flex items-center justify-between gap-2 min-w-0">
-        <div className="home-trending-hero-rail__title-wrap flex items-center gap-1.5 min-w-0 flex-1">
-          <TrendingUp className="h-3.5 w-3.5 text-primary shrink-0" aria-hidden />
-          <h2 id="home-trending-title" className="text-sm font-display font-bold tracking-tight truncate min-w-0">
-            {t('home.trendingWeek')}
-          </h2>
-          <span className="home-trending-hero-rail__window text-[10px] text-muted-foreground font-medium shrink-0 truncate">
-            · {t('home.trendingWindow')}
-          </span>
-        </div>
-        <Link
-          href="/articles"
-          className="section-inline-link text-[10px] text-primary inline-flex items-center gap-0.5 hover:underline font-semibold shrink-0"
+    <div className="home-trending-hero-rail__title-row flex items-center justify-between gap-2 min-w-0 w-full">
+      <div className="home-trending-hero-rail__title-wrap flex items-center gap-1 min-w-0 flex-1">
+        <TrendingUp className="h-3 w-3 text-primary shrink-0" aria-hidden />
+        <h2
+          id="home-trending-title"
+          className="m-0 p-0 text-[13px] font-display font-bold tracking-tight truncate min-w-0 leading-none"
         >
-          {t('home.trendingViewAll')}
-          <ArrowRight className="h-2.5 w-2.5" aria-hidden />
-        </Link>
+          {t('home.trendingWeek')}
+        </h2>
       </div>
+      <Link
+        href="/articles"
+        className="section-inline-link text-primary inline-flex items-center gap-0.5 hover:underline shrink-0 leading-none p-0 m-0"
+      >
+        {t('home.trendingViewAll')}
+        <ArrowRight className="h-2.5 w-2.5 shrink-0" aria-hidden />
+      </Link>
     </div>
   );
 }
@@ -324,7 +379,7 @@ export function HomeTrendingSection({
       }`}
     >
       <div className="home-section-head__title-wrap min-w-0 flex-1">
-        <div className="section-kicker text-[10px] text-emerald-500 dark:text-emerald-400 font-bold mb-1.5">
+        <div className="section-kicker text-emerald-500 dark:text-emerald-400 mb-1.5">
           {t('home.trendingKicker')}
         </div>
         <div className="flex items-center gap-2 min-w-0">
@@ -374,27 +429,15 @@ export function HomeTrendingSection({
     return <TrendingHeroRailWave trending={trending} />;
   }
 
-  if (trending.length === 0) {
-    return (
-      <section
-        className={`home-rail-panel home-block${isRail ? '' : ' container'}`}
-        aria-labelledby="home-trending-title"
-      >
-        {header}
-        <p className="text-sm text-muted-foreground">{t('home.noTrending')}</p>
-      </section>
-    );
+  if (isRail) {
+    return <ArticlesTrendingRail trending={trending} />;
   }
 
-  if (isRail) {
+  if (trending.length === 0) {
     return (
-      <section className="home-rail-panel home-block" aria-labelledby="home-trending-title">
+      <section className="container home-block" aria-labelledby="home-trending-title">
         {header}
-        <div className="home-rail-panel__body divide-y divide-border/50">
-          {trending.map((article, index) => (
-            <TrendingListItem key={article.slug} article={article} rank={index + 1} compact />
-          ))}
-        </div>
+        <p className="text-sm text-muted-foreground">{t('home.noTrending')}</p>
       </section>
     );
   }
@@ -433,7 +476,7 @@ export function HomeTrendingSection({
             </span>
             <CategoryLabel
               name={lead.category}
-              className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-1"
+              className="section-category-label text-muted-foreground mb-1"
             />
             <h3 className="font-display font-bold text-base md:text-lg leading-snug tracking-tight line-clamp-3 group-hover:text-primary transition-colors">
               {lead.title}

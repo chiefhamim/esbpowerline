@@ -14,12 +14,14 @@ import {
   UserRound,
 } from 'lucide-react';
 import { AccountAvatar } from '@/components/members/AccountAvatar';
+import { useLocale } from '@/components/shared/LocaleProvider';
 import { useMemberAccess } from '@/hooks/useMemberAccess';
 import { signOutToPublicSite } from '@/lib/staff-sign-out';
 import { cn } from '@/lib/utils';
 
 export function AccountMenu() {
   const pathname = usePathname();
+  const { t } = useLocale();
   const access = useMemberAccess();
   const [open, setOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
@@ -78,7 +80,7 @@ export function AccountMenu() {
   if (access.state === 'loading') {
     return (
       <span
-        className="inline-flex h-8 w-8 items-center justify-center rounded-xl border border-border/50 bg-muted/40"
+        className="public-nav-bar__pill-btn public-nav-bar__pill-btn--paired public-nav-bar__account-pill public-nav-bar__pill-skeleton"
         aria-hidden
       />
     );
@@ -193,9 +195,11 @@ export function AccountMenu() {
         type="button"
         className={cn(
           'account-menu__trigger',
+          'public-nav-bar__pill-btn',
+          'public-nav-bar__pill-btn--paired',
+          'public-nav-bar__account-pill',
           open && 'account-menu__trigger--open',
           access.signedIn && 'account-menu__trigger--signed-in',
-          access.signedIn && 'account-menu__trigger--avatar-only',
           access.accountKind && `account-menu__trigger--${access.accountKind}`,
           isMemberArea && access.isMember && 'account-menu__trigger--active',
         )}
@@ -206,16 +210,19 @@ export function AccountMenu() {
         aria-label={
           access.signedIn
             ? `Account menu — ${access.userName}`
-            : 'Open sign-in menu'
+            : t('nav.login')
         }
       >
-        {access.signedIn && access.accountKind && access.initial ? (
-          <AccountAvatar kind={access.accountKind} initial={access.initial} compact />
-        ) : access.signedIn ? (
-          <UserRound className="h-4 w-4" strokeWidth={2} aria-hidden />
-        ) : (
-          <UserRound className="h-4 w-4" strokeWidth={2} aria-hidden />
-        )}
+        <span className="public-nav-bar__account-icon-slot" aria-hidden>
+          {access.signedIn && access.accountKind && access.initial ? (
+            <AccountAvatar kind={access.accountKind} initial={access.initial} compact />
+          ) : (
+            <UserRound className="public-nav-bar__account-glyph" strokeWidth={2} aria-hidden />
+          )}
+        </span>
+        <span className="public-nav-bar__pill-label public-nav-bar__pill-label--account">
+          {access.signedIn ? t('nav.account') : t('nav.login')}
+        </span>
       </button>
       {menu}
     </>

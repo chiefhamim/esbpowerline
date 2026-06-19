@@ -22,10 +22,10 @@ const ENERGY_STAT_LABELS_BN: Record<string, string> = {
 };
 
 const PROFESSIONALS_CTA_BN = {
-  label: 'সদস্য অ্যাক্সেস',
-  title: 'নিবন্ধ ও ম্যাগাজিন সংরক্ষণ, ডেটা ডাউনলোড, মন্তব্য ও গভীর বিশ্লেষণে প্রবেশ করুন।',
-  primaryLabel: 'গ্রিড এক্সপ্লোরার খুলুন',
-  secondaryLabel: 'সদস্য লগইন',
+  label: 'সদস্য সুবিধা',
+  title: 'সংবাদ ও ম্যাগাজিন সংরক্ষণ, তথ্য ডাউনলোড, মতামত ও গভীর বিশ্লেষণে প্রবেশ করুন।',
+  primaryLabel: 'গ্রিড তথ্য দেখুন',
+  secondaryLabel: 'সদস্য প্রবেশ',
 };
 
 const SNAPSHOT_LABEL_BN = 'লাইভ • বিপিডিবি • পিজিসিবি • এসআরইডিএ • পেট্রোবাংলা';

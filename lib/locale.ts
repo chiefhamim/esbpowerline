@@ -7,6 +7,26 @@ export const SITE_LOCALES: { id: SiteLocale; label: string; short: string }[] = 
   { id: 'bn', label: 'বাংলা', short: 'BN' },
 ];
 
+export type SiteLocalePreview = {
+  background: string;
+  border: string;
+  foreground: string;
+};
+
+/** Tooltip pill — matches EN blue / BN emerald locale pills */
+export const SITE_LOCALE_PREVIEW: Record<SiteLocale, SiteLocalePreview> = {
+  en: {
+    background: 'hsl(214 88% 58%)',
+    border: 'hsl(214 72% 46%)',
+    foreground: 'hsl(0 0% 100%)',
+  },
+  bn: {
+    background: 'hsl(152 58% 44%)',
+    border: 'hsl(152 62% 32%)',
+    foreground: 'hsl(0 0% 100%)',
+  },
+};
+
 const VALID_LOCALES = new Set<SiteLocale>(SITE_LOCALES.map((l) => l.id));
 
 export function isSiteLocale(value: string | null | undefined): value is SiteLocale {

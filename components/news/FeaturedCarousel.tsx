@@ -118,7 +118,7 @@ export function FeaturedCarousel({
             key={idx}
             onClick={() => goTo(idx)}
             role="tab"
-            className="flex flex-1 items-center py-2"
+            className="featured-hero__progress-tab flex flex-1 items-center py-0"
             aria-label={`Story ${idx + 1}: ${item.title}`}
             aria-selected={isActive}
           >
@@ -153,55 +153,13 @@ export function FeaturedCarousel({
               }`}
             >
               <div className="featured-hero__content min-w-0">
-                <div className="featured-hero__meta flex items-center justify-between gap-x-3 overflow-hidden">
-                  <div className="flex min-w-0 flex-1 items-center gap-2 overflow-hidden">
-                    <CategoryLabel
-                      name={currentItem.category}
-                      className="featured-hero__category text-[10px] font-semibold uppercase tracking-wider text-muted-foreground shrink-0"
-                    />
-                    {currentItem.isFeatured ? <ArticlePlacementBadge type="featured" /> : null}
-                    {currentItem.isBreaking ? <ArticlePlacementBadge type="breaking" /> : null}
-                  </div>
-
-                  <div className="relative flex min-h-8 min-w-[9.5rem] flex-1 items-center justify-end sm:flex-none">
-                    <div className="group/transport flex w-full max-w-[11rem] items-center gap-1 opacity-45 transition-opacity duration-150 hover:opacity-100 focus-within:opacity-100 sm:max-w-none">
-                      <div className="flex min-w-0 flex-1 items-center gap-0.5">
-                        <button
-                          onClick={prev}
-                          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground"
-                          aria-label={t('carousel.previous')}
-                        >
-                          <ChevronLeft className="h-3.5 w-3.5" />
-                        </button>
-                        {storyProgress}
-                        <button
-                          onClick={next}
-                          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground"
-                          aria-label={t('carousel.next')}
-                        >
-                          <ChevronRight className="h-3.5 w-3.5" />
-                        </button>
-                      </div>
-                      <span className="shrink-0 font-mono text-[10px] font-medium tabular-nums text-muted-foreground">
-                        {current + 1}/{featured.length}
-                      </span>
-                    </div>
-
-                    <ModernTooltip
-                      label={isPlaying ? t('carousel.pause') : t('carousel.play')}
-                      hint={t('carousel.storiesMarkets')}
-                      side="top"
-                      fast
-                    >
-                      <button
-                        onClick={() => setIsPlaying(!isPlaying)}
-                        className="relative z-10 ml-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-muted-foreground opacity-45 transition-all duration-150 hover:bg-muted/50 hover:text-foreground hover:opacity-100 focus-visible:opacity-100"
-                        aria-label={isPlaying ? t('carousel.pause') : t('carousel.play')}
-                      >
-                        {isPlaying ? <Pause className="h-3 w-3" /> : <Play className="h-3 w-3" />}
-                      </button>
-                    </ModernTooltip>
-                  </div>
+                <div className="featured-hero__meta flex items-center gap-2 overflow-hidden">
+                  <CategoryLabel
+                    name={currentItem.category}
+                    className="featured-hero__category section-category-label text-muted-foreground shrink-0"
+                  />
+                  {currentItem.isFeatured ? <ArticlePlacementBadge type="featured" /> : null}
+                  {currentItem.isBreaking ? <ArticlePlacementBadge type="breaking" /> : null}
                 </div>
 
                 <div className="featured-hero__title-slot">
@@ -223,9 +181,49 @@ export function FeaturedCarousel({
                   </Link>
                 </div>
 
-                <div className="featured-hero__byline text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                  {t('carousel.byAuthor', { author: currentItem.author })} •{' '}
-                  {t('carousel.minRead', { minutes: currentItem.readTime })}
+                <div className="featured-hero__byline flex items-center justify-between gap-3 overflow-hidden">
+                  <p className="featured-hero__byline-text min-w-0 truncate text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                    {t('carousel.byAuthor', { author: currentItem.author })} •{' '}
+                    {t('carousel.minRead', { minutes: currentItem.readTime })}
+                  </p>
+                  <div className="featured-hero__transport flex shrink-0 items-center">
+                    <div className="featured-hero__transport-controls group/transport flex min-w-0 items-center gap-1 opacity-45 transition-opacity duration-150 hover:opacity-100 focus-within:opacity-100">
+                      <button
+                        onClick={prev}
+                        className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground"
+                        aria-label={t('carousel.previous')}
+                      >
+                        <ChevronLeft className="h-3.5 w-3.5" />
+                      </button>
+                      <div className="featured-hero__progress-track flex min-w-[3.5rem] max-w-[5.5rem] flex-1 items-center">
+                        {storyProgress}
+                      </div>
+                      <button
+                        onClick={next}
+                        className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground"
+                        aria-label={t('carousel.next')}
+                      >
+                        <ChevronRight className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                    <span className="featured-hero__counter shrink-0 font-mono font-medium tabular-nums text-muted-foreground">
+                      {current + 1}/{featured.length}
+                    </span>
+                    <ModernTooltip
+                      label={isPlaying ? t('carousel.pause') : t('carousel.play')}
+                      hint={t('carousel.storiesMarkets')}
+                      side="top"
+                      fast
+                    >
+                      <button
+                        onClick={() => setIsPlaying(!isPlaying)}
+                        className="featured-hero__play-btn flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-muted-foreground opacity-45 transition-all duration-150 hover:bg-muted/50 hover:text-foreground hover:opacity-100 focus-visible:opacity-100"
+                        aria-label={isPlaying ? t('carousel.pause') : t('carousel.play')}
+                      >
+                        {isPlaying ? <Pause className="h-3 w-3" /> : <Play className="h-3 w-3" />}
+                      </button>
+                    </ModernTooltip>
+                  </div>
                 </div>
               </div>
 

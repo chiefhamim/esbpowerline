@@ -113,24 +113,48 @@ export function PublicNavbar({
                 }}
               />
             </PublicNavLink>
+            <PublicMarketStrip energyItems={tickerItems} />
           </div>
         </div>
       </div>
 
-      <PublicMarketStrip energyItems={tickerItems} />
-
-      <nav className="public-nav-bar sticky top-0 z-50" aria-label="Primary">
-        <div className="container container--shell public-nav-bar__shell">
+      <nav className="public-nav-bar" aria-label="Primary">
+        <div className="container container--shell public-nav-bar__hub-shell">
         <div className="public-nav-bar__hub-band">
         <div className="public-nav-bar__main">
           <div className="public-nav-bar__start">
-            <PublicNavLink
-              href="/"
-              className={`public-nav-bar__home${pathname === '/' ? ' public-nav-bar__home--active' : ''}`}
-            >
-              <Home className="h-4 w-4 shrink-0" aria-hidden />
-              <span className="public-nav-bar__home-label">{t('nav.home')}</span>
-            </PublicNavLink>
+            <div className="public-nav-bar__pill-cluster public-nav-bar__start-cluster">
+              <div className="public-nav-bar__utilities">
+                <PublicNavLink
+                  href="/"
+                  className={`public-nav-bar__pill-btn public-nav-bar__pill-btn--paired public-nav-bar__home${
+                    pathname === '/' ? ' public-nav-bar__home--active' : ''
+                  }`}
+                >
+                  <Home className="icon-sm" aria-hidden />
+                  <span className="public-nav-bar__pill-label">{t('nav.home')}</span>
+                </PublicNavLink>
+
+                <span className="public-nav-bar__pill-divider" aria-hidden />
+
+                <PublicNavLink
+                  href="/search"
+                  className={`public-nav-bar__pill-btn public-nav-bar__pill-btn--paired public-nav-bar__search-pill public-nav-bar__utility-btn${
+                    pathname === '/search' ? ' public-nav-bar__utility-btn--active' : ''
+                  }`}
+                  aria-label={t('nav.search')}
+                >
+                  <Search className="icon-sm opacity-85" strokeWidth={2} aria-hidden />
+                  <span className="public-nav-bar__pill-label public-nav-bar__pill-label--search">
+                    {t('nav.search')}
+                  </span>
+                </PublicNavLink>
+
+                <span className="public-nav-bar__pill-divider hidden sm:block" aria-hidden />
+
+                <LocaleToggle className="public-nav-bar__locale" />
+              </div>
+            </div>
           </div>
 
           <div className="public-nav-bar__center hidden md:flex">
@@ -141,7 +165,7 @@ export function PublicNavbar({
                   pathname === '/articles' ? ' public-nav-bar__hub-link--active' : ''
                 }`}
               >
-                <Newspaper className="h-3.5 w-3.5 shrink-0" aria-hidden />
+                <Newspaper className="icon-sm" aria-hidden />
                 <span>{t('nav.latest')}</span>
               </PublicNavLink>
 
@@ -151,7 +175,7 @@ export function PublicNavbar({
                   pathname.includes('/power-grid') ? ' public-nav-bar__hub-link--active' : ''
                 }`}
               >
-                <BarChart3 className="h-3.5 w-3.5 shrink-0" aria-hidden />
+                <BarChart3 className="icon-sm" aria-hidden />
                 <span>{t('nav.gridExplorer')}</span>
               </PublicNavLink>
 
@@ -161,30 +185,21 @@ export function PublicNavbar({
                   pathname === '/magazine' ? ' public-nav-bar__hub-link--active' : ''
                 }`}
               >
-                <BookOpen className="h-3.5 w-3.5 shrink-0" aria-hidden />
+                <BookOpen className="icon-sm" aria-hidden />
                 <span>{t('nav.magazine')}</span>
               </PublicNavLink>
             </div>
           </div>
 
           <div className="public-nav-bar__end">
-            <div className="public-nav-bar__utilities">
-              <PublicNavLink
-                href="/search"
-                className="public-nav-bar__utility-btn"
-                aria-label={t('nav.search')}
-              >
-                <Search className="h-3.5 w-3.5 shrink-0 opacity-80" strokeWidth={2} aria-hidden />
-                <span className="public-nav-bar__utility-label">{t('nav.search')}</span>
-              </PublicNavLink>
+            <div className="public-nav-bar__pill-cluster public-nav-bar__utility-cluster">
+              <div className="public-nav-bar__utilities">
+                <MemberAuthButton />
 
-              <MemberAuthButton />
+                <span className="public-nav-bar__pill-divider hidden sm:block" aria-hidden />
 
-              <span className="public-nav-bar__utility-divider hidden sm:block" aria-hidden />
-
-              <LocaleToggle className="public-nav-bar__locale" />
-
-              <SiteThemeToggle className="public-nav-bar__themes" />
+                <SiteThemeToggle className="public-nav-bar__themes" />
+              </div>
 
               <button
                 type="button"
@@ -192,14 +207,15 @@ export function PublicNavbar({
                 className="public-nav-bar__menu-btn md:hidden"
                 aria-label="Toggle menu"
               >
-                {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+                {mobileOpen ? <X className="icon-md" /> : <Menu className="icon-md" />}
               </button>
             </div>
           </div>
         </div>
         </div>
+        </div>
 
-        <div className="public-nav-bar__categories hidden md:block">
+        <div className="container container--shell public-nav-bar__categories-shell public-nav-bar__categories hidden md:block">
           <div
             className="category-nav-ribbon category-nav-ribbon--desktop grid divide-x divide-border/40"
             style={{ gridTemplateColumns: `repeat(${navCategories.length}, minmax(0, 1fr))` }}
@@ -214,7 +230,7 @@ export function PublicNavbar({
                   key={c.slug}
                   href={href}
                   style={categoryColorVars(c.color)}
-                  className={`category-nav-cell group relative flex flex-col items-center justify-center py-2.5 px-1 text-center transition-all duration-200 select-none w-full overflow-hidden ${
+                  className={`category-nav-cell group relative transition-all duration-200 select-none w-full overflow-hidden ${
                     isActive
                       ? `${colors.activeBg} font-semibold text-foreground`
                       : `${colors.hoverBg} font-medium text-muted-foreground/85 hover:text-foreground`
@@ -227,18 +243,20 @@ export function PublicNavbar({
                     style={colors.useCustom ? categoryUnderlineStyle(c.color) : undefined}
                     aria-hidden
                   />
-                  <CategoryIconDisplay
-                    icon={c.icon}
-                    iconImageUrl={c.iconImageUrl}
-                    name={c.name}
-                    size={14}
-                    className={`relative z-[1] h-3.5 w-3.5 mb-1 transition-transform duration-200 group-hover:scale-110 ${
-                      colors.useCustom ? 'category-nav--custom' : colors.text
-                    }`}
-                    style={colors.useCustom ? categoryTextStyle(c.color) : undefined}
-                  />
-                  <span className="category-nav-label relative z-[1] text-[11px] md:text-xs tracking-tight leading-snug font-sans">
-                    {c.name}
+                  <span className="category-nav-cell__stack">
+                    <CategoryIconDisplay
+                      icon={c.icon}
+                      iconImageUrl={c.iconImageUrl}
+                      name={c.name}
+                      size={14}
+                      className={`relative z-[1] h-3.5 w-3.5 shrink-0 transition-transform duration-200 group-hover:scale-110 ${
+                        colors.useCustom ? 'category-nav--custom' : colors.text
+                      }`}
+                      style={colors.useCustom ? categoryTextStyle(c.color) : undefined}
+                    />
+                    <span className="category-nav-label relative z-[1] font-sans">
+                      {c.name}
+                    </span>
                   </span>
                 </PublicNavLink>
               );
@@ -246,7 +264,7 @@ export function PublicNavbar({
           </div>
         </div>
 
-        <div className="public-nav-bar__categories md:hidden">
+        <div className="container container--shell public-nav-bar__categories-shell public-nav-bar__categories md:hidden">
           <div className="category-nav-ribbon category-nav-ribbon--mobile category-nav-ribbon--mobile-grid">
               {navCategories.map((c) => {
                 const href = `/categories/${c.slug}`;
@@ -258,29 +276,31 @@ export function PublicNavbar({
                     key={c.slug}
                     href={href}
                     style={categoryColorVars(c.color)}
-                    className={`category-nav-cell group relative flex items-center justify-center gap-1.5 px-1 py-2 text-[10px] font-semibold uppercase tracking-wider transition-all duration-200 select-none min-w-0 ${
+                    className={`category-nav-cell group relative font-semibold transition-all duration-200 select-none min-w-0 ${
                       isActive
                         ? `${colors.activeBg} ${colors.useCustom ? 'category-nav--custom' : colors.text}`
                         : `${colors.hoverBg} text-muted-foreground hover:text-foreground`
                     }`}
                   >
-                    <CategoryIconDisplay
-                      icon={c.icon}
-                      iconImageUrl={c.iconImageUrl}
-                      name={c.name}
-                      size={12}
-                      className={`relative z-[1] h-3 w-3 shrink-0 transition-transform duration-200 ${
-                        isActive
-                          ? 'scale-110'
-                          : 'opacity-70 group-hover:opacity-100 group-hover:scale-110'
-                      } ${colors.useCustom ? 'category-nav--custom' : ''}`}
-                      style={colors.useCustom ? categoryTextStyle(c.color) : undefined}
-                    />
-                    <span
-                      className="category-nav-label category-nav-label--mobile relative z-[1]"
-                      style={colors.useCustom && isActive ? categoryTextStyle(c.color) : undefined}
-                    >
-                      {c.name}
+                    <span className="category-nav-cell__inline">
+                      <CategoryIconDisplay
+                        icon={c.icon}
+                        iconImageUrl={c.iconImageUrl}
+                        name={c.name}
+                        size={12}
+                        className={`relative z-[1] h-3 w-3 shrink-0 transition-transform duration-200 ${
+                          isActive
+                            ? 'scale-110'
+                            : 'opacity-70 group-hover:opacity-100 group-hover:scale-110'
+                        } ${colors.useCustom ? 'category-nav--custom' : ''}`}
+                        style={colors.useCustom ? categoryTextStyle(c.color) : undefined}
+                      />
+                      <span
+                        className="category-nav-label category-nav-label--mobile relative z-[1]"
+                        style={colors.useCustom && isActive ? categoryTextStyle(c.color) : undefined}
+                      >
+                        {c.name}
+                      </span>
                     </span>
                     <span
                       className={`absolute bottom-0 left-0 z-[2] h-[2px] w-full transition-transform duration-200 origin-left ${
@@ -293,7 +313,6 @@ export function PublicNavbar({
                 );
               })}
           </div>
-        </div>
         </div>
 
         {mobileOpen && (

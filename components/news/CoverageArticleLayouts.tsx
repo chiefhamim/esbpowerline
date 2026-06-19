@@ -26,7 +26,7 @@ function MetaRow({ article }: { article: PublicArticleCard }) {
 
 function CategoryPill({ category }: { category: string }) {
   return (
-    <span className="category-pill text-[10px] font-medium tracking-wide">{category}</span>
+    <span className="category-pill">{category}</span>
   );
 }
 
@@ -162,7 +162,7 @@ function EditorialLayout({ article }: { article: PublicArticleCard }) {
   return (
     <Link href={`/articles/${article.slug}`} className="coverage-card coverage-card--editorial group flex h-full gap-3 border-l-4 border-primary p-4 pl-5">
       <div className="min-w-0 flex-1">
-        <p className="text-[10px] font-semibold uppercase tracking-widest text-primary/80">{article.category}</p>
+        <p className="section-category-label text-primary/80">{article.category}</p>
         <h3 className="mt-2 font-semibold leading-snug line-clamp-4 group-hover:text-primary transition-colors">{article.title}</h3>
         {article.excerpt && <p className="mt-2 text-[13px] italic leading-relaxed text-muted-foreground line-clamp-3">{article.excerpt}</p>}
         <MetaRow article={article} />

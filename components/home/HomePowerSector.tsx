@@ -24,7 +24,7 @@ export function HomePowerSector({
     <section className="home-block" aria-labelledby="home-power-sector-title">
       <div className="home-section-head flex flex-col sm:flex-row sm:items-end sm:justify-between gap-2">
         <div>
-          <div className="uppercase tracking-[2.5px] text-[10px] text-primary/80 font-bold mb-1.5">
+          <div className="section-kicker text-primary/80 mb-1.5">
             {t('coverage.allCoverage').toUpperCase()}
           </div>
           <div className="flex items-center gap-2">

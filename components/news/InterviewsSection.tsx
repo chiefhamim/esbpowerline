@@ -117,7 +117,7 @@ export function InterviewsSection({
         )}
       >
         <div className="min-w-0">
-          <div className="uppercase tracking-[2.5px] text-[10px] text-emerald-500 dark:text-emerald-400 font-bold mb-1.5">
+          <div className="section-kicker text-emerald-500 dark:text-emerald-400 mb-1.5">
             {t('interviews.kicker').toUpperCase()}
           </div>
           <div className="flex items-center gap-2">
@@ -135,7 +135,7 @@ export function InterviewsSection({
         </a>
       </div>
 
-      <div className="home-editorial__interview-grid grid gap-3 md:gap-3.5">
+      <div className="home-editorial__interview-grid grid">
         {interviewsList.map((iv) => (
           <button
             key={iv.id}
@@ -161,12 +161,12 @@ export function InterviewsSection({
               </h4>
               <p className="mt-2 flex-1 text-xs text-muted-foreground line-clamp-2">{iv.excerpt}</p>
               <div className="mt-3 flex items-center justify-between gap-3">
-                <div className="min-w-0 text-[10px] text-muted-foreground flex items-center gap-1">
+                <div className="min-w-0 text-ui-2xs text-muted-foreground flex items-center gap-1">
                   <User className="h-3 w-3 shrink-0" />
                   <span className="truncate">{iv.role}</span>
                 </div>
                 <div className="flex shrink-0 items-center gap-1.5" aria-hidden>
-                  <span className="inline-flex items-center gap-1 text-[10px] font-medium text-muted-foreground">
+                  <span className="inline-flex items-center gap-1 text-ui-2xs font-medium text-muted-foreground">
                     <Clock className="h-3 w-3" />
                     {iv.duration}
                   </span>

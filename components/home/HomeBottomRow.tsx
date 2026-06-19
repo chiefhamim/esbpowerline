@@ -40,7 +40,7 @@ export function HomeBottomRow({
       <div>
         <div className="flex items-center gap-2 text-emerald-500 dark:text-emerald-400 mb-2.5">
           <BookOpen className="h-4 w-4" />
-          <span className="uppercase tracking-[2px] text-[10px] font-bold">{t('home.monthlyMagazine')}</span>
+          <span className="section-kicker">{t('home.monthlyMagazine')}</span>
         </div>
         <div className={`flex gap-3.5 items-start ${isStack ? 'flex-col sm:flex-row' : ''}`}>
           <div className="w-16 sm:w-[4.5rem] shrink-0 relative group/cover">
@@ -74,7 +74,7 @@ export function HomeBottomRow({
   const memberCard = (
     <div className="card home-bottom-row__card bg-card">
       <div>
-        <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-[2px] text-muted-foreground font-bold mb-2.5">
+        <div className="section-kicker flex items-center gap-1.5 text-muted-foreground mb-2.5">
           <Briefcase className="h-4 w-4 text-primary" />
           {cta.label}
         </div>

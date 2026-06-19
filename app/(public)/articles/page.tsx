@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { Search } from 'lucide-react';
 import { ArticleCard } from '@/components/news/ArticleCard';
 import { HomeTrendingSection } from '@/components/home/HomeTrendingSection';
 import { getPublicCategories, getPublishedArticlesForPublic, getTrendingPublishedArticles } from '@/lib/category-content';
@@ -57,15 +58,16 @@ export default async function ArticlesPage({ searchParams }: ArticlesPageProps) 
     <div className="container container--shell articles-page py-8 md:py-10">
       <header className="articles-page__header flex flex-col md:flex-row md:items-end md:justify-between gap-4 mb-6 md:mb-8">
         <div>
-          <div className="articles-page__kicker section-kicker text-[10px] text-rose-600/80 dark:text-rose-400/90 font-bold mb-1.5">
+          <div className="articles-page__kicker section-kicker text-rose-600/80 dark:text-rose-400/90 mb-1.5">
             {t('nav.latestNews')}
           </div>
           <h1 className="text-3xl md:text-4xl font-display font-bold tracking-tight">{t('articles.title')}</h1>
           <p className="text-muted-foreground mt-2 text-sm md:text-base">{t('articles.subtitle')}</p>
         </div>
-        <div className="flex items-center gap-3 text-sm shrink-0">
-          <Link href="/search" className="btn btn-secondary px-4 py-2">
-            {t('articles.advancedSearch')}
+        <div className="articles-page__toolbar shrink-0">
+          <Link href="/search" className="articles-page__toolbar-btn">
+            <Search className="articles-page__toolbar-icon" strokeWidth={2} aria-hidden />
+            <span>{t('articles.advancedSearch')}</span>
           </Link>
           <SortSelect currentSort={sort} />
         </div>

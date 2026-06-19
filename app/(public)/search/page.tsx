@@ -14,9 +14,11 @@ export default async function SearchPage() {
   const articles = await getPublishedArticlesForPublic(120);
 
   return (
-    <div className="container py-10">
-      <h1 className="text-4xl font-display font-bold tracking-tight">{t('search.title')}</h1>
-      <p className="text-muted-foreground mb-6">{t('search.subtitle')}</p>
+    <div className="container container--shell search-page py-8 md:py-10">
+      <header className="search-page__header mb-6 md:mb-8">
+        <h1 className="text-3xl md:text-4xl font-display font-bold tracking-tight">{t('search.title')}</h1>
+        <p className="text-muted-foreground mt-2 text-sm md:text-base">{t('search.subtitle')}</p>
+      </header>
       <SearchResults articles={articles} />
     </div>
   );

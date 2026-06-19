@@ -16,7 +16,7 @@ export function PublicMarketStrip({ energyItems }: { energyItems?: TickerItem[] 
 
   return (
     <div className="public-market-strip w-full">
-      <div className="container container--shell">
+      <div className="public-market-strip__surface">
         <div className="public-market-strip__grid">
           <div className="public-market-strip__lane public-market-strip__lane--energy">
             <LiveMarketTicker

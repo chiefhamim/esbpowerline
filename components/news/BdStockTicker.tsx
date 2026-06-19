@@ -61,17 +61,19 @@ export function BdStockTicker({
         className,
       )}
     >
-      <div
-        className={cn(
-          'flex shrink-0 items-center gap-1.5 text-muted-foreground',
-          labelClassName ?? 'border-r border-border/60 pr-3',
-        )}
-      >
-        <span className="h-1.5 w-1.5 shrink-0 animate-pulse rounded-full bg-sky-500" aria-hidden />
-        <span className={cn(!labelClassName && 'font-semibold uppercase tracking-[0.1em] text-[10px] md:text-[11px]')}>
-          {t('ticker.dseLive')}
-        </span>
-      </div>
+      {labelClassName ? (
+        <div className={cn('shrink-0', labelClassName)}>
+          <span className="market-ticker-label__dot market-ticker-label__dot--dse" aria-hidden />
+          <span className="market-ticker-label__text">{t('ticker.dseLive')}</span>
+        </div>
+      ) : (
+        <div className="flex shrink-0 items-center gap-1.5 border-r border-border/60 pr-3 text-muted-foreground">
+          <span className="h-1.5 w-1.5 shrink-0 animate-pulse rounded-full bg-sky-500" aria-hidden />
+          <span className="text-[10px] font-semibold uppercase tracking-[0.1em] md:text-[11px]">
+            {t('ticker.dseLive')}
+          </span>
+        </div>
+      )}
       <div className="market-ticker__viewport mask-fade ml-2 md:ml-3">
         <div
           className="market-ticker__track flex w-max items-center gap-7 whitespace-nowrap animate-[marquee_38s_linear_infinite]"

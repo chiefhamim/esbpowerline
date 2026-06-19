@@ -115,7 +115,7 @@ export function SiteThemeToggle({ className = '' }: SiteThemeToggleProps) {
               >
                 <Icon
                   className={cn(
-                    'h-4 w-4 transition-colors',
+                    'icon-sm transition-colors',
                     isActive ? 'text-primary' : iconClass,
                   )}
                   strokeWidth={isActive ? 2.5 : 2}

@@ -128,11 +128,24 @@ export function LiveMarketTicker({
     </div>
   );
 
-  const label = (
+  const label = labelClassName ? (
+    <div className={cn('shrink-0', labelClassName)}>
+      <span
+        className={cn(
+          'market-ticker-label__dot',
+          simulateLive ? 'market-ticker-label__dot--live' : 'market-ticker-label__dot--muted',
+        )}
+        aria-hidden
+      />
+      <span className="market-ticker-label__text">
+        {simulateLive ? t('ticker.energyMarkets') : t('ticker.indicative')}
+      </span>
+    </div>
+  ) : (
     <div
       className={cn(
         'flex shrink-0 items-center gap-1.5 text-muted-foreground',
-        labelClassName ?? (compact ? 'pr-2.5' : 'border-r border-border/60 pr-3'),
+        compact ? 'pr-2.5' : 'border-r border-border/60 pr-3',
       )}
     >
       <span
@@ -142,7 +155,7 @@ export function LiveMarketTicker({
         )}
         aria-hidden
       />
-      <span className={cn(!labelClassName && 'font-semibold uppercase tracking-[0.1em]', labelSize)}>
+      <span className={cn('font-semibold uppercase tracking-[0.1em]', labelSize)}>
         {simulateLive ? t('ticker.energyMarkets') : t('ticker.indicative')}
       </span>
     </div>

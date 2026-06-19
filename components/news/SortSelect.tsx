@@ -37,19 +37,29 @@ export function SortSelect({ currentSort }: { currentSort: string }) {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const activeLabel = currentSort === 'views' ? t('sort.mostViewed') : t('sort.latest');
+  const activeLabel =
+    currentSort === 'views' ? t('sort.mostViewedShort') : t('sort.latestShort');
+  const activeLabelFull =
+    currentSort === 'views' ? t('sort.mostViewed') : t('sort.latest');
 
   return (
-    <div className="relative inline-block text-left" ref={containerRef}>
+    <div className="sort-select relative w-full text-left" ref={containerRef}>
       <button
+        type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-2 px-4 py-2 rounded-xl border border-border/80 bg-card/65 backdrop-blur-md text-sm font-semibold text-foreground hover:bg-muted/30 transition shadow-sm select-none"
+        className="articles-page__toolbar-btn sort-select__trigger w-full"
         aria-haspopup="true"
         aria-expanded={isOpen}
+        aria-label={`${t('sort.label')}: ${activeLabelFull}`}
       >
-        <SlidersHorizontal className="h-3.5 w-3.5 text-muted-foreground" />
-        <span>{t('sort.label')}: {activeLabel}</span>
-        <ChevronDown className={`h-3.5 w-3.5 text-muted-foreground transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
+        <span className="sort-select__trigger-core">
+          <SlidersHorizontal className="articles-page__toolbar-icon" aria-hidden />
+          <span className="sort-select__trigger-label">{activeLabel}</span>
+        </span>
+        <ChevronDown
+          className={`articles-page__toolbar-icon articles-page__toolbar-icon--chevron${isOpen ? ' articles-page__toolbar-icon--chevron-open' : ''}`}
+          aria-hidden
+        />
       </button>
 
       {isOpen && (
