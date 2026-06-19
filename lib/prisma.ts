@@ -1,59 +1,19 @@
 import 'server-only';
 import 'dotenv/config';
-import path from 'path';
 import { PrismaClient, type Prisma } from '@prisma/client';
+import {
+  assertDatabaseUrlMatchesSchema,
+  isSqliteUrl,
+  resolveDatabaseUrl,
+  resolvePrismaSchemaProvider,
+} from './prisma-database';
 
 const globalForPrisma = globalThis as unknown as { prisma: PrismaClient | undefined };
 
-function resolveDatabaseUrl() {
-  const raw = process.env.DATABASE_URL?.trim() || 'file:./dev.db';
-  if (raw.startsWith('file:')) {
-    const filePath = raw.replace(/^file:/, '');
-    const absolute = path.isAbsolute(filePath)
-      ? filePath
-      : path.join(process.cwd(), filePath);
-    return `file:${absolute}`;
-  }
-  return raw;
-}
-
-function isSqliteUrl(url: string) {
-  return url.startsWith('file:');
-}
-
-function isPostgresUrl(url: string) {
-  return url.startsWith('postgresql://') || url.startsWith('postgres://');
-}
-
-/** Must match `provider` in prisma/schema.prisma at last `prisma generate` */
-const PRISMA_SCHEMA_PROVIDER = (process.env.PRISMA_SCHEMA_PROVIDER ?? 'sqlite') as 'sqlite' | 'postgresql';
-
-function assertDatabaseUrlMatchesSchema(databaseUrl: string) {
-  const urlIsSqlite = isSqliteUrl(databaseUrl);
-  const urlIsPostgres = isPostgresUrl(databaseUrl);
-
-  if (PRISMA_SCHEMA_PROVIDER === 'sqlite' && !urlIsSqlite) {
-    throw new Error(
-      'Prisma schema provider is sqlite but DATABASE_URL is not a file: URL. ' +
-        'For local dev use DATABASE_URL="file:./dev.db", or set PRISMA_SCHEMA_PROVIDER=postgresql and use a postgresql:// URL.',
-    );
-  }
-
-  if (PRISMA_SCHEMA_PROVIDER === 'postgresql' && !urlIsPostgres) {
-    throw new Error(
-      'Prisma schema provider is postgresql but DATABASE_URL is not a postgresql:// URL. ' +
-        'Set DATABASE_URL to your Supabase pooler URL (see .env.example), then run `npx prisma generate`.',
-    );
-  }
-
-  if (!urlIsSqlite && !urlIsPostgres) {
-    throw new Error(`Unsupported DATABASE_URL scheme: ${databaseUrl.split(':')[0]}:`);
-  }
-}
-
 function createPrismaClient() {
   const databaseUrl = resolveDatabaseUrl();
-  assertDatabaseUrlMatchesSchema(databaseUrl);
+  const provider = resolvePrismaSchemaProvider(databaseUrl);
+  assertDatabaseUrlMatchesSchema(databaseUrl, provider);
   const log: Prisma.LogLevel[] =
     process.env.NODE_ENV === 'development' ? ['warn', 'error'] : ['error'];
 
