@@ -12,17 +12,23 @@
     "dev:admin": "cross-env APP_SURFACE=admin next dev --webpack -p 3002",
     "dev:warmup": "node scripts/dev-warmup.mjs",
     "dev:all": "concurrently -n public,cms,admin,warmup -c blue,green,magenta,yellow --restart-tries 5 --restart-after 3000 \"npm:dev:public\" \"npm:dev:cms\" \"npm:dev:admin\" \"npm:dev:warmup\"",
-    "build": "prisma generate && next build",
-    "build:vercel": "prisma generate && next build",
+    "build": "node scripts/sync-prisma-provider.mjs && prisma generate && next build",
+    "build:vercel": "cross-env PRISMA_SCHEMA_PROVIDER=postgresql node scripts/sync-prisma-provider.mjs && prisma generate && cross-env PRISMA_SCHEMA_PROVIDER=postgresql PRISMA_MIGRATIONS_DIR=prisma/migrations_postgresql prisma migrate deploy && next build",
     "db:deploy": "prisma migrate deploy",
+    "db:deploy:prod": "cross-env PRISMA_SCHEMA_PROVIDER=postgresql node scripts/sync-prisma-provider.mjs && cross-env PRISMA_SCHEMA_PROVIDER=postgresql PRISMA_MIGRATIONS_DIR=prisma/migrations_postgresql prisma migrate deploy",
     "start": "next start",
     "lint": "next lint",
-    "db:generate": "prisma generate",
+    "db:generate": "node scripts/sync-prisma-provider.mjs && prisma generate",
     "db:migrate": "prisma migrate dev",
+    "db:push": "prisma db push",
     "db:seed": "tsx prisma/seed.ts",
+    "db:seed:prod": "tsx prisma/seed-production.ts",
     "supabase:seed-staff": "tsx scripts/seed-supabase-staff.ts",
     "db:reset": "prisma migrate reset --force",
-    "db:studio": "prisma studio"
+    "db:studio": "prisma studio",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:qa": "vitest run lib/test/role-isolation.test.ts lib/test/article-submit.test.ts lib/test/staff-accounts.test.ts lib/test/env-auth.test.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.4.0",
@@ -82,7 +88,8 @@
     "postcss": "^8.4.49",
     "tailwindcss": "^3.4.17",
     "tsx": "^4.19.4",
-    "typescript": "^5.8.3"
+    "typescript": "^5.8.3",
+    "vitest": "^3.2.4"
   },
   "allowScripts": {
     "@prisma/engines@7.8.0": true,

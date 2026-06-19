@@ -21,7 +21,7 @@ export default async function PowerGridExplorerPage() {
         <div>
           <div className="uppercase tracking-[2.5px] text-[10px] text-primary font-bold mb-1.5">INTERACTIVE DATA • POWER SECTOR</div>
           <h1 className="h1 font-display font-bold text-3xl md:text-4xl tracking-tight">Power Grid Explorer</h1>
-          <p className="text-muted-foreground mt-2 max-w-lg leading-relaxed text-sm">Real-time and planning data for Bangladesh’s electricity system — generation, transmission, demand &amp; projects.</p>
+          <p className="text-muted-foreground mt-2 max-w-lg leading-relaxed text-sm">Planning and indicative data for Bangladesh’s electricity system — generation, transmission, demand &amp; projects. Configure values in admin settings.</p>
         </div>
         <div className="flex items-center gap-2 text-xs">
           <button className="btn btn-secondary flex items-center gap-1.5 text-xs px-3.5 py-2 hover:bg-secondary transition-colors">
@@ -38,7 +38,7 @@ export default async function PowerGridExplorerPage() {
       />
 
       <div className="mt-10 pt-6 border-t border-border/60 text-[11px] text-muted-foreground flex flex-wrap gap-x-5 gap-y-1.5 leading-relaxed">
-        Sources: BPDB, PGCB, SREDA, BERC, Petrobangla. Data shown is illustrative for demonstration. Real-time feeds available to members.
+        Sources: BPDB, PGCB, SREDA, BERC, Petrobangla. Figures are indicative and editor-managed unless noted. Member downloads are logged for reference.
       </div>
     </div>
   );

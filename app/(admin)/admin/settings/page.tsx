@@ -1,6 +1,7 @@
 import { AdminPageHeader, AdminSectionStack } from '@/components/admin/AdminUI';
 import { AdminForbidden } from '@/components/admin/AdminForbidden';
 import { SettingsForm } from '@/components/admin/SettingsForm';
+import { AdminAccountSecurity } from '@/components/admin/AdminAccountSecurity';
 import { getSettings } from '@/lib/actions/settings';
 import { getPublishedArticlePickerList } from '@/lib/coverage-content';
 import { auth } from '@/lib/auth';
@@ -24,6 +25,7 @@ export default async function AdminSettingsPage() {
         title="Settings"
         description="Site configuration, SEO defaults, homepage hero, and All Coverage mosaic."
       />
+      <AdminAccountSecurity email={session.user.email} />
       <SettingsForm settings={settings} articlePickerList={articlePickerList} />
     </AdminSectionStack>
   );

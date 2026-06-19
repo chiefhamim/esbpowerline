@@ -8,12 +8,15 @@ import {
   getPublishedArticleBySlug,
   getRelatedPublishedArticles,
 } from '@/lib/category-content';
+import { incrementArticleView } from '@/lib/actions/articles';
 import { auth } from '@/lib/auth';
 import { can, type Role } from '@/lib/constants';
 import { getArticleComments, getArticleSavedState } from '@/lib/actions/members';
 import { SaveArticleButton } from '@/components/members/SaveArticleButton';
 import { ArticleCommentSection } from '@/components/members/ArticleCommentSection';
 import { ArticleAuthorSticky } from '@/components/shared/ArticleAuthorSticky';
+import { NoImage } from '@/components/shared/NoImage';
+import { hasArticleImage } from '@/lib/article-image';
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
@@ -35,6 +38,8 @@ export default async function ArticlePage({ params }: { params: Promise<{ slug: 
   const { slug } = await params;
   const article = await getPublishedArticleBySlug(slug);
   if (!article) notFound();
+
+  await incrementArticleView(article.id);
 
   const [related, session, comments, saved] = await Promise.all([
     getRelatedPublishedArticles(slug, article.category, article.tags, 3),
@@ -93,14 +98,18 @@ export default async function ArticlePage({ params }: { params: Promise<{ slug: 
 
       <figure className="mt-6">
         <div className="rounded-xl w-full aspect-video border border-border overflow-hidden bg-muted/40 flex items-center justify-center relative">
-          <Image
-            src={article.imageUrl}
-            alt={article.heroImage?.alt ?? article.title}
-            fill
-            priority
-            style={heroImageStyle(article.heroImage)}
-            sizes="(max-width: 768px) 100vw, 800px"
-          />
+          {hasArticleImage(article.imageUrl) ? (
+            <Image
+              src={article.imageUrl}
+              alt={article.heroImage?.alt ?? article.title}
+              fill
+              priority
+              style={heroImageStyle(article.heroImage)}
+              sizes="(max-width: 768px) 100vw, 800px"
+            />
+          ) : (
+            <NoImage className="absolute inset-0 h-full w-full" />
+          )}
         </div>
         {article.heroImage?.caption && (
           <figcaption className="mt-2 text-center text-sm text-muted-foreground italic">{article.heroImage.caption}</figcaption>

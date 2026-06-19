@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import Script from 'next/script';
 import { Inter, Space_Grotesk, JetBrains_Mono } from 'next/font/google';
 import './globals.css';
 import { Toaster } from 'sonner';
@@ -55,13 +56,17 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     >
       <head>
         <style dangerouslySetInnerHTML={{ __html: SITE_THEME_CRITICAL_CSS }} />
-        <script dangerouslySetInnerHTML={{ __html: SITE_THEME_INIT_SCRIPT }} />
       </head>
       <body
         suppressHydrationWarning
         className={`${inter.variable} ${spaceGrotesk.variable} ${jetbrainsMono.variable} min-h-screen bg-background text-foreground antialiased font-sans`}
         style={{ backgroundColor: paint.background, color: paint.foreground }}
       >
+        <Script
+          id="site-theme-init"
+          strategy="beforeInteractive"
+          dangerouslySetInnerHTML={{ __html: SITE_THEME_INIT_SCRIPT }}
+        />
         <Providers>
           {children}
           <Toaster position="top-center" richColors closeButton />

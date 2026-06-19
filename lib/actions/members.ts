@@ -13,10 +13,26 @@ async function requireUserId() {
   if (!memberSession) {
     throw new Error('Sign in required');
   }
+
+  const userId = await resolvePrismaUserId(memberSession.user.id, memberSession.user.email);
+
   return {
-    userId: memberSession.user.id,
-    session: { user: memberSession.user },
+    userId,
+    session: { user: { ...memberSession.user, id: userId } },
   };
+}
+
+async function resolvePrismaUserId(userId: string, email: string) {
+  const user = await prisma.user.findFirst({
+    where: {
+      OR: [{ id: userId }, { email: email.toLowerCase() }, { supabaseUserId: userId }],
+    },
+    select: { id: true, status: true },
+  });
+  if (!user || user.status === 'SUSPENDED' || user.status === 'PENDING') {
+    throw new Error('Sign in required');
+  }
+  return user.id;
 }
 
 async function requireCommentAuthor() {
@@ -30,8 +46,10 @@ async function requireCommentAuthor() {
     throw new Error('Sign in required');
   }
 
+  const userId = await resolvePrismaUserId(session.user.id, session.user.email);
+
   return {
-    userId: session.user.id,
+    userId,
     session,
     role,
     autoApprove: can(role, 'comment.moderate_any'),
@@ -128,10 +146,12 @@ export async function getArticleSavedState(articleId: string): Promise<boolean> 
   const memberSession = await getMemberSession();
   if (!memberSession) return false;
 
+  const userId = await resolvePrismaUserId(memberSession.user.id, memberSession.user.email);
+
   const item = await prisma.savedItem.findUnique({
     where: {
       userId_itemType_targetId: {
-        userId: memberSession.user.id,
+        userId,
         itemType: 'ARTICLE',
         targetId: articleId,
       },
@@ -144,10 +164,12 @@ export async function getMagazineSavedState(magazineId: string): Promise<boolean
   const memberSession = await getMemberSession();
   if (!memberSession) return false;
 
+  const userId = await resolvePrismaUserId(memberSession.user.id, memberSession.user.email);
+
   const item = await prisma.savedItem.findUnique({
     where: {
       userId_itemType_targetId: {
-        userId: memberSession.user.id,
+        userId,
         itemType: 'MAGAZINE',
         targetId: magazineId,
       },
@@ -200,7 +222,7 @@ export async function getMemberSavedArticles(userId: string): Promise<PublicArti
       date: (a.publishedAt ?? a.createdAt).toISOString(),
       readTime: a.readTime,
       views: a.views,
-      imageUrl: a.imageUrl ?? '/images/download (10).jfif',
+      imageUrl: a.imageUrl?.trim() ?? '',
     }));
 }
 

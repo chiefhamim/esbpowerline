@@ -53,9 +53,6 @@ export function SettingsForm({ settings, articlePickerList = [] }: SettingsFormP
   const professionalsDefault = HOMEPAGE_DEFAULTS.professionalsCta;
   const professionals = (homepage.professionalsCta as typeof professionalsDefault) ?? professionalsDefault;
 
-  const [carouselMode, setCarouselMode] = useState<'demo' | 'managed'>(
-    homepage.carouselMode === 'managed' ? 'managed' : 'demo'
-  );
   const [marketPulse, setMarketPulse] = useState(
     (homepage.marketPulse as string) ?? HOMEPAGE_DEFAULTS.marketPulse
   );
@@ -188,7 +185,7 @@ export function SettingsForm({ settings, articlePickerList = [] }: SettingsFormP
         heroTitle,
         heroSubtitle,
         heroImage,
-        carouselMode,
+
         marketPulse,
         snapshotLabel,
         professionals: {
@@ -215,7 +212,7 @@ export function SettingsForm({ settings, articlePickerList = [] }: SettingsFormP
       heroTitle,
       heroSubtitle,
       heroImage,
-      carouselMode,
+
       marketPulse,
       snapshotLabel,
       ctaLabel,
@@ -256,7 +253,6 @@ export function SettingsForm({ settings, articlePickerList = [] }: SettingsFormP
     setHeroTitle,
     setHeroSubtitle,
     setHeroImage,
-    setCarouselMode,
     setMarketPulse,
     setSnapshotLabel,
     setCtaLabel,
@@ -398,15 +394,10 @@ export function SettingsForm({ settings, articlePickerList = [] }: SettingsFormP
               <h2 className="font-semibold flex items-center gap-2"><Globe className="h-4.5 w-4.5 text-primary" /> Homepage Controls</h2>
               <div className="grid md:grid-cols-2 gap-4">
                 <div>
-                  <Label>Carousel mode</Label>
-                  <select
-                    value={carouselMode}
-                    onChange={(e) => setCarouselMode(e.target.value as 'demo' | 'managed')}
-                    className="mt-1 w-full border border-input rounded-xl h-9 px-3 text-sm bg-background"
-                  >
-                    <option value="demo">Demo (unchanged public homepage)</option>
-                    <option value="managed">Managed (pinned + featured articles)</option>
-                  </select>
+                  <Label>Homepage carousel</Label>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    Featured stories are pulled from published articles (breaking, then featured, then latest).
+                  </p>
                 </div>
                 <div>
                   <Label>Snapshot sources label</Label>

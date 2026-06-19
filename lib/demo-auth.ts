@@ -1,2 +1,8 @@
-/** Local demo password — shared by seed + login prefill (dev only) */
-export const DEMO_PASSWORD = 'esbpowerline007';
+import 'server-only';
+
+import { getDevBootstrapPassword } from '@/lib/dev-login-hints';
+
+/** @deprecated Use getDevBootstrapPassword — server-only bootstrap password resolver. */
+export function getDemoPassword(): string {
+  return getDevBootstrapPassword() ?? 'esbpowerline007';
+}

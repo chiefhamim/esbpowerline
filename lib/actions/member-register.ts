@@ -2,6 +2,7 @@
 
 import bcrypt from 'bcryptjs';
 import prisma from '@/lib/prisma';
+import { initialMemberStatus } from '@/lib/member-registration';
 import { upsertSupabaseAuthUser } from '@/lib/supabase/sync-auth-user';
 import {
   formatBdPhoneDisplay,
@@ -11,7 +12,7 @@ import {
 } from '@/lib/bd-phone';
 
 export type MemberRegisterResult =
-  | { ok: true; email: string }
+  | { ok: true; email: string; status: 'ACTIVE' | 'PENDING' }
   | { ok: false; error: string };
 
 export async function registerMemberAction(input: {
@@ -62,30 +63,38 @@ export async function registerMemberAction(input: {
   }
 
   const passwordHash = await bcrypt.hash(password, 10);
+  const status = initialMemberStatus();
 
-  await prisma.user.create({
+  const created = await prisma.user.create({
     data: {
       name,
       email,
       phone,
       passwordHash,
       role: 'SUBSCRIBER',
-      status: 'ACTIVE',
+      status,
     },
   });
 
   try {
-    await upsertSupabaseAuthUser({
+    const supabaseUserId = await upsertSupabaseAuthUser({
       email,
       password,
       name,
       role: 'SUBSCRIBER',
+      status,
     });
+    if (supabaseUserId) {
+      await prisma.user.update({
+        where: { id: created.id },
+        data: { supabaseUserId },
+      });
+    }
   } catch (error) {
-    await prisma.user.delete({ where: { email } }).catch(() => undefined);
+    await prisma.user.delete({ where: { id: created.id } }).catch(() => undefined);
     console.error('[registerMemberAction] Supabase sync failed:', error);
     return { ok: false, error: 'Could not create your account. Please try again.' };
   }
 
-  return { ok: true, email };
+  return { ok: true, email, status };
 }

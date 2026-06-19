@@ -143,8 +143,8 @@ export async function updateCategory(
       updateData.slug = slug;
 
       await prisma.article.updateMany({
-        where: { category: oldName },
-        data: { category: name },
+        where: { categoryId: existing.id },
+        data: { category: name, categoryId: existing.id },
       });
     }
   }
@@ -200,7 +200,7 @@ export async function deleteCategory(
   if (!cat) throw new Error('Category not found');
 
   const affectedArticles = await prisma.article.findMany({
-    where: { category: cat.name },
+    where: { categoryId: cat.id },
     select: { id: true, title: true, authorId: true },
   });
 
@@ -214,8 +214,8 @@ export async function deleteCategory(
     if (!target) throw new Error('Reassign target not found');
 
     await prisma.article.updateMany({
-      where: { category: cat.name },
-      data: { category: target.name },
+      where: { categoryId: cat.id },
+      data: { category: target.name, categoryId: target.id },
     });
 
     const note =

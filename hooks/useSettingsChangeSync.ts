@@ -22,7 +22,6 @@ export type SettingsFormSnapshot = {
   heroTitle: string;
   heroSubtitle: string;
   heroImage: string;
-  carouselMode: 'demo' | 'managed';
   marketPulse: string;
   snapshotLabel: string;
   ctaLabel: string;
@@ -48,7 +47,6 @@ type SettingsSetters = {
   setHeroTitle: (value: string) => void;
   setHeroSubtitle: (value: string) => void;
   setHeroImage: (value: string) => void;
-  setCarouselMode: (value: 'demo' | 'managed') => void;
   setMarketPulse: (value: string) => void;
   setSnapshotLabel: (value: string) => void;
   setCtaLabel: (value: string) => void;
@@ -78,7 +76,7 @@ function stableJson(value: unknown) {
 
 function buildHomepagePayload(current: SettingsFormSnapshot) {
   return {
-    carouselMode: current.carouselMode,
+    carouselMode: 'managed' as const,
     marketPulse: current.marketPulse,
     snapshotLabel: current.snapshotLabel,
     professionalsCta: {
@@ -212,15 +210,6 @@ export function useSettingsChangeSync(
       current.heroImage,
       () => setters.setHeroImage(baseline.heroImage),
       collectors.hero,
-    );
-    syncScalar(
-      'settings:homepage.carouselMode',
-      'Homepage controls',
-      'Carousel mode',
-      baseline.carouselMode,
-      current.carouselMode,
-      () => setters.setCarouselMode(baseline.carouselMode),
-      collectors.homepage,
     );
     syncScalar(
       'settings:homepage.snapshotLabel',
@@ -412,7 +401,6 @@ export function buildSettingsSnapshot(input: {
   heroTitle: string;
   heroSubtitle: string;
   heroImage: string;
-  carouselMode: 'demo' | 'managed';
   marketPulse: string;
   snapshotLabel: string;
   professionals: ProfessionalsCta;
@@ -432,7 +420,6 @@ export function buildSettingsSnapshot(input: {
     heroTitle: input.heroTitle,
     heroSubtitle: input.heroSubtitle,
     heroImage: input.heroImage,
-    carouselMode: input.carouselMode,
     marketPulse: input.marketPulse,
     snapshotLabel: input.snapshotLabel,
     ctaLabel: input.professionals.label,

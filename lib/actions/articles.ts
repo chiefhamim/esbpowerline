@@ -5,7 +5,13 @@ import prisma from '@/lib/prisma';
 import { auth } from '@/lib/auth';
 import { can, type Role } from '@/lib/constants';
 import { slugify } from '@/lib/utils';
-import { parseArticleInput, type ArticleInput } from '@/lib/validations/article';
+import {
+  formatPublishBlockerMessage,
+  getPublishBlockers,
+  parseArticleInput,
+  publishArticleSchema,
+  type ArticleInput,
+} from '@/lib/validations/article';
 import { PUBLIC_REVALIDATE_PATHS } from '@/lib/public-paths';
 import { reconcilePlacementFlags, MAX_PINNED_COVERAGE } from '@/lib/placement-rules';
 
@@ -82,6 +88,19 @@ async function requireAuth() {
   const session = await auth();
   if (!session?.user) throw new Error('Unauthorized');
   return session.user;
+}
+
+async function resolveCategoryRef(categoryName: string) {
+  const category = await prisma.category.findFirst({
+    where: { name: categoryName.trim() },
+    select: { id: true, name: true },
+  });
+  if (!category) {
+    throw new Error(
+      `Category "${categoryName}" is not valid. Choose a category from the admin list.`,
+    );
+  }
+  return category;
 }
 
 async function enforcePinnedCapacity(articleId: string) {
@@ -429,6 +448,7 @@ export async function createArticle(data: ArticleInput) {
   if (!can(user.role, 'article.create')) throw new Error('Forbidden');
 
   const parsed = enforceArticlePermissions(user, parseArticleInput(data));
+  const categoryRef = await resolveCategoryRef(parsed.category);
   const placement = reconcilePlacementFlags({
     isFeatured: parsed.isFeatured ?? false,
     isBreaking: parsed.isBreaking ?? false,
@@ -449,7 +469,8 @@ export async function createArticle(data: ArticleInput) {
       slug,
       excerpt: parsed.excerpt,
       content: parsed.content,
-      category: parsed.category,
+      category: categoryRef.name,
+      categoryId: categoryRef.id,
       status: parsed.status,
       imageUrl: parsed.imageUrl,
       tags: parsed.tags ?? [],
@@ -486,6 +507,7 @@ export async function updateArticle(id: string, data: ArticleInput) {
   if (!canEdit) throw new Error('Forbidden');
 
   const parsed = enforceArticlePermissions(user, parseArticleInput(data), existing);
+  const categoryRef = await resolveCategoryRef(parsed.category);
   const placement = reconcilePlacementFlags({
     isFeatured: parsed.isFeatured ?? false,
     isBreaking: parsed.isBreaking ?? false,
@@ -503,7 +525,8 @@ export async function updateArticle(id: string, data: ArticleInput) {
       slug: resolveArticleSlug(parsed.title, parsed.slug, existing.slug),
       excerpt: parsed.excerpt,
       content: parsed.content,
-      category: parsed.category,
+      category: categoryRef.name,
+      categoryId: categoryRef.id,
       status: parsed.status,
       imageUrl: parsed.imageUrl,
       tags: parsed.tags ?? [],
@@ -694,4 +717,95 @@ export async function bulkOwnArticleAction(ids: string[], action: OwnBulkAction)
   if (action === 'trash') revalidatePath('/cms/trash');
   revalidatePublicContent(articles.map((a) => a.slug));
   return { affected, action };
+}
+
+/** Increment view count when a published article is read (once per server render). */
+export async function incrementArticleView(articleId: string) {
+  await prisma.article.updateMany({
+    where: { id: articleId, status: 'PUBLISHED' },
+    data: { views: { increment: 1 } },
+  });
+}
+
+export type PublishScheduledResult = {
+  published: string[];
+  skipped: { id: string; title: string; reason: string }[];
+};
+
+/** Publish scheduled articles whose go-live time has passed. Intended for cron / manual trigger. */
+export async function publishDueScheduledArticles(now = new Date()): Promise<PublishScheduledResult> {
+  const due = await prisma.article.findMany({
+    where: {
+      status: 'SCHEDULED',
+      publishedAt: { lte: now },
+    },
+    select: {
+      id: true,
+      title: true,
+      slug: true,
+      excerpt: true,
+      content: true,
+      category: true,
+      imageUrl: true,
+      tags: true,
+      publishedAt: true,
+    },
+  });
+
+  const published: string[] = [];
+  const skipped: PublishScheduledResult['skipped'] = [];
+
+  for (const article of due) {
+    const blockers = getPublishBlockers({
+      title: article.title,
+      excerpt: article.excerpt ?? '',
+      content: article.content,
+    });
+    if (blockers.length > 0) {
+      skipped.push({
+        id: article.id,
+        title: article.title,
+        reason: formatPublishBlockerMessage(blockers),
+      });
+      continue;
+    }
+
+    const parsed = publishArticleSchema.safeParse({
+      title: article.title,
+      slug: article.slug,
+      excerpt: article.excerpt ?? '',
+      content: article.content,
+      category: article.category,
+      status: 'PUBLISHED',
+      imageUrl: article.imageUrl ?? undefined,
+      tags: (article.tags as string[]) ?? [],
+      publishedAt: article.publishedAt?.toISOString(),
+    });
+
+    if (!parsed.success) {
+      skipped.push({
+        id: article.id,
+        title: article.title,
+        reason: parsed.error.issues.map((i) => i.message).join('; '),
+      });
+      continue;
+    }
+
+    await prisma.article.update({
+      where: { id: article.id },
+      data: {
+        status: 'PUBLISHED',
+        publishedAt: article.publishedAt ?? now,
+      },
+    });
+    published.push(article.slug);
+  }
+
+  if (published.length > 0) {
+    revalidatePublicContent(published);
+    revalidatePath('/cms/articles/scheduled');
+    revalidatePath('/admin/articles');
+  }
+
+  return { published, skipped };
 }

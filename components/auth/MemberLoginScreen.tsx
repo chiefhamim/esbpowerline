@@ -11,7 +11,7 @@ import {
   EyeOff,
   UserRound,
 } from 'lucide-react';
-import { DEMO_PASSWORD } from '@/lib/demo-auth';
+
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -24,6 +24,7 @@ import {
   memberSignUpAction,
   type MemberAuthResult,
 } from '@/app/members/login/actions';
+
 
 type AuthMode = 'sign-in' | 'sign-up';
 
@@ -41,9 +42,10 @@ export function MemberLoginScreen() {
   const [identifier, setIdentifier] = useState('');
   const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
-  const [password, setPassword] = useState(DEMO_PASSWORD);
+  const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
   const [handoffMessage, setHandoffMessage] = useState<string | null>(null);
   const pendingRedirect = useRef<string | null>(null);
   const [loginState, loginFormAction, loginPending] = useActionState(memberLoginAction, INITIAL_STATE);
@@ -53,16 +55,33 @@ export function MemberLoginScreen() {
   const isPending = mode === 'sign-in' ? loginPending : signupPending;
 
   useEffect(() => {
+    if (searchParams.get('pending') === '1') {
+      setError('Your account is pending verification. Sign in once an administrator activates it.');
+    }
+  }, [searchParams]);
+
+  useEffect(() => {
     const activeState = mode === 'sign-in' ? loginState : signupState;
 
     if (activeState?.error) {
       setError(activeState.error);
+      setSuccess('');
       setHandoffMessage(null);
       pendingRedirect.current = null;
       return;
     }
 
+    if (activeState?.successMessage) {
+      setSuccess(activeState.successMessage);
+      setError('');
+      setHandoffMessage(null);
+      pendingRedirect.current = null;
+      setMode('sign-in');
+      return;
+    }
+
     if (activeState?.redirectTo) {
+      setSuccess('');
       pendingRedirect.current = activeState.redirectTo;
       setHandoffMessage(activeState.handoffMessage ?? 'Opening your library…');
     }
@@ -84,21 +103,21 @@ export function MemberLoginScreen() {
   function switchMode(next: AuthMode) {
     setMode(next);
     setError('');
-    if (next === 'sign-in') {
-      setPassword(DEMO_PASSWORD);
-    } else {
+    setSuccess('');
+    if (next !== 'sign-in') {
       setPassword('');
     }
   }
 
-  function clearError() {
+  function clearMessages() {
     if (error) setError('');
+    if (success) setSuccess('');
   }
 
   function selectDemoMember() {
     setMode('sign-in');
     setIdentifier(DEMO_MEMBER.identifier);
-    setPassword(DEMO_PASSWORD);
+    setPassword('');
     setError('');
   }
 
@@ -142,7 +161,7 @@ export function MemberLoginScreen() {
                       value={identifier}
                       onChange={(e) => {
                         setIdentifier(e.target.value);
-                        clearError();
+                        clearMessages();
                       }}
                       className="login-access__input"
                       required
@@ -162,7 +181,7 @@ export function MemberLoginScreen() {
                         value={password}
                         onChange={(e) => {
                           setPassword(e.target.value);
-                          clearError();
+                          clearMessages();
                         }}
                         className="login-access__input login-access__input--password"
                         required
@@ -182,6 +201,12 @@ export function MemberLoginScreen() {
                     <div className="login-access__error" role="alert">
                       <AlertCircle className="h-4 w-4 shrink-0" />
                       <span>{error}</span>
+                    </div>
+                  )}
+
+                  {success && (
+                    <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-sm text-emerald-900 dark:text-emerald-100" role="status">
+                      {success}
                     </div>
                   )}
 
@@ -222,7 +247,7 @@ export function MemberLoginScreen() {
                       value={name}
                       onChange={(e) => {
                         setName(e.target.value);
-                        clearError();
+                        clearMessages();
                       }}
                       className="login-access__input"
                       required
@@ -242,7 +267,7 @@ export function MemberLoginScreen() {
                       value={phone}
                       onChange={(e) => {
                         setPhone(e.target.value);
-                        clearError();
+                        clearMessages();
                       }}
                       className="login-access__input"
                       required
@@ -262,7 +287,7 @@ export function MemberLoginScreen() {
                       value={email}
                       onChange={(e) => {
                         setEmail(e.target.value);
-                        clearError();
+                        clearMessages();
                       }}
                       className="login-access__input"
                     />
@@ -281,7 +306,7 @@ export function MemberLoginScreen() {
                         value={password}
                         onChange={(e) => {
                           setPassword(e.target.value);
-                          clearError();
+                          clearMessages();
                         }}
                         className="login-access__input login-access__input--password"
                         minLength={8}
@@ -302,6 +327,12 @@ export function MemberLoginScreen() {
                     <div className="login-access__error" role="alert">
                       <AlertCircle className="h-4 w-4 shrink-0" />
                       <span>{error}</span>
+                    </div>
+                  )}
+
+                  {success && (
+                    <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-sm text-emerald-900 dark:text-emerald-100" role="status">
+                      {success}
                     </div>
                   )}
 
@@ -353,11 +384,11 @@ export function MemberLoginScreen() {
                 )}
               </p>
 
-              {mode === 'sign-in' && (
+              {mode === 'sign-in' && process.env.NODE_ENV !== 'production' && (
                 <div className="login-contributors">
                   <div className="login-contributors__header">
                     <p className="login-contributors__title">Demo account</p>
-                    <p className="login-contributors__hint">Tap to fill credentials</p>
+                    <p className="login-contributors__hint">Tap to fill email (use seed password from .env)</p>
                   </div>
                   <ul className="login-contributors__rows">
                     <li>

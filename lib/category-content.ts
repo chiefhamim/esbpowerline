@@ -2,6 +2,7 @@ import { cache } from 'react';
 import prisma from '@/lib/prisma';
 import type { PublicArticleCard, PublicCategory } from '@/lib/category-types';
 import type { HeroImageMeta } from '@/lib/hero-image';
+import { normalizeArticleImageUrl } from '@/lib/article-image';
 
 export type { PublicArticleCard, PublicCategory, HeroImageMeta };
 
@@ -46,7 +47,7 @@ function mapArticle(a: {
     date: (a.publishedAt ?? a.createdAt).toISOString(),
     readTime: a.readTime,
     views: a.views,
-    imageUrl: a.imageUrl ?? '/images/download (10).jfif',
+    imageUrl: normalizeArticleImageUrl(a.imageUrl) ?? '',
     isFeatured: a.isFeatured,
     isBreaking: a.isBreaking,
     isPinned: a.isPinned,

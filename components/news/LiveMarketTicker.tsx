@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { TrendingUp, TrendingDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { isSimulatedTelemetryEnabled } from '@/lib/telemetry-mode';
 
 export interface TickerItem {
   id: string;
@@ -38,8 +39,12 @@ export function LiveMarketTicker({
   const [items, setItems] = useState<TickerItem[]>(propItems || initialItems);
   const [mounted, setMounted] = useState(false);
 
+  const simulateLive = isSimulatedTelemetryEnabled();
+
   useEffect(() => {
     setMounted(true);
+    if (!simulateLive) return;
+
     const interval = setInterval(() => {
       if (document.hidden) return;
       setItems((prev) =>
@@ -60,7 +65,7 @@ export function LiveMarketTicker({
     }, 25000);
 
     return () => clearInterval(interval);
-  }, []);
+  }, [simulateLive]);
 
   if (!mounted) {
     return (
@@ -102,8 +107,16 @@ export function LiveMarketTicker({
 
   const label = (
     <div className={`flex shrink-0 items-center gap-1.5 text-muted-foreground ${compact ? 'pr-2.5' : 'border-r border-border/60 pr-3'}`}>
-      <span className="h-1.5 w-1.5 shrink-0 animate-pulse rounded-full bg-emerald-500" aria-hidden />
-      <span className={`font-semibold uppercase tracking-[0.12em] ${compact ? 'text-[9px]' : 'text-[10px]'}`}>Markets</span>
+      <span
+        className={cn(
+          'h-1.5 w-1.5 shrink-0 rounded-full',
+          simulateLive ? 'animate-pulse bg-emerald-500' : 'bg-muted-foreground/50',
+        )}
+        aria-hidden
+      />
+      <span className={`font-semibold uppercase tracking-[0.12em] ${compact ? 'text-[9px]' : 'text-[10px]'}`}>
+        {simulateLive ? 'Markets' : 'Indicative'}
+      </span>
     </div>
   );
 

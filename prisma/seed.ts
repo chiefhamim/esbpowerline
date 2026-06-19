@@ -7,14 +7,19 @@
 
 import 'dotenv/config';
 import bcrypt from 'bcryptjs';
-import { PrismaClient } from '@prisma/client';
+import { createScriptPrismaClient } from './client';
 import { CATEGORIES, CATEGORY_DETAILS } from '../lib/constants';
 import { DEFAULT_COVERAGE_SLOTS } from '../lib/coverage-defaults';
 import { slugify } from '../lib/utils';
 
-const prisma = new PrismaClient();
+const prisma = createScriptPrismaClient();
 
 async function main() {
+  if (process.env.NODE_ENV === 'production' && process.env.ALLOW_PRODUCTION_SEED !== 'true') {
+    console.error('❌ Refusing to seed: set ALLOW_PRODUCTION_SEED=true to override in production.');
+    process.exit(1);
+  }
+
   console.log('🌱 Seeding ESB PowerLine database...');
 
   // Clean in dev (order matters for relations)
@@ -100,6 +105,8 @@ async function main() {
     })
   );
   console.log('✓ 10 Categories seeded');
+
+  const categoryIdByName = Object.fromEntries(catRecords.map((c) => [c.name, c.id]));
 
   // === OFFICIAL ESB POWERLINE ARTICLES (All Coverage mosaic + detailed archive) ===
   const officialArticles = [
@@ -274,6 +281,7 @@ async function main() {
         content: a.content,
         authorId: a.author,
         category: a.cat,
+        categoryId: categoryIdByName[a.cat],
         status: 'PUBLISHED',
         isFeatured: a.featured,
         isBreaking: a.breaking,
@@ -319,6 +327,7 @@ async function main() {
         content: a.content,
         authorId: a.author,
         category: a.cat,
+        categoryId: categoryIdByName[a.cat],
         status: a.status as any,
         isFeatured: a.featured,
         isBreaking: a.breaking,

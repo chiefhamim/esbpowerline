@@ -31,15 +31,38 @@ async function resolveAppUser(
   const role = resolveRoleFromSupabaseUser(supabaseUser, profile?.role ?? null);
 
   const email = supabaseUser.email?.toLowerCase() ?? '';
-  const dbUser = email
-    ? await prisma.user.findUnique({
-        where: { email },
-        select: { id: true, name: true, email: true, role: true, avatar: true, status: true },
-      })
-    : null;
+  const dbUser = await prisma.user.findFirst({
+    where: {
+      OR: [
+        ...(email ? [{ email }] : []),
+        { supabaseUserId: supabaseUser.id },
+      ],
+    },
+    select: {
+      id: true,
+      supabaseUserId: true,
+      name: true,
+      email: true,
+      role: true,
+      avatar: true,
+      status: true,
+    },
+  });
 
   const resolvedRole = (role ?? (dbUser?.role as Role | undefined)) ?? null;
-  if (!resolvedRole || dbUser?.status === 'SUSPENDED') return null;
+  if (!resolvedRole || dbUser?.status === 'SUSPENDED' || dbUser?.status === 'PENDING') return null;
+
+  const metadataStatus = supabaseUser.user_metadata?.status;
+  if (metadataStatus === 'SUSPENDED' || metadataStatus === 'PENDING') return null;
+
+  if (dbUser && !dbUser.supabaseUserId) {
+    await prisma.user
+      .update({
+        where: { id: dbUser.id },
+        data: { supabaseUserId: supabaseUser.id },
+      })
+      .catch(() => undefined);
+  }
 
   return {
     id: dbUser?.id ?? supabaseUser.id,

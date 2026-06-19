@@ -7,18 +7,19 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "sqlite"
 }
 
 // ============================================
 // USERS + AUTH + ROLES (port of datastore Users + ROLES + hasPermission)
 // ============================================
 model User {
-  id            String     @id @default(cuid())
-  name          String
-  email         String     @unique
-  phone         String?    @unique
-  passwordHash  String
+  id              String     @id @default(cuid())
+  supabaseUserId  String?    @unique
+  name            String
+  email           String     @unique
+  phone           String?    @unique
+  passwordHash    String
   role          Role       @default(AUTHOR)
   pendingName   String?
   avatar        String?
@@ -66,7 +67,9 @@ model Article {
   author      User            @relation(fields: [authorId], references: [id])
   publishedAt DateTime?
   status      ArticleStatus   @default(DRAFT)
-  category    String          // Matches legacy 10 categories (flexible; can normalize to Category later)
+  category    String
+  categoryId  String?
+  categoryRef Category?       @relation(fields: [categoryId], references: [id], onDelete: Restrict)
   imageUrl    String?
   readTime    Int             @default(1)
   views       Int             @default(0)
@@ -110,6 +113,7 @@ model Category {
   color       String?
   order       Int      @default(0)
   createdAt   DateTime @default(now())
+  articles    Article[]
 }
 
 // ============================================

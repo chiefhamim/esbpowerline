@@ -3,6 +3,10 @@
 import { revalidatePath } from 'next/cache';
 import { registerMemberAction } from '@/lib/actions/member-register';
 import { ensureDemoMemberAccount } from '@/lib/ensure-demo-accounts';
+import {
+  MEMBER_PENDING_LOGIN_MESSAGE,
+  MEMBER_PENDING_SIGNUP_MESSAGE,
+} from '@/lib/member-registration';
 import { resolveRoleFromSupabaseUser } from '@/lib/supabase/resolve-role';
 import { createClient } from '@/utils/supabase/server';
 import prisma from '@/lib/prisma';
@@ -12,6 +16,7 @@ export type MemberAuthResult = {
   error?: string;
   redirectTo?: string;
   handoffMessage?: string;
+  successMessage?: string;
 };
 
 function readField(formData: FormData, key: string) {
@@ -77,12 +82,30 @@ async function establishMemberSession(
     .eq('id', user.id)
     .maybeSingle();
 
+  const dbUser = await prisma.user.findUnique({
+    where: { email },
+    select: { role: true, status: true },
+  });
+
   const role =
     resolveRoleFromSupabaseUser(user, profile?.role ?? null) ??
-    ((await prisma.user.findUnique({
-      where: { email },
-      select: { role: true },
-    }))?.role as 'SUBSCRIBER' | undefined);
+    (dbUser?.role as 'SUBSCRIBER' | undefined);
+
+  if (dbUser?.status === 'SUSPENDED') {
+    await supabase.auth.signOut();
+    return memberLoginFailure('This account has been suspended. Contact support.');
+  }
+
+  if (dbUser?.status === 'PENDING') {
+    await supabase.auth.signOut();
+    return memberLoginFailure(MEMBER_PENDING_LOGIN_MESSAGE);
+  }
+
+  const metadataStatus = user.user_metadata?.status;
+  if (metadataStatus === 'PENDING') {
+    await supabase.auth.signOut();
+    return memberLoginFailure(MEMBER_PENDING_LOGIN_MESSAGE);
+  }
 
   if (role !== 'SUBSCRIBER') {
     await supabase.auth.signOut();
@@ -143,6 +166,10 @@ export async function memberSignUpAction(
 
     if (!registerResult.ok) {
       return memberLoginFailure(registerResult.error);
+    }
+
+    if (registerResult.status === 'PENDING') {
+      return { successMessage: MEMBER_PENDING_SIGNUP_MESSAGE };
     }
 
     const authError = await establishMemberSession(registerResult.email, password);

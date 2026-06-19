@@ -8,7 +8,7 @@ export default function NewUserPage() {
       <AdminPageHeader
         icon={UserPlus}
         title="Add User"
-        description="Create a new platform user with role and permissions."
+        description="Create editors, authors, or admins. Editors sign in at Staff login with the email and password you set here."
       />
       <UserForm mode="create" />
     </AdminSectionStack>

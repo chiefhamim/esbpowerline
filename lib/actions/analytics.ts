@@ -2,7 +2,7 @@
 
 import prisma from '@/lib/prisma';
 import { auth } from '@/lib/auth';
-import { can } from '@/lib/constants';
+import { can, canAccessAdminPanel } from '@/lib/constants';
 import {
   type AnalyticsPeriod,
   parseAnalyticsQuery,
@@ -20,7 +20,7 @@ const ARTICLE_RANK_COLORS = ['#f43f5e', '#e11d48', '#db2777', '#c026d3', '#9333e
 
 async function requireAnalyticsAccess() {
   const session = await auth();
-  if (!session?.user || !can(session.user.role, 'analytics.view_all')) {
+  if (!session?.user || !canAccessAdminPanel(session.user.role) || !can(session.user.role, 'analytics.view_all')) {
     throw new Error('Forbidden');
   }
   return session.user;
@@ -362,8 +362,7 @@ export async function getAnalytics(options?: AnalyticsOptions) {
   const adClicks = adTotals._sum.clicks ?? 0;
   const adCtr = adImpressions > 0 ? (adClicks / adImpressions) * 100 : 0;
 
-  const homepage = (homepageSetting?.value as { carouselMode?: string }) ?? {};
-  const carouselMode = homepage.carouselMode === 'managed' ? 'managed' : 'demo';
+  const carouselMode = 'managed' as const;
 
   const contentPipeline = [
     { status: 'Published', count: publishedCount, color: '#10b981' },
@@ -558,8 +557,8 @@ export async function getAnalytics(options?: AnalyticsOptions) {
       slots: adsWithMetrics,
     },
     platform: {
-      carouselMode: carouselMode as 'demo' | 'managed',
-      homepageManaged: carouselMode === 'managed',
+      carouselMode,
+      homepageManaged: true,
     },
   };
 }

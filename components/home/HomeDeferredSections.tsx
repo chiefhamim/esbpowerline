@@ -35,7 +35,7 @@ export function HomeDeferredSections({
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-5">
           <div className="flex items-center gap-2">
             <BarChart3 className="h-6 w-6 text-primary" />
-            <h2 className="text-2xl md:text-3xl font-display font-bold tracking-tight">Live System Snapshot</h2>
+            <h2 className="text-2xl md:text-3xl font-display font-bold tracking-tight">System Snapshot</h2>
           </div>
           <span className="text-[10px] text-muted-foreground uppercase tracking-widest font-semibold">
             {snapshotLabel}

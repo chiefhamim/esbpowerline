@@ -110,6 +110,7 @@ export async function updateCommentStatus(
   }
   revalidatePath('/members/comments');
   revalidatePath('/admin/comments');
+  revalidatePath('/cms/comments');
 
   await prisma.auditLog.create({
     data: {

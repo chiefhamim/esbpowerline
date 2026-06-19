@@ -4,7 +4,6 @@ import { useMemo, type CSSProperties } from 'react';
 import { AdminSelectMenu } from '@/components/admin/AdminSelectMenu';
 import { categoryColorVars, getCategoryAccentColor } from '@/lib/category-icons';
 import type { PublicCategory } from '@/lib/category-types';
-import { CATEGORIES } from '@/lib/constants';
 import { cn } from '@/lib/utils';
 
 type CategoryMeta = Pick<PublicCategory, 'name' | 'color' | 'icon' | 'iconImageUrl'>;
@@ -22,10 +21,7 @@ export function CmsCategorySelect({
 }) {
   const metaByName = useMemo(() => {
     const map = new Map<string, CategoryMeta>();
-    const list = categories.length
-      ? categories
-      : CATEGORIES.map((name) => ({ name, color: null, icon: null, iconImageUrl: null }));
-    for (const c of list) map.set(c.name, c);
+    for (const c of categories) map.set(c.name, c);
     return map;
   }, [categories]);
 
@@ -42,6 +38,18 @@ export function CmsCategorySelect({
       })),
     [metaByName],
   );
+
+  if (options.length === 0) {
+    return (
+      <p className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-sm text-amber-900 dark:text-amber-100">
+        No categories in the database. Add sectors in{' '}
+        <a href="/admin/categories" className="font-medium underline">
+          Admin → Categories
+        </a>{' '}
+        before publishing.
+      </p>
+    );
+  }
 
   return (
     <div

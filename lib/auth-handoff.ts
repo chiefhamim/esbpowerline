@@ -2,6 +2,7 @@ import 'server-only';
 
 import { createHmac, timingSafeEqual } from 'crypto';
 import { createClient } from '@/utils/supabase/server';
+import { getAuthSecret } from '@/lib/env-auth';
 
 const HANDOFF_TTL_MS = 60_000;
 
@@ -12,7 +13,7 @@ type HandoffPayload = {
 };
 
 function handoffSecret() {
-  return process.env.AUTH_SECRET?.trim() || 'dev-secret-change-in-prod';
+  return getAuthSecret();
 }
 
 function encodePayload(payload: HandoffPayload) {

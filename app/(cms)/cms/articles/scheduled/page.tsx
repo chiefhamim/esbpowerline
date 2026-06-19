@@ -18,7 +18,7 @@ export default async function CMSScheduledPage() {
     <CmsSectionStack>
       <CmsPageHeader
         title="Scheduled"
-        description="Stories queued to go live automatically"
+        description="Stories queued for a future go-live — published by cron or manual publish"
         icon={Clock}
       >
         <CmsCreateCapsule href="/cms/articles/new" label="Schedule new" />
@@ -45,7 +45,7 @@ export default async function CMSScheduledPage() {
           ))}
           {scheduled.length === 0 && (
             <p className="text-[13px] text-muted-foreground py-4 text-center">
-              Nothing scheduled. Set status to Scheduled when editing an article.
+              Nothing scheduled. Set status to Scheduled with a go-live date, or use Publish now.
             </p>
           )}
         </CmsScheduleList>

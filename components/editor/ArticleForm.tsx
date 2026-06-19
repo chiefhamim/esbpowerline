@@ -38,9 +38,10 @@ import { CmsPlacementSwitch } from '@/components/cms/CmsPlacementSwitch';
 import { PLACEMENT_FLAGS } from '@/lib/article-placement';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { createArticle, updateArticle } from '@/lib/actions/articles';
+import { isMockArticleSubmitEnabled, mockArticleSubmit } from '@/lib/test/mockArticleSubmit';
 import { submitDraftForAdminReview } from '@/lib/actions/review-workflow';
 import { can, type Role } from '@/lib/constants';
-import { CATEGORIES } from '@/lib/constants';
+import { canSubmitArticleForReview } from '@/lib/editorial-review';
 import type { PublicCategory } from '@/lib/category-types';
 import { slugify } from '@/lib/utils';
 import type { MediaItem } from '@/components/cms/MediaPicker';
@@ -91,6 +92,7 @@ interface ArticleFormProps {
   };
   article?: {
     id: string;
+    authorId?: string;
     title: string;
     slug: string;
     excerpt?: string | null;
@@ -99,6 +101,7 @@ interface ArticleFormProps {
     status: string;
     imageUrl?: string | null;
     tags?: unknown;
+    collaboratorIds?: unknown;
     isFeatured: boolean;
     isBreaking: boolean;
     isPinned?: boolean;
@@ -109,8 +112,9 @@ interface ArticleFormProps {
 
 const STATUS_OPTIONS = [
   { value: 'DRAFT', label: 'Draft', description: 'Work in progress, not visible' },
+  { value: 'IN_REVIEW', label: 'In review', description: 'Awaiting admin approval' },
   { value: 'PUBLISHED', label: 'Published', description: 'Live on the public site' },
-  { value: 'SCHEDULED', label: 'Scheduled', description: 'Queued for automatic publish' },
+  { value: 'SCHEDULED', label: 'Scheduled', description: 'Go live when date passes (cron or manual publish)' },
   { value: 'ARCHIVED', label: 'Archived', description: 'Removed from live site' },
 ];
 
@@ -130,9 +134,8 @@ export function ArticleForm({
     canBreaking = true,
     canPin = true,
   } = permissions;
-  const categoryOptions = categories.length
-    ? categories.map((c) => c.name)
-    : [...CATEGORIES];
+  const categoryOptions = categories.map((c) => c.name);
+  const hasCategories = categoryOptions.length > 0;
   const router = useRouter();
   const { data: session } = useSession();
   const editorCtx = useCmsArticleEditor();
@@ -147,13 +150,20 @@ export function ArticleForm({
   const [slug, setSlug] = useState(article?.slug ?? '');
   const [excerpt, setExcerpt] = useState(article?.excerpt ?? '');
   const [content, setContent] = useState(article?.content ?? '<p></p>');
-  const [category, setCategory] = useState(article?.category ?? categoryOptions[0] ?? CATEGORIES[0]);
+  const [category, setCategory] = useState(() => {
+    const initial = article?.category;
+    if (initial && categoryOptions.includes(initial)) return initial;
+    return categoryOptions[0] ?? '';
+  });
   const [status, setStatus] = useState(article?.status ?? 'DRAFT');
   const [imageUrl, setImageUrl] = useState(article?.imageUrl ?? '');
   const [tags, setTags] = useState(((article?.tags as string[]) ?? []).join(', '));
   const [collaboratorIds, setCollaboratorIds] = useState<string[]>(
-    ((article as any)?.collaboratorIds as string[]) ?? []
+    Array.isArray(article?.collaboratorIds)
+      ? (article.collaboratorIds as string[])
+      : [],
   );
+  const [autosaveError, setAutosaveError] = useState<string | null>(null);
   const [isFeatured, setIsFeatured] = useState(article?.isFeatured ?? false);
   const [isBreaking, setIsBreaking] = useState(article?.isBreaking ?? false);
   const [isPinned, setIsPinned] = useState(article?.isPinned ?? false);
@@ -186,39 +196,65 @@ export function ArticleForm({
   );
 
   const role = session?.user?.role as Role | undefined;
-  const canSubmitForReview = Boolean(
-    role
-    && mode === 'edit'
-    && article
-    && status !== 'PUBLISHED'
-    && status !== 'SCHEDULED'
-    && (status === 'DRAFT' || status === 'IN_REVIEW')
-    && can(role, 'article.review'),
-  );
+  const canSubmitForReview = canSubmitArticleForReview({
+    role,
+    userId: session?.user?.id,
+    authorId: article?.authorId ?? '',
+    collaboratorIds,
+    status,
+  });
 
   const statusSelectOptions = useMemo(() => {
     return STATUS_OPTIONS.filter((opt) => {
       if (opt.value === 'PUBLISHED' || opt.value === 'SCHEDULED') return canPublish;
+      if (opt.value === 'IN_REVIEW') {
+        return status === 'IN_REVIEW' || can(role, 'admin.access');
+      }
       return true;
     });
-  }, [canPublish]);
+  }, [canPublish, role, status]);
+
+  const buildSavePayload = useCallback(
+    (saveStatus: string) => ({
+      title,
+      slug: slug || slugify(title),
+      excerpt,
+      content,
+      category,
+      status: saveStatus as 'DRAFT' | 'PUBLISHED' | 'SCHEDULED' | 'ARCHIVED' | 'TRASH' | 'IN_REVIEW',
+      imageUrl: imageUrl || undefined,
+      tags: tags.split(',').map((t) => t.trim()).filter(Boolean),
+      collaboratorIds,
+      isFeatured,
+      isBreaking,
+      isPinned,
+      publishedAt: resolvedPublishedAt ? datetimeLocalToISO(resolvedPublishedAt) : null,
+      seo: { metaTitle, metaDescription, focusKeyword, heroImage: heroMeta },
+    }),
+    [
+      title, slug, excerpt, content, category, imageUrl, tags, collaboratorIds,
+      isFeatured, isBreaking, isPinned, resolvedPublishedAt, metaTitle, metaDescription,
+      focusKeyword, heroMeta,
+    ],
+  );
 
   const handleSubmitForReview = useCallback(async () => {
     if (!article) return;
     setLoading(true);
     try {
+      await updateArticle(article.id, buildSavePayload('DRAFT'));
       await submitDraftForAdminReview(article.id, reviewNote.trim() || undefined);
       setStatus('IN_REVIEW');
       setReviewDialogOpen(false);
       setReviewNote('');
-      toast.success('Sent to admin for review');
+      toast.success('Draft saved and sent to admin for review');
       router.refresh();
     } catch (e: unknown) {
       toast.error(e instanceof Error ? e.message : 'Could not submit for review');
     } finally {
       setLoading(false);
     }
-  }, [article, reviewNote, router]);
+  }, [article, buildSavePayload, reviewNote, router]);
 
   const handleTitleChange = useCallback((value: string) => {
     setTitle(value);
@@ -233,6 +269,11 @@ export function ArticleForm({
   const handleSubmit = useCallback(async (publishStatus?: string) => {
     const finalStatus = (publishStatus ?? status) as string;
 
+    if (!hasCategories || !category.trim()) {
+      toast.error('Choose a category from the admin list before saving.');
+      return;
+    }
+
     if (requiresPublishValidation(finalStatus)) {
       const blockers = getPublishBlockers({ title, excerpt, content });
       if (blockers.length > 0) {
@@ -246,22 +287,21 @@ export function ArticleForm({
     setLoading(true);
     editorCtx?.setLoading(true);
     try {
-      const data = {
-        title,
-        slug: slug || slugify(title),
-        excerpt,
-        content,
-        category,
-        status: finalStatus as 'DRAFT' | 'PUBLISHED' | 'SCHEDULED' | 'ARCHIVED' | 'TRASH',
-        imageUrl: imageUrl || undefined,
-        tags: tags.split(',').map((t) => t.trim()).filter(Boolean),
-        collaboratorIds,
-        isFeatured,
-        isBreaking,
-        isPinned,
-        publishedAt: resolvedPublishedAt ? datetimeLocalToISO(resolvedPublishedAt) : null,
-        seo: { metaTitle, metaDescription, focusKeyword, heroImage: heroMeta },
-      };
+      const data = buildSavePayload(finalStatus);
+
+      if (isMockArticleSubmitEnabled()) {
+        const mockResult = await mockArticleSubmit(data);
+        setStatus(finalStatus);
+        toast.success('Dry-run saved (check browser console for JSON payload)', {
+          description: `Mock ID: ${mockResult.mockId} · no database write`,
+        });
+        if (mode === 'create') {
+          router.push('/cms/articles/new');
+        } else {
+          router.refresh();
+        }
+        return;
+      }
 
       if (mode === 'create') {
         const created = await createArticle(data);
@@ -293,9 +333,7 @@ export function ArticleForm({
       editorCtx?.setLoading(false);
     }
   }, [
-    article, canPublish, category, content, editorCtx, excerpt, focusKeyword, imageUrl,
-    heroMeta, isBreaking, isFeatured, isPinned, metaDescription, metaTitle, mode, resolvedPublishedAt, router,
-    slug, status, tags, title,
+    article, buildSavePayload, editorCtx, mode, router, status,
   ]);
 
   useEffect(() => {
@@ -304,27 +342,19 @@ export function ArticleForm({
   }, [editorCtx, handleSubmit]);
 
   useEffect(() => {
+    if (isMockArticleSubmitEnabled()) return;
     if (mode === 'edit' && status === 'DRAFT' && article) {
       const interval = setInterval(() => {
-        updateArticle(article.id, {
-          title,
-          slug: slug || slugify(title),
-          excerpt,
-          content,
-          category,
-          status: 'DRAFT',
-          imageUrl: imageUrl || undefined,
-          tags: tags.split(',').map((t) => t.trim()).filter(Boolean),
-          isFeatured,
-          isBreaking,
-          isPinned,
-          publishedAt: resolvedPublishedAt ? datetimeLocalToISO(resolvedPublishedAt) : null,
-          seo: { metaTitle, metaDescription, focusKeyword, heroImage: heroMeta },
-        }).catch(() => {});
+        updateArticle(article.id, buildSavePayload('DRAFT'))
+          .then(() => setAutosaveError(null))
+          .catch((err: unknown) => {
+            const message = err instanceof Error ? err.message : 'Autosave failed';
+            setAutosaveError(message);
+          });
       }, 5000);
       return () => clearInterval(interval);
     }
-  }, [mode, status, article, title, slug, excerpt, content, category, imageUrl, tags, isFeatured, isBreaking, isPinned, resolvedPublishedAt, metaTitle, metaDescription, focusKeyword, heroMeta]);
+  }, [mode, status, article, buildSavePayload]);
 
   const heroTitle = writeMeta?.title ?? (mode === 'create' ? 'New story' : 'Edit story');
   const heroSubtitle = writeMeta?.subtitle
@@ -591,7 +621,7 @@ export function ArticleForm({
               </div>
             )}
             <div className="cms-publish-actions cms-publish-actions--sidebar">
-              <Button onClick={() => handleSubmit()} disabled={loading} className="cms-publish-btn w-full">
+              <Button onClick={() => handleSubmit()} disabled={loading || !hasCategories} className="cms-publish-btn w-full">
                 <Save className="h-4 w-4" />
                 {loading ? 'Saving…' : 'Save changes'}
               </Button>
@@ -633,6 +663,11 @@ export function ArticleForm({
               {status === 'IN_REVIEW' && (
                 <p className="cms-field__hint text-center">
                   Awaiting admin sign-off. You will be notified in Editorial when approved or returned.
+                </p>
+              )}
+              {autosaveError && status === 'DRAFT' && (
+                <p className="cms-field__hint text-center text-destructive">
+                  Autosave failed: {autosaveError}
                 </p>
               )}
             </div>

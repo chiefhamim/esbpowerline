@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { writeFile, mkdir } from 'fs/promises';
-import path from 'path';
 import { auth } from '@/lib/auth';
 import { can } from '@/lib/constants';
+import { uploadMediaBuffer } from '@/lib/media-storage';
 
 export async function POST(request: NextRequest) {
   const session = await auth();
@@ -25,17 +24,18 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Icon must be under 512KB after resize' }, { status: 400 });
   }
 
-  const uploadsDir = path.join(process.cwd(), 'public', 'uploads', 'categories');
-  await mkdir(uploadsDir, { recursive: true });
-
   const safeId = categoryId.replace(/[^a-zA-Z0-9_-]/g, '_').slice(0, 40);
-  const safeName = `${safeId}-${Date.now()}.png`;
-  const filePath = path.join(uploadsDir, safeName);
-  await writeFile(filePath, buffer);
+  const stored = await uploadMediaBuffer({
+    buffer,
+    fileName: `${safeId}-${Date.now()}.png`,
+    mimeType: 'image/png',
+    folder: 'categories',
+  });
 
   return NextResponse.json({
-    url: `/uploads/categories/${safeName}`,
+    url: stored.url,
     width: 128,
     height: 128,
+    storage: stored.storage,
   });
 }

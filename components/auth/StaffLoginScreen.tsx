@@ -8,9 +8,9 @@ import {
   Loader2,
   AlertCircle,
   Shield,
-  PenLine,
 } from 'lucide-react';
-import { DEMO_PASSWORD } from '@/lib/demo-auth';
+import { MASTER_ADMIN_EMAIL } from '@/lib/staff-accounts';
+import { getStaffDevLoginHint } from '@/app/login/actions';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -20,16 +20,11 @@ import { LoginFrame } from '@/components/auth/LoginFrame';
 import { StaffValuePanel } from '@/components/auth/StaffValuePanel';
 import { loginAction, type AuthActionResult } from '@/app/login/actions';
 
-const STAFF_ACCOUNTS = [
-  { role: 'Admin', email: 'admin@esbpowerline.com', icon: Shield },
-  { role: 'Editor', email: 'editor@esbpowerline.com', icon: PenLine },
-] as const;
-
 const INITIAL_STATE: AuthActionResult = {};
 
 export function StaffLoginScreen() {
   const [email, setEmail] = useState('');
-  const [password, setPassword] = useState(DEMO_PASSWORD);
+  const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [handoffMessage, setHandoffMessage] = useState<string | null>(null);
   const pendingRedirect = useRef<string | null>(null);
@@ -64,15 +59,18 @@ export function StaffLoginScreen() {
     return () => cancelAnimationFrame(frame);
   }, [handoffMessage]);
 
-  function selectStaffEmail(accountEmail: string) {
-    setEmail(accountEmail);
-    setPassword(DEMO_PASSWORD);
+  async function selectMasterAdminEmail() {
+    setEmail(MASTER_ADMIN_EMAIL);
     setError('');
+    const { passwordHint } = await getStaffDevLoginHint();
+    if (passwordHint) setPassword(passwordHint);
   }
 
   function clearError() {
     if (error) setError('');
   }
+
+  const isMasterAdminSelected = email.toLowerCase() === MASTER_ADMIN_EMAIL;
 
   return (
     <>
@@ -86,7 +84,7 @@ export function StaffLoginScreen() {
           <div className="login-access__intro">
             <h2 className="login-access__heading">Staff sign in</h2>
             <p className="login-access__hint">
-              Admins open the admin dashboard; editors open the CMS workspace.
+              Master admin opens the admin dashboard. Editors and authors use the email and password set in Admin → Users.
             </p>
           </div>
 
@@ -158,36 +156,29 @@ export function StaffLoginScreen() {
 
           <div className="login-contributors">
             <div className="login-contributors__header">
-              <p className="login-contributors__title">Demo accounts</p>
-              <p className="login-contributors__hint">Tap to fill email</p>
+              <p className="login-contributors__title">Master admin</p>
+              <p className="login-contributors__hint">Tap to fill master admin email (dev fills bootstrap password)</p>
             </div>
             <ul className="login-contributors__rows">
-              {STAFF_ACCOUNTS.map((account) => {
-                const Icon = account.icon;
-                const isActive = email === account.email;
-
-                return (
-                  <li key={account.email}>
-                    <button
-                      type="button"
-                      className={cn(
-                        'login-contributors__row',
-                        isActive && 'login-contributors__row--active',
-                      )}
-                      onClick={() => selectStaffEmail(account.email)}
-                    >
-                      <span className="login-contributors__icon" aria-hidden>
-                        <Icon />
-                      </span>
-                      <span className="login-contributors__meta">
-                        <span className="login-contributors__badge">{account.role}</span>
-                        <span className="login-contributors__email">{account.email}</span>
-                      </span>
-                      <ArrowRight className="login-contributors__arrow" aria-hidden />
-                    </button>
-                  </li>
-                );
-              })}
+              <li>
+                <button
+                  type="button"
+                  className={cn(
+                    'login-contributors__row',
+                    isMasterAdminSelected && 'login-contributors__row--active',
+                  )}
+                  onClick={selectMasterAdminEmail}
+                >
+                  <span className="login-contributors__icon" aria-hidden>
+                    <Shield />
+                  </span>
+                  <span className="login-contributors__meta">
+                    <span className="login-contributors__badge">Super Admin</span>
+                    <span className="login-contributors__email">{MASTER_ADMIN_EMAIL}</span>
+                  </span>
+                  <ArrowRight className="login-contributors__arrow" aria-hidden />
+                </button>
+              </li>
             </ul>
           </div>
 

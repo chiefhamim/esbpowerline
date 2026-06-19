@@ -4,7 +4,6 @@ import { useMemo, useState } from 'react';
 import Link from 'next/link';
 import { ArrowRight, Zap } from 'lucide-react';
 import { ArticleCard } from './ArticleCard';
-import { demoArticles } from '@/lib/data';
 import { CATEGORIES } from '@/lib/constants';
 import { slugify } from '@/lib/utils';
 import type { PublicArticleCard, PublicCategory } from '@/lib/category-types';
@@ -29,8 +28,6 @@ type SectorTab = {
   color?: string | null;
   description: string;
 };
-
-type ArticleItem = PublicArticleCard | (typeof demoArticles)[number];
 
 function buildTabs(categories: PublicCategory[]): SectorTab[] {
   const source = categories.length
@@ -85,7 +82,7 @@ export function SectorCoverage({
   const [activeTab, setActiveTab] = useState('all');
   const sectorTabs = useMemo(() => buildTabs(categories), [categories]);
 
-  const articlePool: ArticleItem[] = articles.length ? articles : demoArticles;
+  const articlePool = articles;
   const active = sectorTabs.find((t) => t.id === activeTab) ?? sectorTabs[0];
 
   const pinnedIds = useMemo(
@@ -210,9 +207,9 @@ export function SectorCoverage({
               date={a.date}
               readTime={a.readTime}
               views={a.views}
-              isFeatured={'isFeatured' in a ? a.isFeatured : undefined}
-              isBreaking={'isBreaking' in a ? a.isBreaking : undefined}
-              isPinned={'isPinned' in a ? a.isPinned : undefined}
+              isFeatured={a.isFeatured}
+              isBreaking={a.isBreaking}
+              isPinned={a.isPinned}
             />
           ))
         ) : (

@@ -2,6 +2,8 @@ import Link from 'next/link';
 import { requireMemberSession } from '@/lib/member-auth';
 import { ROLES } from '@/lib/constants';
 import { MemberSignOutButton } from '@/components/members/MemberSignOutButton';
+import { MemberAccountSettings } from '@/components/members/MemberAccountSettings';
+import { getMemberAccountDetails } from '@/lib/actions/member-profile';
 
 export const metadata = {
   title: 'Account | Member library',
@@ -9,6 +11,7 @@ export const metadata = {
 
 export default async function MemberAccountPage() {
   const session = await requireMemberSession();
+  const account = await getMemberAccountDetails();
   const roleLabel = ROLES[session.user.role]?.name ?? session.user.role;
 
   return (
@@ -16,23 +19,33 @@ export default async function MemberAccountPage() {
       <div className="member-account-card">
         <dl className="member-account-card__fields">
           <div>
-            <dt>Name</dt>
-            <dd>{session.user.name}</dd>
-          </div>
-          <div>
-            <dt>Email</dt>
-            <dd>{session.user.email}</dd>
-          </div>
-          <div>
             <dt>Account type</dt>
             <dd>{roleLabel}</dd>
           </div>
+          {account?.status && account.status !== 'ACTIVE' && (
+            <div>
+              <dt>Status</dt>
+              <dd className="capitalize">{account.status.toLowerCase()}</dd>
+            </div>
+          )}
         </dl>
       </div>
 
+      {account ? (
+        <MemberAccountSettings
+          name={account.name}
+          email={account.email}
+          phone={account.phone}
+          status={account.status}
+        />
+      ) : null}
+
       <p className="text-sm text-muted-foreground">
-        Profile editing and password changes will be added in a later update. For staff editorial access, use{' '}
-        <Link href="/login" className="text-primary hover:underline">staff sign in</Link>.
+        For staff editorial access, use{' '}
+        <Link href="/login" className="text-primary hover:underline">
+          staff sign in
+        </Link>
+        .
       </p>
 
       <MemberSignOutButton />

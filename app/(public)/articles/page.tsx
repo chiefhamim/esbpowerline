@@ -1,7 +1,6 @@
 import Link from 'next/link';
 import { ArticleCard } from '@/components/news/ArticleCard';
-import { getTrendingArticles } from '@/lib/data';
-import { getPublicCategories, getPublishedArticlesForPublic } from '@/lib/category-content';
+import { getPublicCategories, getPublishedArticlesForPublic, getTrendingPublishedArticles } from '@/lib/category-content';
 import { SortSelect } from '@/components/news/SortSelect';
 
 export const metadata = {
@@ -23,9 +22,10 @@ export default async function ArticlesPage({ searchParams }: ArticlesPageProps) 
   const sort = resolvedParams.sort || 'latest';
   const currentPage = parseInt(resolvedParams.page || '1', 10);
 
-  const [categories, allArticles] = await Promise.all([
+  const [categories, allArticles, trending] = await Promise.all([
     getPublicCategories(),
     getPublishedArticlesForPublic(120),
+    getTrendingPublishedArticles(4),
   ]);
 
   let articles = allArticles;
@@ -46,8 +46,6 @@ export default async function ArticlesPage({ searchParams }: ArticlesPageProps) 
   const perPage = 6;
   const totalPages = Math.ceil(articles.length / perPage);
   const paginatedArticles = articles.slice(0, currentPage * perPage);
-
-  const trending = getTrendingArticles(4);
 
   return (
     <div className="container py-8">
@@ -134,12 +132,16 @@ export default async function ArticlesPage({ searchParams }: ArticlesPageProps) 
           <div className="sticky top-20">
             <h3 className="font-semibold mb-4 text-lg">Trending</h3>
             <div className="space-y-4">
-              {trending.map((a, i) => (
-                <Link key={i} href={`/articles/${a.slug}`} className="block group">
-                  <div className="text-sm font-medium group-hover:text-primary line-clamp-2">{a.title}</div>
-                  <div className="text-xs text-muted-foreground mt-1">{a.category} · {a.views.toLocaleString()} views</div>
-                </Link>
-              ))}
+              {trending.length === 0 ? (
+                <p className="text-sm text-muted-foreground">No trending articles yet.</p>
+              ) : (
+                trending.map((a, i) => (
+                  <Link key={a.slug} href={`/articles/${a.slug}`} className="block group">
+                    <div className="text-sm font-medium group-hover:text-primary line-clamp-2">{a.title}</div>
+                    <div className="text-xs text-muted-foreground mt-1">{a.category} · {a.views.toLocaleString()} views</div>
+                  </Link>
+                ))
+              )}
             </div>
 
             <div className="mt-8 p-4 rounded-lg border border-border bg-muted/50 text-sm">

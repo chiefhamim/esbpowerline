@@ -5,6 +5,7 @@ import prisma from '@/lib/prisma';
 import type { CoverageSlot, ResolvedCoverageSlot } from '@/lib/coverage-types';
 import type { PublicArticleCard } from '@/lib/category-types';
 import { MAX_PINNED_COVERAGE } from '@/lib/placement-rules';
+import { normalizeArticleImageUrl } from '@/lib/article-image';
 
 function mapArticle(a: {
   id: string;
@@ -32,7 +33,7 @@ function mapArticle(a: {
     date: (a.publishedAt ?? a.createdAt).toISOString(),
     readTime: a.readTime,
     views: a.views,
-    imageUrl: a.imageUrl ?? '/images/download (10).jfif',
+    imageUrl: normalizeArticleImageUrl(a.imageUrl) ?? '',
     isFeatured: a.isFeatured,
     isBreaking: a.isBreaking,
     isPinned: a.isPinned,

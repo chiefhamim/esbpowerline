@@ -30,7 +30,7 @@ export function UserForm({ mode, user }: UserFormProps) {
   const [name, setName] = useState(user?.name ?? '');
   const [email, setEmail] = useState(user?.email ?? '');
   const [password, setPassword] = useState('');
-  const [role, setRole] = useState<Role>(user?.role ?? 'AUTHOR');
+  const [role, setRole] = useState<Role>(user?.role ?? (mode === 'create' ? 'EDITOR' : 'AUTHOR'));
   const [status, setStatus] = useState<'ACTIVE' | 'SUSPENDED' | 'PENDING'>((user?.status as 'ACTIVE' | 'SUSPENDED' | 'PENDING') ?? 'ACTIVE');
   const [bio, setBio] = useState(user?.bio ?? '');
 
@@ -44,8 +44,16 @@ export function UserForm({ mode, user }: UserFormProps) {
           toast.error('Password is required when creating a user');
           return;
         }
+        if (password.trim().length < 8) {
+          toast.error('Password must be at least 8 characters');
+          return;
+        }
         await createUser({ ...data, password });
-        toast.success('User created');
+        toast.success(
+          role === 'EDITOR'
+            ? 'Editor created — they can sign in at Staff login with this email and password'
+            : 'User created',
+        );
         router.push('/admin/users');
       } else if (user) {
         await updateUser(user.id, data);
@@ -72,7 +80,19 @@ export function UserForm({ mode, user }: UserFormProps) {
         </div>
         <div className="space-y-1.5">
           <Label>{mode === 'create' ? 'Password' : 'New Password (leave blank to keep)'}</Label>
-          <Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
+          <Input
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            minLength={mode === 'create' ? 8 : undefined}
+            required={mode === 'create'}
+            autoComplete={mode === 'create' ? 'new-password' : 'off'}
+          />
+          {mode === 'create' && role === 'EDITOR' && (
+            <p className="text-xs text-muted-foreground">
+              Share this email and password with the editor. They sign in at Staff login and open the CMS workspace.
+            </p>
+          )}
         </div>
         <div className="space-y-1.5">
           <Label>Role</Label>

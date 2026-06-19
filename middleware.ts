@@ -8,17 +8,28 @@ const ADMIN_ROUTES = ['/admin'];
 const EDITOR_ROUTES = ['/cms', '/editor'];
 const MEMBER_ROUTES = ['/members'];
 
-async function getUserRole(
+type StaffStatus = 'ACTIVE' | 'SUSPENDED' | 'PENDING';
+
+async function getUserAccess(
   supabase: Awaited<ReturnType<typeof updateSession>>['supabase'],
   user: NonNullable<Awaited<ReturnType<typeof updateSession>>['user']>,
-): Promise<Role | null> {
+): Promise<{ role: Role | null; status: StaffStatus }> {
   const { data: profile } = await supabase
     .from('profiles')
-    .select('role')
+    .select('role, status')
     .eq('id', user.id)
     .maybeSingle();
 
-  return resolveRoleFromSupabaseUser(user, profile?.role ?? null);
+  const metadataStatus = user.user_metadata?.status;
+  const status = (
+    profile?.status ??
+    (typeof metadataStatus === 'string' ? metadataStatus : null) ??
+    'ACTIVE'
+  ) as StaffStatus;
+
+  const role = resolveRoleFromSupabaseUser(user, profile?.role ?? null);
+
+  return { role, status };
 }
 
 export async function middleware(request: NextRequest) {
@@ -38,17 +49,32 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(loginUrl);
   }
 
-  const role = await getUserRole(supabase, user);
+  const { role, status } = await getUserAccess(supabase, user);
 
-  if (needsAdmin && !canAccessAdminPanel(role ?? undefined)) {
+  if (status === 'SUSPENDED') {
     return NextResponse.redirect(new URL('/unauthorized', request.url));
   }
 
-  if (needsEditor && !can(role ?? undefined, 'article.create')) {
+  if (status === 'PENDING') {
+    const loginPath = needsMember ? '/members/login' : '/login';
+    const loginUrl = new URL(loginPath, request.url);
+    loginUrl.searchParams.set('pending', '1');
+    return NextResponse.redirect(loginUrl);
+  }
+
+  if (!role) {
     return NextResponse.redirect(new URL('/unauthorized', request.url));
   }
 
-  if (needsMember && role && !isMemberRole(role)) {
+  if (needsAdmin && !canAccessAdminPanel(role)) {
+    return NextResponse.redirect(new URL('/unauthorized', request.url));
+  }
+
+  if (needsEditor && !can(role, 'article.create')) {
+    return NextResponse.redirect(new URL('/unauthorized', request.url));
+  }
+
+  if (needsMember && !isMemberRole(role)) {
     const destination = roleHomePath(role);
     return NextResponse.redirect(new URL(destination, request.url));
   }

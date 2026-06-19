@@ -1,10 +1,10 @@
 import { cache } from 'react';
 import prisma from '@/lib/prisma';
-import { demoArticles } from '@/lib/data';
 import { HOMEPAGE_DEFAULTS, type CarouselItem } from '@/lib/homepage-defaults';
 import { normalizeCoverageSlots } from '@/lib/coverage-defaults';
 import type { CoverageSlot } from '@/lib/coverage-types';
 import { MAX_CAROUSEL_ITEMS } from '@/lib/placement-rules';
+import { normalizeArticleImageUrl } from '@/lib/article-image';
 
 const PUBLIC_SETTING_KEYS = [
   'homepage', 'ticker', 'snapshot', 'interviews', 'site', 'seo', 'hero', 'coverage',
@@ -14,19 +14,6 @@ const GRID_SETTING_KEYS = ['gridMix', 'gridLines', 'gridProjects'] as const;
 
 export type { CarouselItem };
 export { HOMEPAGE_DEFAULTS };
-
-const DEMO_CAROUSEL: CarouselItem[] = demoArticles.slice(0, 5).map((a) => ({
-  slug: a.slug,
-  title: a.title,
-  excerpt: a.excerpt,
-  imageUrl: a.imageUrl,
-  author: a.author,
-  readTime: a.readTime,
-  category: a.category,
-  isBreaking: a.isBreaking,
-  isFeatured: true,
-  isPinned: false,
-}));
 
 export const getPublicSettingsMap = cache(async () => {
   const settings = await prisma.siteSetting.findMany({
@@ -62,7 +49,7 @@ function mapCarouselArticle(a: {
     slug: a.slug,
     title: a.title,
     excerpt: a.excerpt ?? '',
-    imageUrl: a.imageUrl ?? '/images/download (10).jfif',
+    imageUrl: normalizeArticleImageUrl(a.imageUrl) ?? '',
     author: a.author?.name ?? 'ESB PowerLine',
     readTime: a.readTime ?? 5,
     category: a.category,
@@ -105,16 +92,8 @@ async function fetchManagedCarouselItems(): Promise<CarouselItem[]> {
   return [...prioritized, ...backfill].slice(0, MAX_CAROUSEL_ITEMS).map(mapCarouselArticle);
 }
 
-export const getCarouselItems = cache(async (settings: Record<string, unknown>): Promise<CarouselItem[]> => {
-  const homepage = (settings.homepage as { carouselMode?: string } | undefined) ?? {};
-  const managedMode = homepage.carouselMode === 'managed';
-
-  const managedItems = await fetchManagedCarouselItems();
-  if (managedMode || managedItems.length > 0) {
-    return managedItems.length > 0 ? managedItems : DEMO_CAROUSEL;
-  }
-
-  return DEMO_CAROUSEL;
+export const getCarouselItems = cache(async (_settings: Record<string, unknown>): Promise<CarouselItem[]> => {
+  return fetchManagedCarouselItems();
 });
 
 /** Coverage slots come from admin settings; pinned stories render in a separate top row. */

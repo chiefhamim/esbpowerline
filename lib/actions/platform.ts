@@ -103,9 +103,6 @@ export async function getAdminDeskSnapshot() {
       : Promise.resolve(0),
   ]);
 
-  const homepage = (homepageSetting?.value as { carouselMode?: string }) ?? {};
-  const carouselMode = homepage.carouselMode === 'managed' ? 'managed' : 'demo';
-
   return {
     published,
     featured,
@@ -114,7 +111,7 @@ export async function getAdminDeskSnapshot() {
     inReview,
     scheduled,
     settingsCount,
-    carouselMode: carouselMode as 'demo' | 'managed',
+    carouselMode: 'managed' as const,
     reviewCount,
     pendingComments,
     reviewQueue: reviewQueue.map((n) => ({
@@ -134,25 +131,14 @@ export async function getAdminDeskSnapshot() {
   };
 }
 
-export async function setCarouselMode(mode: 'demo' | 'managed') {
+/** @deprecated Carousel is always database-driven; kept for legacy callers. */
+export async function setCarouselMode(_mode: 'managed') {
   const session = await auth();
   if (!session?.user || !can(session.user.role, 'settings.edit')) {
     throw new Error('Forbidden');
   }
 
-  const existing = await prisma.siteSetting.findUnique({ where: { key: 'homepage' } });
-  const current = (existing?.value as Record<string, unknown>) ?? {};
-
-  await prisma.siteSetting.upsert({
-    where: { key: 'homepage' },
-    create: { key: 'homepage', value: { ...current, carouselMode: mode } },
-    update: { value: { ...current, carouselMode: mode } },
-  });
-
-  revalidatePath('/');
-  revalidatePath('/admin/settings');
-
-  return { carouselMode: mode };
+  return { carouselMode: 'managed' as const };
 }
 
 function periodStarts(now = new Date()) {

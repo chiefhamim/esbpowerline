@@ -2,29 +2,29 @@ import 'server-only';
 
 import bcrypt from 'bcryptjs';
 import prisma from '@/lib/prisma';
-import { DEMO_PASSWORD } from '@/lib/demo-auth';
+import { getDevBootstrapPassword } from '@/lib/dev-login-hints';
 import { upsertSupabaseAuthUser } from '@/lib/supabase/sync-auth-user';
 
 const DEMO_MEMBER_EMAIL = 'member@esbpowerline.com';
-const DEMO_STAFF = [
-  { email: 'admin@esbpowerline.com', name: 'System Admin', role: 'SUPER_ADMIN' as const },
-  { email: 'editor@esbpowerline.com', name: 'Nadia Karim', role: 'EDITOR' as const },
-] as const;
+
+/** Optional dev-only sample editor — not the master admin. */
+const DEMO_EDITOR_EMAIL = 'editor@esbpowerline.com';
 
 function demoPassword() {
-  return process.env.SEED_DEMO_PASSWORD?.trim() || DEMO_PASSWORD;
+  return getDevBootstrapPassword() ?? 'esbpowerline007';
 }
 
 async function syncDemoAuthUser(
   email: string,
   name: string,
-  role: 'SUPER_ADMIN' | 'EDITOR' | 'SUBSCRIBER',
+  role: 'EDITOR' | 'SUBSCRIBER',
   password: string,
-) {
+): Promise<string | null> {
   try {
-    await upsertSupabaseAuthUser({ email, password, name, role });
+    return await upsertSupabaseAuthUser({ email, password, name, role });
   } catch (error) {
     console.warn(`[ensureDemoAccounts] Supabase sync skipped for ${email}:`, error);
+    return null;
   }
 }
 
@@ -35,7 +35,7 @@ export async function ensureDemoMemberAccount() {
   const password = demoPassword();
   const passwordHash = await bcrypt.hash(password, 10);
 
-  await prisma.user.upsert({
+  const member = await prisma.user.upsert({
     where: { email: DEMO_MEMBER_EMAIL },
     create: {
       name: 'Demo Member',
@@ -53,33 +53,47 @@ export async function ensureDemoMemberAccount() {
     },
   });
 
-  await syncDemoAuthUser(DEMO_MEMBER_EMAIL, 'Demo Member', 'SUBSCRIBER', password);
+  const supabaseUserId = await syncDemoAuthUser(DEMO_MEMBER_EMAIL, 'Demo Member', 'SUBSCRIBER', password);
+  if (supabaseUserId && member.supabaseUserId !== supabaseUserId) {
+    await prisma.user.update({
+      where: { id: member.id },
+      data: { supabaseUserId },
+    });
+  }
 }
 
-/** Upsert Prisma demo staff rows and mirror to Supabase Auth in development. */
-export async function ensureDemoStaffAccounts() {
+/**
+ * Optional dev sample editor account. Skips if the email already exists
+ * (e.g. created by the master admin via /admin/users/new).
+ */
+export async function ensureDemoEditorAccount() {
   if (process.env.NODE_ENV === 'production') return;
+
+  const existing = await prisma.user.findUnique({
+    where: { email: DEMO_EDITOR_EMAIL },
+    select: { id: true },
+  });
+  if (existing) return;
 
   const password = demoPassword();
   const passwordHash = await bcrypt.hash(password, 10);
 
-  for (const account of DEMO_STAFF) {
-    await prisma.user.upsert({
-      where: { email: account.email },
-      create: {
-        name: account.name,
-        email: account.email,
-        passwordHash,
-        role: account.role,
-        status: 'ACTIVE',
-      },
-      update: {
-        passwordHash,
-        role: account.role,
-        status: 'ACTIVE',
-      },
-    });
+  await prisma.user.create({
+    data: {
+      name: 'Nadia Karim',
+      email: DEMO_EDITOR_EMAIL,
+      passwordHash,
+      role: 'EDITOR',
+      status: 'ACTIVE',
+    },
+  });
 
-    await syncDemoAuthUser(account.email, account.name, account.role, password);
-  }
+  await syncDemoAuthUser(DEMO_EDITOR_EMAIL, 'Nadia Karim', 'EDITOR', password);
+}
+
+/** @deprecated Use ensureMasterAdminAccount — kept for scripts that still import this name. */
+export async function ensureDemoStaffAccounts() {
+  const { ensureMasterAdminAccount } = await import('@/lib/master-admin');
+  await ensureMasterAdminAccount();
+  await ensureDemoEditorAccount();
 }

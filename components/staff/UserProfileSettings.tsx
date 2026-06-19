@@ -85,6 +85,7 @@ export function UserProfileSettings({ open, onOpenChange }: { open: boolean; onO
               value={password} 
               onChange={(e) => setPassword(e.target.value)} 
               placeholder="Leave blank to keep current"
+              minLength={8}
             />
           </div>
         </div>

@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache';
 import prisma from '@/lib/prisma';
 import { auth } from '@/lib/auth';
 import { can } from '@/lib/constants';
+import { deleteStoredMedia } from '@/lib/media-storage';
 
 async function requireAuth() {
   const session = await auth();
@@ -150,6 +151,7 @@ export async function deleteMedia(id: string) {
   }
 
   await prisma.media.delete({ where: { id } });
+  await deleteStoredMedia(media.url).catch(() => undefined);
   revalidatePath('/cms/media');
   revalidatePath('/admin/media');
 }

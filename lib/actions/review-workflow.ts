@@ -4,6 +4,12 @@ import { revalidatePath } from 'next/cache';
 import prisma from '@/lib/prisma';
 import { auth } from '@/lib/auth';
 import { can, type Role } from '@/lib/constants';
+import {
+  formatPublishBlockerMessage,
+  getPublishBlockers,
+  publishArticleSchema,
+} from '@/lib/validations/article';
+import { canSubmitArticleForReview } from '@/lib/editorial-review';
 
 async function requireAuthUser() {
   const session = await auth();
@@ -19,9 +25,9 @@ async function requireAdminReviewer() {
   return user;
 }
 
-function canSubmitForReview(role: Role, authorId: string, userId: string) {
-  if (can(role, 'article.review')) return true;
-  return authorId === userId && can(role, 'article.create');
+function parseCollaboratorIds(raw: unknown): string[] {
+  if (!Array.isArray(raw)) return [];
+  return raw.filter((id): id is string => typeof id === 'string');
 }
 
 export async function submitDraftForAdminReview(articleId: string, note?: string) {
@@ -30,11 +36,27 @@ export async function submitDraftForAdminReview(articleId: string, note?: string
 
   const article = await prisma.article.findUnique({
     where: { id: articleId },
-    select: { id: true, title: true, status: true, authorId: true },
+    select: {
+      id: true,
+      title: true,
+      status: true,
+      authorId: true,
+      collaboratorIds: true,
+    },
   });
   if (!article) throw new Error('Article not found');
-  if (!canSubmitForReview(role, article.authorId, user.id)) throw new Error('Forbidden');
-  if (!['DRAFT', 'IN_REVIEW'].includes(article.status)) {
+  if (
+    !canSubmitArticleForReview({
+      role,
+      userId: user.id,
+      authorId: article.authorId,
+      collaboratorIds: parseCollaboratorIds(article.collaboratorIds),
+      status: article.status,
+    })
+  ) {
+    throw new Error('Forbidden');
+  }
+  if (article.status !== 'DRAFT') {
     throw new Error('Only drafts can be submitted for admin review');
   }
 
@@ -95,10 +117,47 @@ export async function approveReviewSubmission(
 
   const article = await prisma.article.findUnique({
     where: { id: articleId },
-    select: { id: true, title: true, status: true, authorId: true, publishedAt: true, slug: true },
+    select: {
+      id: true,
+      title: true,
+      slug: true,
+      excerpt: true,
+      content: true,
+      category: true,
+      status: true,
+      authorId: true,
+      publishedAt: true,
+      imageUrl: true,
+      tags: true,
+    },
   });
   if (!article) throw new Error('Article not found');
   if (article.status !== 'IN_REVIEW') throw new Error('Article is not awaiting review');
+
+  if (publish) {
+    const blockers = getPublishBlockers({
+      title: article.title,
+      excerpt: article.excerpt ?? '',
+      content: article.content,
+    });
+    if (blockers.length > 0) {
+      throw new Error(formatPublishBlockerMessage(blockers));
+    }
+    const parsed = publishArticleSchema.safeParse({
+      title: article.title,
+      slug: article.slug,
+      excerpt: article.excerpt ?? '',
+      content: article.content,
+      category: article.category,
+      status: 'PUBLISHED',
+      imageUrl: article.imageUrl ?? undefined,
+      tags: (article.tags as string[]) ?? [],
+    });
+    if (!parsed.success) {
+      const message = parsed.error.issues.map((i) => i.message).join('; ');
+      throw new Error(message || 'Article failed publish validation');
+    }
+  }
 
   const approvalMessage =
     note

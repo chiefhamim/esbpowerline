@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { formatNumber } from '@/lib/utils';
 import { Zap, Activity, Leaf, Gauge, Flame, Cable, Sun, TrendingUp } from 'lucide-react';
+import { isSimulatedTelemetryEnabled } from '@/lib/telemetry-mode';
 
 const IconMap: Record<string, any> = {
   Zap,
@@ -57,7 +58,11 @@ export function EnergyDashboard({ initialStats }: { initialStats?: any[] }) {
     });
   });
 
+  const simulateLive = isSimulatedTelemetryEnabled();
+
   useEffect(() => {
+    if (!simulateLive) return;
+
     const interval = setInterval(() => {
       setStats(prev => prev.map((s, idx) => {
         const range = idx === 0 || idx === 1 || idx === 5 ? 160 : (idx === 4 ? 35 : 0.2);
@@ -70,7 +75,7 @@ export function EnergyDashboard({ initialStats }: { initialStats?: any[] }) {
       }));
     }, 24000);
     return () => clearInterval(interval);
-  }, []);
+  }, [simulateLive]);
 
   return (
     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
@@ -79,9 +84,18 @@ export function EnergyDashboard({ initialStats }: { initialStats?: any[] }) {
         return (
           <div key={i} className="stat group relative overflow-hidden flex flex-col items-center text-center pt-6 pb-5 px-3">
             {/* Live SCADA Radar Ping */}
-            <span className="absolute top-2.5 right-2.5 flex h-1.5 w-1.5" title="Live Telemetry Feed">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75 font-semibold"></span>
-              <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500"></span>
+            <span
+              className="absolute top-2.5 right-2.5 flex h-1.5 w-1.5"
+              title={simulateLive ? 'Simulated telemetry (dev)' : 'Indicative snapshot'}
+            >
+              {simulateLive ? (
+                <>
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75 font-semibold" />
+                  <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500" />
+                </>
+              ) : (
+                <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-muted-foreground/40" />
+              )}
             </span>
             <Icon className={`h-6 w-6 mb-2 shrink-0 ${s.iconClass ?? 'text-primary'}`} />
             <div className="text-[11px] font-medium tracking-wide text-muted-foreground mb-1">

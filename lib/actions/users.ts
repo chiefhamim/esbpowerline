@@ -5,7 +5,12 @@ import bcrypt from 'bcryptjs';
 import prisma from '@/lib/prisma';
 import { auth } from '@/lib/auth';
 import { can } from '@/lib/constants';
-import { upsertSupabaseAuthUser } from '@/lib/supabase/sync-auth-user';
+import {
+  upsertSupabaseAuthUser,
+  syncSupabaseAuthUserMetadata,
+  syncSupabaseAuthUserStatus,
+} from '@/lib/supabase/sync-auth-user';
+import type { Role } from '@/lib/constants';
 import { userSchema, type UserInput } from '@/lib/validations/user';
 
 async function requireAdmin() {
@@ -149,16 +154,29 @@ export async function getUser(id: string) {
   });
 }
 
+const PRIVILEGED_ROLES: Role[] = ['SUPER_ADMIN', 'ADMIN'];
+
+function assertRoleAssignment(actorRole: Role, targetRole: Role) {
+  if (PRIVILEGED_ROLES.includes(targetRole) && actorRole !== 'SUPER_ADMIN') {
+    throw new Error('Only the master admin can assign admin-level roles');
+  }
+}
+
 export async function createUser(data: UserInput) {
   const admin = await requireAdmin();
   if (!can(admin.role, 'user.create')) throw new Error('Forbidden');
 
   const parsed = userSchema.parse(data);
+  assertRoleAssignment(admin.role as Role, parsed.role as Role);
+
   const existing = await prisma.user.findUnique({ where: { email: parsed.email } });
   if (existing) throw new Error('Email already exists');
 
   if (!parsed.password?.trim()) {
     throw new Error('Password is required when creating a user');
+  }
+  if (parsed.password.trim().length < 8) {
+    throw new Error('Password must be at least 8 characters');
   }
   const passwordHash = await bcrypt.hash(parsed.password.trim(), 10);
   const user = await prisma.user.create({
@@ -173,19 +191,31 @@ export async function createUser(data: UserInput) {
   });
 
   try {
-    await upsertSupabaseAuthUser({
+    const supabaseUserId = await upsertSupabaseAuthUser({
       email: parsed.email,
       password: parsed.password!.trim(),
       name: parsed.name,
       role: parsed.role,
+      status: parsed.status,
     });
+    if (supabaseUserId) {
+      await prisma.user.update({
+        where: { id: user.id },
+        data: { supabaseUserId },
+      });
+    }
   } catch (error) {
     await prisma.user.delete({ where: { id: user.id } }).catch(() => undefined);
     throw error;
   }
 
+  const roleLabel = parsed.role === 'EDITOR' ? 'editor (CMS access)' : parsed.role.toLowerCase();
   await prisma.auditLog.create({
-    data: { type: 'user.create', message: `Created user: ${user.email}`, userId: admin.id },
+    data: {
+      type: 'user.create',
+      message: `Created ${roleLabel}: ${user.email}`,
+      userId: admin.id,
+    },
   });
 
   revalidatePath('/admin/users');
@@ -201,6 +231,9 @@ export async function updateUser(id: string, data: Partial<UserInput>) {
   delete updateData.password;
 
   if (parsed.password) {
+    if (parsed.password.trim().length < 8) {
+      throw new Error('Password must be at least 8 characters');
+    }
     updateData.passwordHash = await bcrypt.hash(parsed.password, 10);
   }
 
@@ -208,20 +241,49 @@ export async function updateUser(id: string, data: Partial<UserInput>) {
     where: { id },
     select: { email: true, name: true, role: true },
   });
+  if (!existing) throw new Error('User not found');
 
-  if (parsed.role && !can(admin.role, 'user.change_role')) {
-    throw new Error('Cannot change role');
+  if (parsed.role) {
+    if (!can(admin.role, 'user.change_role')) {
+      throw new Error('Cannot change role');
+    }
+    assertRoleAssignment(admin.role as Role, parsed.role as Role);
   }
 
   const user = await prisma.user.update({ where: { id }, data: updateData as any });
 
-  if (parsed.password && existing) {
-    await upsertSupabaseAuthUser({
+  const nextName = parsed.name ?? existing.name;
+  const nextRole = (parsed.role ?? existing.role) as UserInput['role'];
+
+  const nextStatus = (parsed.status ?? user.status) as UserInput['status'];
+
+  if (parsed.password) {
+    const supabaseUserId = await upsertSupabaseAuthUser({
       email: existing.email,
       password: parsed.password,
-      name: parsed.name ?? existing.name,
-      role: (parsed.role ?? existing.role) as UserInput['role'],
+      name: nextName,
+      role: nextRole,
+      status: nextStatus,
     });
+    if (supabaseUserId) {
+      await prisma.user.update({
+        where: { id },
+        data: { supabaseUserId },
+      });
+    }
+  } else if (parsed.name || parsed.role || parsed.status) {
+    await syncSupabaseAuthUserMetadata({
+      email: existing.email,
+      name: nextName,
+      role: nextRole,
+      status: nextStatus,
+    });
+  }
+
+  if (parsed.status === 'SUSPENDED') {
+    await syncSupabaseAuthUserStatus(existing.email, 'SUSPENDED');
+  } else if (parsed.status === 'ACTIVE') {
+    await syncSupabaseAuthUserStatus(existing.email, 'ACTIVE');
   }
 
   revalidatePath('/admin/users');
@@ -233,6 +295,13 @@ export async function deleteUser(id: string) {
   if (!can(admin.role, 'user.delete')) throw new Error('Forbidden');
   if (admin.id === id) throw new Error('Cannot delete yourself');
 
+  const existing = await prisma.user.findUnique({
+    where: { id },
+    select: { email: true },
+  });
+  if (!existing) throw new Error('User not found');
+
   await prisma.user.update({ where: { id }, data: { status: 'SUSPENDED' } });
+  await syncSupabaseAuthUserStatus(existing.email, 'SUSPENDED');
   revalidatePath('/admin/users');
 }

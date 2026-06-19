@@ -3,7 +3,8 @@
 import { headers } from 'next/headers';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
-import { ensureDemoStaffAccounts } from '@/lib/ensure-demo-accounts';
+import { ensureMasterAdminAccount } from '@/lib/master-admin';
+import { authContinuePath, needsAuthHandoff } from '@/lib/auth-handoff';
 import {
   getAuthHandoffMessage,
   hostContextFromHeaders,
@@ -14,6 +15,7 @@ import type { Role } from '@/lib/constants';
 import { resolveRoleFromSupabaseUser } from '@/lib/supabase/resolve-role';
 import { createClient } from '@/utils/supabase/server';
 import prisma from '@/lib/prisma';
+import { getDevBootstrapPassword } from '@/lib/dev-login-hints';
 
 export type AuthActionResult = {
   error?: string;
@@ -52,7 +54,7 @@ export async function loginAction(
       return { error: 'Email and password are required.' };
     }
 
-    await ensureDemoStaffAccounts();
+    await ensureMasterAdminAccount();
 
     const supabase = await createClient();
     const { error } = await supabase.auth.signInWithPassword({ email, password });
@@ -74,16 +76,23 @@ export async function loginAction(
       .eq('id', user.id)
       .maybeSingle();
 
+    const dbUser = await prisma.user.findUnique({
+      where: { email },
+      select: { role: true, status: true },
+    });
+
     const role =
       resolveRoleFromSupabaseUser(user, profile?.role ?? null) ??
-      ((await prisma.user.findUnique({
-        where: { email },
-        select: { role: true, status: true },
-      }))?.role as Role | undefined);
+      (dbUser?.role as Role | undefined);
 
     if (!role) {
       await supabase.auth.signOut();
       return { error: 'Account is missing a role. Contact an administrator.' };
+    }
+
+    if (dbUser?.status === 'SUSPENDED') {
+      await supabase.auth.signOut();
+      return { error: 'This account has been suspended. Contact an administrator.' };
     }
 
     if (!isStaffRole(role)) {
@@ -104,8 +113,13 @@ export async function loginAction(
       audience: 'staff',
     }, hostContext);
 
+    const host = headerStore.get('host') ?? 'localhost:3000';
+    const redirectTo = needsAuthHandoff(destination, host)
+      ? authContinuePath(destination)
+      : destination;
+
     return {
-      redirectTo: destination,
+      redirectTo,
       handoffMessage: getAuthHandoffMessage(
         role,
         'staff',
@@ -119,11 +133,20 @@ export async function loginAction(
   }
 }
 
+/** Dev-only password hint for master admin quick-fill — never returns a value in production. */
+export async function getStaffDevLoginHint(): Promise<{ passwordHint: string | null }> {
+  return { passwordHint: getDevBootstrapPassword() };
+}
+
 /** Attach to staff sign-up form: useActionState(signupAction, {}) */
 export async function signupAction(
   _prevState: AuthActionResult,
   formData: FormData,
 ): Promise<AuthActionResult> {
+  if (process.env.NODE_ENV === 'production') {
+    return { error: 'Staff self-registration is disabled. Contact the master admin.' };
+  }
+
   const email = readField(formData, 'email').toLowerCase();
   const password = readField(formData, 'password');
   const name = readField(formData, 'name');

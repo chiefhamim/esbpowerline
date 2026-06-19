@@ -55,6 +55,11 @@ async function upsertStaffUser(admin: SupabaseClient, account: StaffSeedAccount,
 }
 
 async function main() {
+  if (process.env.NODE_ENV === 'production' && process.env.ALLOW_PRODUCTION_SEED !== 'true') {
+    console.error('❌ Refusing to seed Supabase staff: set ALLOW_PRODUCTION_SEED=true to override in production.');
+    process.exit(1);
+  }
+
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim();
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY?.trim();
   const password = process.env.SEED_DEMO_PASSWORD?.trim() || 'esbpowerline007';

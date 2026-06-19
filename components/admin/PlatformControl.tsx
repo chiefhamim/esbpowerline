@@ -48,7 +48,7 @@ const EMPTY: DeskSnapshot = {
   inReview: 0,
   scheduled: 0,
   settingsCount: 0,
-  carouselMode: 'demo',
+  carouselMode: 'managed',
   reviewCount: 0,
   pendingComments: 0,
   reviewQueue: [],
@@ -104,25 +104,6 @@ export function PlatformControl() {
         toast.error(e instanceof Error ? e.message : 'Failed to refresh');
       }
     });
-  }
-
-  function handleCarouselMode(mode: 'demo' | 'managed') {
-    if (!canEditSettings || loadState !== 'ready') return;
-    const previous = stats.carouselMode;
-    if (mode === previous) return;
-
-    setSnapshot((s) => (s ? { ...s, carouselMode: mode } : s));
-    upsertChange({
-      id: 'settings:homepage.carouselMode',
-      group: 'settings',
-      section: 'Platform desk',
-      label: 'Carousel mode',
-      detail: `${previous} → ${mode}`,
-      page: pathname.startsWith('/admin') ? pathname : '/admin',
-      revert: () => setSnapshot((s) => (s ? { ...s, carouselMode: previous } : s)),
-      collect: () => ({ homepage: { carouselMode: mode } }),
-    });
-    toast.message('Carousel change queued — save from the Changes panel');
   }
 
   function openReviewAction(item: ReviewItem, action: ReviewAction) {
@@ -291,28 +272,8 @@ export function PlatformControl() {
                 <div className="admin-platform-divider" />
 
                 <div className="admin-platform-section-label">Homepage carousel</div>
-                <div className="admin-platform-toggle-row">
-                  <button
-                    type="button"
-                    disabled={pending || !canEditSettings || loadState !== 'ready'}
-                    className={cn('admin-platform-mode', stats.carouselMode === 'demo' && 'admin-platform-mode--active')}
-                    onClick={() => handleCarouselMode('demo')}
-                  >
-                    Demo
-                  </button>
-                  <button
-                    type="button"
-                    disabled={pending || !canEditSettings || loadState !== 'ready'}
-                    className={cn('admin-platform-mode', stats.carouselMode === 'managed' && 'admin-platform-mode--active')}
-                    onClick={() => handleCarouselMode('managed')}
-                  >
-                    Managed
-                  </button>
-                </div>
                 <p className="admin-platform-hint">
-                  {canEditSettings
-                    ? 'Managed uses pinned then featured articles on the public homepage.'
-                    : 'View only — settings access required to change carousel mode.'}
+                  Featured stories are served from published articles (breaking, featured, then latest).
                 </p>
 
                 <div className="admin-platform-divider" />

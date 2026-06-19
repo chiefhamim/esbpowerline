@@ -90,17 +90,21 @@ export default async function Home() {
                 Trending this week
               </h3>
               <div className="space-y-4">
-                {trending.map((a, i) => (
-                  <Link key={a.slug} href={`/articles/${a.slug}`} className="group block">
-                    <div className="flex gap-3">
-                      <div className="text-[10px] text-muted-foreground tabular-nums w-4 mt-0.5">{(i + 1).toString().padStart(2, '0')}</div>
-                      <div>
-                        <div className="font-medium leading-snug group-hover:text-primary transition line-clamp-2">{a.title}</div>
-                        <div className="text-xs text-muted-foreground mt-0.5">{a.category} · {a.views.toLocaleString()} views</div>
+                {trending.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">No trending articles yet — publish stories to populate this list.</p>
+                ) : (
+                  trending.map((a, i) => (
+                    <Link key={a.slug} href={`/articles/${a.slug}`} className="group block">
+                      <div className="flex gap-3">
+                        <div className="text-[10px] text-muted-foreground tabular-nums w-4 mt-0.5">{(i + 1).toString().padStart(2, '0')}</div>
+                        <div>
+                          <div className="font-medium leading-snug group-hover:text-primary transition line-clamp-2">{a.title}</div>
+                          <div className="text-xs text-muted-foreground mt-0.5">{a.category} · {a.views.toLocaleString()} views</div>
+                        </div>
                       </div>
-                    </div>
-                  </Link>
-                ))}
+                    </Link>
+                  ))
+                )}
               </div>
             </div>
 

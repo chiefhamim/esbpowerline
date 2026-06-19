@@ -1,4 +1,5 @@
-import { CATEGORIES } from './constants';
+/** Test-only demo fixtures — never import from app runtime code. */
+import { CATEGORIES } from '../constants';
 
 export type DemoArticle = {
   id: string;

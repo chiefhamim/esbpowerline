@@ -5,9 +5,10 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { ArrowRight, ChevronLeft, ChevronRight, Play, Pause } from 'lucide-react';
 import { ArticlePlacementBadge } from '@/components/shared/ArticlePlacementBadge';
-import { demoArticles } from '@/lib/data';
 import { LiveMarketTicker, type TickerItem } from '@/components/news/LiveMarketTicker';
 import { ModernTooltip } from '@/components/shared/ModernTooltip';
+import { NoImage } from '@/components/shared/NoImage';
+import { hasArticleImage } from '@/lib/article-image';
 
 interface FeaturedItem {
   slug: string;
@@ -29,20 +30,7 @@ export function FeaturedCarousel({
   items?: FeaturedItem[];
   tickerItems?: TickerItem[];
 }) {
-  const featured: FeaturedItem[] =
-    items ??
-    demoArticles.slice(0, 5).map((a) => ({
-      slug: a.slug,
-      title: a.title,
-      excerpt: a.excerpt,
-      imageUrl: a.imageUrl,
-      author: a.author,
-      readTime: a.readTime,
-      category: a.category,
-      isBreaking: a.isBreaking,
-      isFeatured: true,
-      isPinned: false,
-    }));
+  const featured: FeaturedItem[] = items ?? [];
 
   const [current, setCurrent] = useState(0);
   const [isPlaying, setIsPlaying] = useState(true);
@@ -237,20 +225,32 @@ export function FeaturedCarousel({
 
               <div className="relative md:col-span-5">
                 <div className="featured-hero__image relative aspect-[16/10] w-full overflow-hidden rounded-2xl border border-border/60 bg-muted/20 shadow-lg md:aspect-auto">
-                  {featured.map((item, idx) => (
-                    <Image
-                      key={idx}
-                      src={item.imageUrl}
-                      alt={item.title}
-                      fill
-                      priority={idx === 0}
-                      className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-700 ease-out ${
-                        idx === current ? 'opacity-100' : 'opacity-0 pointer-events-none'
-                      }`}
-                      style={idx === current ? undefined : { visibility: 'hidden' }}
-                      sizes="(max-width: 768px) 100vw, 50vw"
-                    />
-                  ))}
+                  {featured.map((item, idx) =>
+                    hasArticleImage(item.imageUrl) ? (
+                      <Image
+                        key={idx}
+                        src={item.imageUrl}
+                        alt={item.title}
+                        fill
+                        priority={idx === 0}
+                        className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-700 ease-out ${
+                          idx === current ? 'opacity-100' : 'opacity-0 pointer-events-none'
+                        }`}
+                        style={idx === current ? undefined : { visibility: 'hidden' }}
+                        sizes="(max-width: 768px) 100vw, 50vw"
+                      />
+                    ) : (
+                      <div
+                        key={idx}
+                        className={`absolute inset-0 transition-opacity duration-700 ease-out ${
+                          idx === current ? 'opacity-100' : 'opacity-0 pointer-events-none'
+                        }`}
+                        style={idx === current ? undefined : { visibility: 'hidden' }}
+                      >
+                        <NoImage className="h-full w-full" />
+                      </div>
+                    ),
+                  )}
                   <div className="pointer-events-none absolute inset-0 rounded-2xl border border-white/5" />
                 </div>
               </div>

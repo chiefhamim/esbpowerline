@@ -2,6 +2,8 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { formatDistanceToNow } from 'date-fns';
 import { ArticlePlacementBadge } from '@/components/shared/ArticlePlacementBadge';
+import { NoImage } from '@/components/shared/NoImage';
+import { hasArticleImage } from '@/lib/article-image';
 
 interface ArticleCardProps {
   id: string;
@@ -37,7 +39,7 @@ export function ArticleCard({
   return (
     <Link href={`/articles/${id}`} className="article-card group block">
       <div className="article-card__image-wrapper relative">
-        {imageUrl ? (
+        {hasArticleImage(imageUrl) ? (
           <Image
             src={imageUrl}
             alt={title}
@@ -46,7 +48,7 @@ export function ArticleCard({
             className="article-card__image"
           />
         ) : (
-          <div className="article-card__image bg-muted flex items-center justify-center text-muted-foreground">No image</div>
+          <NoImage className="article-card__image h-48 w-full" compact />
         )}
         <div className="absolute top-2.5 left-2.5 flex flex-wrap items-center gap-1">
           <span className="category-pill text-[10px] font-medium tracking-wide">{category}</span>
