@@ -7,6 +7,7 @@ import { PrismaClient, type Prisma } from '@prisma/client';
 import {
   assertDatabaseUrlMatchesSchema,
   isSqliteUrl,
+  createPgPoolConfig,
   resolveDatabaseUrl,
   resolvePrismaSchemaProvider,
 } from '../lib/prisma-database';
@@ -28,7 +29,7 @@ export function createScriptPrismaClient(): PrismaClient {
 
   const { PrismaPg } = require('@prisma/adapter-pg') as typeof import('@prisma/adapter-pg');
   const { Pool } = require('pg') as typeof import('pg');
-  const pool = new Pool({ connectionString: databaseUrl });
+  const pool = new Pool(createPgPoolConfig(databaseUrl));
   const adapter = new PrismaPg(pool);
   return new PrismaClient({ adapter, log });
 }

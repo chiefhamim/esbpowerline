@@ -29,6 +29,25 @@ export function isPostgresUrl(url: string) {
   return url.startsWith('postgresql://') || url.startsWith('postgres://');
 }
 
+/** Supabase pooler TLS needs relaxed cert verification in serverless Node runtimes. */
+export function createPgPoolConfig(connectionString: string) {
+  let remote = true;
+  try {
+    const normalized = connectionString
+      .replace(/^postgresql:\/\//, 'https://')
+      .replace(/^postgres:\/\//, 'https://');
+    const host = new URL(normalized).hostname;
+    remote = host !== 'localhost' && host !== '127.0.0.1';
+  } catch {
+    remote = true;
+  }
+
+  return {
+    connectionString,
+    ssl: remote ? { rejectUnauthorized: false as const } : undefined,
+  };
+}
+
 /** Explicit PRISMA_SCHEMA_PROVIDER wins; otherwise infer from DATABASE_URL. */
 export function resolvePrismaSchemaProvider(databaseUrl?: string): 'sqlite' | 'postgresql' {
   const explicit = process.env.PRISMA_SCHEMA_PROVIDER?.trim();
