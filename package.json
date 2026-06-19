@@ -26,6 +26,8 @@
     "supabase:seed-staff": "tsx scripts/seed-supabase-staff.ts",
     "supabase:seed-member": "node scripts/seed-supabase-member.mjs",
     "bootstrap:prod": "cross-env PRISMA_SCHEMA_PROVIDER=postgresql node scripts/bootstrap-production.mjs",
+    "import:news": "cross-env PRISMA_SCHEMA_PROVIDER=postgresql tsx scripts/import-esbpowerline-news.ts",
+    "import:news:prod": "cross-env PRISMA_SCHEMA_PROVIDER=postgresql ALLOW_PRODUCTION_SEED=true tsx scripts/import-esbpowerline-news.ts",
     "env:pull": "node scripts/env-pull-vercel.mjs",
     "setup:agents": "scripts/setup-agent-integrations.cmd",
     "db:reset": "prisma migrate reset --force",

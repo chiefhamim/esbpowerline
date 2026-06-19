@@ -58,7 +58,7 @@ async function main() {
 
   const editor = await prisma.user.create({
     data: {
-      name: 'Nadia Karim',
+      name: 'Mehedi Hasan Hamim',
       email: 'editor@esbpowerline.com',
       passwordHash,
       role: 'EDITOR',

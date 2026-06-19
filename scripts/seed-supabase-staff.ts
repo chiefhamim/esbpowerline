@@ -12,7 +12,7 @@ type StaffSeedAccount = {
 
 const STAFF_ACCOUNTS: StaffSeedAccount[] = [
   { email: 'admin@esbpowerline.com', name: 'System Admin', role: 'SUPER_ADMIN' },
-  { email: 'editor@esbpowerline.com', name: 'Nadia Karim', role: 'EDITOR' },
+  { email: 'editor@esbpowerline.com', name: 'Mehedi Hasan Hamim', role: 'EDITOR' },
 ];
 
 async function findUserIdByEmail(admin: SupabaseClient, email: string): Promise<string | null> {
