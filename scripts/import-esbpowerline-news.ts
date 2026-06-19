@@ -13,11 +13,17 @@ import type { PrismaClient } from '@prisma/client';
 import { CATEGORIES, CATEGORY_DETAILS } from '../lib/constants';
 import { slugify } from '../lib/utils';
 
+/** Preserve npm/cross-env targets — .env.production.local can contain empty placeholders. */
+const cliProvider = process.env.PRISMA_SCHEMA_PROVIDER?.trim() || '';
+const cliDatabaseUrl = process.env.DATABASE_URL?.trim() || '';
+
 config({ path: '.env' });
 if (existsSync('.env.local')) config({ path: '.env.local', override: true });
-if (existsSync('.env.production.local')) {
+if (existsSync('.env.production.local') && cliProvider !== 'sqlite') {
   config({ path: '.env.production.local', override: true });
 }
+if (cliProvider) process.env.PRISMA_SCHEMA_PROVIDER = cliProvider;
+if (cliDatabaseUrl) process.env.DATABASE_URL = cliDatabaseUrl;
 
 function toPostgresqlUrl(raw: string | undefined): string {
   const value = raw?.trim();
@@ -34,21 +40,29 @@ function readEnvValue(file: string, key: string): string {
   }
 }
 
-if (!process.env.DATABASE_URL?.trim()) {
-  process.env.DATABASE_URL = toPostgresqlUrl(
-    process.env.POSTGRES_PRISMA_URL ||
-      readEnvValue('.env.local', 'POSTGRES_PRISMA_URL') ||
-      readEnvValue('.env', 'POSTGRES_PRISMA_URL'),
-  );
+const schemaProvider = process.env.PRISMA_SCHEMA_PROVIDER?.trim() || 'postgresql';
+process.env.PRISMA_SCHEMA_PROVIDER = schemaProvider;
+
+if (schemaProvider === 'sqlite') {
+  const sqliteUrl = process.env.DATABASE_URL?.trim();
+  process.env.DATABASE_URL =
+    sqliteUrl && sqliteUrl.startsWith('file:') ? sqliteUrl : 'file:./dev.db';
+} else {
+  if (!process.env.DATABASE_URL?.trim()) {
+    process.env.DATABASE_URL = toPostgresqlUrl(
+      process.env.POSTGRES_PRISMA_URL ||
+        readEnvValue('.env.local', 'POSTGRES_PRISMA_URL') ||
+        readEnvValue('.env', 'POSTGRES_PRISMA_URL'),
+    );
+  }
+  if (!process.env.DIRECT_URL?.trim()) {
+    process.env.DIRECT_URL = toPostgresqlUrl(
+      process.env.POSTGRES_URL_NON_POOLING ||
+        readEnvValue('.env.local', 'POSTGRES_URL_NON_POOLING') ||
+        readEnvValue('.env', 'POSTGRES_URL_NON_POOLING'),
+    );
+  }
 }
-if (!process.env.DIRECT_URL?.trim()) {
-  process.env.DIRECT_URL = toPostgresqlUrl(
-    process.env.POSTGRES_URL_NON_POOLING ||
-      readEnvValue('.env.local', 'POSTGRES_URL_NON_POOLING') ||
-      readEnvValue('.env', 'POSTGRES_URL_NON_POOLING'),
-  );
-}
-process.env.PRISMA_SCHEMA_PROVIDER = process.env.PRISMA_SCHEMA_PROVIDER?.trim() || 'postgresql';
 
 if (!process.env.DATABASE_URL?.trim()) {
   console.error('❌ DATABASE_URL is not set. Add POSTGRES_PRISMA_URL to .env.local or DATABASE_URL to .env.production.local');
@@ -144,6 +158,31 @@ function sanitizeContent(html: string): string {
     .replace(/\sdata-index-in-node="[^"]*"/gi, '')
     .replace(/<script[\s\S]*?<\/script>/gi, '')
     .trim();
+}
+
+/** Pull the first real editorial image from post HTML (WordPress uploads). */
+function extractContentImage(html: string): string | null {
+  const matches = html.matchAll(/<img[^>]+src=["']([^"']+)["']/gi);
+  for (const match of matches) {
+    const src = match[1]?.trim();
+    if (!src) continue;
+    if (src.includes('wp-content/uploads')) return src;
+    if (src.startsWith('https://esbpowerline.com/')) return src;
+  }
+  return null;
+}
+
+function isDemoImage(url: string | null | undefined): boolean {
+  if (!url?.trim()) return true;
+  const u = url.trim().toLowerCase();
+  return (
+    u.startsWith('/images/') ||
+    u.includes('/images/download') ||
+    u.includes('placeholder') ||
+    u.includes('demo_') ||
+    u.includes('unsplash.com') ||
+    u.includes('placehold')
+  );
 }
 
 function normalizeSlug(raw: string): string {
@@ -306,11 +345,16 @@ async function importArticles(
     const title = stripTags(post.title.rendered);
     const slug = normalizeSlug(post.slug);
     const excerpt = stripTags(post.excerpt.rendered).slice(0, 500) || null;
-    const content = sanitizeContent(post.content.rendered);
+    const rawContent = post.content.rendered;
+    const content = sanitizeContent(rawContent);
     const categoryName = resolveAppCategory(post.categories, wpCatById);
     const categoryId = categoryIdByName[categoryName];
-    const imageUrl = await fetchFeaturedImage(post.featured_media);
+    let imageUrl = await fetchFeaturedImage(post.featured_media);
+    if (isDemoImage(imageUrl)) {
+      imageUrl = extractContentImage(rawContent);
+    }
     const publishedAt = new Date(post.date);
+    const wpImportedAt = new Date(post.date);
     const readTime = estimateReadTime(content);
 
     const isFeatured = index < 3;
@@ -333,6 +377,8 @@ async function importArticles(
         isFeatured,
         isBreaking,
         views: Math.floor(800 + Math.random() * 4200),
+        createdAt: wpImportedAt,
+        updatedAt: wpImportedAt,
       },
       update: {
         title,
@@ -347,6 +393,7 @@ async function importArticles(
         readTime,
         isFeatured,
         isBreaking,
+        updatedAt: wpImportedAt,
       },
     });
 
@@ -354,10 +401,53 @@ async function importArticles(
     console.log(`  ✓ [${imported}/${posts.length}] ${title.slice(0, 72)}… → ${categoryName}`);
   }
 
+  // Reassign any stray demo-authored rows and strip placeholder images.
+  const reassigned = await prisma.article.updateMany({
+    where: { NOT: { authorId } },
+    data: { authorId },
+  });
+  if (reassigned.count > 0) {
+    console.log(`✓ Reassigned ${reassigned.count} article(s) to ${EDITOR_NAME}`);
+  }
+
+  const withDemoImages = await prisma.article.findMany({
+    where: {
+      OR: [
+        { imageUrl: { startsWith: '/images/' } },
+        { imageUrl: { contains: 'download (' } },
+        { imageUrl: null },
+      ],
+    },
+    select: { id: true, slug: true, content: true, imageUrl: true },
+  });
+
+  for (const row of withDemoImages) {
+    const fixed = extractContentImage(row.content);
+    if (fixed && !isDemoImage(fixed)) {
+      await prisma.article.update({ where: { id: row.id }, data: { imageUrl: fixed } });
+      console.log(`  ✓ Fixed image for ${row.slug}`);
+    }
+  }
+
   const articleCount = await prisma.article.count({ where: { authorId } });
   await prisma.user.update({
     where: { id: authorId },
-    data: { articlesCount: articleCount },
+    data: { name: EDITOR_NAME, articlesCount: articleCount },
+  });
+
+  // Demote leftover demo author accounts so CMS never shows fake bylines.
+  await prisma.user.updateMany({
+    where: {
+      email: {
+        in: [
+          'aminul@esbpowerline.com',
+          'farhana@esbpowerline.com',
+          'rafiq@esbpowerline.com',
+          'nadia@esbpowerline.com',
+        ],
+      },
+    },
+    data: { articlesCount: 0 },
   });
 
   return imported;
