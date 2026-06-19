@@ -1,7 +1,7 @@
 import 'server-only';
 import 'dotenv/config';
 import path from 'path';
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, type Prisma } from '@prisma/client';
 
 const globalForPrisma = globalThis as unknown as { prisma: PrismaClient | undefined };
 
@@ -23,7 +23,8 @@ function isSqliteUrl(url: string) {
 
 function createPrismaClient() {
   const databaseUrl = resolveDatabaseUrl();
-  const log = process.env.NODE_ENV === 'development' ? ['warn', 'error'] : ['error'];
+  const log: Prisma.LogLevel[] =
+    process.env.NODE_ENV === 'development' ? ['warn', 'error'] : ['error'];
 
   if (isSqliteUrl(databaseUrl)) {
     const { PrismaBetterSqlite3 } = require('@prisma/adapter-better-sqlite3') as typeof import('@prisma/adapter-better-sqlite3');
