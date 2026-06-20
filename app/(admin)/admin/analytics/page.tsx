@@ -8,7 +8,7 @@ import { AdminRecentActivity } from '@/components/admin/AdminRecentActivity';
 import { AdminAnalyticsUpdated } from '@/components/admin/AdminAnalyticsUpdated';
 import { AdminAnalyticsChartsLazy } from '@/components/admin/AdminAnalyticsChartsLazy';
 import { AdminAnalyticsToolbar } from '@/components/admin/AdminAnalyticsToolbar';
-import { loadAdminAnalytics } from '@/lib/analytics-data-source';
+import { getAnalytics } from '@/lib/actions/analytics';
 import { formatNumber } from '@/lib/utils';
 
 import type { AnalyticsPeriod } from '@/lib/analytics-period';
@@ -29,7 +29,7 @@ function pct(n: number, total: number) {
 
 export default async function AdminAnalyticsPage({ searchParams }: PageProps) {
   const params = await searchParams;
-  const stats = await loadAdminAnalytics({ period: params.period, month: params.month ?? null });
+  const stats = await getAnalytics({ period: params.period, month: params.month ?? null });
 
   const pm = stats.periodMetrics;
 

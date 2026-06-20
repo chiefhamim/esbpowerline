@@ -504,13 +504,25 @@ export async function createArticle(data: ArticleInput) {
     },
   });
 
+  const { registerArticleMedia } = await import('@/lib/media-registry');
+  const { syncAuthorArticleCounts } = await import('@/lib/author-stats');
+  await registerArticleMedia({
+    imageUrl: parsed.imageUrl,
+    content: parsed.content,
+    uploadedById: user.id,
+    title: parsed.title,
+  });
+  await syncAuthorArticleCounts(user.id);
+
   await prisma.auditLog.create({
     data: { type: 'article.create', message: `Created article: ${article.title}`, userId: user.id },
   });
 
   revalidatePath('/cms');
   revalidatePath('/cms/articles');
+  revalidatePath('/cms/media');
   revalidatePath('/admin/articles');
+  revalidatePath('/admin/media');
   if (parsed.status === 'PUBLISHED') revalidatePublicContent([article.slug]);
   return article;
 }
@@ -566,8 +578,19 @@ export async function updateArticle(id: string, data: ArticleInput) {
     });
   }
 
+  const { registerArticleMedia } = await import('@/lib/media-registry');
+  const { syncAuthorArticleCounts } = await import('@/lib/author-stats');
+  await registerArticleMedia({
+    imageUrl: parsed.imageUrl,
+    content: parsed.content,
+    uploadedById: existing.authorId,
+    title: parsed.title,
+  });
+  await syncAuthorArticleCounts(existing.authorId);
+
   revalidatePath('/cms');
   revalidatePath('/cms/articles');
+  revalidatePath('/admin/media');
   revalidatePath('/admin/articles');
   const slugs = [existing.slug];
   if (parsed.slug && parsed.slug !== existing.slug) slugs.push(parsed.slug);
@@ -594,6 +617,10 @@ export async function deleteArticle(id: string) {
       ? { status: 'TRASH', editorTrash: true, trashedAt: new Date() }
       : { status: 'TRASH', editorTrash: false, trashedAt: null },
   });
+
+  const { syncAuthorArticleCounts } = await import('@/lib/author-stats');
+  await syncAuthorArticleCounts(existing.authorId);
+
   revalidatePath('/cms');
   revalidatePath('/cms/articles');
   revalidatePath('/cms/trash');

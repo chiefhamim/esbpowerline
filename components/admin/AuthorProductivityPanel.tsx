@@ -24,6 +24,7 @@ export function AuthorProductivityPanel({ authors }: { authors: AuthorPublishing
 
   const totals = useMemo(
     () => ({
+      total: authors.reduce((sum, a) => sum + a.total, 0),
       day: authors.reduce((sum, a) => sum + a.day, 0),
       week: authors.reduce((sum, a) => sum + a.week, 0),
       month: authors.reduce((sum, a) => sum + a.month, 0),
@@ -62,6 +63,7 @@ export function AuthorProductivityPanel({ authors }: { authors: AuthorPublishing
             <tr>
               <th>Author</th>
               <th>Role</th>
+              <th className="admin-author-productivity__num">Live</th>
               <th className="admin-author-productivity__num">Today</th>
               <th className="admin-author-productivity__num">Week</th>
               <th className="admin-author-productivity__num">Month</th>
@@ -80,6 +82,9 @@ export function AuthorProductivityPanel({ authors }: { authors: AuthorPublishing
                     {ROLES[author.role as Role]?.name ?? author.role}
                   </span>
                 </td>
+                <td className="admin-author-productivity__num tabular-nums font-medium">
+                  {formatNumber(author.total)}
+                </td>
                 {PERIODS.map((p) => (
                   <td
                     key={p.key}
@@ -97,6 +102,9 @@ export function AuthorProductivityPanel({ authors }: { authors: AuthorPublishing
           <tfoot>
             <tr>
               <td colSpan={2} className="admin-author-productivity__total-label">Newsroom total</td>
+              <td className="admin-author-productivity__num tabular-nums font-semibold">
+                {formatNumber(totals.total)}
+              </td>
               {PERIODS.map((p) => (
                 <td
                   key={p.key}

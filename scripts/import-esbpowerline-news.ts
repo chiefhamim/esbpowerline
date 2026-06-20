@@ -356,7 +356,7 @@ async function importArticles(
       imageUrl = extractContentImage(rawContent);
     }
     const publishedAt = new Date(post.date);
-    const wpImportedAt = new Date(post.date);
+    const importedAt = new Date();
     const readTime = estimateReadTime(content);
 
     const isFeatured = index < 3;
@@ -380,8 +380,8 @@ async function importArticles(
         isBreaking,
         views: 0,
         likes: 0,
-        createdAt: wpImportedAt,
-        updatedAt: wpImportedAt,
+        createdAt: importedAt,
+        updatedAt: importedAt,
       },
       update: {
         title,
@@ -396,8 +396,16 @@ async function importArticles(
         readTime,
         isFeatured,
         isBreaking,
-        updatedAt: wpImportedAt,
+        updatedAt: importedAt,
       },
+    });
+
+    const { registerArticleMedia } = await import('../lib/media-registry-core');
+    await registerArticleMedia(prisma, {
+      imageUrl,
+      content,
+      uploadedById: authorId,
+      title,
     });
 
     imported += 1;
@@ -432,10 +440,11 @@ async function importArticles(
     }
   }
 
-  const articleCount = await prisma.article.count({ where: { authorId } });
+  const { syncAuthorArticleCounts } = await import('../lib/author-stats-core');
+  await syncAuthorArticleCounts(prisma, authorId);
   await prisma.user.update({
     where: { id: authorId },
-    data: { name: EDITOR_NAME, articlesCount: articleCount },
+    data: { name: EDITOR_NAME },
   });
 
   const { REMOVED_DEMO_AUTHOR_EMAILS } = await import('../lib/staff-accounts');

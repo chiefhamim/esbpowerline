@@ -1,4 +1,4 @@
-import type { ArticleSubmitPayload } from '@/lib/test/mockArticleSubmit';
+import type { ArticleSubmitPayload } from '@/lib/test/article-submit-validation';
 import { CATEGORIES } from '@/lib/constants';
 
 export const VALID_DRAFT_PAYLOAD: ArticleSubmitPayload = {

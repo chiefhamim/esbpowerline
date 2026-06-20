@@ -35,6 +35,7 @@ export type AuthorPublishingStat = {
   id: string;
   name: string;
   role: string;
+  total: number;
   day: number;
   week: number;
   month: number;
@@ -76,7 +77,12 @@ export async function getAuthorPublishingStats(): Promise<AuthorPublishingStat[]
   const countByAuthor = (groups: { authorId: string; _count: { _all: number } }[]) =>
     new Map(groups.map((g) => [g.authorId, g._count._all]));
 
-  const [dayGroups, weekGroups, monthGroups, yearGroups] = await Promise.all([
+  const [totalGroups, dayGroups, weekGroups, monthGroups, yearGroups] = await Promise.all([
+    prisma.article.groupBy({
+      by: ['authorId'],
+      where: publishedBase,
+      _count: { _all: true },
+    }),
     prisma.article.groupBy({
       by: ['authorId'],
       where: { ...publishedBase, publishedAt: { gte: day } },
@@ -99,6 +105,7 @@ export async function getAuthorPublishingStats(): Promise<AuthorPublishingStat[]
     }),
   ]);
 
+  const totalMap = countByAuthor(totalGroups);
   const dayMap = countByAuthor(dayGroups);
   const weekMap = countByAuthor(weekGroups);
   const monthMap = countByAuthor(monthGroups);
@@ -109,12 +116,13 @@ export async function getAuthorPublishingStats(): Promise<AuthorPublishingStat[]
       id: author.id,
       name: author.name,
       role: author.role,
+      total: totalMap.get(author.id) ?? 0,
       day: dayMap.get(author.id) ?? 0,
       week: weekMap.get(author.id) ?? 0,
       month: monthMap.get(author.id) ?? 0,
       year: yearMap.get(author.id) ?? 0,
     }))
-    .sort((a, b) => b.month - a.month || b.year - a.year || a.name.localeCompare(b.name));
+    .sort((a, b) => b.total - a.total || b.month - a.month || b.year - a.year || a.name.localeCompare(b.name));
 }
 
 /** Lightweight stats for admin dashboard — avoids full analytics query storm */
@@ -136,6 +144,7 @@ export async function getAdminOverview() {
     recentLogs,
     dashboardStats,
     publishedThisMonth,
+    addedThisMonth,
     pendingComments,
     memberCount,
   ] = await Promise.all([
@@ -156,6 +165,9 @@ export async function getAdminOverview() {
     }),
     prisma.dashboardStat.findMany({ orderBy: { lastVerified: 'desc' }, take: 4 }),
     prisma.article.count({ where: { status: 'PUBLISHED', publishedAt: { gte: monthStart } } }),
+    prisma.article.count({
+      where: { status: { not: 'TRASH' }, editorTrash: false, createdAt: { gte: monthStart } },
+    }),
     prisma.comment.count({ where: { status: 'PENDING' } }),
     prisma.user.count({ where: { role: 'SUBSCRIBER' } }),
   ]);
@@ -169,6 +181,7 @@ export async function getAdminOverview() {
     recentLogs,
     dashboardStats,
     publishedThisMonth,
+    addedThisMonth,
     pendingComments,
     memberCount,
   };

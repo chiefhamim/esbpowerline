@@ -2,16 +2,14 @@ import { describe, it, expect } from 'vitest';
 import {
   buildArticleSubmitPayload,
   validateArticleSubmitPayload,
-  mockArticleSubmit,
-} from '@/lib/test/mockArticleSubmit';
+} from '@/lib/test/article-submit-validation';
 import {
   VALID_DRAFT_PAYLOAD,
   VALID_PUBLISH_PAYLOAD,
   INVALID_PUBLISH_PAYLOAD,
 } from '@/lib/test/article-form-fixtures';
-import { getMockAnalytics, getMockChartProps } from '@/lib/mockAnalytics';
 
-describe('Article form — mock submit validation', () => {
+describe('Article form — submit validation', () => {
   it('accepts a complete draft payload with cover photo URL', () => {
     const result = validateArticleSubmitPayload(VALID_DRAFT_PAYLOAD);
     expect(result.ok).toBe(true);
@@ -50,42 +48,5 @@ describe('Article form — mock submit validation', () => {
     });
     expect(payload.imageUrl).toBe('https://cdn.esbpowerline.test/hero.jpg');
     expect(payload.tags).toEqual(['test']);
-  });
-
-  it('mockArticleSubmit resolves without throwing for valid draft', async () => {
-    const result = await mockArticleSubmit(VALID_DRAFT_PAYLOAD);
-    expect(result.mockId).toMatch(/^mock-/);
-    expect(result.ok).toBe(true);
-  });
-});
-
-describe('Mock analytics — chart data shapes', () => {
-  it('returns deterministic publishing trend with 14 buckets', () => {
-    const data = getMockAnalytics();
-    expect(data.publishingTrend).toHaveLength(14);
-    expect(data.publishingTrend[13]).toEqual({ label: 'Jun 19', count: 10, views: 14500 });
-  });
-
-  it('includes regional traffic segments and active reader total', () => {
-    const data = getMockAnalytics();
-    expect(data.regionalTraffic.length).toBeGreaterThanOrEqual(5);
-    expect(data.activeReaders).toBe(data.regionalTraffic.reduce((s, r) => s + r.readers, 0));
-    expect(data.periodMetrics.activeUsers).toBe(data.activeReaders);
-  });
-
-  it('chart props slice matches AdminAnalyticsCharts contract', () => {
-    const charts = getMockChartProps();
-    expect(charts.topArticles[0]).toMatchObject({
-      title: expect.any(String),
-      slug: expect.any(String),
-      views: expect.any(Number),
-      category: expect.any(String),
-    });
-    expect(charts.usersByRole[0]).toMatchObject({ role: expect.any(String), _count: expect.any(Number) });
-    expect(charts.categoriesByViews[0]).toMatchObject({
-      category: expect.any(String),
-      articles: expect.any(Number),
-      views: expect.any(Number),
-    });
   });
 });
