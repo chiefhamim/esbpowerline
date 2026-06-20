@@ -161,6 +161,12 @@ export function MemberAccountSettings({ name, email, phone, status }: MemberAcco
             {passwordPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             Update password
           </Button>
+          <p className="text-xs text-muted-foreground">
+            Locked out?{' '}
+            <a href="/auth/forgot-password?audience=member" className="font-medium hover:underline">
+              Reset via email
+            </a>
+          </p>
         </form>
       </div>
     </div>

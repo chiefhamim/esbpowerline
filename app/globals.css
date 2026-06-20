@@ -3491,6 +3491,14 @@ html.locale-bn .public-nav-bar__hub-link span {
   @apply text-xs font-medium text-muted-foreground;
 }
 
+.login-access__label-row {
+  @apply flex items-center justify-between gap-3;
+}
+
+.login-access__forgot-link {
+  @apply text-[11px] font-medium text-muted-foreground hover:text-foreground hover:underline shrink-0;
+}
+
 .login-shell--member .login-access__hint {
   @apply max-w-none text-[13px] leading-[1.65];
   color: hsl(var(--foreground) / 0.46);

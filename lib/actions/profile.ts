@@ -60,7 +60,6 @@ export async function changeStaffPassword(input: {
 export async function updateProfile(data: {
   name?: string;
   email?: string;
-  password?: string;
   avatar?: string;
 }) {
   const sessionUser = await requireSessionUser();
@@ -87,13 +86,6 @@ export async function updateProfile(data: {
     updateData.email = data.email;
   }
 
-  if (data.password) {
-    if (data.password.trim().length < 8) {
-      throw new Error('Password must be at least 8 characters');
-    }
-    updateData.passwordHash = await bcrypt.hash(data.password, 10);
-  }
-
   if (data.avatar !== undefined) {
     updateData.avatar = data.avatar;
   }
@@ -108,15 +100,7 @@ export async function updateProfile(data: {
   const nextEmail = (data.email ?? user.email).toLowerCase();
   const nextName = (updateData.name as string | undefined) ?? user.name;
 
-  if (data.password) {
-    await upsertSupabaseAuthUser({
-      email: nextEmail,
-      password: data.password,
-      name: nextName,
-      role: user.role as Role,
-      status: user.status,
-    });
-  } else if (data.name || data.email) {
+  if (data.name || data.email) {
     await syncSupabaseAuthUserMetadata({
       email: user.email,
       name: nextName,

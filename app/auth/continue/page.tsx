@@ -7,25 +7,16 @@ import {
   needsAuthHandoff,
 } from '@/lib/auth-handoff';
 import { redirectUrlForRequest } from '@/lib/auth-routing';
+import { safeAuthRedirectPath } from '@/lib/auth-redirect';
 import { headers } from 'next/headers';
 
 type Props = {
   searchParams: Promise<{ to?: string }>;
 };
 
-/** Same-origin relative paths only — blocks open redirects to external sites. */
-function safeDestination(raw: string | undefined): string | null {
-  if (!raw?.trim()) return null;
-  const value = raw.trim();
-  if (!value.startsWith('/') || value.startsWith('//')) return null;
-  if (value.includes('://') || value.includes('\\')) return null;
-  return value;
-}
-
 export default async function AuthContinuePage({ searchParams }: Props) {
   const { to } = await searchParams;
-  const destination = safeDestination(to);
-
+  const destination = to?.trim() ? safeAuthRedirectPath(to, '/') : null;
   if (!destination) {
     redirect('/');
   }

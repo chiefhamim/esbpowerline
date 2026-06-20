@@ -44,7 +44,7 @@
     "db:studio": "prisma studio",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:qa": "vitest run lib/test/role-isolation.test.ts lib/test/article-submit.test.ts lib/test/staff-accounts.test.ts lib/test/env-auth.test.ts lib/test/seed-credentials.test.ts lib/test/server-auth.test.ts",
+    "test:qa": "vitest run lib/test/role-isolation.test.ts lib/test/article-submit.test.ts lib/test/staff-accounts.test.ts lib/test/env-auth.test.ts lib/test/seed-credentials.test.ts lib/test/server-auth.test.ts lib/test/password-reset.test.ts",
     "diagnose:prod": "cross-env PRISMA_SCHEMA_PROVIDER=postgresql tsx scripts/diagnose-production-state.ts",
     "supabase:sync-passwords": "npm run supabase:seed-staff && npm run supabase:seed-member"
   },

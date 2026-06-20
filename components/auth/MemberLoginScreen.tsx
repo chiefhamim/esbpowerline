@@ -52,6 +52,7 @@ export function MemberLoginScreen() {
   const [signupState, signupFormAction, signupPending] = useActionState(memberSignUpAction, INITIAL_STATE);
   const searchParams = useSearchParams();
   const callbackUrl = searchParams.get('callbackUrl') ?? '';
+  const resetSuccess = searchParams.get('reset') === 'success';
   const isPending = mode === 'sign-in' ? loginPending : signupPending;
 
   useEffect(() => {
@@ -169,9 +170,17 @@ export function MemberLoginScreen() {
                   </div>
 
                   <div className="login-access__field">
-                    <Label htmlFor="member-password" className="login-access__label">
-                      Password
-                    </Label>
+                    <div className="login-access__label-row">
+                      <Label htmlFor="member-password" className="login-access__label">
+                        Password
+                      </Label>
+                      <Link
+                        href="/auth/forgot-password?audience=member"
+                        className="login-access__forgot-link"
+                      >
+                        Forgot password?
+                      </Link>
+                    </div>
                     <div className="login-access__password">
                       <Input
                         id="member-password"
@@ -196,6 +205,15 @@ export function MemberLoginScreen() {
                       </button>
                     </div>
                   </div>
+
+                  {resetSuccess && !error && (
+                    <div
+                      className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-sm text-emerald-900 dark:text-emerald-100"
+                      role="status"
+                    >
+                      Password updated. Sign in with your new password.
+                    </div>
+                  )}
 
                   {error && (
                     <div className="login-access__error" role="alert">
