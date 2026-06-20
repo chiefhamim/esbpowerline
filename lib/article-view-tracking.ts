@@ -1,10 +1,12 @@
 import 'server-only';
 
 import { createHash, randomUUID } from 'crypto';
+import { Prisma } from '@prisma/client';
 import prisma from '@/lib/prisma';
+import { viewDedupBucket } from '@/lib/article-view-dedup';
 
 export const VISITOR_COOKIE = 'esb_vid';
-export const VIEW_DEDUP_HOURS = 24;
+export { VIEW_DEDUP_HOURS } from '@/lib/article-view-dedup';
 
 function hashVisitorToken(token: string): string {
   return createHash('sha256').update(token).digest('hex');
@@ -19,6 +21,12 @@ export function newVisitorToken(): string {
   return randomUUID();
 }
 
+function isUniqueConstraintError(error: unknown): boolean {
+  return (
+    error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002'
+  );
+}
+
 /**
  * Record one qualified pageview. Dedupes per visitor per article within VIEW_DEDUP_HOURS.
  * This is the ONLY code path allowed to increment Article.views and author totalViews.
@@ -28,37 +36,37 @@ export async function recordArticleView(
   visitorKey: string,
   referrer?: string | null,
 ): Promise<{ recorded: boolean }> {
-  const since = new Date(Date.now() - VIEW_DEDUP_HOURS * 60 * 60 * 1000);
-
   const article = await prisma.article.findFirst({
     where: { id: articleId, status: 'PUBLISHED' },
     select: { id: true, authorId: true },
   });
   if (!article) return { recorded: false };
 
-  const recent = await prisma.articleView.findFirst({
-    where: { articleId, visitorKey, viewedAt: { gte: since } },
-    select: { id: true },
-  });
-  if (recent) return { recorded: false };
+  const dedupBucket = viewDedupBucket();
 
-  await prisma.$transaction(async (tx) => {
-    await tx.articleView.create({
-      data: {
-        articleId,
-        visitorKey,
-        referrer: referrer?.trim().slice(0, 500) || null,
-      },
+  try {
+    await prisma.$transaction(async (tx) => {
+      await tx.articleView.create({
+        data: {
+          articleId,
+          visitorKey,
+          dedupBucket,
+          referrer: referrer?.trim().slice(0, 500) || null,
+        },
+      });
+      await tx.article.update({
+        where: { id: articleId },
+        data: { views: { increment: 1 } },
+      });
+      await tx.user.update({
+        where: { id: article.authorId },
+        data: { totalViews: { increment: 1 } },
+      });
     });
-    await tx.article.update({
-      where: { id: articleId },
-      data: { views: { increment: 1 } },
-    });
-    await tx.user.update({
-      where: { id: article.authorId },
-      data: { totalViews: { increment: 1 } },
-    });
-  });
+  } catch (error) {
+    if (isUniqueConstraintError(error)) return { recorded: false };
+    throw error;
+  }
 
   return { recorded: true };
 }

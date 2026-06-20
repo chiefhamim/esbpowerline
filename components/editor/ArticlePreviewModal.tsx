@@ -12,6 +12,7 @@ import { PreviewThemeToggle } from '@/components/editor/PreviewThemeToggle';
 import { PreviewCategoryPill } from '@/components/editor/PreviewCategoryPill';
 import { ArticleAuthorSticky } from '@/components/shared/ArticleAuthorSticky';
 import { getArticlePreviewContext } from '@/lib/actions/preview-context';
+import { sanitizeArticleHtml } from '@/lib/sanitize-article-html';
 import {
   mergeDraftIntoCarousel,
   mergeDraftIntoArticles,
@@ -400,7 +401,7 @@ export function ArticlePreviewModal({
                       )}
                     </figure>
                   )}
-                  <div className="article-body mt-8" dangerouslySetInnerHTML={{ __html: content }} />
+                  <div className="article-body mt-8" dangerouslySetInnerHTML={{ __html: sanitizeArticleHtml(content) }} />
                   <div className="mt-8 pt-6 border-t border-border text-sm text-muted-foreground flex flex-wrap gap-4">
                     <span>{formatNumber(0)} views</span>
                     <span>{readTime} min read</span>

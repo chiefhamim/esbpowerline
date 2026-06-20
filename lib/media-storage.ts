@@ -5,6 +5,8 @@ import path from 'path';
 import { createServiceRoleClient } from '@/lib/supabase/admin-client';
 import { getSupabaseEnv } from '@/lib/supabase/env';
 import { mediaStorageBucket, storagePathFromUrl as storagePathFromUrlFor } from '@/lib/media-storage-url';
+import { assertAllowedUploadMime } from '@/lib/upload-policy';
+import { resolveSafeLocalUploadPath } from '@/lib/local-upload-path';
 
 export type MediaStorageUploadResult = {
   url: string;
@@ -39,6 +41,8 @@ export async function uploadMediaBuffer(input: {
   mimeType: string;
   folder?: 'library' | 'categories';
 }): Promise<MediaStorageUploadResult> {
+  assertAllowedUploadMime(input.mimeType, input.fileName);
+
   const folder = input.folder ?? 'library';
   const safeName = `${Date.now()}-${sanitizeFileName(input.fileName)}`;
   const storagePath = `${folder}/${safeName}`;
@@ -85,8 +89,8 @@ export async function deleteStoredMedia(url: string): Promise<void> {
     return;
   }
 
-  if (url.startsWith('/uploads/')) {
-    const filePath = path.join(process.cwd(), 'public', url.replace(/^\//, ''));
+  const filePath = resolveSafeLocalUploadPath(url);
+  if (filePath) {
     await unlink(filePath).catch(() => undefined);
   }
 }

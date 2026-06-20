@@ -3,6 +3,7 @@ import { auth } from '@/lib/auth';
 import { can } from '@/lib/constants';
 import { createMedia } from '@/lib/actions/media';
 import { uploadMediaBuffer } from '@/lib/media-storage';
+import { isBlockedUploadMime } from '@/lib/upload-policy';
 
 const MAX_UPLOAD_BYTES = 10 * 1024 * 1024;
 
@@ -17,6 +18,9 @@ export async function POST(request: NextRequest) {
   if (!file) return NextResponse.json({ error: 'No file' }, { status: 400 });
   if (file.size > MAX_UPLOAD_BYTES) {
     return NextResponse.json({ error: 'File must be under 10MB' }, { status: 400 });
+  }
+  if (isBlockedUploadMime(file.type || '', file.name)) {
+    return NextResponse.json({ error: 'SVG uploads are not allowed' }, { status: 400 });
   }
 
   const bytes = await file.arrayBuffer();

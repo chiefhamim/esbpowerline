@@ -14,6 +14,7 @@ import {
 import { ADMIN_ASSIGNABLE_ROLES, ROLES, type Role } from '@/lib/constants';
 import { userSchema, type UserInput } from '@/lib/validations/user';
 import { requireStaffCollaboration } from '@/lib/server-auth';
+import { assertActorCanManageTarget } from '@/lib/role-hierarchy';
 
 async function requireAdmin() {
   const session = await auth();
@@ -244,6 +245,10 @@ export async function updateUser(id: string, data: Partial<UserInput>) {
   });
   if (!existing) throw new Error('User not found');
 
+  assertActorCanManageTarget(admin.role as Role, existing.role as Role, {
+    isSelf: admin.id === id,
+  });
+
   if (parsed.role) {
     if (!can(admin.role, 'user.change_role')) {
       throw new Error('Cannot change role');
@@ -304,9 +309,11 @@ export async function deleteUser(id: string) {
 
   const existing = await prisma.user.findUnique({
     where: { id },
-    select: { email: true },
+    select: { email: true, role: true },
   });
   if (!existing) throw new Error('User not found');
+
+  assertActorCanManageTarget(admin.role as Role, existing.role as Role);
 
   await prisma.user.update({ where: { id }, data: { status: 'SUSPENDED' } });
   await syncSupabaseAuthUserStatus(existing.email, 'SUSPENDED');

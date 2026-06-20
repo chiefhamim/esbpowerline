@@ -1,5 +1,6 @@
 'use server';
 
+import { headers } from 'next/headers';
 import bcrypt from 'bcryptjs';
 import prisma from '@/lib/prisma';
 import { initialMemberStatus } from '@/lib/member-registration';
@@ -10,6 +11,10 @@ import {
   normalizeBdPhone,
   phoneMemberEmail,
 } from '@/lib/bd-phone';
+import { checkRateLimit, clientIpFromForwarded } from '@/lib/rate-limit';
+
+const REGISTER_LIMIT = 5;
+const REGISTER_WINDOW_MS = 60 * 60 * 1000;
 
 export type MemberRegisterResult =
   | { ok: true; email: string; status: 'ACTIVE' | 'PENDING' }
@@ -21,6 +26,16 @@ export async function registerMemberAction(input: {
   email?: string;
   password: string;
 }): Promise<MemberRegisterResult> {
+  const headerList = await headers();
+  const clientIp = clientIpFromForwarded(
+    headerList.get('x-forwarded-for'),
+    headerList.get('x-real-ip'),
+  );
+  const rate = checkRateLimit(`member-register:${clientIp}`, REGISTER_LIMIT, REGISTER_WINDOW_MS);
+  if (!rate.allowed) {
+    return { ok: false, error: 'Too many registration attempts. Please try again later.' };
+  }
+
   const name = input.name.trim();
   const password = input.password;
   const emailRaw = input.email?.trim().toLowerCase() ?? '';

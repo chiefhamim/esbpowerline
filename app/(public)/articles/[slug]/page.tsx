@@ -17,6 +17,7 @@ import { ArticleCommentSection } from '@/components/members/ArticleCommentSectio
 import { ArticleAuthorSticky } from '@/components/shared/ArticleAuthorSticky';
 import { NoImage } from '@/components/shared/NoImage';
 import { hasArticleImage } from '@/lib/article-image';
+import { sanitizeArticleHtml } from '@/lib/sanitize-article-html';
 
 export const revalidate = 60;
 
@@ -117,7 +118,7 @@ export default async function ArticlePage({ params }: { params: Promise<{ slug: 
         )}
       </figure>
 
-      <div className="article-body mt-8" dangerouslySetInnerHTML={{ __html: article.content }} />
+      <div className="article-body mt-8" dangerouslySetInnerHTML={{ __html: sanitizeArticleHtml(article.content) }} />
 
       <div className="mt-8 flex flex-wrap gap-2">
         {article.tags.map((t: string) => (

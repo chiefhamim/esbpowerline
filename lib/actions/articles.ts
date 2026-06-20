@@ -16,8 +16,13 @@ import { PUBLIC_REVALIDATE_PATHS } from '@/lib/public-paths';
 import { reconcilePlacementFlags, MAX_PINNED_COVERAGE } from '@/lib/placement-rules';
 import { resolveEditorialAuthorScope } from '@/lib/editorial-scope';
 import { assertCanReadArticle, requireEditorialReader } from '@/lib/server-auth';
+import { sanitizeArticleHtml } from '@/lib/sanitize-article-html';
 
 type ArticleUser = { id: string; role: Role };
+
+function withSanitizedContent<T extends { content: string }>(input: T): T {
+  return { ...input, content: sanitizeArticleHtml(input.content) };
+}
 
 function resolveArticleSlug(title: string, slug?: string, fallback?: string) {
   const candidate = slug?.trim() || slugify(title.trim());
@@ -466,7 +471,7 @@ export async function createArticle(data: ArticleInput) {
   const user = await requireAuth();
   if (!can(user.role, 'article.create')) throw new Error('Forbidden');
 
-  const parsed = enforceArticlePermissions(user, parseArticleInput(data));
+  const parsed = withSanitizedContent(enforceArticlePermissions(user, parseArticleInput(data)));
   const categoryRef = await resolveCategoryRef(parsed.category);
   const placement = reconcilePlacementFlags({
     isFeatured: parsed.isFeatured ?? false,
@@ -537,7 +542,7 @@ export async function updateArticle(id: string, data: ArticleInput) {
     : can(user.role, 'article.edit_any');
   if (!canEdit) throw new Error('Forbidden');
 
-  const parsed = enforceArticlePermissions(user, parseArticleInput(data), existing);
+  const parsed = withSanitizedContent(enforceArticlePermissions(user, parseArticleInput(data), existing));
   const categoryRef = await resolveCategoryRef(parsed.category);
   const placement = reconcilePlacementFlags({
     isFeatured: parsed.isFeatured ?? false,

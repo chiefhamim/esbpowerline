@@ -7,6 +7,7 @@ import { History, RotateCcw, ChevronDown, ChevronUp } from 'lucide-react';
 import { restoreArticleRevision } from '@/lib/actions/articles';
 import { Button } from '@/components/ui/button';
 import { cn, formatEditorialTimestamp } from '@/lib/utils';
+import { sanitizeArticleHtml } from '@/lib/sanitize-article-html';
 
 export type RevisionRow = {
   id: string;
@@ -103,7 +104,7 @@ export function RevisionHistory({
                 )}
               </div>
               {isPreview && (
-                <div className="mt-3 p-3 rounded-lg bg-background border border-border/40 prose prose-sm max-w-none max-h-48 overflow-auto" dangerouslySetInnerHTML={{ __html: rev.content }} />
+                <div className="mt-3 p-3 rounded-lg bg-background border border-border/40 prose prose-sm max-w-none max-h-48 overflow-auto" dangerouslySetInnerHTML={{ __html: sanitizeArticleHtml(rev.content) }} />
               )}
             </div>
           );
