@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useEffect, useState, useCallback, type ReactNode } from 'react';
 import { createClient } from '@/utils/supabase/client';
+import { getSupabaseEnv } from '@/utils/supabase/env';
 import { resolveRoleFromSupabaseUser } from '@/lib/supabase/resolve-role';
 import type { Role } from '@/lib/constants';
 import {
@@ -51,6 +52,12 @@ export function SupabaseAuthProvider({ children }: { children: ReactNode }) {
   const [status, setStatus] = useState<AuthStatus>('loading');
 
   const fetchUser = useCallback(async () => {
+    if (!getSupabaseEnv().isConfigured) {
+      setUser(null);
+      setStatus('unauthenticated');
+      return;
+    }
+
     const supabase = createClient();
     const {
       data: { user: supaUser },
@@ -90,6 +97,8 @@ export function SupabaseAuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     fetchUser();
+
+    if (!getSupabaseEnv().isConfigured) return;
 
     const supabase = createClient();
     const {

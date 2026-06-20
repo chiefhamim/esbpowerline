@@ -9,6 +9,7 @@ import {
 } from '@/lib/member-registration';
 import { resolveRoleFromSupabaseUser } from '@/lib/supabase/resolve-role';
 import { createClient } from '@/utils/supabase/server';
+import { getSupabaseEnv, SUPABASE_AUTH_SETUP_MESSAGE } from '@/utils/supabase/env';
 import prisma from '@/lib/prisma';
 import { normalizeBdPhone } from '@/lib/bd-phone';
 
@@ -121,6 +122,10 @@ export async function memberLoginAction(
   formData: FormData,
 ): Promise<MemberAuthResult> {
   try {
+    if (!getSupabaseEnv().isConfigured) {
+      return memberLoginFailure(SUPABASE_AUTH_SETUP_MESSAGE);
+    }
+
     const identifier = readField(formData, 'identifier');
     const password = readField(formData, 'password');
 

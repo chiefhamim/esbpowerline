@@ -9,7 +9,6 @@ import {
   useState,
   type ReactNode,
 } from 'react';
-import { useRouter } from 'next/navigation';
 import { applySiteLocale, getSavedSiteLocale, type SiteLocale } from '@/lib/locale';
 import { createTranslator, type MessageKey } from '@/lib/i18n/messages';
 
@@ -21,24 +20,30 @@ type LocaleContextValue = {
 
 const LocaleContext = createContext<LocaleContextValue | null>(null);
 
+function readDocumentLocale(): SiteLocale {
+  if (typeof document === 'undefined') return 'en';
+  const fromDom = document.documentElement.dataset.siteLocale;
+  if (fromDom === 'en' || fromDom === 'bn') return fromDom;
+  return getSavedSiteLocale();
+}
+
+/**
+ * Client locale state — initialized from the beforeInteractive script / localStorage.
+ * Avoids server cookie reads so public ISR pages can stay static.
+ */
 export function LocaleProvider({ children }: { children: ReactNode }) {
-  const router = useRouter();
   const [locale, setLocaleState] = useState<SiteLocale>('en');
 
   useLayoutEffect(() => {
-    const saved = getSavedSiteLocale();
+    const saved = readDocumentLocale();
     setLocaleState(saved);
     applySiteLocale(saved);
   }, []);
 
-  const setLocale = useCallback(
-    (next: SiteLocale) => {
-      setLocaleState(next);
-      applySiteLocale(next);
-      router.refresh();
-    },
-    [router],
-  );
+  const setLocale = useCallback((next: SiteLocale) => {
+    setLocaleState(next);
+    applySiteLocale(next);
+  }, []);
 
   const value = useMemo<LocaleContextValue>(
     () => ({

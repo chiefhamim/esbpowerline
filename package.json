@@ -35,6 +35,7 @@
     "sync:editor": "tsx scripts/sync-editor-identity.ts",
     "sync:editor:prod": "cross-env PRISMA_SCHEMA_PROVIDER=postgresql ALLOW_PRODUCTION_SEED=true tsx scripts/sync-editor-identity.ts",
     "env:pull": "node scripts/env-pull-vercel.mjs",
+    "env:sync": "node scripts/sync-env-from-supabase.mjs",
     "setup:agents": "scripts/setup-agent-integrations.cmd",
     "db:reset": "prisma migrate reset --force",
     "db:studio": "prisma studio",

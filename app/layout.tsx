@@ -4,14 +4,8 @@ import { Inter, Noto_Sans_Bengali, Space_Grotesk, JetBrains_Mono } from 'next/fo
 import './globals.css';
 import { Toaster } from 'sonner';
 import { Providers } from './providers';
-import {
-  SITE_THEME_CRITICAL_CSS,
-  SITE_THEME_INIT_SCRIPT,
-  SITE_THEME_PAINT,
-} from '@/lib/site-theme';
-import { getServerSiteTheme, siteThemeHtmlClass } from '@/lib/site-theme-server';
+import { SITE_THEME_CRITICAL_CSS, SITE_THEME_INIT_SCRIPT } from '@/lib/site-theme';
 import { SITE_LOCALE_INIT_SCRIPT } from '@/lib/locale';
-import { getServerSiteLocale } from '@/lib/locale-server';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -50,18 +44,18 @@ export const metadata: Metadata = {
   },
 };
 
-export default async function RootLayout({ children }: { children: React.ReactNode }) {
-  const theme = await getServerSiteTheme();
-  const locale = await getServerSiteLocale();
-  const paint = SITE_THEME_PAINT[theme];
-
+/**
+ * Static root shell — theme/locale personalization is applied client-side
+ * via beforeInteractive scripts + SiteThemeProvider / LocaleProvider.
+ * Do not read cookies() here; it would force the entire tree dynamic.
+ */
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html
-      lang={locale}
-      className={`${siteThemeHtmlClass(theme)}${locale === 'bn' ? ' locale-bn' : ''}`}
-      data-site-theme={theme}
-      data-site-locale={locale}
-      style={{ backgroundColor: paint.background, color: paint.foreground }}
+      lang="en"
+      className="theme-midnight dark"
+      data-site-theme="midnight"
+      data-site-locale="en"
       suppressHydrationWarning
     >
       <head>
@@ -70,7 +64,6 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       <body
         suppressHydrationWarning
         className={`${inter.variable} ${spaceGrotesk.variable} ${jetbrainsMono.variable} ${notoSansBengali.variable} min-h-screen bg-background text-foreground antialiased font-sans`}
-        style={{ backgroundColor: paint.background, color: paint.foreground }}
       >
         <Script
           id="site-theme-init"

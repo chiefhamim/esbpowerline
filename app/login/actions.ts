@@ -14,6 +14,8 @@ import {
 import type { Role } from '@/lib/constants';
 import { resolveRoleFromSupabaseUser } from '@/lib/supabase/resolve-role';
 import { createClient } from '@/utils/supabase/server';
+import { getSupabaseEnv, SUPABASE_AUTH_SETUP_MESSAGE } from '@/utils/supabase/env';
+import { upsertSupabaseAuthUser } from '@/lib/supabase/sync-auth-user';
 import prisma from '@/lib/prisma';
 import { getDevBootstrapPassword } from '@/lib/dev-login-hints';
 
@@ -47,6 +49,10 @@ export async function loginAction(
   formData: FormData,
 ): Promise<AuthActionResult> {
   try {
+    if (!getSupabaseEnv().isConfigured) {
+      return { error: SUPABASE_AUTH_SETUP_MESSAGE };
+    }
+
     const email = readField(formData, 'email').toLowerCase();
     const password = readField(formData, 'password');
 
@@ -159,16 +165,15 @@ export async function signupAction(
     return { error: 'Password must be at least 8 characters.' };
   }
 
-  const supabase = await createClient();
-  const { error } = await supabase.auth.signUp({
-    email,
-    password,
-    options: {
-      data: name ? { full_name: name, name, role: 'AUTHOR' } : { role: 'AUTHOR' },
-    },
-  });
-
-  if (error) {
+  try {
+    await upsertSupabaseAuthUser({
+      email,
+      password,
+      name: name || '',
+      role: 'AUTHOR',
+      status: 'ACTIVE',
+    });
+  } catch (error: any) {
     return { error: error.message };
   }
 

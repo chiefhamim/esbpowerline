@@ -8,6 +8,8 @@ import { getServerSiteLocale } from '@/lib/locale-server';
 import { categoryIconWrapStyle, categoryTextStyle } from '@/lib/category-icons';
 import { CategoryIconDisplay } from '@/components/category/CategoryIconDisplay';
 
+export const revalidate = 60;
+
 interface Props {
   params: Promise<{ slug: string }>;
 }

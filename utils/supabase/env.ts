@@ -22,3 +22,7 @@ export function getSupabaseEnv() {
     isConfigured,
   };
 }
+
+/** Shown when sign-in is attempted without Supabase env vars (avoids dummy URL fetch errors). */
+export const SUPABASE_AUTH_SETUP_MESSAGE =
+  'Supabase Auth is not configured. Add NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY to .env.local (run npm run env:pull), then restart the dev server.';

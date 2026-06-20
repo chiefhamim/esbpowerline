@@ -18,6 +18,8 @@ import { ArticleAuthorSticky } from '@/components/shared/ArticleAuthorSticky';
 import { NoImage } from '@/components/shared/NoImage';
 import { hasArticleImage } from '@/lib/article-image';
 
+export const revalidate = 60;
+
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   const article = await getPublishedArticleBySlug(slug);

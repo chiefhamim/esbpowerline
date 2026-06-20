@@ -12,6 +12,7 @@ import { CATEGORIES, CATEGORY_DETAILS } from '../lib/constants';
 import { EDITOR_EMAIL, EDITOR_NAME } from '../lib/staff-accounts';
 import { DEFAULT_COVERAGE_SLOTS } from '../lib/coverage-defaults';
 import { slugify } from '../lib/utils';
+import { upsertSupabaseAuthUser } from '../lib/supabase/sync-auth-user';
 
 const prisma = createScriptPrismaClient();
 
@@ -81,6 +82,11 @@ async function main() {
       bio: 'Energy sector professional — member account',
     },
   });
+
+  // Sync to Supabase Auth if configured
+  await upsertSupabaseAuthUser({ email: 'admin@esbpowerline.com', password: seedPassword, name: 'System Admin', role: 'SUPER_ADMIN', status: 'ACTIVE' });
+  await upsertSupabaseAuthUser({ email: EDITOR_EMAIL, password: seedPassword, name: EDITOR_NAME, role: 'EDITOR', status: 'ACTIVE' });
+  await upsertSupabaseAuthUser({ email: 'member@esbpowerline.com', password: seedPassword, name: 'Demo Member', role: 'SUBSCRIBER', status: 'ACTIVE' });
 
   console.log('✓ Users seeded (admin, editor, member)');
 

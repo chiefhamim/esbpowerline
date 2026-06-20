@@ -9,8 +9,9 @@ import {
   upsertSupabaseAuthUser,
   syncSupabaseAuthUserMetadata,
   syncSupabaseAuthUserStatus,
+  invalidateSupabaseAuthSession,
 } from '@/lib/supabase/sync-auth-user';
-import { ADMIN_ASSIGNABLE_ROLES, type Role } from '@/lib/constants';
+import { ADMIN_ASSIGNABLE_ROLES, ROLES, type Role } from '@/lib/constants';
 import { userSchema, type UserInput } from '@/lib/validations/user';
 
 async function requireAdmin() {
@@ -283,8 +284,14 @@ export async function updateUser(id: string, data: Partial<UserInput>) {
 
   if (parsed.status === 'SUSPENDED') {
     await syncSupabaseAuthUserStatus(existing.email, 'SUSPENDED');
+    await invalidateSupabaseAuthSession(existing.email);
   } else if (parsed.status === 'ACTIVE') {
     await syncSupabaseAuthUserStatus(existing.email, 'ACTIVE');
+  }
+
+  // Force immediate session invalidation if role is reduced
+  if (parsed.role && ROLES[parsed.role].level < ROLES[existing.role].level) {
+    await invalidateSupabaseAuthSession(existing.email);
   }
 
   revalidatePath('/admin/users');
@@ -304,5 +311,6 @@ export async function deleteUser(id: string) {
 
   await prisma.user.update({ where: { id }, data: { status: 'SUSPENDED' } });
   await syncSupabaseAuthUserStatus(existing.email, 'SUSPENDED');
+  await invalidateSupabaseAuthSession(existing.email);
   revalidatePath('/admin/users');
 }

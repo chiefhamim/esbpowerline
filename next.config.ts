@@ -7,6 +7,9 @@ const distDir = surface === 'all' ? '.next' : `.next-${surface}`;
 const nextConfig: NextConfig = {
   allowedDevOrigins: ['127.0.0.1', 'localhost'],
   distDir,
+  env: {
+    NEXT_PUBLIC_APP_SURFACE: surface,
+  },
 
   experimental: {
     // Disabled: parallel split-surface dev (3 instances) can corrupt Turbopack's dev cache

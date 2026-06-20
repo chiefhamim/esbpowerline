@@ -6,6 +6,8 @@ import { auth } from '@/lib/auth';
 import { getMagazineSavedState } from '@/lib/actions/members';
 import { SaveMagazineButton } from '@/components/members/SaveMagazineButton';
 
+export const revalidate = 60;
+
 export const metadata = {
   title: 'Monthly Magazine | ESB PowerLine',
   description: 'Read the latest issue of ESB PowerLine — in-depth analysis, data and features on Bangladesh energy & power.',

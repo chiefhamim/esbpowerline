@@ -1,5 +1,5 @@
 import { config } from 'dotenv';
-import { createClient, type SupabaseClient } from '@supabase/supabase-js';
+import { createClient } from '@supabase/supabase-js';
 import {
   EDITOR_EMAIL,
   EDITOR_NAME,
@@ -7,6 +7,7 @@ import {
   MASTER_ADMIN_EMAIL,
   MASTER_ADMIN_NAME,
 } from '../lib/staff-accounts';
+import { upsertAuthUserWithClient } from '../lib/supabase/auth-user-sync';
 
 config({ path: '.env.local' });
 config();
@@ -22,45 +23,6 @@ const STAFF_ACCOUNTS: StaffSeedAccount[] = [
   { email: EDITOR_EMAIL, name: EDITOR_NAME, role: 'EDITOR' },
   { email: LEGACY_EDITOR_EMAIL, name: EDITOR_NAME, role: 'EDITOR' },
 ];
-
-async function findUserIdByEmail(admin: SupabaseClient, email: string): Promise<string | null> {
-  const { data, error } = await admin.auth.admin.listUsers({ page: 1, perPage: 200 });
-  if (error) throw error;
-  return data.users.find((user) => user.email === email)?.id ?? null;
-}
-
-async function upsertStaffUser(admin: SupabaseClient, account: StaffSeedAccount, password: string) {
-  const metadata = { role: account.role, name: account.name, full_name: account.name };
-  const { error: createError } = await admin.auth.admin.createUser({
-    email: account.email,
-    password,
-    email_confirm: true,
-    user_metadata: metadata,
-  });
-
-  if (!createError) {
-    console.log(`✓ Created ${account.email} (${account.role})`);
-    return;
-  }
-
-  if (!createError.message.toLowerCase().includes('already')) {
-    throw createError;
-  }
-
-  const userId = await findUserIdByEmail(admin, account.email);
-  if (!userId) {
-    throw new Error(`User exists but could not be found: ${account.email}`);
-  }
-
-  const { error: updateError } = await admin.auth.admin.updateUserById(userId, {
-    password,
-    email_confirm: true,
-    user_metadata: metadata,
-  });
-
-  if (updateError) throw updateError;
-  console.log(`✓ Updated ${account.email} (${account.role})`);
-}
 
 async function main() {
   if (process.env.NODE_ENV === 'production' && process.env.ALLOW_PRODUCTION_SEED !== 'true') {
@@ -82,7 +44,13 @@ async function main() {
 
   console.log('🌱 Seeding Supabase staff demo accounts...');
   for (const account of STAFF_ACCOUNTS) {
-    await upsertStaffUser(admin, account, password);
+    await upsertAuthUserWithClient(admin, {
+      email: account.email,
+      password,
+      name: account.name,
+      role: account.role,
+    });
+    console.log(`✓ Synced ${account.email} (${account.role})`);
   }
   console.log('Done.');
 }

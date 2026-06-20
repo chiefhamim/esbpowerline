@@ -1,5 +1,6 @@
 import type { Role } from '@/lib/constants';
 import { can, canAccessAdminPanel } from '@/lib/constants';
+import { isSplitSurfaceDev } from '@/lib/workspace-urls';
 
 export type AuthAudience = 'member' | 'staff';
 
@@ -84,6 +85,7 @@ export function getPublicSiteUrl(): string {
  * Vercel and unified `next dev` keep staff workspaces on the same origin.
  */
 export function resolveWorkspaceUrl(path: string, ctx?: HostContext): string {
+  if (!isSplitSurfaceDev()) return path;
   if (!isLocalDevHost(ctx?.hostname ?? '')) return path;
 
   const port = ctx?.host?.split(':')[1] ?? '3000';

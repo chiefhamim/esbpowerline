@@ -29,7 +29,6 @@ export function resolveRoleFromSupabaseUser(
   if (fromProfile) return fromProfile;
 
   return (
-    normalizeRole(user?.user_metadata?.role) ??
     normalizeRole(user?.app_metadata?.role) ??
     null
   );

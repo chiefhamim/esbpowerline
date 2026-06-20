@@ -3,6 +3,8 @@ import Link from 'next/link';
 import { ArticleCard } from '@/components/news/ArticleCard';
 import { getPublishedArticlesByTag } from '@/lib/category-content';
 
+export const revalidate = 60;
+
 interface Props {
   params: Promise<{ tag: string }>;
 }

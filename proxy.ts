@@ -1,95 +1,83 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { updateSession } from '@/utils/supabase/middleware';
-import { can, canAccessAdminPanel, type Role } from '@/lib/constants';
-import { isMemberRole, roleHomePath } from '@/lib/auth-routing';
-import { resolveRoleFromSupabaseUser } from '@/lib/supabase/resolve-role';
+import {
+  canAccessPath,
+  roleHomePath,
+  resolveWorkspaceUrl,
+  hostContextFromHeaders,
+} from '@/lib/auth-routing';
+import { isCronAuthorized } from '@/lib/api/cron-auth';
+import { isProxyProtectedApi } from '@/lib/api/protected-routes';
+import { resolveEdgeSession } from '@/lib/supabase/edge-session-gate';
 
-const ADMIN_ROUTES = ['/admin'];
-const EDITOR_ROUTES = ['/cms', '/editor'];
-const MEMBER_ROUTES = ['/members'];
+function unauthorizedApi(response: NextResponse): NextResponse {
+  const denied = NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  response.cookies.getAll().forEach((cookie) => {
+    denied.cookies.set(cookie.name, cookie.value);
+  });
+  return denied;
+}
 
-type StaffStatus = 'ACTIVE' | 'SUSPENDED' | 'PENDING';
+function redirectWithCookies(
+  request: NextRequest,
+  response: NextResponse,
+  destination: string,
+): NextResponse {
+  const hostContext = hostContextFromHeaders(
+    request.headers.get('host'),
+    request.headers.get('x-forwarded-proto'),
+  );
+  const resolvedUrl = resolveWorkspaceUrl(destination, hostContext);
+  const finalUrl = /^https?:\/\//i.test(resolvedUrl)
+    ? new URL(resolvedUrl)
+    : new URL(resolvedUrl, request.url);
 
-async function getUserAccess(
-  supabase: NonNullable<Awaited<ReturnType<typeof updateSession>>['supabase']>,
-  user: NonNullable<Awaited<ReturnType<typeof updateSession>>['user']>,
-): Promise<{ role: Role | null; status: StaffStatus }> {
-  try {
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('role, status')
-      .eq('id', user.id)
-      .maybeSingle();
-
-    const metadataStatus = user.user_metadata?.status;
-    const status = (
-      profile?.status ??
-      (typeof metadataStatus === 'string' ? metadataStatus : null) ??
-      'ACTIVE'
-    ) as StaffStatus;
-
-    const role = resolveRoleFromSupabaseUser(user, profile?.role ?? null);
-
-    return { role, status };
-  } catch {
-    const role = resolveRoleFromSupabaseUser(user, null);
-    return { role, status: 'ACTIVE' };
-  }
+  const redirectResponse = NextResponse.redirect(finalUrl);
+  response.cookies.getAll().forEach((cookie) => {
+    redirectResponse.cookies.set(cookie.name, cookie.value);
+  });
+  return redirectResponse;
 }
 
 export async function proxy(request: NextRequest) {
-  const { pathname } = request.nextUrl;
+  const { response, supabase, user } = await updateSession(request);
+  const pathname = request.nextUrl.pathname;
 
-  const needsAdmin = ADMIN_ROUTES.some((r) => pathname.startsWith(r));
-  const needsEditor = EDITOR_ROUTES.some((r) => pathname.startsWith(r));
-  const needsMember =
-    MEMBER_ROUTES.some((r) => pathname.startsWith(r)) && !pathname.startsWith('/members/login');
+  if (isProxyProtectedApi(pathname)) {
+    if (isCronAuthorized(request)) return response;
 
-  const session = await updateSession(request);
-  const { response, supabase, user } = session;
+    const { active } = await resolveEdgeSession(user, supabase);
+    if (!active) return unauthorizedApi(response);
 
-  if (!needsAdmin && !needsEditor && !needsMember) return response;
-
-  if (!user || !supabase) {
-    const loginUrl = new URL(needsMember ? '/members/login' : '/login', request.url);
-    loginUrl.searchParams.set('callbackUrl', pathname);
-    return NextResponse.redirect(loginUrl);
+    return response;
   }
 
-  const { role, status } = await getUserAccess(supabase, user);
+  const { active, role } = await resolveEdgeSession(user, supabase);
+  const effectiveRole = active ? (role ?? undefined) : undefined;
 
-  if (status === 'SUSPENDED') {
-    return NextResponse.redirect(new URL('/unauthorized', request.url));
-  }
-
-  if (status === 'PENDING') {
-    const loginPath = needsMember ? '/members/login' : '/login';
-    const loginUrl = new URL(loginPath, request.url);
-    loginUrl.searchParams.set('pending', '1');
-    return NextResponse.redirect(loginUrl);
-  }
-
-  if (!role) {
-    return NextResponse.redirect(new URL('/unauthorized', request.url));
-  }
-
-  if (needsAdmin && !canAccessAdminPanel(role)) {
-    return NextResponse.redirect(new URL('/unauthorized', request.url));
-  }
-
-  if (needsEditor && !can(role, 'article.create')) {
-    return NextResponse.redirect(new URL('/unauthorized', request.url));
-  }
-
-  if (needsMember && !isMemberRole(role)) {
-    const destination = roleHomePath(role);
-    return NextResponse.redirect(new URL(destination, request.url));
+  if (!canAccessPath(effectiveRole, pathname)) {
+    let destination = '/login';
+    if (!effectiveRole) {
+      if (pathname.startsWith('/members')) destination = '/members/login';
+    } else {
+      destination = roleHomePath(effectiveRole);
+    }
+    return redirectWithCookies(request, response, destination);
   }
 
   return response;
 }
 
-/** Only run auth proxy on protected app surfaces — public pages skip Supabase entirely. */
+// Keep API prefixes in sync with lib/api/protected-routes.ts (PROXY_PROTECTED_API_PREFIXES).
 export const config = {
-  matcher: ['/admin/:path*', '/cms/:path*', '/editor/:path*', '/members/:path*'],
+  matcher: [
+    '/admin/:path*',
+    '/cms/:path*',
+    '/members/:path*',
+    '/api/analytics',
+    '/api/analytics/:path*',
+    '/api/upload',
+    '/api/upload/:path*',
+    '/api/members/grid-export',
+  ],
 };

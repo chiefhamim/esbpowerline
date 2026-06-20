@@ -8,6 +8,8 @@ import { createTranslator } from '@/lib/i18n/messages';
 import { getServerSiteLocale } from '@/lib/locale-server';
 import { SortSelect } from '@/components/news/SortSelect';
 
+export const revalidate = 60;
+
 export const metadata = {
   title: 'Latest News | ESB PowerLine',
   description: 'Latest power & energy sector news from Bangladesh. Filter by category, search, and read in-depth analysis.',
