@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { publishDueScheduledArticles } from '@/lib/actions/articles';
+import { publishDueScheduledArticles } from '@/lib/cron/publish-scheduled-articles';
 
 export const dynamic = 'force-dynamic';
 

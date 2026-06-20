@@ -18,8 +18,8 @@ async function requireUser() {
   return session.user;
 }
 
-/** Permanently remove editor-trash items older than retention window */
-export async function purgeExpiredEditorTrash(userId: string) {
+/** Permanently remove editor-trash items older than retention window (internal — session-scoped only). */
+async function purgeExpiredEditorTrash(userId: string) {
   const cutoff = purgeCutoffDate();
 
   await prisma.$transaction([

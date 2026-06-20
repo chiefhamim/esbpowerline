@@ -11,7 +11,7 @@ export const metadata = {
 
 export default async function MemberOverviewPage() {
   const session = await requireMemberSession();
-  const overview = await getMemberOverview(session.user.id);
+  const overview = await getMemberOverview();
 
   const stats = [
     { label: 'Saved items', value: overview.savedCount, href: '/members/saved', icon: Bookmark },

@@ -49,8 +49,8 @@ begin
       new.raw_user_meta_data->>'name',
       split_part(new.email, '@', 1)
     ),
-    coalesce(new.raw_user_meta_data->>'role', 'SUBSCRIBER'),
-    coalesce(new.raw_user_meta_data->>'status', 'ACTIVE')
+    coalesce(new.raw_app_meta_data->>'role', 'SUBSCRIBER'),
+    coalesce(new.raw_app_meta_data->>'status', 'ACTIVE')
   )
   on conflict (id) do update
     set full_name = excluded.full_name,
@@ -71,8 +71,8 @@ insert into public.profiles (id, full_name, role, status)
 select
   u.id,
   coalesce(u.raw_user_meta_data->>'full_name', u.raw_user_meta_data->>'name', split_part(u.email, '@', 1)),
-  coalesce(u.raw_user_meta_data->>'role', 'SUBSCRIBER'),
-  coalesce(u.raw_user_meta_data->>'status', 'ACTIVE')
+  coalesce(u.raw_app_meta_data->>'role', 'SUBSCRIBER'),
+  coalesce(u.raw_app_meta_data->>'status', 'ACTIVE')
 from auth.users u
 on conflict (id) do update
   set full_name = excluded.full_name,

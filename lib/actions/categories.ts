@@ -7,6 +7,7 @@ import { can } from '@/lib/constants';
 import { slugify } from '@/lib/utils';
 import { CATEGORY_ICON_OPTIONS } from '@/lib/category-icons';
 import { verifyAdminPassword } from '@/lib/actions/auth-verify';
+import { requireEditorialReader } from '@/lib/server-auth';
 
 async function requireEditor() {
   const session = await auth();
@@ -26,10 +27,12 @@ function revalidateCategoryPaths(...slugs: (string | undefined)[]) {
 }
 
 export async function getCategories() {
+  await requireEditorialReader();
   return prisma.category.findMany({ orderBy: { order: 'asc' } });
 }
 
 export async function getCategoriesWithCounts() {
+  await requireEditorialReader();
   const [categories, counts] = await Promise.all([
     prisma.category.findMany({ orderBy: { order: 'asc' } }),
     prisma.article.groupBy({

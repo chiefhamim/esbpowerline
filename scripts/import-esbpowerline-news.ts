@@ -285,10 +285,12 @@ async function ensureEditor(prisma: PrismaClient) {
   }
 
   const bcrypt = await import('bcryptjs');
-  const passwordHash = await bcrypt.hash(
-    process.env.SEED_DEMO_PASSWORD?.trim() || 'esbpowerline007',
-    10,
-  );
+  const { seedPasswordForEmail } = await import('../lib/seed-credentials');
+  const editorPassword = seedPasswordForEmail(EDITOR_EMAIL);
+  if (!editorPassword) {
+    throw new Error('Editor seed password not configured (EDITOR_PASSWORD or dev default).');
+  }
+  const passwordHash = await bcrypt.hash(editorPassword, 10);
 
   const editor = await prisma.user.create({
     data: {

@@ -7,6 +7,7 @@ import { can, type Role } from '@/lib/constants';
 import prisma from '@/lib/prisma';
 import type { PublicArticleCard } from '@/lib/category-types';
 import type { PublicMagazineIssue } from '@/lib/category-content';
+import { requireMemberPanelUser } from '@/lib/server-auth';
 
 async function requireUserId() {
   const memberSession = await getMemberSession();
@@ -185,7 +186,9 @@ export type MemberOverview = {
   pendingComments: number;
 };
 
-export async function getMemberOverview(userId: string): Promise<MemberOverview> {
+export async function getMemberOverview(): Promise<MemberOverview> {
+  const user = await requireMemberPanelUser();
+  const userId = user.id;
   const [savedCount, downloadCount, commentCount, pendingComments] = await Promise.all([
     prisma.savedItem.count({ where: { userId } }),
     prisma.memberDownload.count({ where: { userId } }),
@@ -196,7 +199,9 @@ export async function getMemberOverview(userId: string): Promise<MemberOverview>
   return { savedCount, downloadCount, commentCount, pendingComments };
 }
 
-export async function getMemberSavedArticles(userId: string): Promise<PublicArticleCard[]> {
+export async function getMemberSavedArticles(): Promise<PublicArticleCard[]> {
+  const user = await requireMemberPanelUser();
+  const userId = user.id;
   const saved = await prisma.savedItem.findMany({
     where: { userId, itemType: 'ARTICLE' },
     orderBy: { createdAt: 'desc' },
@@ -226,7 +231,9 @@ export async function getMemberSavedArticles(userId: string): Promise<PublicArti
     }));
 }
 
-export async function getMemberSavedMagazines(userId: string): Promise<PublicMagazineIssue[]> {
+export async function getMemberSavedMagazines(): Promise<PublicMagazineIssue[]> {
+  const user = await requireMemberPanelUser();
+  const userId = user.id;
   const saved = await prisma.savedItem.findMany({
     where: { userId, itemType: 'MAGAZINE' },
     orderBy: { createdAt: 'desc' },
@@ -277,7 +284,9 @@ export type MemberCommentRow = {
   articleSlug: string;
 };
 
-export async function getMemberComments(userId: string): Promise<MemberCommentRow[]> {
+export async function getMemberComments(): Promise<MemberCommentRow[]> {
+  const user = await requireMemberPanelUser();
+  const userId = user.id;
   const comments = await prisma.comment.findMany({
     where: { userId },
     orderBy: { createdAt: 'desc' },
@@ -308,9 +317,10 @@ export type MemberDownloadRow = {
   createdAt: Date;
 };
 
-export async function getMemberDownloads(userId: string): Promise<MemberDownloadRow[]> {
+export async function getMemberDownloads(): Promise<MemberDownloadRow[]> {
+  const user = await requireMemberPanelUser();
   return prisma.memberDownload.findMany({
-    where: { userId },
+    where: { userId: user.id },
     orderBy: { createdAt: 'desc' },
     select: { id: true, label: true, fileUrl: true, createdAt: true },
   });

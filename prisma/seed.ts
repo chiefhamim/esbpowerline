@@ -9,10 +9,12 @@ import 'dotenv/config';
 import bcrypt from 'bcryptjs';
 import { createScriptPrismaClient } from './client';
 import { CATEGORIES, CATEGORY_DETAILS } from '../lib/constants';
-import { EDITOR_EMAIL, EDITOR_NAME } from '../lib/staff-accounts';
+import { EDITOR_EMAIL, EDITOR_NAME, MASTER_ADMIN_EMAIL } from '../lib/staff-accounts';
 import { DEFAULT_COVERAGE_SLOTS } from '../lib/coverage-defaults';
 import { slugify } from '../lib/utils';
 import { upsertSupabaseAuthUser } from '../lib/supabase/sync-auth-user';
+import { MEMBER_DEMO_EMAIL, seedPasswordForEmail } from '../lib/seed-credentials';
+
 
 const prisma = createScriptPrismaClient();
 
@@ -43,15 +45,19 @@ async function main() {
   await prisma.category.deleteMany();
   await prisma.siteSetting.deleteMany();
 
-  // === USERS (demo accounts — password from local env only, never committed) ===
-  const seedPassword = process.env.SEED_DEMO_PASSWORD?.trim() || 'esbpowerline007';
-  const passwordHash = await bcrypt.hash(seedPassword, 10);
+  // === USERS (demo accounts — per-role dev passwords or env overrides) ===
+  const adminPassword = seedPasswordForEmail(MASTER_ADMIN_EMAIL);
+  const editorPassword = seedPasswordForEmail(EDITOR_EMAIL);
+  const memberPassword = seedPasswordForEmail(MEMBER_DEMO_EMAIL);
+  if (!adminPassword || !editorPassword || !memberPassword) {
+    throw new Error('Seed passwords not configured. Set SEED_DEMO_PASSWORD or per-account env vars.');
+  }
 
   const superAdmin = await prisma.user.create({
     data: {
       name: 'System Admin',
-      email: 'admin@esbpowerline.com',
-      passwordHash,
+      email: MASTER_ADMIN_EMAIL,
+      passwordHash: await bcrypt.hash(adminPassword, 10),
       role: 'SUPER_ADMIN',
       status: 'ACTIVE',
       bio: 'Platform administrator',
@@ -62,7 +68,7 @@ async function main() {
     data: {
       name: EDITOR_NAME,
       email: EDITOR_EMAIL,
-      passwordHash,
+      passwordHash: await bcrypt.hash(editorPassword, 10),
       role: 'EDITOR',
       status: 'ACTIVE',
       bio: 'Senior Energy Correspondent — ESB PowerLine',
@@ -74,9 +80,9 @@ async function main() {
   const demoMember = await prisma.user.create({
     data: {
       name: 'Demo Member',
-      email: 'member@esbpowerline.com',
+      email: MEMBER_DEMO_EMAIL,
       phone: '+8801712345678',
-      passwordHash,
+      passwordHash: await bcrypt.hash(memberPassword, 10),
       role: 'SUBSCRIBER',
       status: 'ACTIVE',
       bio: 'Energy sector professional — member account',
@@ -84,9 +90,9 @@ async function main() {
   });
 
   // Sync to Supabase Auth if configured
-  await upsertSupabaseAuthUser({ email: 'admin@esbpowerline.com', password: seedPassword, name: 'System Admin', role: 'SUPER_ADMIN', status: 'ACTIVE' });
-  await upsertSupabaseAuthUser({ email: EDITOR_EMAIL, password: seedPassword, name: EDITOR_NAME, role: 'EDITOR', status: 'ACTIVE' });
-  await upsertSupabaseAuthUser({ email: 'member@esbpowerline.com', password: seedPassword, name: 'Demo Member', role: 'SUBSCRIBER', status: 'ACTIVE' });
+  await upsertSupabaseAuthUser({ email: MASTER_ADMIN_EMAIL, password: adminPassword, name: 'System Admin', role: 'SUPER_ADMIN', status: 'ACTIVE' });
+  await upsertSupabaseAuthUser({ email: EDITOR_EMAIL, password: editorPassword, name: EDITOR_NAME, role: 'EDITOR', status: 'ACTIVE' });
+  await upsertSupabaseAuthUser({ email: MEMBER_DEMO_EMAIL, password: memberPassword, name: 'Demo Member', role: 'SUBSCRIBER', status: 'ACTIVE' });
 
   console.log('✓ Users seeded (admin, editor, member)');
 

@@ -1,11 +1,10 @@
 /**
  * One-shot production bootstrap (run locally with production env in .env.production.local):
  *
- *   1. Copy .env.production.local and replace YOUR_SUPABASE_DB_PASSWORD
- *   2. npm run bootstrap:prod
+ *   1. Copy .env.production.local and set MASTER_ADMIN_PASSWORD
+ *   2. ALLOW_PRODUCTION_SEED=true npm run bootstrap:prod
  *
- * Requires: DATABASE_URL, DIRECT_URL, Supabase keys (see .env.example).
- * WARNING: db:seed wipes existing Prisma rows — use only on empty/staging DBs.
+ * Uses db:seed:prod (idempotent, no demo wipe) — NOT full db:seed.
  */
 import { config } from 'dotenv';
 import { existsSync } from 'fs';
@@ -29,9 +28,8 @@ if (process.env.ALLOW_PRODUCTION_SEED !== 'true') {
   process.exit(1);
 }
 
-const password = process.env.SEED_DEMO_PASSWORD?.trim() || process.env.MASTER_ADMIN_PASSWORD?.trim();
-if (!password) {
-  console.error('❌ Set SEED_DEMO_PASSWORD (and/or MASTER_ADMIN_PASSWORD) for demo/staff accounts.');
+if (!process.env.MASTER_ADMIN_PASSWORD?.trim()) {
+  console.error('❌ Set MASTER_ADMIN_PASSWORD for production bootstrap.');
   process.exit(1);
 }
 
@@ -43,8 +41,6 @@ function run(label, script) {
       ...process.env,
       PRISMA_SCHEMA_PROVIDER: 'postgresql',
       ALLOW_PRODUCTION_SEED: 'true',
-      SEED_DEMO_PASSWORD: process.env.SEED_DEMO_PASSWORD?.trim() || password,
-      MASTER_ADMIN_PASSWORD: process.env.MASTER_ADMIN_PASSWORD?.trim() || password,
     },
     shell: process.platform === 'win32',
   });
@@ -53,12 +49,10 @@ function run(label, script) {
   }
 }
 
-console.log('🚀 Production bootstrap — migrations, Prisma seed, Supabase auth users');
+console.log('🚀 Production bootstrap — migrations, idempotent seed, Supabase staff');
 run('Deploy migrations', 'db:deploy:prod');
-run('Seed Prisma content (articles, categories, settings)', 'db:seed');
+run('Seed production baseline (categories, settings, master admin)', 'db:seed:prod');
 run('Seed Supabase staff (admin + editor)', 'supabase:seed-staff');
-run('Seed Supabase member', 'supabase:seed-member');
 console.log('\n✅ Bootstrap complete.');
-console.log('   Staff:  admin@esbpowerline.com / hamim2964@gmail.com');
-console.log('   Member: member@esbpowerline.com');
-console.log(`   Password: (your SEED_DEMO_PASSWORD)`);
+console.log('   Staff: admin@esbpowerline.com / hamim2964@gmail.com');
+console.log('   Passwords: from MASTER_ADMIN_PASSWORD / EDITOR_PASSWORD env vars');

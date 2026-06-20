@@ -13,6 +13,7 @@ import {
 } from '@/lib/supabase/sync-auth-user';
 import { ADMIN_ASSIGNABLE_ROLES, ROLES, type Role } from '@/lib/constants';
 import { userSchema, type UserInput } from '@/lib/validations/user';
+import { requireStaffCollaboration } from '@/lib/server-auth';
 
 async function requireAdmin() {
   const session = await auth();
@@ -31,9 +32,7 @@ export type UserMemberActivity = {
 const STAFF_ROLES = ['SUPER_ADMIN', 'ADMIN', 'EDITOR', 'AUTHOR', 'CONTRIBUTOR'] as const;
 
 export async function getStaffForCollaboration() {
-  const session = await auth();
-  if (!session?.user) throw new Error('Forbidden');
-  
+  await requireStaffCollaboration();
   return prisma.user.findMany({
     where: { role: { in: [...STAFF_ROLES] }, status: 'ACTIVE' },
     select: { id: true, name: true, role: true, avatar: true },

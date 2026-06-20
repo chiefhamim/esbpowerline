@@ -54,10 +54,11 @@ if (schemaProvider === 'sqlite') {
 }
 
 async function ensureEditor(prisma: PrismaClient) {
-  const password =
-    process.env.SEED_DEMO_PASSWORD?.trim() ||
-    process.env.MASTER_ADMIN_PASSWORD?.trim() ||
-    'esbpowerline007';
+  const { seedPasswordForEmail } = await import('../lib/seed-credentials');
+  const password = seedPasswordForEmail(EDITOR_EMAIL);
+  if (!password) {
+    throw new Error('Editor seed password not configured (EDITOR_PASSWORD or dev default).');
+  }
   const passwordHash = await bcrypt.hash(password, 10);
 
   let editor = await prisma.user.findUnique({ where: { email: EDITOR_EMAIL } });

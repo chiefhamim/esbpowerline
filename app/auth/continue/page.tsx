@@ -13,17 +13,13 @@ type Props = {
   searchParams: Promise<{ to?: string }>;
 };
 
+/** Same-origin relative paths only — blocks open redirects to external sites. */
 function safeDestination(raw: string | undefined): string | null {
   if (!raw?.trim()) return null;
   const value = raw.trim();
-  if (value.startsWith('/') && !value.startsWith('//')) return value;
-  try {
-    const url = new URL(value);
-    if (url.protocol !== 'http:' && url.protocol !== 'https:') return null;
-    return url.toString();
-  } catch {
-    return null;
-  }
+  if (!value.startsWith('/') || value.startsWith('//')) return null;
+  if (value.includes('://') || value.includes('\\')) return null;
+  return value;
 }
 
 export default async function AuthContinuePage({ searchParams }: Props) {

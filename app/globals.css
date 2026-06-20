@@ -1848,9 +1848,9 @@ html.locale-bn .article-card h3 {
 .site-banner__image {
   display: block;
   width: 100%;
-  height: clamp(5rem, 14vw, 15.625rem);
-  max-height: 15.625rem;
-  object-fit: cover;
+  height: auto;
+  aspect-ratio: 3728 / 343;
+  object-fit: contain;
   object-position: center center;
 }
 

@@ -3,10 +3,10 @@ import { createClient } from '@supabase/supabase-js';
 import {
   EDITOR_EMAIL,
   EDITOR_NAME,
-  LEGACY_EDITOR_EMAIL,
   MASTER_ADMIN_EMAIL,
   MASTER_ADMIN_NAME,
 } from '../lib/staff-accounts';
+import { seedPasswordForEmail } from '../lib/seed-credentials';
 import { upsertAuthUserWithClient } from '../lib/supabase/auth-user-sync';
 
 config({ path: '.env.local' });
@@ -21,7 +21,6 @@ type StaffSeedAccount = {
 const STAFF_ACCOUNTS: StaffSeedAccount[] = [
   { email: MASTER_ADMIN_EMAIL, name: MASTER_ADMIN_NAME, role: 'SUPER_ADMIN' },
   { email: EDITOR_EMAIL, name: EDITOR_NAME, role: 'EDITOR' },
-  { email: LEGACY_EDITOR_EMAIL, name: EDITOR_NAME, role: 'EDITOR' },
 ];
 
 async function main() {
@@ -32,7 +31,6 @@ async function main() {
 
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim();
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY?.trim();
-  const password = process.env.SEED_DEMO_PASSWORD?.trim() || 'esbpowerline007';
 
   if (!url || !serviceRoleKey) {
     throw new Error('Missing NEXT_PUBLIC_SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY in .env.local');
@@ -42,8 +40,13 @@ async function main() {
     auth: { autoRefreshToken: false, persistSession: false },
   });
 
-  console.log('🌱 Seeding Supabase staff demo accounts...');
+  console.log('🌱 Seeding Supabase staff accounts...');
   for (const account of STAFF_ACCOUNTS) {
+    const password = seedPasswordForEmail(account.email);
+    if (!password) {
+      console.warn(`  Skipped ${account.email}: no password configured for this environment.`);
+      continue;
+    }
     await upsertAuthUserWithClient(admin, {
       email: account.email,
       password,

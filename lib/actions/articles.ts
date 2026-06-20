@@ -14,6 +14,8 @@ import {
 } from '@/lib/validations/article';
 import { PUBLIC_REVALIDATE_PATHS } from '@/lib/public-paths';
 import { reconcilePlacementFlags, MAX_PINNED_COVERAGE } from '@/lib/placement-rules';
+import { resolveEditorialAuthorScope } from '@/lib/editorial-scope';
+import { assertCanReadArticle, requireEditorialReader } from '@/lib/server-auth';
 
 type ArticleUser = { id: string; role: Role };
 
@@ -119,24 +121,27 @@ async function enforcePinnedCapacity(articleId: string) {
 }
 
 export async function getAuthorArticleStats(authorId: string) {
-  const baseWhere = { authorId, status: { not: 'TRASH' as const } };
+  const user = await requireEditorialReader();
+  const scopedAuthorId = resolveEditorialAuthorScope(user, authorId);
+  if (!scopedAuthorId) throw new Error('Forbidden');
+  const baseWhere = { authorId: scopedAuthorId, status: { not: 'TRASH' as const } };
   const [statusGroups, featured, breaking, viewsAgg, recent, topByViews, pendingNotices] = await Promise.all([
     prisma.article.groupBy({
       by: ['status'],
-      where: { authorId },
+      where: { authorId: scopedAuthorId },
       _count: { _all: true },
     }),
     prisma.article.count({ where: { ...baseWhere, isFeatured: true } }),
     prisma.article.count({ where: { ...baseWhere, isBreaking: true } }),
     prisma.article.aggregate({ where: baseWhere, _sum: { views: true } }),
-    getArticles({ authorId, limit: 8 }),
+    getArticles({ authorId: scopedAuthorId, limit: 8 }),
     prisma.article.findMany({
-      where: { authorId, status: 'PUBLISHED' },
+      where: { authorId: scopedAuthorId, status: 'PUBLISHED' },
       orderBy: { views: 'desc' },
       take: 5,
       select: { id: true, title: true, slug: true, views: true, category: true },
     }),
-    prisma.editorialNotice.count({ where: { recipientId: authorId, status: 'PENDING' } }),
+    prisma.editorialNotice.count({ where: { recipientId: scopedAuthorId, status: 'PENDING' } }),
   ]);
 
   const countByStatus = (status: string) =>
@@ -166,7 +171,11 @@ export async function getAuthorArticleStats(authorId: string) {
 }
 
 export async function getCalendarArticles(opts?: { authorId?: string; allAuthors?: boolean }) {
-  const authorFilter = opts?.allAuthors || !opts?.authorId ? {} : { authorId: opts.authorId };
+  const user = await requireEditorialReader();
+  const scopedAuthorId = opts?.allAuthors
+    ? undefined
+    : resolveEditorialAuthorScope(user, opts?.authorId);
+  const authorFilter = scopedAuthorId ? { authorId: scopedAuthorId } : can(user.role, 'article.review') ? {} : { authorId: user.id };
   const [scheduled, published] = await Promise.all([
     prisma.article.findMany({
       where: { status: 'SCHEDULED', editorTrash: false, ...authorFilter },
@@ -201,13 +210,17 @@ export async function getEditorialCalendarEvents(opts?: {
   month?: number;
   year?: number;
 }): Promise<CalendarEvent[]> {
+  const user = await requireEditorialReader();
+  const scopedAuthorId = opts?.allAuthors
+    ? undefined
+    : resolveEditorialAuthorScope(user, opts?.authorId);
+  const authorFilter = scopedAuthorId ? { authorId: scopedAuthorId } : can(user.role, 'article.review') ? {} : { authorId: user.id };
+
   const now = new Date();
   const year = opts?.year ?? now.getFullYear();
   const month = opts?.month ?? now.getMonth();
   const rangeStart = new Date(year, month, 1);
   const rangeEnd = new Date(year, month + 1, 0, 23, 59, 59, 999);
-
-  const authorFilter = opts?.allAuthors || !opts?.authorId ? {} : { authorId: opts.authorId };
 
   const articles = await prisma.article.findMany({
     where: {
@@ -237,10 +250,12 @@ export async function getEditorialCalendarEvents(opts?: {
 }
 
 export async function getArticles(opts?: { authorId?: string; status?: string; limit?: number; includeTrash?: boolean }) {
+  const user = await requireEditorialReader();
+  const scopedAuthorId = resolveEditorialAuthorScope(user, opts?.authorId);
   return prisma.article.findMany({
     where: {
       editorTrash: false,
-      ...(opts?.authorId ? { authorId: opts.authorId } : {}),
+      ...(scopedAuthorId ? { authorId: scopedAuthorId } : can(user.role, 'article.review') ? {} : { authorId: user.id }),
       ...(opts?.status
         ? { status: opts.status as 'DRAFT' | 'IN_REVIEW' | 'PUBLISHED' | 'SCHEDULED' | 'ARCHIVED' | 'TRASH' }
         : opts?.includeTrash
@@ -437,10 +452,14 @@ export async function bulkArticleAction(
 }
 
 export async function getArticle(id: string) {
-  return prisma.article.findUnique({
+  const user = await requireEditorialReader();
+  const article = await prisma.article.findUnique({
     where: { id },
     include: { author: { select: { id: true, name: true, email: true } } },
   });
+  if (!article) return null;
+  await assertCanReadArticle(user, article);
+  return article;
 }
 
 export async function createArticle(data: ArticleInput) {
@@ -583,10 +602,12 @@ export async function deleteArticle(id: string) {
 }
 
 export async function getAllTags(authorId?: string) {
+  const user = await requireEditorialReader();
+  const scopedAuthorId = resolveEditorialAuthorScope(user, authorId);
   const articles = await prisma.article.findMany({
     where: {
       status: { not: 'TRASH' },
-      ...(authorId ? { authorId } : {}),
+      ...(scopedAuthorId ? { authorId: scopedAuthorId } : can(user.role, 'article.review') ? {} : { authorId: user.id }),
     },
     select: { tags: true },
   });
@@ -598,10 +619,12 @@ export async function getAllTags(authorId?: string) {
 }
 
 export async function getTagCounts(authorId?: string) {
+  const user = await requireEditorialReader();
+  const scopedAuthorId = resolveEditorialAuthorScope(user, authorId);
   const articles = await prisma.article.findMany({
     where: {
       status: { not: 'TRASH' },
-      ...(authorId ? { authorId } : {}),
+      ...(scopedAuthorId ? { authorId: scopedAuthorId } : can(user.role, 'article.review') ? {} : { authorId: user.id }),
     },
     select: { tags: true },
   });
@@ -727,85 +750,5 @@ export async function incrementArticleView(_articleId: string) {
   return;
 }
 
-export type PublishScheduledResult = {
-  published: string[];
-  skipped: { id: string; title: string; reason: string }[];
-};
-
-/** Publish scheduled articles whose go-live time has passed. Intended for cron / manual trigger. */
-export async function publishDueScheduledArticles(now = new Date()): Promise<PublishScheduledResult> {
-  const due = await prisma.article.findMany({
-    where: {
-      status: 'SCHEDULED',
-      publishedAt: { lte: now },
-    },
-    select: {
-      id: true,
-      title: true,
-      slug: true,
-      excerpt: true,
-      content: true,
-      category: true,
-      imageUrl: true,
-      tags: true,
-      publishedAt: true,
-    },
-  });
-
-  const published: string[] = [];
-  const skipped: PublishScheduledResult['skipped'] = [];
-
-  for (const article of due) {
-    const blockers = getPublishBlockers({
-      title: article.title,
-      excerpt: article.excerpt ?? '',
-      content: article.content,
-    });
-    if (blockers.length > 0) {
-      skipped.push({
-        id: article.id,
-        title: article.title,
-        reason: formatPublishBlockerMessage(blockers),
-      });
-      continue;
-    }
-
-    const parsed = publishArticleSchema.safeParse({
-      title: article.title,
-      slug: article.slug,
-      excerpt: article.excerpt ?? '',
-      content: article.content,
-      category: article.category,
-      status: 'PUBLISHED',
-      imageUrl: article.imageUrl ?? undefined,
-      tags: (article.tags as string[]) ?? [],
-      publishedAt: article.publishedAt?.toISOString(),
-    });
-
-    if (!parsed.success) {
-      skipped.push({
-        id: article.id,
-        title: article.title,
-        reason: parsed.error.issues.map((i) => i.message).join('; '),
-      });
-      continue;
-    }
-
-    await prisma.article.update({
-      where: { id: article.id },
-      data: {
-        status: 'PUBLISHED',
-        publishedAt: article.publishedAt ?? now,
-      },
-    });
-    published.push(article.slug);
-  }
-
-  if (published.length > 0) {
-    revalidatePublicContent(published);
-    revalidatePath('/cms/articles/scheduled');
-    revalidatePath('/admin/articles');
-  }
-
-  return { published, skipped };
-}
+/** @deprecated Use lib/cron/publish-scheduled-articles — not invokable as a server action. */
+export type PublishScheduledResult = import('@/lib/cron/publish-scheduled-articles').PublishScheduledResult;

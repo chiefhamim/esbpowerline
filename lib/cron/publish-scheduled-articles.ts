@@ -1,0 +1,98 @@
+import 'server-only';
+
+import { revalidatePath } from 'next/cache';
+import prisma from '@/lib/prisma';
+import {
+  formatPublishBlockerMessage,
+  getPublishBlockers,
+  publishArticleSchema,
+} from '@/lib/validations/article';
+import { PUBLIC_REVALIDATE_PATHS } from '@/lib/public-paths';
+
+export type PublishScheduledResult = {
+  published: string[];
+  skipped: { id: string; title: string; reason: string }[];
+};
+
+function revalidatePublicContent(slugs: string[] = []) {
+  for (const path of PUBLIC_REVALIDATE_PATHS) revalidatePath(path);
+  for (const slug of slugs) revalidatePath(`/articles/${slug}`);
+}
+
+/** Publish scheduled articles whose go-live time has passed. Cron route only — not exposed as a server action. */
+export async function publishDueScheduledArticles(now = new Date()): Promise<PublishScheduledResult> {
+  const due = await prisma.article.findMany({
+    where: {
+      status: 'SCHEDULED',
+      publishedAt: { lte: now },
+    },
+    select: {
+      id: true,
+      title: true,
+      slug: true,
+      excerpt: true,
+      content: true,
+      category: true,
+      imageUrl: true,
+      tags: true,
+      publishedAt: true,
+    },
+  });
+
+  const published: string[] = [];
+  const skipped: PublishScheduledResult['skipped'] = [];
+
+  for (const article of due) {
+    const blockers = getPublishBlockers({
+      title: article.title,
+      excerpt: article.excerpt ?? '',
+      content: article.content,
+    });
+    if (blockers.length > 0) {
+      skipped.push({
+        id: article.id,
+        title: article.title,
+        reason: formatPublishBlockerMessage(blockers),
+      });
+      continue;
+    }
+
+    const parsed = publishArticleSchema.safeParse({
+      title: article.title,
+      slug: article.slug,
+      excerpt: article.excerpt ?? '',
+      content: article.content,
+      category: article.category,
+      status: 'PUBLISHED',
+      imageUrl: article.imageUrl ?? undefined,
+      tags: (article.tags as string[]) ?? [],
+      publishedAt: article.publishedAt?.toISOString(),
+    });
+
+    if (!parsed.success) {
+      skipped.push({
+        id: article.id,
+        title: article.title,
+        reason: parsed.error.issues.map((i) => i.message).join('; '),
+      });
+      continue;
+    }
+
+    await prisma.article.update({
+      where: { id: article.id },
+      data: {
+        status: 'PUBLISHED',
+        publishedAt: article.publishedAt ?? now,
+      },
+    });
+    published.push(article.slug);
+  }
+
+  if (published.length > 0) {
+    revalidatePublicContent(published);
+    revalidatePath('/cms/articles/scheduled');
+    revalidatePath('/admin/articles');
+  }
+
+  return { published, skipped };
+}

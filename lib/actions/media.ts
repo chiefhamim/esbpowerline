@@ -13,6 +13,7 @@ async function requireAuth() {
 }
 
 export async function getMedia() {
+  await requireAuth();
   return prisma.media.findMany({ orderBy: { createdAt: 'desc' } });
 }
 

@@ -11,8 +11,8 @@ export const metadata = {
 export default async function MemberSavedPage() {
   const session = await requireMemberSession();
   const [articles, magazines] = await Promise.all([
-    getMemberSavedArticles(session.user.id),
-    getMemberSavedMagazines(session.user.id),
+    getMemberSavedArticles(),
+    getMemberSavedMagazines(),
   ]);
 
   return (

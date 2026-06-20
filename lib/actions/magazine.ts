@@ -12,6 +12,7 @@ async function requireAdmin() {
 }
 
 export async function getMagazineIssues() {
+  await requireAdmin();
   return prisma.magazineIssue.findMany({ orderBy: { issueDate: 'desc' } });
 }
 

@@ -1,8 +1,9 @@
 import 'server-only';
 
-import { getDevBootstrapPassword } from '@/lib/dev-login-hints';
+import { seedPasswordForEmail } from '@/lib/seed-credentials';
+import { MASTER_ADMIN_EMAIL } from '@/lib/staff-accounts';
 
-/** @deprecated Use getDevBootstrapPassword — server-only bootstrap password resolver. */
-export function getDemoPassword(): string {
-  return getDevBootstrapPassword() ?? 'esbpowerline007';
+/** @deprecated Use seedPasswordForEmail — server-only bootstrap password resolver. */
+export function getDemoPassword(): string | null {
+  return seedPasswordForEmail(MASTER_ADMIN_EMAIL);
 }

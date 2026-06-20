@@ -16,7 +16,7 @@ const STATUS_LABELS: Record<string, string> = {
 
 export default async function MemberCommentsPage() {
   const session = await requireMemberSession();
-  const comments = await getMemberComments(session.user.id);
+  const comments = await getMemberComments();
 
   return (
     <div className="space-y-6">

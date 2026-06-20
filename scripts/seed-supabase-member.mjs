@@ -1,14 +1,19 @@
 import { config } from 'dotenv';
 import { createClient } from '@supabase/supabase-js';
+import { MEMBER_DEMO_EMAIL, seedPasswordForEmail } from './lib/seed-passwords.mjs';
 
+config({ path: '.env.local' });
 config();
 
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim();
 const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY?.trim();
-const password = process.env.SEED_DEMO_PASSWORD?.trim() || 'esbpowerline007';
+const password = seedPasswordForEmail(MEMBER_DEMO_EMAIL);
 
 if (!url || !serviceRoleKey) {
   throw new Error('Missing NEXT_PUBLIC_SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY');
+}
+if (!password) {
+  throw new Error('No member demo password configured (MEMBER_DEMO_PASSWORD or dev default).');
 }
 
 const admin = createClient(url, serviceRoleKey, {
@@ -16,7 +21,7 @@ const admin = createClient(url, serviceRoleKey, {
 });
 
 const account = {
-  email: 'member@esbpowerline.com',
+  email: MEMBER_DEMO_EMAIL,
   name: 'Demo Member',
   role: 'SUBSCRIBER',
 };
@@ -28,12 +33,13 @@ async function findUserIdByEmail(email) {
 }
 
 async function upsertMember() {
-  const metadata = { role: account.role, name: account.name, full_name: account.name };
+  const metadata = { role: account.role, name: account.name, full_name: account.name, status: 'ACTIVE' };
   const { error: createError } = await admin.auth.admin.createUser({
     email: account.email,
     password,
     email_confirm: true,
     user_metadata: metadata,
+    app_metadata: { role: account.role },
   });
 
   if (!createError) {
@@ -52,6 +58,7 @@ async function upsertMember() {
     password,
     email_confirm: true,
     user_metadata: metadata,
+    app_metadata: { role: account.role },
   });
   if (updateError) throw updateError;
 

@@ -90,7 +90,7 @@ export function PublicNavbar({
   }, [categories, locale]);
 
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [bannerSrc, setBannerSrc] = useState('/images/banner.jpg');
+  const [bannerSrc, setBannerSrc] = useState('/images/banner.png');
   const pathname = usePathname();
 
   return (
@@ -101,14 +101,15 @@ export function PublicNavbar({
             <PublicNavLink href="/" className="w-full block transition-opacity hover:opacity-95">
               <Image
                 src={bannerSrc}
-                alt="ESB PowerLine Banner"
+                alt="ESB PowerLine — Safe Energy Safe Nation"
                 className="site-banner__image block mx-auto"
-                width={1760}
-                height={250}
+                width={3728}
+                height={343}
+                sizes="(max-width: 1760px) 100vw, 1760px"
                 priority
                 onError={() => {
-                  if (bannerSrc !== 'https://i.ibb.co/VKq8pgw/001.jpg') {
-                    setBannerSrc('https://i.ibb.co/VKq8pgw/001.jpg');
+                  if (bannerSrc !== '/images/banner.jpg') {
+                    setBannerSrc('/images/banner.jpg');
                   }
                 }}
               />

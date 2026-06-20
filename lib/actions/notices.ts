@@ -163,6 +163,9 @@ export async function notifyAuthorsForArticles(
   metadata?: Record<string, unknown>
 ) {
   const user = await requireAuthUser();
+  if (!can(user.role, 'article.review') && !can(user.role, 'admin.access')) {
+    throw new Error('Forbidden');
+  }
   const articles = await prisma.article.findMany({
     where: { id: { in: articleIds } },
     select: { id: true, title: true, authorId: true },

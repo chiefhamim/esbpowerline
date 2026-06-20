@@ -2,15 +2,9 @@ import 'server-only';
 
 import bcrypt from 'bcryptjs';
 import prisma from '@/lib/prisma';
-import { getDevBootstrapPassword } from '@/lib/dev-login-hints';
+import { MEMBER_DEMO_EMAIL, seedPasswordForEmail } from '@/lib/seed-credentials';
 import { EDITOR_EMAIL, EDITOR_NAME } from '@/lib/staff-accounts';
 import { upsertSupabaseAuthUser } from '@/lib/supabase/sync-auth-user';
-
-const DEMO_MEMBER_EMAIL = 'member@esbpowerline.com';
-
-function demoPassword() {
-  return getDevBootstrapPassword() ?? 'esbpowerline007';
-}
 
 async function syncDemoAuthUser(
   email: string,
@@ -30,14 +24,16 @@ async function syncDemoAuthUser(
 export async function ensureDemoMemberAccount() {
   if (process.env.NODE_ENV === 'production') return;
 
-  const password = demoPassword();
+  const password = seedPasswordForEmail(MEMBER_DEMO_EMAIL);
+  if (!password) return;
+
   const passwordHash = await bcrypt.hash(password, 10);
 
   const member = await prisma.user.upsert({
-    where: { email: DEMO_MEMBER_EMAIL },
+    where: { email: MEMBER_DEMO_EMAIL },
     create: {
       name: 'Demo Member',
-      email: DEMO_MEMBER_EMAIL,
+      email: MEMBER_DEMO_EMAIL,
       phone: '+8801712345678',
       passwordHash,
       role: 'SUBSCRIBER',
@@ -45,13 +41,12 @@ export async function ensureDemoMemberAccount() {
       bio: 'Energy sector professional — member account',
     },
     update: {
-      passwordHash,
       role: 'SUBSCRIBER',
       status: 'ACTIVE',
     },
   });
 
-  const supabaseUserId = await syncDemoAuthUser(DEMO_MEMBER_EMAIL, 'Demo Member', 'SUBSCRIBER', password);
+  const supabaseUserId = await syncDemoAuthUser(MEMBER_DEMO_EMAIL, 'Demo Member', 'SUBSCRIBER', password);
   if (supabaseUserId && member.supabaseUserId !== supabaseUserId) {
     await prisma.user.update({
       where: { id: member.id },
@@ -73,7 +68,9 @@ export async function ensureDemoEditorAccount() {
   });
   if (existing) return;
 
-  const password = demoPassword();
+  const password = seedPasswordForEmail(EDITOR_EMAIL);
+  if (!password) return;
+
   const passwordHash = await bcrypt.hash(password, 10);
 
   await prisma.user.create({

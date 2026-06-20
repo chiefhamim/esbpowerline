@@ -2,18 +2,11 @@ import 'server-only';
 
 import bcrypt from 'bcryptjs';
 import prisma from '@/lib/prisma';
-import { getDevBootstrapPassword } from '@/lib/dev-login-hints';
+import { seedPasswordForEmail } from '@/lib/seed-credentials';
 import { MASTER_ADMIN_EMAIL, MASTER_ADMIN_NAME } from '@/lib/staff-accounts';
 import { upsertSupabaseAuthUser } from '@/lib/supabase/sync-auth-user';
 
 export { MASTER_ADMIN_EMAIL, MASTER_ADMIN_NAME };
-
-function masterAdminBootstrapPassword(): string | null {
-  if (process.env.NODE_ENV === 'production') {
-    return process.env.MASTER_ADMIN_PASSWORD?.trim() || null;
-  }
-  return getDevBootstrapPassword() ?? 'esbpowerline007';
-}
 
 /**
  * Ensures the master admin exists on first run only.
@@ -26,7 +19,7 @@ export async function ensureMasterAdminAccount(): Promise<void> {
   });
   if (existing) return;
 
-  const password = masterAdminBootstrapPassword();
+  const password = seedPasswordForEmail(MASTER_ADMIN_EMAIL);
   if (!password) return;
 
   const passwordHash = await bcrypt.hash(password, 10);

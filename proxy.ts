@@ -9,6 +9,20 @@ import {
 import { isCronAuthorized } from '@/lib/api/cron-auth';
 import { isProxyProtectedApi } from '@/lib/api/protected-routes';
 import { resolveEdgeSession } from '@/lib/supabase/edge-session-gate';
+import { can, type Role } from '@/lib/constants';
+
+function apiRoleAllowed(pathname: string, role: Role): boolean {
+  if (pathname === '/api/members/grid-export' || pathname.startsWith('/api/members/grid-export/')) {
+    return role === 'SUBSCRIBER';
+  }
+  if (pathname === '/api/analytics' || pathname.startsWith('/api/analytics/')) {
+    return can(role, 'analytics.view_all');
+  }
+  if (pathname === '/api/upload' || pathname.startsWith('/api/upload/')) {
+    return can(role, 'media.upload');
+  }
+  return false;
+}
 
 function unauthorizedApi(response: NextResponse): NextResponse {
   const denied = NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -46,8 +60,10 @@ export async function proxy(request: NextRequest) {
   if (isProxyProtectedApi(pathname)) {
     if (isCronAuthorized(request)) return response;
 
-    const { active } = await resolveEdgeSession(user, supabase);
-    if (!active) return unauthorizedApi(response);
+    const { active, role } = await resolveEdgeSession(user, supabase);
+    if (!active || !role || !apiRoleAllowed(pathname, role)) {
+      return unauthorizedApi(response);
+    }
 
     return response;
   }

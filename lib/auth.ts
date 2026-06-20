@@ -37,11 +37,32 @@ async function resolveAppUser(
     app_metadata?: Record<string, unknown>;
   },
 ) {
-  const { data: profile } = await supabase
+  type ProfileRow = {
+    role: string | null;
+    status?: string | null;
+    full_name: string | null;
+    avatar_url: string | null;
+  };
+
+  const profileResult = await supabase
     .from('profiles')
-    .select('role, full_name, avatar_url')
+    .select('role, status, full_name, avatar_url')
     .eq('id', supabaseUser.id)
     .maybeSingle();
+
+  let profile: ProfileRow | null = (profileResult.data as ProfileRow | null) ?? null;
+  if (profileResult.error) {
+    const roleOnly = await supabase
+      .from('profiles')
+      .select('role, full_name, avatar_url')
+      .eq('id', supabaseUser.id)
+      .maybeSingle();
+    profile = (roleOnly.data as ProfileRow | null) ?? null;
+  }
+
+  const profileStatus =
+    profile && 'status' in profile && typeof profile.status === 'string' ? profile.status : null;
+  if (profileStatus === 'SUSPENDED' || profileStatus === 'PENDING') return null;
 
   const role = resolveRoleFromSupabaseUser(supabaseUser, profile?.role ?? null);
 

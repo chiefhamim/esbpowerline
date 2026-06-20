@@ -9,9 +9,34 @@ function metadataStatus(user: User): string | undefined {
   return typeof value === 'string' ? value : undefined;
 }
 
+type ProfileGateRow = { role: string | null; status?: string | null };
+
+async function loadProfileRow(
+  supabase: SupabaseClient,
+  userId: string,
+): Promise<ProfileGateRow | null> {
+  const withStatus = await supabase
+    .from('profiles')
+    .select('role, status')
+    .eq('id', userId)
+    .maybeSingle();
+
+  if (!withStatus.error) {
+    return withStatus.data as ProfileGateRow | null;
+  }
+
+  const roleOnly = await supabase
+    .from('profiles')
+    .select('role')
+    .eq('id', userId)
+    .maybeSingle();
+
+  if (roleOnly.error) return null;
+  return roleOnly.data as ProfileGateRow | null;
+}
+
 /**
  * Edge-safe session gate for proxy.ts — profiles + app_metadata only (no Prisma).
- * Profile select omits `status` until supabase/setup-profiles.sql is applied remotely.
  */
 export async function resolveEdgeSession(
   user: User | null,
@@ -24,11 +49,11 @@ export async function resolveEdgeSession(
     return { active: false, role: null };
   }
 
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('role')
-    .eq('id', user.id)
-    .maybeSingle();
+  const profile = await loadProfileRow(supabase, user.id);
+
+  if (profile?.status && INACTIVE_STATUSES.has(profile.status)) {
+    return { active: false, role: null };
+  }
 
   const role = resolveRoleFromSupabaseUser(user, profile?.role ?? null);
   if (!role) return { active: false, role: null };

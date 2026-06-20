@@ -9,7 +9,7 @@ export const metadata = {
 
 export default async function MemberDownloadsPage() {
   const session = await requireMemberSession();
-  const downloads = await getMemberDownloads(session.user.id);
+  const downloads = await getMemberDownloads();
 
   return (
     <div className="space-y-8">
