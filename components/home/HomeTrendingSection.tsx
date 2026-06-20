@@ -11,12 +11,10 @@ import { NoImage } from '@/components/shared/NoImage';
 import { useLocale } from '@/components/shared/LocaleProvider';
 import { hasArticleImage } from '@/lib/article-image';
 import type { PublicArticleCard } from '@/lib/category-types';
+import { formatExactDate } from '@/lib/utils';
 
 function formatTrendingTime(date: string, locale: 'en' | 'bn') {
-  return formatDistanceToNow(new Date(date), {
-    addSuffix: true,
-    locale: locale === 'bn' ? bn : undefined,
-  });
+  return formatExactDate(date);
 }
 
 function TrendingListItem({
@@ -443,10 +441,7 @@ export function HomeTrendingSection({
   }
 
   const [lead, ...rest] = trending;
-  const leadTimeAgo = formatDistanceToNow(new Date(lead.date), {
-    addSuffix: true,
-    locale: locale === 'bn' ? bn : undefined,
-  });
+  const leadTimeAgo = formatExactDate(lead.date);
 
   return (
     <section className="container home-block" aria-labelledby="home-trending-title">

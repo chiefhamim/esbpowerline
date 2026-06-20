@@ -77,6 +77,7 @@ type ArticleFormPermissions = {
   canFeature?: boolean;
   canBreaking?: boolean;
   canPin?: boolean;
+  canTrend?: boolean;
 };
 
 interface ArticleFormProps {
@@ -105,6 +106,7 @@ interface ArticleFormProps {
     isFeatured: boolean;
     isBreaking: boolean;
     isPinned?: boolean;
+    isTrending?: boolean;
     publishedAt?: string | Date | null;
     seo?: unknown;
   };
@@ -133,6 +135,7 @@ export function ArticleForm({
     canFeature = true,
     canBreaking = true,
     canPin = true,
+    canTrend = true,
   } = permissions;
   const categoryOptions = categories.map((c) => c.name);
   const hasCategories = categoryOptions.length > 0;
@@ -167,6 +170,7 @@ export function ArticleForm({
   const [isFeatured, setIsFeatured] = useState(article?.isFeatured ?? false);
   const [isBreaking, setIsBreaking] = useState(article?.isBreaking ?? false);
   const [isPinned, setIsPinned] = useState(article?.isPinned ?? false);
+  const [isTrending, setIsTrending] = useState(article?.isTrending ?? false);
   const [publishedAt, setPublishedAt] = useState(() => toDatetimeLocal(article?.publishedAt));
   const articleSeo = (article?.seo ?? {}) as {
     metaTitle?: string;
@@ -228,12 +232,13 @@ export function ArticleForm({
       isFeatured,
       isBreaking,
       isPinned,
+      isTrending,
       publishedAt: resolvedPublishedAt ? datetimeLocalToISO(resolvedPublishedAt) : null,
       seo: { metaTitle, metaDescription, focusKeyword, heroImage: heroMeta },
     }),
     [
       title, slug, excerpt, content, category, imageUrl, tags, collaboratorIds,
-      isFeatured, isBreaking, isPinned, resolvedPublishedAt, metaTitle, metaDescription,
+      isFeatured, isBreaking, isPinned, isTrending, resolvedPublishedAt, metaTitle, metaDescription,
       focusKeyword, heroMeta,
     ],
   );
@@ -397,12 +402,12 @@ export function ArticleForm({
             </div>
           </div>
           <div className="cms-editor-panel__body cms-editor-panel__body--stack">
-            {(canFeature || canBreaking || canPin) && (
+            {(canFeature || canBreaking || canPin || canTrend) && (
               <div className="cms-placement-strip">
                 <div className="cms-placement-strip__head">
                   <Sparkles className="h-3.5 w-3.5 text-sky-500 shrink-0" />
                   <span className="cms-placement-strip__title">Placement</span>
-                  <span className="cms-placement-strip__desc">Carousel (featured/breaking) or All Coverage pin</span>
+                  <span className="cms-placement-strip__desc">Carousel (featured/breaking) or Homepage placements</span>
                 </div>
                 <div className="cms-placement-strip__grid">
                   {canFeature && (
@@ -459,6 +464,23 @@ export function ArticleForm({
                         }}
                         accent="violet"
                         aria-label={PLACEMENT_FLAGS.pin.label}
+                      />
+                    </div>
+                  )}
+                  {canTrend && (
+                    <div className="cms-placement-row cms-placement-row--strip">
+                      <div className="cms-placement-row__copy">
+                        <CmsPlacementIcon type="trending" />
+                        <div className="min-w-0">
+                          <span className="cms-placement-row__label">{PLACEMENT_FLAGS.trending.label}</span>
+                          <span className="cms-placement-row__hint">{PLACEMENT_FLAGS.trending.hint}</span>
+                        </div>
+                      </div>
+                      <CmsPlacementSwitch
+                        checked={isTrending}
+                        onCheckedChange={setIsTrending}
+                        accent="sky"
+                        aria-label={PLACEMENT_FLAGS.trending.label}
                       />
                     </div>
                   )}

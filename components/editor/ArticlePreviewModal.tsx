@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { X, Monitor, Tablet, Smartphone, LayoutGrid, Newspaper, Pin, Star } from 'lucide-react';
-import { cn, formatDate, formatNumber } from '@/lib/utils';
+import { cn, formatExactDate, formatNumber, slugify } from '@/lib/utils';
 import { FeaturedCarousel } from '@/components/news/FeaturedCarousel';
 import { ArticleCard } from '@/components/news/ArticleCard';
 import { heroImageStyle, type HeroImageMeta } from '@/lib/hero-image';
@@ -55,28 +55,7 @@ type ArticlePreviewModalProps = {
   isBreaking?: boolean;
 };
 
-function PreviewMeta({
-  authorName,
-  readTime,
-  publishedAt,
-  className,
-}: {
-  authorName: string;
-  readTime: number;
-  publishedAt?: string | Date | null;
-  className?: string;
-}) {
-  const dateLabel = publishedAt ? formatDate(publishedAt) : 'Draft preview';
-  return (
-    <div className={cn('cms-preview-meta', className)}>
-      <span>{authorName}</span>
-      <span className="cms-preview-meta__dot" aria-hidden />
-      <span>{dateLabel}</span>
-      <span className="cms-preview-meta__dot" aria-hidden />
-      <span>{readTime} min read</span>
-    </div>
-  );
-}
+// PreviewMeta removed
 
 export function ArticlePreviewModal({
   open,
@@ -107,11 +86,14 @@ export function ArticlePreviewModal({
   useEffect(() => {
     if (!open) return;
     setTheme(getSavedSiteTheme());
-    setLoadingContext(true);
-    getArticlePreviewContext()
-      .then(setContext)
-      .catch(() => setContext(null))
-      .finally(() => setLoadingContext(false));
+    
+    if (!context) {
+      setLoadingContext(true);
+      getArticlePreviewContext()
+        .then(setContext)
+        .catch(() => setContext(null))
+        .finally(() => setLoadingContext(false));
+    }
 
     if (placement === 'carousel' && !isFeatured && !isBreaking) {
       setPlacement(isPinned ? 'coverage-hero' : 'card');
@@ -152,6 +134,11 @@ export function ArticlePreviewModal({
     [context?.categories, category],
   );
 
+  const cleanContent = useMemo(
+    () => open && placement === 'article' ? sanitizeArticleHtml(content) : '',
+    [open, placement, content]
+  );
+
   const carouselItems = useMemo(
     () => mergeDraftIntoCarousel(context?.carouselItems ?? [], draft),
     [context?.carouselItems, draft],
@@ -173,7 +160,7 @@ export function ArticlePreviewModal({
     const grid = coverageSlots
       .map((slot) => slot.article)
       .filter((a): a is PublicArticleCard => a !== null && !pinnedIds.has(a.id))
-      .slice(0, 9);
+      .slice(0, 7);
     return { pinned, grid };
   }, [context?.pinnedArticles, coverageSlots, draft]);
 
@@ -300,7 +287,7 @@ export function ArticlePreviewModal({
                     <p className="text-sm text-muted-foreground mt-1">Pinned top row + nine equal cards</p>
                   </div>
                   {pinnedRow.pinned.length > 0 && (
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
+                    <div className="home-article-grid home-article-grid--pinned mb-4">
                       {pinnedRow.pinned.map((a) => (
                         <div
                           key={a.id}
@@ -316,13 +303,14 @@ export function ArticlePreviewModal({
                             date={a.date}
                             readTime={a.readTime}
                             views={a.views}
+                            heroMeta={a.heroMeta}
                             isPinned
                           />
                         </div>
                       ))}
                     </div>
                   )}
-                  <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  <div className="home-article-grid">
                     {pinnedRow.grid.map((a) => (
                       <div
                         key={a.id}
@@ -338,6 +326,7 @@ export function ArticlePreviewModal({
                           date={a.date}
                           readTime={a.readTime}
                           views={a.views}
+                          heroMeta={a.heroMeta}
                           isFeatured={a.isFeatured}
                           isBreaking={a.isBreaking}
                         />
@@ -353,7 +342,7 @@ export function ArticlePreviewModal({
                     <h2 className="text-xl font-semibold tracking-tight">Latest stories</h2>
                     <p className="text-sm text-muted-foreground mt-1">Homepage card grid alongside other coverage</p>
                   </div>
-                  <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  <div className="home-article-grid">
                     {cardArticles.map((a) => (
                       <div
                         key={a.id}
@@ -369,6 +358,7 @@ export function ArticlePreviewModal({
                           date={a.date}
                           readTime={a.readTime}
                           views={a.views}
+                          heroMeta={a.heroMeta}
                           isFeatured={a.isFeatured}
                           isBreaking={a.isBreaking}
                           isPinned={a.isPinned}
@@ -381,11 +371,35 @@ export function ArticlePreviewModal({
 
               {placement === 'article' && (
                 <div className="container py-10 max-w-3xl cms-preview-article-page">
-                  <PreviewCategoryPill category={category} color={categoryColor} />
-                  <h1 className="text-4xl font-semibold tracking-tight mt-3">{displayTitle}</h1>
-                  <PreviewMeta authorName={authorName} readTime={readTime} publishedAt={previewDate} className="mt-3" />
-                  <ArticleAuthorSticky name={authorName} />
-                  {excerpt && <p className="text-muted-foreground mt-4 text-lg leading-relaxed">{excerpt}</p>}
+                  <header className="article-header mb-8 mt-2">
+                    <div className="flex items-center gap-2 mb-5">
+                      <PreviewCategoryPill category={category} color={categoryColor} className="text-sm font-bold uppercase tracking-widest text-primary" />
+                    </div>
+                    <h1 className="text-4xl md:text-5xl lg:text-[3.5rem] font-display font-extrabold tracking-tight leading-[1.05] text-foreground mb-6 line-clamp-2">
+                      {displayTitle}
+                    </h1>
+                    {excerpt && (
+                      <p className="text-xl md:text-2xl text-muted-foreground leading-snug font-light mb-8 line-clamp-3">
+                        {excerpt.replace(/\[&hellip;\]/g, '...').replace(/&hellip;/g, '...')}
+                      </p>
+                    )}
+                    
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-2 pb-5">
+                      <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center font-bold text-muted-foreground text-lg uppercase shadow-sm shrink-0">
+                          {authorName ? authorName.substring(0, 2) : 'ES'}
+                        </div>
+                        <div className="flex flex-col">
+                          <span className="text-base font-semibold text-foreground hover:text-primary transition-colors cursor-pointer">{authorName || 'ESB PowerLine'}</span>
+                          <span className="text-sm text-muted-foreground">{formatExactDate(previewDate)} <span className="mx-1.5 opacity-50">•</span> {readTime} min read</span>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <span className="text-sm text-muted-foreground font-medium">0 views</span>
+                      </div>
+                    </div>
+                  </header>
+
                   {imageUrl && (
                     <figure className="mt-6">
                       <div className="cms-preview-hero-frame rounded-xl overflow-hidden border border-border aspect-video">
@@ -401,8 +415,8 @@ export function ArticlePreviewModal({
                       )}
                     </figure>
                   )}
-                  <div className="article-body mt-8" dangerouslySetInnerHTML={{ __html: sanitizeArticleHtml(content) }} />
-                  <div className="mt-8 pt-6 border-t border-border text-sm text-muted-foreground flex flex-wrap gap-4">
+                  <div className="article-body mt-8" dangerouslySetInnerHTML={{ __html: cleanContent }} />
+                  <div className="mt-8 pt-6 text-sm text-muted-foreground flex flex-wrap gap-4">
                     <span>{formatNumber(0)} views</span>
                     <span>{readTime} min read</span>
                   </div>

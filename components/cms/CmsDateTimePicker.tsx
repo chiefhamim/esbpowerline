@@ -62,7 +62,7 @@ export function CmsDateTimePicker({
   value,
   onChange,
   className,
-  yearSpan = 30,
+  yearSpan = 16,
 }: {
   value: string;
   onChange: (value: string) => void;

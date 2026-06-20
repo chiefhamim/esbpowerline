@@ -11,6 +11,10 @@ export type HeroImageMeta = {
   fitMode?: HeroFitMode;
   /** 100–200 — fine-tune zoom after fit/fill */
   zoom?: number;
+  /** 0-100 — focal point X */
+  panX?: number;
+  /** 0-100 — focal point Y */
+  panY?: number;
 };
 
 const FILTER_STYLES: Record<HeroImageFilter, string> = {
@@ -28,13 +32,15 @@ export function heroImageStyle(
   const fitMode = meta?.fitMode ?? 'fill';
   const zoom = Math.min(200, Math.max(100, meta?.zoom ?? 100)) / 100;
   const animate = options?.animate !== false;
+  const panX = meta?.panX ?? 50;
+  const panY = meta?.panY ?? 50;
 
   return {
     filter: FILTER_STYLES[meta?.filter ?? 'none'],
     objectFit: fitMode === 'fit' ? 'contain' : 'cover',
-    objectPosition: 'center',
+    objectPosition: `${panX}% ${panY}%`,
     transform: zoom !== 1 ? `scale(${zoom})` : undefined,
-    transformOrigin: 'center center',
+    transformOrigin: `${panX}% ${panY}%`,
     transition: animate
       ? 'transform 140ms cubic-bezier(0.22, 1, 0.36, 1), object-fit 220ms ease, filter 180ms ease'
       : 'none',

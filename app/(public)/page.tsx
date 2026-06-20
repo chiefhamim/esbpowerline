@@ -98,6 +98,7 @@ export default async function Home() {
 
             <aside className="home-editorial__rail" aria-label="Sidebar">
               <HomeSnapshotPanel snapshotStats={settings.snapshot} snapshotLabel={snapshotLabel} />
+              <HomeTrendingSection trending={trending} layout="rail" />
             </aside>
           </div>
 

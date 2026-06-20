@@ -79,11 +79,18 @@ export function EditorialPlatformControl() {
   }, [refreshDismissed]);
 
   useEffect(() => {
-    if (open && session?.user) {
+    if (session?.user && loadState === 'idle') {
       refreshDismissed();
-      if (loadState === 'idle') loadSnapshot();
+      loadSnapshot();
     }
-  }, [open, session?.user, loadState, loadSnapshot, refreshDismissed]);
+  }, [session?.user, loadState, loadSnapshot, refreshDismissed]);
+
+  useEffect(() => {
+    if (open && session?.user && loadState !== 'idle') {
+      refreshDismissed();
+      loadSnapshot();
+    }
+  }, [open, session?.user, loadSnapshot, refreshDismissed]);
 
   const stats = snapshot ?? EMPTY;
 

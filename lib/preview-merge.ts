@@ -8,6 +8,7 @@ export type DraftPreviewInput = {
   title: string;
   excerpt: string;
   imageUrl: string;
+  heroMeta?: any;
   category: string;
   author: string;
   readTime: number;
@@ -28,6 +29,7 @@ function toCard(draft: DraftPreviewInput, id = 'preview-draft'): PublicArticleCa
     readTime: draft.readTime,
     views: 0,
     imageUrl: draft.imageUrl?.trim() || '',
+    heroMeta: draft.heroMeta,
     isFeatured: draft.isFeatured,
     isBreaking: draft.isBreaking,
     isPinned: draft.isPinned,

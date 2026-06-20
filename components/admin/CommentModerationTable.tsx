@@ -2,7 +2,7 @@
 
 import { useState, useTransition, useEffect } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { Check, Trash2, ShieldAlert, RotateCcw, XCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { updateCommentStatus, type ModerationComment } from '@/lib/actions/comments';
@@ -18,6 +18,7 @@ export function CommentModerationTable({
   emptyMessage: string;
 }) {
   const router = useRouter();
+  const pathname = usePathname();
   const [pending, startTransition] = useTransition();
   const [activeId, setActiveId] = useState<string | null>(null);
   const [clearedIds, setClearedIds] = useState<Set<string>>(new Set());
@@ -149,7 +150,7 @@ export function CommentModerationTable({
             <p className="mt-3 text-sm leading-relaxed text-foreground/90">{comment.content}</p>
             {comment.userId ? (
               <Link
-                href={`/admin/users/${comment.userId}`}
+                href={pathname.startsWith('/cms') ? `/cms/users/${comment.userId}` : `/admin/users/${comment.userId}`}
                 className="mt-2 inline-block text-[11px] font-medium text-muted-foreground hover:text-foreground"
               >
                 View member account →

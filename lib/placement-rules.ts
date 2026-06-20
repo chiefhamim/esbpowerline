@@ -7,12 +7,13 @@ export type PlacementFlags = {
   isFeatured: boolean;
   isBreaking: boolean;
   isPinned: boolean;
+  isTrending: boolean;
 };
 
 /** Pinned stories live in All Coverage; featured drives the carousel. Never both. */
 export function reconcilePlacementFlags(flags: PlacementFlags): PlacementFlags {
-  let { isFeatured, isBreaking, isPinned } = flags;
+  let { isFeatured, isBreaking, isPinned, isTrending } = flags;
   if (isPinned) isFeatured = false;
   if (isFeatured) isPinned = false;
-  return { isFeatured, isBreaking, isPinned };
+  return { isFeatured, isBreaking, isPinned, isTrending };
 }

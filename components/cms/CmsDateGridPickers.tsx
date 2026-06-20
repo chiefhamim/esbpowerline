@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { ChevronDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -263,7 +263,7 @@ export function CmsYearGridSelect({
   value,
   onChange,
   startYear,
-  count = 30,
+  count = 16,
   placeholder = 'Year',
 }: {
   value: string;
@@ -272,29 +272,91 @@ export function CmsYearGridSelect({
   count?: number;
   placeholder?: string;
 }) {
+  const { open, toggle, close } = useAdminDropdown();
+  const { rootRef, rect } = useDatetimeMenuPosition(open, '16rem', { menuMinHeight: 220 });
   const currentYear = new Date().getFullYear();
-  const options = useMemo(
-    () =>
-      Array.from({ length: count }, (_, i) => {
-        const year = startYear + i;
-        const label = String(year);
-        return { value: label, label, marked: year === currentYear };
-      }),
-    [count, currentYear, startYear],
-  );
+  const selectedYear = parseInt(value, 10);
+
+  const [viewStart, setViewStart] = useState(() => {
+    const target = !Number.isNaN(selectedYear) ? selectedYear : currentYear;
+    return target - 7;
+  });
+
+  useEffect(() => {
+    if (open) {
+      const target = !Number.isNaN(selectedYear) ? selectedYear : currentYear;
+      setViewStart(target - 7);
+    }
+  }, [open, selectedYear, currentYear]);
+
+  const handlePrev = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setViewStart(v => v - 16);
+  };
+  
+  const handleNext = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setViewStart(v => v + 16);
+  };
+  
+  const handleCurrent = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setViewStart(currentYear - 7);
+  };
+
+  const menu = open ? (
+    <>
+      <AdminDropdownBackdrop onClose={close} />
+      <AdminDropdownPanel
+        className={cn('admin-select-menu', DATETIME_MENU, `${DATETIME_MENU}--year`)}
+        align="left"
+        style={datetimeMenuStyle(rect)}
+      >
+        <div className="admin-select-menu-title">Year</div>
+        <div className="cms-datetime-custom-menu__body flex flex-col">
+          <div className="flex items-center gap-1 p-2 bg-muted/30 border-b border-border/50">
+            <button type="button" onClick={handlePrev} className="flex-1 rounded-md border border-border/50 bg-background py-1.5 text-xs font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-colors">-16 Yrs</button>
+            <button type="button" onClick={handleCurrent} className="flex-1 rounded-md border border-border/50 bg-background py-1.5 text-xs font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-colors">Current</button>
+            <button type="button" onClick={handleNext} className="flex-1 rounded-md border border-border/50 bg-background py-1.5 text-xs font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-colors">+16 Yrs</button>
+          </div>
+          <div className="grid grid-cols-4 gap-1 p-2">
+            {Array.from({ length: 16 }, (_, i) => {
+              const y = viewStart + i;
+              const isSelected = String(y) === value;
+              const isCurrent = y === currentYear;
+              return (
+                <button
+                  key={y}
+                  type="button"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    onChange(String(y));
+                    close();
+                  }}
+                  className={cn(
+                    'cms-datetime-grid-cell',
+                    isSelected && 'cms-datetime-grid-cell--active',
+                    !isSelected && isCurrent && 'cms-datetime-grid-cell--today'
+                  )}
+                >
+                  {y}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      </AdminDropdownPanel>
+    </>
+  ) : null;
 
   return (
-    <DatetimeSelectShell
-      value={value}
-      onChange={onChange}
-      placeholder={placeholder}
-      menuTitle="Year"
-      menuClassName={`${DATETIME_MENU}--year`}
-      menuWidth="13.75rem"
-      gridColumns={5}
-      options={options}
-      menuMinHeight={200}
-    />
+    <div ref={rootRef} className="cms-form-select relative w-full shrink-0">
+      <DateGridTrigger label={value} placeholder={placeholder} open={open} onClick={toggle} />
+      {typeof document !== 'undefined' ? createPortal(menu, document.body) : null}
+    </div>
   );
 }
 

@@ -1,6 +1,6 @@
 'use client';
 
-import { Flame, Pin, Star, type LucideIcon } from 'lucide-react';
+import { Flame, Pin, Star, TrendingUp, type LucideIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { PLACEMENT_FLAGS, type PlacementFlagId } from '@/lib/article-placement';
 
@@ -8,6 +8,7 @@ const PLACEMENT_ICONS: Record<PlacementFlagId, LucideIcon> = {
   featured: Star,
   breaking: Flame,
   pin: Pin,
+  trending: TrendingUp,
 };
 
 export function CmsPlacementIcon({ type }: { type: PlacementFlagId }) {

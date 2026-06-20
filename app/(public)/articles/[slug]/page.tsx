@@ -1,7 +1,7 @@
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
-import { formatDate, formatNumber } from '@/lib/utils';
+import { formatDate, formatExactDate, formatNumber, slugify } from '@/lib/utils';
 import { heroImageStyle } from '@/lib/hero-image';
 import { ArticleCard } from '@/components/news/ArticleCard';
 import {
@@ -76,27 +76,42 @@ export default async function ArticlePage({ params }: { params: Promise<{ slug: 
       <ArticleViewTracker articleId={article.id} />
       <Link href="/articles" className="text-sm text-primary hover:underline">← Back to news</Link>
 
-      <div className="mt-4">
-        <span className="category-pill">{article.category}</span>
-        <h1 className="text-4xl font-semibold tracking-tight mt-3">{article.title}</h1>
-        <div className="flex items-center gap-4 text-sm text-muted-foreground mt-3">
-          <span>{article.author}</span>
-          <span>{formatDate(article.date)}</span>
-          <span>{article.readTime} min read</span>
-          <span>{formatNumber(article.views)} views</span>
+      <header className="article-header mb-8 mt-6">
+        <div className="flex items-center gap-2 mb-5">
+          <span className="text-sm font-bold uppercase tracking-widest text-primary">{article.category}</span>
         </div>
-      </div>
-
-      <div className="mt-5">
-        <SaveArticleButton
-          articleId={article.id}
-          articleSlug={slug}
-          initialSaved={saved}
-          signedIn={signedIn}
-        />
-      </div>
-
-      <ArticleAuthorSticky name={article.author} />
+        <h1 className="text-4xl md:text-5xl lg:text-[3.5rem] font-display font-extrabold tracking-tight leading-[1.05] text-foreground mb-6 line-clamp-2">
+          {article.title}
+        </h1>
+        {article.excerpt && (
+          <p className="text-xl md:text-2xl text-muted-foreground leading-snug font-light mb-8 line-clamp-3">
+            {article.excerpt.replace(/\[&hellip;\]/g, '...').replace(/&hellip;/g, '...')}
+          </p>
+        )}
+        
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-2 pb-5">
+          <div className="flex items-center gap-4">
+            <Link href={`/authors/${slugify(article.author)}`} className="w-12 h-12 rounded-full bg-muted flex items-center justify-center font-bold text-muted-foreground text-lg uppercase shadow-sm hover:ring-2 hover:ring-primary transition-all shrink-0">
+              {article.author.substring(0, 2)}
+            </Link>
+            <div className="flex flex-col">
+              <Link href={`/authors/${slugify(article.author)}`} className="text-base font-semibold text-foreground hover:text-primary transition-colors">
+                {article.author}
+              </Link>
+              <span className="text-sm text-muted-foreground">{formatExactDate(article.date)} <span className="mx-1.5 opacity-50">•</span> {article.readTime} min read</span>
+            </div>
+          </div>
+          <div className="flex items-center gap-3">
+            <span className="text-sm text-muted-foreground mr-2 font-medium">{formatNumber(article.views)} views</span>
+            <SaveArticleButton
+              articleId={article.id}
+              articleSlug={slug}
+              initialSaved={saved}
+              signedIn={signedIn}
+            />
+          </div>
+        </div>
+      </header>
 
       <figure className="mt-6">
         <div className="rounded-xl w-full aspect-video border border-border overflow-hidden bg-muted/40 flex items-center justify-center relative">
@@ -126,7 +141,7 @@ export default async function ArticlePage({ params }: { params: Promise<{ slug: 
         ))}
       </div>
 
-      <div className="mt-10 border-t border-border pt-8">
+      <div className="mt-10">
         <ArticleCommentSection
           articleId={article.id}
           articleSlug={slug}
@@ -141,7 +156,7 @@ export default async function ArticlePage({ params }: { params: Promise<{ slug: 
         />
       </div>
 
-      <div className="mt-10 border-t border-border pt-8">
+      <div className="mt-10">
         <h3 className="font-semibold mb-4">Related stories</h3>
         <div className="grid sm:grid-cols-2 gap-4">
           {related.map((r) => (

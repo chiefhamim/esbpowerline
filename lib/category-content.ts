@@ -35,7 +35,9 @@ function mapArticle(a: {
   isFeatured?: boolean;
   isBreaking?: boolean;
   isPinned?: boolean;
+  isTrending?: boolean;
   author?: { name: string } | null;
+  seo?: any;
 }): PublicArticleCard {
   return {
     id: a.id,
@@ -48,9 +50,11 @@ function mapArticle(a: {
     readTime: a.readTime,
     views: a.views,
     imageUrl: normalizeArticleImageUrl(a.imageUrl) ?? '',
+    heroMeta: a.seo?.heroImage,
     isFeatured: a.isFeatured,
     isBreaking: a.isBreaking,
     isPinned: a.isPinned,
+    isTrending: a.isTrending,
   };
 }
 
@@ -166,7 +170,7 @@ export const getTrendingPublishedArticles = cache(async (limit = 5): Promise<Pub
   const articles = await prisma.article.findMany({
     where: { status: 'PUBLISHED' },
     include: { author: { select: { name: true } } },
-    orderBy: { views: 'desc' },
+    orderBy: [{ isTrending: 'desc' }, { views: 'desc' }],
     take: limit,
   });
   return articles.map(mapArticle);

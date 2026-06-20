@@ -34,7 +34,7 @@ function resolveArticleSlug(title: string, slug?: string, fallback?: string) {
 function enforceArticlePermissions(
   user: ArticleUser,
   parsed: ArticleInput,
-  existing?: { status: string; isFeatured: boolean; isBreaking: boolean; isPinned: boolean },
+  existing?: { status: string; isFeatured: boolean; isBreaking: boolean; isPinned: boolean; isTrending?: boolean },
 ): ArticleInput {
   if (
     !can(user.role, 'article.publish')
@@ -61,6 +61,7 @@ function enforceArticlePermissions(
   if (!can(user.role, 'article.feature')) {
     result.isFeatured = existing?.isFeatured ?? false;
     result.isPinned = existing?.isPinned ?? false;
+    result.isTrending = existing?.isTrending ?? false;
   }
   if (!can(user.role, 'article.breaking')) {
     result.isBreaking = existing?.isBreaking ?? false;
@@ -477,6 +478,7 @@ export async function createArticle(data: ArticleInput) {
     isFeatured: parsed.isFeatured ?? false,
     isBreaking: parsed.isBreaking ?? false,
     isPinned: parsed.isPinned ?? false,
+      isTrending: parsed.isTrending ?? false,
   });
   const slug = resolveArticleSlug(parsed.title, parsed.slug);
 
@@ -502,6 +504,7 @@ export async function createArticle(data: ArticleInput) {
       isFeatured: placement.isFeatured,
       isBreaking: placement.isBreaking,
       isPinned: placement.isPinned,
+        isTrending: placement.isTrending,
       authorId: user.id,
       publishedAt: resolvePublishedAt(parsed.status, parsed.publishedAt),
       seo: parsed.seo ?? {},
@@ -548,6 +551,7 @@ export async function updateArticle(id: string, data: ArticleInput) {
     isFeatured: parsed.isFeatured ?? false,
     isBreaking: parsed.isBreaking ?? false,
     isPinned: parsed.isPinned ?? false,
+      isTrending: parsed.isTrending ?? false,
   });
 
   if (placement.isPinned) {
@@ -570,6 +574,7 @@ export async function updateArticle(id: string, data: ArticleInput) {
       isFeatured: placement.isFeatured,
       isBreaking: placement.isBreaking,
       isPinned: placement.isPinned,
+        isTrending: placement.isTrending,
       publishedAt: resolvePublishedAt(parsed.status, parsed.publishedAt, existing.publishedAt),
       seo: parsed.seo ?? {},
       version: { increment: 1 },

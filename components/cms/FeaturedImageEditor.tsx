@@ -38,7 +38,8 @@ export function FeaturedImageEditor({
   const [open, setOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [uploading, setUploading] = useState(false);
-  const [showAdjust, setShowAdjust] = useState(false);
+  const [uploadState, setUploadState] = useState<'idle' | 'checking' | 'compressing' | 'uploading' | 'done'>('idle');
+  const [isRepositionMode, setIsRepositionMode] = useState(false);
   const images = items.filter((m) => m.type === 'image');
 
   useBodyScrollLock(open);
@@ -54,20 +55,74 @@ export function FeaturedImageEditor({
     input.onchange = async () => {
       const file = input.files?.[0];
       if (!file) return;
+
       setUploading(true);
-      const form = new FormData();
-      form.append('file', file);
+      setUploadState('checking');
+
       try {
+        // 1. Simulate checking size/formatting/resolution step
+        await new Promise((r) => setTimeout(r, 600));
+
+        // 2. Compress to WebP
+        setUploadState('compressing');
+        const compressedBlob = await new Promise<Blob>((resolve, reject) => {
+          const img = new Image();
+          img.onload = () => {
+            let { width, height } = img;
+            const maxDim = 1920; // Maintain standard quality but prevent extreme sizes
+            if (width > maxDim || height > maxDim) {
+              if (width > height) {
+                height = Math.round((height * maxDim) / width);
+                width = maxDim;
+              } else {
+                width = Math.round((width * maxDim) / height);
+                height = maxDim;
+              }
+            }
+
+            const canvas = document.createElement('canvas');
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext('2d');
+            if (!ctx) return reject(new Error('Failed to get canvas context'));
+            
+            ctx.drawImage(img, 0, 0, width, height);
+            
+            // Compress to WebP with 0.8 quality
+            canvas.toBlob((blob) => {
+              if (blob) resolve(blob);
+              else reject(new Error('Blob conversion failed'));
+            }, 'image/webp', 0.8);
+          };
+          img.onerror = () => reject(new Error('Invalid image file'));
+          img.src = URL.createObjectURL(file);
+        });
+
+        const webpFile = new File([compressedBlob], file.name.replace(/\.[^/.]+$/, '') + '.webp', {
+          type: 'image/webp',
+        });
+
+        // 3. Upload the optimized file
+        setUploadState('uploading');
+        const form = new FormData();
+        form.append('file', webpFile);
+        
         const res = await fetch('/api/upload', { method: 'POST', body: form });
         if (!res.ok) throw new Error('Upload failed');
         const data = await res.json();
+        
+        // 4. Done
+        setUploadState('done');
         onChange(data.url ?? data.path ?? '');
-        cmsToast.success('Featured image uploaded', 'Adjust crop and filters before publishing.');
-        setShowAdjust(true);
-      } catch {
-        cmsToast.error('Upload failed', 'Check the file type and size, then try again.');
+        cmsToast.success('Featured image optimized & uploaded', 'Saved as WebP format.');
+      } catch (err) {
+        console.error(err);
+        cmsToast.error('Upload failed', 'There was an issue processing the image.');
       } finally {
-        setUploading(false);
+        setTimeout(() => {
+          setUploading(false);
+          setUploadState('idle');
+        }, 1500); // Give user time to see the "Done" state
       }
     };
     input.click();
@@ -82,11 +137,23 @@ export function FeaturedImageEditor({
   const [zoomDraft, setZoomDraft] = useState(zoom);
   const [zoomDragging, setZoomDragging] = useState(false);
 
+  const panX = meta.panX ?? 50;
+  const panY = meta.panY ?? 50;
+  const [panDraft, setPanDraft] = useState({ x: panX, y: panY });
+  const [isPanning, setIsPanning] = useState(false);
+
   useEffect(() => {
     if (!zoomDragging) setZoomDraft(zoom);
   }, [zoom, zoomDragging]);
 
-  const previewStyle = heroImageStyle({ ...meta, zoom: zoomDraft }, { animate: !zoomDragging });
+  useEffect(() => {
+    if (!isPanning) setPanDraft({ x: panX, y: panY });
+  }, [panX, panY, isPanning]);
+
+  const previewStyle = heroImageStyle(
+    { ...meta, zoom: zoomDraft, panX: panDraft.x, panY: panDraft.y },
+    { animate: !zoomDragging && !isPanning }
+  );
 
   const modal = open && mounted ? (
     <div
@@ -108,13 +175,42 @@ export function FeaturedImageEditor({
           <div className="flex items-center gap-2">
             <Button type="button" size="sm" variant="outline" onClick={handleUpload} disabled={uploading}>
               <Upload className="h-3.5 w-3.5 mr-1.5" />
-              {uploading ? 'Uploading…' : 'Upload'}
+              {uploading ? 'Processing…' : 'Upload'}
             </Button>
             <button type="button" onClick={() => setOpen(false)} className="ui-close-btn" aria-label="Close">
               <X className="h-4 w-4" />
             </button>
           </div>
         </div>
+        {uploading && uploadState !== 'idle' && (
+          <div className="px-5 py-3 border-b border-border/50 bg-sky-500/5">
+            <div className="flex items-center justify-between mb-1.5">
+              <span className="text-[12px] font-medium text-sky-600 dark:text-sky-400">
+                {uploadState === 'checking' && 'Checking size & resolution...'}
+                {uploadState === 'compressing' && 'Optimizing to WebP format...'}
+                {uploadState === 'uploading' && 'Uploading optimized image...'}
+                {uploadState === 'done' && 'Optimization complete!'}
+              </span>
+              <span className="text-[11px] font-medium text-muted-foreground">
+                {uploadState === 'checking' && '10%'}
+                {uploadState === 'compressing' && '45%'}
+                {uploadState === 'uploading' && '85%'}
+                {uploadState === 'done' && '100%'}
+              </span>
+            </div>
+            <div className="h-1.5 w-full bg-border/50 rounded-full overflow-hidden">
+              <div 
+                className={cn(
+                  "h-full transition-all duration-500 ease-out rounded-full",
+                  uploadState === 'checking' && "w-[10%] bg-sky-500",
+                  uploadState === 'compressing' && "w-[45%] bg-sky-500",
+                  uploadState === 'uploading' && "w-[85%] bg-sky-500",
+                  uploadState === 'done' && "w-[100%] bg-emerald-500"
+                )}
+              />
+            </div>
+          </div>
+        )}
         <div className="flex-1 overflow-auto p-5">
           {images.length === 0 ? (
             <p className="text-center text-muted-foreground text-[13px] py-12">No images yet. Upload one to get started.</p>
@@ -126,7 +222,7 @@ export function FeaturedImageEditor({
                   <button
                     key={m.id}
                     type="button"
-                    onClick={() => { onChange(m.url); setOpen(false); setShowAdjust(true); }}
+                    onClick={() => { onChange(m.url); setOpen(false); }}
                     className={cn(
                       'relative rounded-lg overflow-hidden border-2 transition-all aspect-square',
                       selected ? 'border-sky-500 ring-2 ring-sky-500/30' : 'border-transparent hover:border-border',
@@ -154,125 +250,172 @@ export function FeaturedImageEditor({
               alt={meta.alt ?? ''}
               className={cn(
                 'featured-image-editor__img featured-image-editor__img--smooth',
-                zoomDragging && 'featured-image-editor__img--dragging',
+                (zoomDragging || isPanning) && 'featured-image-editor__img--dragging'
               )}
               style={previewStyle}
             />
             <div
-              className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2"
-              onMouseDown={(e) => e.preventDefault()}
+              className={cn(
+                "absolute inset-0 z-10",
+                isRepositionMode ? "bg-transparent cursor-move" : "bg-black/50 opacity-0 group-hover:opacity-100 flex flex-wrap items-center justify-center gap-2 transition-opacity p-2",
+                isPanning && "cursor-grabbing"
+              )}
+              onPointerDown={(e) => {
+                if (!isRepositionMode) return;
+                e.preventDefault();
+                setIsPanning(true);
+                e.currentTarget.setPointerCapture(e.pointerId);
+              }}
+              onPointerMove={(e) => {
+                if (!isPanning) return;
+                const rect = e.currentTarget.getBoundingClientRect();
+                const dx = (e.movementX / rect.width) * 100;
+                const dy = (e.movementY / rect.height) * 100;
+                setPanDraft((prev) => ({
+                  x: Math.min(100, Math.max(0, prev.x - dx)),
+                  y: Math.min(100, Math.max(0, prev.y - dy)),
+                }));
+              }}
+              onPointerUp={(e) => {
+                if (!isPanning) return;
+                setIsPanning(false);
+                e.currentTarget.releasePointerCapture(e.pointerId);
+                updateMeta({ panX: panDraft.x, panY: panDraft.y });
+              }}
+              onPointerCancel={(e) => {
+                if (!isPanning) return;
+                setIsPanning(false);
+                e.currentTarget.releasePointerCapture(e.pointerId);
+                updateMeta({ panX: panDraft.x, panY: panDraft.y });
+              }}
+              onContextMenu={(e) => isRepositionMode && e.preventDefault()}
             >
-              <Button type="button" size="sm" variant="secondary" onMouseDown={(e) => e.preventDefault()} onClick={() => setOpen(true)}>Change</Button>
-              <Button type="button" size="sm" variant="secondary" onMouseDown={(e) => e.preventDefault()} onClick={() => setShowAdjust((v) => !v)}>
-                <SlidersHorizontal className="h-3.5 w-3.5 mr-1" /> Adjust
-              </Button>
-              <Button type="button" size="sm" variant="ghost" className="text-white" onMouseDown={(e) => e.preventDefault()} onClick={() => { onChange(''); onMetaChange({}); }}>
-                <X className="h-3.5 w-3.5" />
-              </Button>
+              {isRepositionMode ? (
+                <div className="absolute bottom-3 left-1/2 -translate-x-1/2">
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="secondary"
+                    className="shadow-xl px-4 font-medium"
+                    onPointerDown={(e) => e.stopPropagation()}
+                    onClick={() => setIsRepositionMode(false)}
+                  >
+                    Done
+                  </Button>
+                </div>
+              ) : (
+                <>
+                  <Button type="button" size="sm" variant="secondary" onMouseDown={(e) => e.preventDefault()} onClick={() => setOpen(true)}>Change</Button>
+                  <Button type="button" size="sm" variant="secondary" onMouseDown={(e) => e.preventDefault()} onClick={() => setIsRepositionMode(true)}>
+                    <SlidersHorizontal className="h-3.5 w-3.5 mr-1" /> Reposition
+                  </Button>
+                  <Button type="button" size="sm" variant="ghost" className="text-red-500 hover:text-red-600 hover:bg-red-500/20" onMouseDown={(e) => e.preventDefault()} onClick={() => { onChange(''); onMetaChange({}); }}>
+                    <X className="h-3.5 w-3.5" />
+                  </Button>
+                </>
+              )}
             </div>
           </div>
 
-          {(showAdjust || meta.caption || meta.alt || meta.filter || meta.fitMode || (meta.zoom && meta.zoom !== 100)) && (
-            <div className="featured-image-editor__adjust mt-2 space-y-3 rounded-xl border border-border/50 bg-muted/10 p-3">
-              <div>
-                <label className="cms-field__label text-[11px]">Frame fit</label>
-                <div className="featured-image-editor__fit-pills mt-1">
+          <div className="featured-image-editor__adjust mt-2 space-y-3 rounded-xl border border-border/50 bg-muted/10 p-3">
+            <div>
+              <label className="cms-field__label text-[11px]">Frame fit</label>
+              <div className="featured-image-editor__fit-pills mt-1">
+                <button
+                  type="button"
+                  onClick={() => updateMeta({ fitMode: 'fit', zoom: 100 })}
+                  className={cn(
+                    'featured-image-editor__fit-pill',
+                    fitMode === 'fit' && 'featured-image-editor__fit-pill--active',
+                  )}
+                >
+                  Auto fit
+                </button>
+                <button
+                  type="button"
+                  onClick={() => updateMeta({ fitMode: 'fill', zoom: 100 })}
+                  className={cn(
+                    'featured-image-editor__fit-pill',
+                    fitMode === 'fill' && 'featured-image-editor__fit-pill--active',
+                  )}
+                >
+                  Auto fill
+                </button>
+              </div>
+              <p className="featured-image-editor__fit-hint text-[10px] text-muted-foreground mt-1.5">
+                {fitMode === 'fit'
+                  ? 'Shows the full image inside the frame — letterboxing if needed.'
+                  : 'Zooms to cover the frame — edges may crop.'}
+              </p>
+            </div>
+
+            <div>
+              <div className="flex items-center justify-between gap-2">
+                <label className="cms-field__label text-[11px]">Zoom</label>
+                <span className="text-[10px] tabular-nums text-muted-foreground">{zoomDraft}%</span>
+              </div>
+              <input
+                type="range"
+                min={100}
+                max={200}
+                step={1}
+                value={zoomDraft}
+                onPointerDown={() => setZoomDragging(true)}
+                onChange={(e) => setZoomDraft(Number(e.target.value))}
+                onPointerUp={(e) => {
+                  const value = Number(e.currentTarget.value);
+                  setZoomDragging(false);
+                  updateMeta({ zoom: value });
+                }}
+                onPointerCancel={(e) => {
+                  const value = Number(e.currentTarget.value);
+                  setZoomDragging(false);
+                  updateMeta({ zoom: value });
+                }}
+                className="featured-image-editor__zoom featured-image-editor__zoom--smooth mt-1 w-full"
+              />
+            </div>
+
+            <div>
+              <label className="cms-field__label text-[11px]">Filter</label>
+              <div className="flex flex-wrap gap-1.5 mt-1">
+                {(['none', 'warm', 'cool', 'mono', 'contrast'] as HeroImageFilter[]).map((f) => (
                   <button
+                    key={f}
                     type="button"
-                    onClick={() => updateMeta({ fitMode: 'fit', zoom: 100 })}
+                    onClick={() => updateMeta({ filter: f })}
                     className={cn(
-                      'featured-image-editor__fit-pill',
-                      fitMode === 'fit' && 'featured-image-editor__fit-pill--active',
+                      'rounded-full border px-2.5 py-1 text-[10px] font-semibold capitalize transition-colors',
+                      (meta.filter ?? 'none') === f
+                        ? 'border-sky-500/50 bg-sky-500/15 text-sky-600'
+                        : 'border-border/60 text-muted-foreground hover:border-border',
                     )}
                   >
-                    Auto fit
+                    {f}
                   </button>
-                  <button
-                    type="button"
-                    onClick={() => updateMeta({ fitMode: 'fill', zoom: 100 })}
-                    className={cn(
-                      'featured-image-editor__fit-pill',
-                      fitMode === 'fill' && 'featured-image-editor__fit-pill--active',
-                    )}
-                  >
-                    Auto fill
-                  </button>
-                </div>
-                <p className="featured-image-editor__fit-hint text-[10px] text-muted-foreground mt-1.5">
-                  {fitMode === 'fit'
-                    ? 'Shows the full image inside the frame — letterboxing if needed.'
-                    : 'Zooms to cover the frame — edges may crop.'}
-                </p>
-              </div>
-
-              <div>
-                <div className="flex items-center justify-between gap-2">
-                  <label className="cms-field__label text-[11px]">Zoom</label>
-                  <span className="text-[10px] tabular-nums text-muted-foreground">{zoomDraft}%</span>
-                </div>
-                <input
-                  type="range"
-                  min={100}
-                  max={200}
-                  step={1}
-                  value={zoomDraft}
-                  onPointerDown={() => setZoomDragging(true)}
-                  onChange={(e) => setZoomDraft(Number(e.target.value))}
-                  onPointerUp={(e) => {
-                    const value = Number(e.currentTarget.value);
-                    setZoomDragging(false);
-                    updateMeta({ zoom: value });
-                  }}
-                  onPointerCancel={(e) => {
-                    const value = Number(e.currentTarget.value);
-                    setZoomDragging(false);
-                    updateMeta({ zoom: value });
-                  }}
-                  className="featured-image-editor__zoom featured-image-editor__zoom--smooth mt-1 w-full"
-                />
-              </div>
-
-              <div>
-                <label className="cms-field__label text-[11px]">Filter</label>
-                <div className="flex flex-wrap gap-1.5 mt-1">
-                  {(['none', 'warm', 'cool', 'mono', 'contrast'] as HeroImageFilter[]).map((f) => (
-                    <button
-                      key={f}
-                      type="button"
-                      onClick={() => updateMeta({ filter: f })}
-                      className={cn(
-                        'rounded-full border px-2.5 py-1 text-[10px] font-semibold capitalize transition-colors',
-                        (meta.filter ?? 'none') === f
-                          ? 'border-sky-500/50 bg-sky-500/15 text-sky-600'
-                          : 'border-border/60 text-muted-foreground hover:border-border',
-                      )}
-                    >
-                      {f}
-                    </button>
-                  ))}
-                </div>
-              </div>
-              <div>
-                <label className="cms-field__label text-[11px]">Alt text</label>
-                <Input
-                  value={meta.alt ?? ''}
-                  onChange={(e) => updateMeta({ alt: e.target.value })}
-                  className="cms-field__input mt-1"
-                  placeholder="Describe the image for accessibility"
-                />
-              </div>
-              <div>
-                <label className="cms-field__label text-[11px]">Caption</label>
-                <Textarea
-                  value={meta.caption ?? ''}
-                  onChange={(e) => updateMeta({ caption: e.target.value })}
-                  className="cms-field__input mt-1 resize-y min-h-[3rem]"
-                  rows={2}
-                  placeholder="Optional caption on the article page"
-                />
+                ))}
               </div>
             </div>
-          )}
+            <div>
+              <label className="cms-field__label text-[11px]">Alt text</label>
+              <Input
+                value={meta.alt ?? ''}
+                onChange={(e) => updateMeta({ alt: e.target.value })}
+                className="cms-field__input mt-1"
+                placeholder="Describe the image for accessibility"
+              />
+            </div>
+            <div>
+              <label className="cms-field__label text-[11px]">Caption</label>
+              <Textarea
+                value={meta.caption ?? ''}
+                onChange={(e) => updateMeta({ caption: e.target.value })}
+                className="cms-field__input mt-1 resize-y min-h-[3rem]"
+                rows={2}
+                placeholder="Optional caption on the article page"
+              />
+            </div>
+          </div>
         </div>
       ) : (
         <button

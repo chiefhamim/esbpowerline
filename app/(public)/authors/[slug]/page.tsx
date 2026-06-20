@@ -1,0 +1,127 @@
+import { notFound } from 'next/navigation';
+import Link from 'next/link';
+import { User, Twitter, Linkedin, Mail } from 'lucide-react';
+import prisma from '@/lib/prisma';
+import { slugify } from '@/lib/utils';
+import { ArticleCard } from '@/components/news/ArticleCard';
+import { getPublishedArticlesForPublic } from '@/lib/category-content';
+
+export const revalidate = 60;
+
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params;
+  const users = await prisma.user.findMany({ select: { name: true, bio: true } });
+  const user = users.find(u => slugify(u.name) === slug);
+  
+  if (!user) return { title: 'Author not found | ESB PowerLine' };
+
+  return {
+    title: `${user.name} | ESB PowerLine`,
+    description: user.bio ?? `Articles written by ${user.name}`,
+  };
+}
+
+export default async function AuthorPage({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params;
+  
+  // Find author by matching slugified name
+  const users = await prisma.user.findMany({ 
+    select: { id: true, name: true, bio: true, avatar: true, email: true } 
+  });
+  const author = users.find(u => slugify(u.name) === slug);
+  
+  if (!author) notFound();
+
+  // Get articles published by this author
+  const articles = await prisma.article.findMany({
+    where: { 
+      status: 'PUBLISHED',
+      authorId: author.id
+    },
+    include: { author: { select: { name: true } } },
+    orderBy: { publishedAt: 'desc' }
+  });
+
+  // Map to PublicArticleCard format
+  const mappedArticles = articles.map(a => ({
+    id: a.id,
+    slug: a.slug,
+    title: a.title,
+    excerpt: a.excerpt ?? '',
+    category: a.category,
+    author: a.author?.name ?? 'ESB PowerLine',
+    date: (a.publishedAt ?? a.createdAt).toISOString(),
+    readTime: a.readTime,
+    views: a.views,
+    imageUrl: a.imageUrl ?? '',
+    heroMeta: (a.seo as any)?.heroImage,
+    isFeatured: a.isFeatured,
+    isBreaking: a.isBreaking,
+    isPinned: a.isPinned,
+  }));
+
+  return (
+    <div className="container py-12 max-w-5xl">
+      <div className="flex flex-col md:flex-row gap-8 items-start mb-16 bg-muted/30 p-8 rounded-3xl border border-border/50">
+        <div className="w-24 h-24 md:w-32 md:h-32 rounded-full bg-primary/10 flex items-center justify-center text-primary font-display font-bold text-3xl md:text-5xl shrink-0 overflow-hidden border border-primary/20">
+          {author.avatar ? (
+            <img src={author.avatar} alt={author.name} className="w-full h-full object-cover" />
+          ) : (
+            author.name.substring(0, 2).toUpperCase()
+          )}
+        </div>
+        <div className="flex-1">
+          <h1 className="text-3xl md:text-5xl font-display font-bold tracking-tight mb-4">{author.name}</h1>
+          <p className="text-lg md:text-xl text-muted-foreground leading-relaxed mb-6 max-w-3xl">
+            {author.bio || `Staff writer at ESB PowerLine.`}
+          </p>
+          <div className="flex items-center gap-3">
+            <a href={`mailto:${author.email}`} className="w-10 h-10 rounded-full bg-background border flex items-center justify-center text-muted-foreground hover:text-primary hover:border-primary transition-colors">
+              <Mail className="w-4 h-4" />
+            </a>
+            <button className="w-10 h-10 rounded-full bg-background border flex items-center justify-center text-muted-foreground hover:text-primary hover:border-primary transition-colors">
+              <Twitter className="w-4 h-4" />
+            </button>
+            <button className="w-10 h-10 rounded-full bg-background border flex items-center justify-center text-muted-foreground hover:text-primary hover:border-primary transition-colors">
+              <Linkedin className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <div className="flex items-center justify-between mb-8 pb-4 border-b">
+          <h2 className="text-2xl font-bold tracking-tight">Latest from {author.name.split(' ')[0]}</h2>
+          <span className="text-sm font-medium text-muted-foreground bg-muted px-3 py-1 rounded-full">{mappedArticles.length} articles</span>
+        </div>
+        
+        {mappedArticles.length > 0 ? (
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {mappedArticles.map((a) => (
+              <ArticleCard
+                key={a.id}
+                id={a.slug}
+                title={a.title}
+                excerpt={a.excerpt}
+                category={a.category}
+                imageUrl={a.imageUrl}
+                author={a.author}
+                date={a.date}
+                readTime={a.readTime}
+                views={a.views}
+                heroMeta={a.heroMeta}
+                isFeatured={a.isFeatured}
+              />
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-20 bg-muted/20 rounded-2xl border border-dashed">
+            <User className="w-12 h-12 text-muted-foreground/30 mx-auto mb-4" />
+            <h3 className="text-xl font-semibold mb-2">No articles yet</h3>
+            <p className="text-muted-foreground">This author hasn't published any articles yet.</p>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}

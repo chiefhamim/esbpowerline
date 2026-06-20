@@ -116,7 +116,8 @@ export function FeaturedCarousel({
         return (
           <button
             key={idx}
-            onClick={() => goTo(idx)}
+            type="button"
+            onClick={(e) => { e.preventDefault(); goTo(idx); }}
             role="tab"
             className="featured-hero__progress-tab flex flex-1 items-center py-0"
             aria-label={`Story ${idx + 1}: ${item.title}`}
@@ -163,12 +164,12 @@ export function FeaturedCarousel({
                 </div>
 
                 <div className="featured-hero__title-slot">
-                  <h1 className="featured-hero__title">{currentItem.title}</h1>
+                  <h1 className="featured-hero__title line-clamp-2">{currentItem.title}</h1>
                 </div>
 
                 <div className="featured-hero__excerpt-slot">
-                  <p className="featured-hero__excerpt text-lg leading-relaxed text-muted-foreground md:text-xl">
-                    {currentItem.excerpt || '\u00A0'}
+                  <p className="featured-hero__excerpt text-lg leading-relaxed text-muted-foreground md:text-xl line-clamp-3">
+                    {currentItem.excerpt ? currentItem.excerpt.replace(/\[&hellip;\]/g, '...').replace(/&hellip;/g, '...') : '\u00A0'}
                   </p>
                 </div>
 
@@ -189,7 +190,8 @@ export function FeaturedCarousel({
                   <div className="featured-hero__transport flex shrink-0 items-center">
                     <div className="featured-hero__transport-controls group/transport flex min-w-0 items-center gap-1 opacity-45 transition-opacity duration-150 hover:opacity-100 focus-within:opacity-100">
                       <button
-                        onClick={prev}
+                        type="button"
+                        onClick={(e) => { e.preventDefault(); prev(); }}
                         className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground"
                         aria-label={t('carousel.previous')}
                       >
@@ -199,7 +201,8 @@ export function FeaturedCarousel({
                         {storyProgress}
                       </div>
                       <button
-                        onClick={next}
+                        type="button"
+                        onClick={(e) => { e.preventDefault(); next(); }}
                         className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground"
                         aria-label={t('carousel.next')}
                       >
@@ -216,7 +219,8 @@ export function FeaturedCarousel({
                       fast
                     >
                       <button
-                        onClick={() => setIsPlaying(!isPlaying)}
+                        type="button"
+                        onClick={(e) => { e.preventDefault(); setIsPlaying(!isPlaying); }}
                         className="featured-hero__play-btn flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-muted-foreground opacity-45 transition-all duration-150 hover:bg-muted/50 hover:text-foreground hover:opacity-100 focus-visible:opacity-100"
                         aria-label={isPlaying ? t('carousel.pause') : t('carousel.play')}
                       >

@@ -4,6 +4,7 @@ import { formatDistanceToNow } from 'date-fns';
 import { ArrowRight } from 'lucide-react';
 import type { PublicArticleCard } from '@/lib/category-types';
 import type { CoverageLayoutId } from '@/lib/coverage-types';
+import { heroImageStyle } from '@/lib/hero-image';
 import { ArticleCard } from './ArticleCard';
 
 type ArticleProps = {
@@ -40,6 +41,7 @@ function HeroLayout({ article }: { article: PublicArticleCard }) {
           width={640}
           height={360}
           className="coverage-card__hero-image"
+          style={heroImageStyle(article.heroMeta)}
           priority
         />
         <span className="absolute top-4 left-4">
@@ -62,13 +64,15 @@ function HeroLayout({ article }: { article: PublicArticleCard }) {
 function HorizontalLayout({ article }: { article: PublicArticleCard }) {
   return (
     <Link href={`/articles/${article.slug}`} className="coverage-card coverage-card--horizontal group flex h-full gap-4 p-4">
-      <Image
-        src={article.imageUrl ?? ''}
-        alt={article.title}
-        width={120}
-        height={88}
-        className="coverage-card__thumb rounded-xl object-cover"
-      />
+      <div className="relative shrink-0 overflow-hidden rounded-xl" style={{ width: 120, height: 88 }}>
+        <Image
+          src={article.imageUrl ?? ''}
+          alt={article.title}
+          fill
+          className="coverage-card__thumb object-cover"
+          style={heroImageStyle(article.heroMeta)}
+        />
+      </div>
       <div className="min-w-0 flex flex-1 flex-col justify-center">
         <CategoryPill category={article.category} />
         <h3 className="mt-2 font-semibold leading-snug line-clamp-3 group-hover:text-primary transition-colors">{article.title}</h3>
@@ -82,13 +86,15 @@ function HorizontalLayout({ article }: { article: PublicArticleCard }) {
 function CompactLayout({ article }: { article: PublicArticleCard }) {
   return (
     <Link href={`/articles/${article.slug}`} className="coverage-card coverage-card--compact group block h-full p-4">
-      <Image
-        src={article.imageUrl ?? ''}
-        alt={article.title}
-        width={320}
-        height={200}
-        className="coverage-card__compact-image rounded-xl object-cover"
-      />
+      <div className="relative overflow-hidden rounded-xl" style={{ width: '100%', height: 200 }}>
+        <Image
+          src={article.imageUrl ?? ''}
+          alt={article.title}
+          fill
+          className="coverage-card__compact-image object-cover"
+          style={heroImageStyle(article.heroMeta)}
+        />
+      </div>
       <h3 className="mt-3 text-sm font-semibold leading-snug line-clamp-3 group-hover:text-primary transition-colors">{article.title}</h3>
       <MetaRow article={article} />
     </Link>
@@ -103,6 +109,7 @@ function OverlayLayout({ article }: { article: PublicArticleCard }) {
         alt={article.title}
         fill
         className="object-cover transition-transform duration-300 group-hover:scale-[1.03]"
+        style={heroImageStyle(article.heroMeta)}
         sizes="(max-width: 768px) 100vw, 400px"
       />
       <div className="absolute inset-0 bg-gradient-to-t from-background via-background/70 to-transparent" />
@@ -123,13 +130,15 @@ function HeadlineLayout({ article }: { article: PublicArticleCard }) {
         <h3 className="mt-2 text-sm font-semibold leading-snug line-clamp-4 group-hover:text-primary transition-colors">{article.title}</h3>
         <MetaRow article={article} />
       </div>
-      <Image
-        src={article.imageUrl ?? ''}
-        alt={article.title}
-        width={88}
-        height={88}
-        className="coverage-card__headline-thumb rounded-lg object-cover"
-      />
+      <div className="relative shrink-0 overflow-hidden rounded-lg" style={{ width: 88, height: 88 }}>
+        <Image
+          src={article.imageUrl ?? ''}
+          alt={article.title}
+          fill
+          className="coverage-card__headline-thumb object-cover"
+          style={heroImageStyle(article.heroMeta)}
+        />
+      </div>
     </Link>
   );
 }
@@ -143,6 +152,7 @@ function SplitLayout({ article }: { article: PublicArticleCard }) {
           alt={article.title}
           fill
           className="object-cover"
+          style={heroImageStyle(article.heroMeta)}
           sizes="(max-width: 768px) 100vw, 400px"
         />
       </div>
@@ -179,6 +189,7 @@ function BannerLayout({ article }: { article: PublicArticleCard }) {
         alt={article.title}
         fill
         className="object-cover opacity-35 transition-opacity group-hover:opacity-45"
+        style={heroImageStyle(article.heroMeta)}
         sizes="(max-width: 768px) 100vw, 800px"
       />
       <div className="relative flex h-full flex-col justify-center bg-background/75 p-4 backdrop-blur-[2px]">
@@ -223,6 +234,7 @@ export function CoverageArticle({ article, layout }: ArticleProps) {
           date={article.date}
           readTime={article.readTime}
           views={article.views}
+          heroMeta={article.heroMeta}
         />
       );
   }

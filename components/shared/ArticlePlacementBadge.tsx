@@ -1,6 +1,6 @@
 'use client';
 
-import { Flame, Pin, Star, type LucideIcon } from 'lucide-react';
+import { Flame, Pin, Star, TrendingUp, type LucideIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { PLACEMENT_FLAGS, type PlacementFlagId } from '@/lib/article-placement';
 import { useLocale } from '@/components/shared/LocaleProvider';
@@ -10,12 +10,14 @@ const PLACEMENT_ICONS: Record<PlacementFlagId, LucideIcon> = {
   featured: Star,
   breaking: Flame,
   pin: Pin,
+  trending: TrendingUp,
 };
 
 const PLACEMENT_MESSAGE_KEYS: Record<PlacementFlagId, MessageKey> = {
   featured: 'placement.featured',
   breaking: 'placement.breaking',
   pin: 'placement.pinned',
+  trending: 'placement.trending',
 };
 
 export function ArticlePlacementBadge({

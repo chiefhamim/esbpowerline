@@ -1,8 +1,8 @@
 /** Editorial & public-site placement flags — shared labels and color tokens */
 
-export type PlacementFlagId = 'featured' | 'breaking' | 'pin';
+export type PlacementFlagId = 'featured' | 'breaking' | 'pin' | 'trending';
 
-export type PlacementAccent = 'amber' | 'red' | 'violet';
+export type PlacementAccent = 'amber' | 'red' | 'violet' | 'sky';
 
 export const PLACEMENT_FLAGS = {
   featured: {
@@ -33,6 +33,16 @@ export const PLACEMENT_FLAGS = {
     accent: 'violet',
     /** Violet — distinct “pinned to top” editorial signal */
     color: '262 72% 62%',
+    filledIcon: false,
+  },
+  trending: {
+    id: 'trending',
+    label: 'Trending',
+    shortLabel: 'Trending',
+    hint: 'Homepage right rail (5 stories)',
+    accent: 'sky',
+    /** Sky — trending/viral content */
+    color: '199 89% 48%',
     filledIcon: false,
   },
 } as const satisfies Record<

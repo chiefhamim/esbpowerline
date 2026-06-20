@@ -2,13 +2,13 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
-import { formatDistanceToNow } from 'date-fns';
-import { bn } from 'date-fns/locale';
+import { formatExactDate } from '@/lib/utils';
 import { ArticlePlacementBadge } from '@/components/shared/ArticlePlacementBadge';
 import { CategoryLabel } from '@/components/i18n/CategoryLabel';
 import { NoImage } from '@/components/shared/NoImage';
 import { hasArticleImage } from '@/lib/article-image';
 import { useLocale } from '@/components/shared/LocaleProvider';
+import { heroImageStyle } from '@/lib/hero-image';
 
 interface ArticleCardProps {
   id: string;
@@ -23,6 +23,7 @@ interface ArticleCardProps {
   isFeatured?: boolean;
   isBreaking?: boolean;
   isPinned?: boolean;
+  heroMeta?: any;
 }
 
 export function ArticleCard({
@@ -38,14 +39,10 @@ export function ArticleCard({
   isFeatured,
   isBreaking,
   isPinned,
+  heroMeta,
 }: ArticleCardProps) {
   const { locale, t } = useLocale();
-  const timeAgo = date
-    ? formatDistanceToNow(new Date(date), {
-        addSuffix: true,
-        locale: locale === 'bn' ? bn : undefined,
-      })
-    : '';
+  const timeAgo = date ? formatExactDate(date) : '';
 
   return (
     <Link href={`/articles/${id}`} className="article-card group block">
@@ -57,6 +54,7 @@ export function ArticleCard({
             width={500}
             height={192}
             className="article-card__image"
+            style={heroImageStyle(heroMeta)}
           />
         ) : (
           <NoImage className="article-card__image h-48 w-full" compact />
@@ -70,7 +68,7 @@ export function ArticleCard({
       </div>
       <div className="p-5">
         <h3 className="font-semibold tracking-[-0.015em] leading-tight line-clamp-2 group-hover:text-primary transition-colors">{title}</h3>
-        {excerpt && <p className="mt-2.5 text-[13px] text-muted-foreground line-clamp-2 leading-snug">{excerpt}</p>}
+        {excerpt && <p className="mt-2.5 text-[13px] text-muted-foreground line-clamp-2 leading-snug">{excerpt.replace(/\[&hellip;\]/g, '...').replace(/&hellip;/g, '...')}</p>}
         <div className="mt-4 flex items-center justify-between text-ui-xs text-muted-foreground">
           <span className="font-medium">{author || t('common.esbStaff')}</span>
           <span>{timeAgo} {readTime ? `· ${readTime} ${t('common.min')}` : ''}</span>

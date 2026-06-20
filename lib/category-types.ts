@@ -21,7 +21,9 @@ export type PublicArticleCard = {
   readTime: number;
   views: number;
   imageUrl: string;
+  heroMeta?: any;
   isFeatured?: boolean;
   isBreaking?: boolean;
   isPinned?: boolean;
+  isTrending?: boolean;
 };

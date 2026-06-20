@@ -109,6 +109,7 @@ export type MessageKey =
   | 'placement.featured'
   | 'placement.breaking'
   | 'placement.pinned'
+  | 'placement.trending'
   | 'interviews.kicker'
   | 'interviews.title'
   | 'interviews.watchAll'
@@ -248,12 +249,13 @@ const EN: Record<MessageKey, string> = {
   'carousel.pause': 'Pause carousel',
   'carousel.play': 'Play carousel',
   'carousel.browseAll': 'Browse all news',
-  'carousel.byAuthor': 'By {author}',
+  'carousel.byAuthor': '{author}',
   'carousel.minRead': '{minutes} min read',
   'carousel.storiesMarkets': 'Stories & markets',
   'placement.featured': 'Featured',
   'placement.breaking': 'Breaking',
   'placement.pinned': 'Pinned',
+  'placement.trending': 'Trending',
   'interviews.kicker': 'In conversation',
   'interviews.title': 'Latest Interviews',
   'interviews.watchAll': 'Watch all on YouTube',
@@ -402,9 +404,10 @@ const BN: Record<MessageKey, string> = {
   'carousel.byAuthor': '{author}',
   'carousel.minRead': '{minutes} মিনিট পড়া',
   'carousel.storiesMarkets': 'সংবাদ ও বাজার',
-  'placement.featured': 'বিশেষ সংবাদ',
-  'placement.breaking': 'জরুরি সংবাদ',
-  'placement.pinned': 'নির্বাচিত',
+  'placement.featured': 'নির্বাচিত সংবাদ',
+  'placement.breaking': 'ব্রেকিং নিউজ',
+  'placement.pinned': 'পিন করা হয়েছে',
+  'placement.trending': 'ট্রেন্ডিং',
   'interviews.kicker': 'সাক্ষাৎকারে',
   'interviews.title': 'সর্বশেষ সাক্ষাৎকার',
   'interviews.watchAll': 'ইউটিউবে সব দেখুন',

@@ -22,6 +22,7 @@ function mapArticle(a: {
   isBreaking?: boolean;
   isPinned?: boolean;
   author?: { name: string } | null;
+  seo?: any;
 }): PublicArticleCard {
   return {
     id: a.id,
@@ -34,6 +35,7 @@ function mapArticle(a: {
     readTime: a.readTime,
     views: a.views,
     imageUrl: normalizeArticleImageUrl(a.imageUrl) ?? '',
+    heroMeta: a.seo?.heroImage,
     isFeatured: a.isFeatured,
     isBreaking: a.isBreaking,
     isPinned: a.isPinned,
