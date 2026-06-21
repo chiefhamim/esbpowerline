@@ -61,7 +61,7 @@ export default async function ArticlesPage({ searchParams }: ArticlesPageProps) 
       <header className="articles-page__header flex flex-col md:flex-row md:items-end md:justify-between gap-4 mb-6 md:mb-8">
         <div>
           <div className="articles-page__kicker section-kicker text-rose-600/80 dark:text-rose-400/90 mb-1.5">
-            {t('nav.latestNews')}
+            {t('articles.kicker')}
           </div>
           <h1 className="text-3xl md:text-4xl font-display font-bold tracking-tight">{t('articles.title')}</h1>
           <p className="text-muted-foreground mt-2 text-sm md:text-base">{t('articles.subtitle')}</p>

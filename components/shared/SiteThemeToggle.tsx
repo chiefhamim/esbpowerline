@@ -36,6 +36,23 @@ export function SiteThemeToggle({ className = '' }: SiteThemeToggleProps) {
   const lockedTipRef = useRef<SiteTheme | null>(null);
   const hideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  const [isOpen, setIsOpen] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent | TouchEvent) {
+      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener('touchstart', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('touchstart', handleClickOutside);
+    };
+  }, []);
+
   useLayoutEffect(() => {
     const saved = getSavedSiteTheme();
     setTheme(saved);
@@ -87,65 +104,74 @@ export function SiteThemeToggle({ className = '' }: SiteThemeToggleProps) {
     applySiteTheme(next);
     button.blur();
     scheduleTipDismiss(next);
+    setIsOpen(false);
   }
 
   return (
-    <div className={cn('site-theme-toggle', className)}>
-      <div className="site-theme-toggle__swatches">
-        {SITE_THEMES.map((t) => {
-          const { icon: Icon, iconClass } = THEME_ICONS[t.id];
-          const isActive = theme === t.id;
-          const preview = SITE_THEME_PREVIEW[t.id];
+    <div ref={containerRef} className={cn('site-theme-toggle-wrapper', isOpen && 'is-open', className)}>
+      <div className={cn('site-theme-toggle', isOpen && 'is-open')}>
+        <div className="site-theme-toggle__swatches">
+          {SITE_THEMES.map((t) => {
+            const { icon: Icon, iconClass } = THEME_ICONS[t.id];
+            const isActive = theme === t.id;
+            const preview = SITE_THEME_PREVIEW[t.id];
 
-          return (
-            <div
-              key={t.id}
-              className="site-theme-toggle__item relative"
-              onMouseEnter={() => showTip(t.id)}
-              onMouseLeave={hideTip}
-            >
-              <button
-                type="button"
-                onClick={(e) => changeTheme(t.id, e.currentTarget)}
-                onFocus={() => showTip(t.id)}
-                onBlur={hideTip}
-                className="site-theme-toggle__btn"
-                aria-label={`Switch to ${t.label} theme`}
-                aria-pressed={isActive}
-              >
-                <Icon
-                  className={cn(
-                    'icon-sm transition-colors',
-                    isActive ? 'text-primary' : iconClass,
-                  )}
-                  strokeWidth={isActive ? 2.5 : 2}
-                />
-              </button>
+            return (
               <div
-                className={cn(
-                  'site-theme-toggle__flyout',
-                  (openTip === t.id || closingTip === t.id) && 'site-theme-toggle__flyout--visible',
-                  closingTip === t.id && 'site-theme-toggle__flyout--closing',
-                )}
-                aria-hidden={openTip !== t.id && closingTip !== t.id}
+                key={t.id}
+                className="site-theme-toggle__item relative"
+                onMouseEnter={() => showTip(t.id)}
+                onMouseLeave={hideTip}
               >
-                <div
-                  className="site-theme-toggle__tip"
-                  style={
-                    {
-                      '--theme-preview-bg': preview.background,
-                      '--theme-preview-border': preview.border,
-                      '--theme-preview-fg': preview.foreground,
-                    } as React.CSSProperties
-                  }
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    if (isActive) {
+                      setIsOpen(!isOpen);
+                    } else {
+                      changeTheme(t.id, e.currentTarget);
+                    }
+                  }}
+                  onFocus={() => showTip(t.id)}
+                  onBlur={hideTip}
+                  className="site-theme-toggle__btn"
+                  aria-label={`Switch to ${t.label} theme`}
+                  aria-pressed={isActive}
                 >
-                  <div className="site-theme-toggle__flyout-arrow" aria-hidden />
-                  <ThemePreview label={t.label} />
+                  <Icon
+                    className={cn(
+                      'icon-sm transition-colors',
+                      isActive ? 'text-primary' : iconClass,
+                    )}
+                    strokeWidth={isActive ? 2.5 : 2}
+                  />
+                </button>
+                <div
+                  className={cn(
+                    'site-theme-toggle__flyout',
+                    (openTip === t.id || closingTip === t.id) && 'site-theme-toggle__flyout--visible',
+                    closingTip === t.id && 'site-theme-toggle__flyout--closing',
+                  )}
+                  aria-hidden={openTip !== t.id && closingTip !== t.id}
+                >
+                  <div
+                    className="site-theme-toggle__tip"
+                    style={
+                      {
+                        '--theme-preview-bg': preview.background,
+                        '--theme-preview-border': preview.border,
+                        '--theme-preview-fg': preview.foreground,
+                      } as React.CSSProperties
+                    }
+                  >
+                    <div className="site-theme-toggle__flyout-arrow" aria-hidden />
+                    <ThemePreview label={t.label} />
+                  </div>
                 </div>
               </div>
-            </div>
-          );
-        })}
+            );
+          })}
+        </div>
       </div>
     </div>
   );

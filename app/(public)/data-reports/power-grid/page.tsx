@@ -17,16 +17,18 @@ export default async function PowerGridExplorerPage() {
 
   return (
     <div className="container container--shell py-8 md:py-10">
-      <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-3 mb-8">
-        <div>
+      <div className="grid grid-cols-1 md:grid-cols-5 gap-3 items-end mb-8">
+        <div className="md:col-span-3">
           <div className="uppercase tracking-[2.5px] text-[10px] text-primary font-bold mb-1.5">INTERACTIVE DATA • POWER SECTOR</div>
           <h1 className="h1 font-display font-bold text-3xl md:text-4xl tracking-tight">Power Grid Explorer</h1>
           <p className="text-muted-foreground mt-2 max-w-lg leading-relaxed text-sm">Planning and indicative data for Bangladesh’s electricity system — generation, transmission, demand &amp; projects. Configure values in admin settings.</p>
         </div>
-        <div className="flex items-center gap-2 text-xs">
-          <button className="btn btn-secondary flex items-center gap-1.5 text-xs px-3.5 py-2 hover:bg-secondary transition-colors">
+        <div className="md:col-span-1 w-full">
+          <button className="btn btn-secondary flex items-center justify-center gap-1.5 text-xs w-full py-2 hover:bg-secondary transition-colors">
             <RefreshCw className="h-3.5 w-3.5" /> Refresh Data
           </button>
+        </div>
+        <div className="md:col-span-1 w-full flex flex-col items-center">
           <PowerGridExportControls />
         </div>
       </div>

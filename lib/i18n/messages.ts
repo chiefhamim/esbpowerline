@@ -54,6 +54,7 @@ export type MessageKey =
   | 'categories.allCategories'
   | 'categories.latestAnalysis'
   | 'categories.noPublished'
+  | 'articles.kicker'
   | 'articles.title'
   | 'articles.subtitle'
   | 'articles.advancedSearch'
@@ -199,6 +200,7 @@ const EN: Record<MessageKey, string> = {
   'categories.allCategories': '← All categories',
   'categories.latestAnalysis': 'Latest analysis, projects and policy updates for this sector.',
   'categories.noPublished': 'No published articles in this category yet. Check back soon.',
+  'articles.kicker': 'Newsroom',
   'articles.title': 'Latest News',
   'articles.subtitle': 'Power & energy sector coverage for Bangladesh',
   'articles.advancedSearch': 'Advanced Search',
@@ -351,6 +353,7 @@ const BN: Record<MessageKey, string> = {
   'categories.allCategories': '← সব খাত',
   'categories.latestAnalysis': 'এই খাতের সর্বশেষ বিশ্লেষণ, প্রকল্প ও নীতি সংবাদ।',
   'categories.noPublished': 'এই খাতে এখনও প্রকাশিত সংবাদ নেই। কিছুদিন পর আবার দেখুন।',
+  'articles.kicker': 'নিউজরুম',
   'articles.title': 'সর্বশেষ সংবাদ',
   'articles.subtitle': 'বাংলাদেশের বিদ্যুৎ ও জ্বালানি খাতের সংবাদ',
   'articles.advancedSearch': 'বিস্তারিত খোঁজ',

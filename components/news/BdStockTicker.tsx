@@ -64,7 +64,10 @@ export function BdStockTicker({
       {labelClassName ? (
         <div className={cn('shrink-0', labelClassName)}>
           <span className="market-ticker-label__dot market-ticker-label__dot--dse" aria-hidden />
-          <span className="market-ticker-label__text">{t('ticker.dseLive')}</span>
+          <span className="market-ticker-label__text">
+            <span className="md:hidden">DSE</span>
+            <span className="hidden md:inline">{t('ticker.dseLive')}</span>
+          </span>
         </div>
       ) : (
         <div className="flex shrink-0 items-center gap-1.5 border-r border-border/60 pr-3 text-muted-foreground">

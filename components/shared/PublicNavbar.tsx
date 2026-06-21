@@ -136,6 +136,10 @@ export function PublicNavbar({
                   <span className="public-nav-bar__pill-label">{t('nav.home')}</span>
                 </PublicNavLink>
 
+                <span className="public-nav-bar__pill-divider hidden sm:block" aria-hidden />
+
+                <LocaleToggle className="public-nav-bar__locale" />
+
                 <span className="public-nav-bar__pill-divider" aria-hidden />
 
                 <PublicNavLink
@@ -150,15 +154,11 @@ export function PublicNavbar({
                     {t('nav.search')}
                   </span>
                 </PublicNavLink>
-
-                <span className="public-nav-bar__pill-divider hidden sm:block" aria-hidden />
-
-                <LocaleToggle className="public-nav-bar__locale" />
               </div>
             </div>
           </div>
 
-          <div className="public-nav-bar__center hidden md:flex">
+          <div className="public-nav-bar__center flex">
             <div className="public-nav-bar__hub" role="group" aria-label="Primary sections">
               <PublicNavLink
                 href="/articles"
@@ -167,7 +167,7 @@ export function PublicNavbar({
                 }`}
               >
                 <Newspaper className="icon-sm" aria-hidden />
-                <span>{t('nav.latest')}</span>
+                <span className="hidden lg:inline">{t('nav.latest')}</span>
               </PublicNavLink>
 
               <PublicNavLink
@@ -177,7 +177,7 @@ export function PublicNavbar({
                 }`}
               >
                 <BarChart3 className="icon-sm" aria-hidden />
-                <span>{t('nav.gridExplorer')}</span>
+                <span className="hidden lg:inline">{t('nav.gridExplorer')}</span>
               </PublicNavLink>
 
               <PublicNavLink
@@ -187,7 +187,7 @@ export function PublicNavbar({
                 }`}
               >
                 <BookOpen className="icon-sm" aria-hidden />
-                <span>{t('nav.magazine')}</span>
+                <span className="hidden lg:inline">{t('nav.magazine')}</span>
               </PublicNavLink>
             </div>
           </div>
@@ -205,7 +205,7 @@ export function PublicNavbar({
               <button
                 type="button"
                 onClick={() => setMobileOpen(!mobileOpen)}
-                className="public-nav-bar__menu-btn md:hidden"
+                className="public-nav-bar__menu-btn lg:hidden tap-safe"
                 aria-label="Toggle menu"
               >
                 {mobileOpen ? <X className="icon-md" /> : <Menu className="icon-md" />}
@@ -216,7 +216,7 @@ export function PublicNavbar({
         </div>
         </div>
 
-        <div className="container container--shell public-nav-bar__categories-shell public-nav-bar__categories hidden md:block">
+        <div className="container container--shell public-nav-bar__categories-shell public-nav-bar__categories hidden lg:block">
           <div
             className="category-nav-ribbon category-nav-ribbon--desktop grid divide-x divide-border/40"
             style={{ gridTemplateColumns: `repeat(${navCategories.length}, minmax(0, 1fr))` }}
@@ -265,73 +265,57 @@ export function PublicNavbar({
           </div>
         </div>
 
-        <div className="container container--shell public-nav-bar__categories-shell public-nav-bar__categories md:hidden">
-          <div className="category-nav-ribbon category-nav-ribbon--mobile category-nav-ribbon--mobile-grid">
-              {navCategories.map((c) => {
-                const href = `/categories/${c.slug}`;
-                const isActive = pathname === `/categories/${c.slug}`;
-                const colors = getNavbarColorClasses(c.name, c.color);
-
-                return (
-                  <PublicNavLink
-                    key={c.slug}
-                    href={href}
-                    style={categoryColorVars(c.color)}
-                    className={`category-nav-cell group relative font-semibold transition-all duration-200 select-none min-w-0 ${
-                      isActive
-                        ? `${colors.activeBg} ${colors.useCustom ? 'category-nav--custom' : colors.text}`
-                        : `${colors.hoverBg} text-foreground hover:text-foreground`
-                    }`}
-                  >
-                    <span className="category-nav-cell__inline">
-                      <CategoryIconDisplay
-                        icon={c.icon}
-                        iconImageUrl={c.iconImageUrl}
-                        name={c.name}
-                        size={12}
-                        className={`relative z-[1] h-3 w-3 shrink-0 transition-transform duration-200 ${
-                          isActive
-                            ? 'scale-110'
-                            : 'opacity-70 group-hover:opacity-100 group-hover:scale-110'
-                        } ${colors.useCustom ? 'category-nav--custom' : ''}`}
-                        style={colors.useCustom ? categoryTextStyle(c.color) : undefined}
-                      />
-                      <span
-                        className="category-nav-label category-nav-label--mobile relative z-[1]"
-                        style={colors.useCustom && isActive ? categoryTextStyle(c.color) : undefined}
-                      >
-                        {c.name}
-                      </span>
-                    </span>
-                    <span
-                      className={`absolute bottom-0 left-0 z-[2] h-[2px] w-full transition-transform duration-200 origin-left ${
-                        isActive ? 'scale-x-100' : 'scale-x-0 group-hover:scale-x-100'
-                      } ${colors.useCustom ? 'category-nav-underline--custom' : colors.underline}`}
-                      style={colors.useCustom ? categoryUnderlineStyle(c.color) : undefined}
-                      aria-hidden
-                    />
-                  </PublicNavLink>
-                );
-              })}
-          </div>
-        </div>
-
         {mobileOpen && (
-          <div className="md:hidden border-t border-border/70 public-nav-bar px-4 py-4 text-sm space-y-1">
-            <PublicNavLink href="/articles" className="flex items-center gap-2 py-1.5 text-rose-600/85 dark:text-rose-400/90">
-              <Newspaper className="h-4 w-4" /> {t('nav.latestNews')}
-            </PublicNavLink>
-            <PublicNavLink href="/data-reports/power-grid" className="flex items-center gap-2 py-1.5 text-sky-600/85 dark:text-sky-400/90">
-              <BarChart3 className="h-4 w-4" /> {t('nav.gridExplorer')}
-            </PublicNavLink>
-            <PublicNavLink href="/magazine" className="flex items-center gap-2 py-1.5 text-emerald-600/90 dark:text-emerald-400/90">
-              <BookOpen className="h-4 w-4" />
-              {t('nav.monthlyMagazine')}
-            </PublicNavLink>
+          <div className="lg:hidden border-t border-border/70 public-nav-bar px-4 py-4 text-sm space-y-1">
             <PublicNavLink href="/search" className="flex items-center gap-2 py-1.5">
               <Search className="h-4 w-4" /> {t('nav.searchArticles')}
             </PublicNavLink>
-            <MemberNavMenuLinks />
+
+            <div className="pt-4 pb-2">
+              <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 px-2">
+                Categories
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                {navCategories.map((c) => {
+                  const href = `/categories/${c.slug}`;
+                  const isActive = pathname === href;
+                  const colors = getNavbarColorClasses(c.name, c.color);
+                  return (
+                    <PublicNavLink 
+                      key={c.slug} 
+                      href={href} 
+                      style={categoryColorVars(c.color)}
+                      className={`flex items-center gap-2.5 py-2 px-2.5 rounded-xl border border-border/40 bg-muted/20 transition-all tap-safe group ${
+                        isActive 
+                          ? `${colors.activeBg} border-primary/30 font-semibold` 
+                          : `${colors.hoverBg} text-foreground`
+                      }`}
+                    >
+                      <CategoryIconDisplay 
+                        icon={c.icon} 
+                        iconImageUrl={c.iconImageUrl} 
+                        name={c.name} 
+                        size={16}
+                        className={`transition-transform duration-200 group-hover:scale-110 shrink-0 ${
+                          colors.useCustom ? 'category-nav--custom' : colors.text
+                        }`}
+                        style={colors.useCustom ? categoryTextStyle(c.color) : undefined}
+                      />
+                      <span 
+                        className={`font-medium text-[14px] leading-tight transition-colors duration-200 ${
+                          isActive 
+                            ? (colors.useCustom ? 'category-nav--custom' : colors.text) 
+                            : 'text-foreground'
+                        }`}
+                        style={isActive && colors.useCustom ? categoryTextStyle(c.color) : undefined}
+                      >
+                        {c.name}
+                      </span>
+                    </PublicNavLink>
+                  );
+                })}
+              </div>
+            </div>
           </div>
         )}
       </nav>

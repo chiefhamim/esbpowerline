@@ -133,7 +133,7 @@ export default async function ArticlePage({ params }: { params: Promise<{ slug: 
         )}
       </figure>
 
-      <div className="article-body mt-8" dangerouslySetInnerHTML={{ __html: sanitizeArticleHtml(article.content) }} />
+      <div className="article-body mt-8 text-lg md:text-xl leading-relaxed pb-safe" dangerouslySetInnerHTML={{ __html: sanitizeArticleHtml(article.content) }} />
 
       <div className="mt-8 flex flex-wrap gap-2">
         {article.tags.map((t: string) => (

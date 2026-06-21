@@ -138,7 +138,8 @@ export function LiveMarketTicker({
         aria-hidden
       />
       <span className="market-ticker-label__text">
-        {simulateLive ? t('ticker.energyMarkets') : t('ticker.indicative')}
+        <span className="md:hidden">{simulateLive ? 'ENERGY' : 'INDIC.'}</span>
+        <span className="hidden md:inline">{simulateLive ? t('ticker.energyMarkets') : t('ticker.indicative')}</span>
       </span>
     </div>
   ) : (
