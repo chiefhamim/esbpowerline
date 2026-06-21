@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { getStaffForCollaboration } from '@/lib/actions/users';
 import { toast } from 'sonner';
+import { slugify } from '@/lib/utils';
 
 type StaffMember = {
   id: string;
@@ -18,31 +19,22 @@ type EditorCollaboratorsProps = {
   authorName: string;
   collaboratorIds: string[];
   onChange: (ids: string[]) => void;
+  postAsNewsDesk?: boolean;
+  onPostAsNewsDeskChange?: (val: boolean) => void;
+  staff: StaffMember[];
+  loading?: boolean;
 };
 
-export function EditorCollaborators({ authorName, collaboratorIds, onChange }: EditorCollaboratorsProps) {
+export function EditorCollaborators({
+  authorName,
+  collaboratorIds,
+  onChange,
+  postAsNewsDesk = false,
+  onPostAsNewsDeskChange,
+  staff = [],
+  loading = false,
+}: EditorCollaboratorsProps) {
   const [open, setOpen] = useState(false);
-  const [staff, setStaff] = useState<StaffMember[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [pending, startTransition] = useTransition();
-
-  useEffect(() => {
-    if (open && staff.length === 0) {
-      setLoading(true);
-      startTransition(async () => {
-        try {
-          const data = await getStaffForCollaboration();
-          setStaff(data);
-        } catch (e) {
-          toast.error('Could not load editors', {
-            description: 'Refresh the page and try again.',
-          });
-        } finally {
-          setLoading(false);
-        }
-      });
-    }
-  }, [open, staff.length]);
 
   const toggleCollaborator = (id: string) => {
     if (collaboratorIds.includes(id)) {
@@ -52,29 +44,58 @@ export function EditorCollaborators({ authorName, collaboratorIds, onChange }: E
       toast.success('Collaborator added', {
         description: 'They can now co-edit this story in the editorial workspace.',
       });
-      // In a full implementation, we'd fire an EditorialNotice here via a server action.
     }
   };
 
   const selectedStaff = staff.filter(s => collaboratorIds.includes(s.id));
 
   return (
-    <div className="flex items-center gap-2 flex-wrap mb-4 mt-2">
-      <div className="article-author-sticky article-author-sticky--cms" style={{ position: 'relative', margin: 0, bottom: 'auto' }}>
-        <User className="article-author-sticky__icon" aria-hidden />
-        <span className="article-author-sticky__label">By</span>
-        <span className="article-author-sticky__name">{authorName}</span>
+    <div className="flex items-center gap-3.5 flex-wrap mb-4 mt-2">
+      <div className="flex items-center gap-2 flex-wrap">
+        <div className="article-author-sticky article-author-sticky--cms shrink-0" style={{ position: 'relative', margin: 0, bottom: 'auto' }}>
+          <User className="article-author-sticky__icon" aria-hidden />
+          <span className="article-author-sticky__label">By</span>
+          <span className="article-author-sticky__name">{postAsNewsDesk ? 'ESB News Desk' : authorName}</span>
+        </div>
+
+        <label className="inline-flex items-center gap-1.5 cursor-pointer select-none text-[11px] font-medium text-muted-foreground hover:text-foreground border border-border/40 bg-muted/10 px-2.5 py-1 rounded-full hover:bg-muted/20 transition-all shrink-0">
+          <input
+            type="checkbox"
+            checked={postAsNewsDesk}
+            onChange={(e) => onPostAsNewsDeskChange?.(e.target.checked)}
+            className="rounded border-muted-foreground/30 text-sky-500 focus:ring-sky-500 h-3 w-3 shrink-0 cursor-pointer"
+          />
+          <span>Post as ESB News Desk</span>
+        </label>
       </div>
 
-      {selectedStaff.map(s => (
-        <div key={s.id} className="article-author-sticky article-author-sticky--cms" style={{ position: 'relative', margin: 0, bottom: 'auto' }}>
-          <User className="article-author-sticky__icon" aria-hidden />
-          <span className="article-author-sticky__name">{s.name}</span>
-          <button type="button" onClick={() => toggleCollaborator(s.id)} className="ml-1 text-muted-foreground hover:text-foreground">
+      {selectedStaff.length > 0 && (
+        <div className="flex items-center gap-1.5 text-xs text-muted-foreground bg-muted/30 px-3 py-1 rounded-full border border-border/40">
+          <span>with:</span>
+          <span className="font-semibold text-foreground hover:text-primary transition-colors cursor-pointer underline underline-offset-2">
+            <a href={`/authors/${slugify(selectedStaff[0].name)}`} target="_blank" rel="noopener noreferrer">
+              {selectedStaff[0].name}
+            </a>
+          </span>
+          <button 
+            type="button" 
+            onClick={() => toggleCollaborator(selectedStaff[0].id)} 
+            className="text-muted-foreground hover:text-destructive transition-colors ml-0.5"
+            title="Remove editor"
+          >
             <X className="h-3 w-3" />
           </button>
+          
+          {selectedStaff.length > 1 && (
+            <span 
+              className="bg-muted-foreground/10 px-1.5 py-0.5 rounded text-[10px] font-bold text-foreground cursor-help ml-1" 
+              title={selectedStaff.slice(1).map(s => s.name).join(', ')}
+            >
+              +{selectedStaff.length - 1}
+            </span>
+          )}
         </div>
-      ))}
+      )}
 
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>

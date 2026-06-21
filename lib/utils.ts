@@ -83,3 +83,128 @@ export function formatNumber(num: number, maxFractionDigits = 0): string {
   if (!Number.isFinite(num)) return '0';
   return num.toLocaleString('en-IN', { maximumFractionDigits: maxFractionDigits });
 }
+
+export function extractKeywords(title: string, contentHtml: string): string[] {
+  // Simple check to avoid import loops if called from validations
+  const text = (title + ' ' + (contentHtml ? contentHtml.replace(/<[^>]+>/g, ' ').replace(/&nbsp;/gi, ' ') : ''))
+    .toLowerCase()
+    .replace(/[^\w\s\u0980-\u09ff-]/g, ' ')
+    .replace(/\s+/g, ' ');
+  
+  const words = text.split(' ').filter(w => w.length >= 3);
+  
+  const stopwords = new Set([
+    'the', 'and', 'for', 'that', 'with', 'this', 'from', 'have', 'were', 'was', 'are', 'has', 'had',
+    'will', 'would', 'shall', 'should', 'about', 'their', 'there', 'they', 'them', 'been', 'than',
+    'more', 'most', 'some', 'many', 'other', 'into', 'over', 'both', 'only', 'such', 'very', 'even',
+    'also', 'just', 'like', 'than', 'then', 'into', 'under', 'upon', 'through', 'after', 'before',
+    'এবং', 'ও', 'কিন্তু', 'অথবা', 'জন্য', 'থেকে', 'করে', 'হয়ে', 'ছিল', 'আছে', 'হবে', 'করতে', 'করা'
+  ]);
+  
+  const counts: Record<string, number> = {};
+  for (const w of words) {
+    if (stopwords.has(w)) continue;
+    counts[w] = (counts[w] || 0) + 1;
+  }
+  
+  return Object.entries(counts)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 10)
+    .map(entry => entry[0]);
+}
+
+export function smartRearrangeText(text: string): string {
+  if (!text) return '<p></p>';
+  const sections = text.split(/\r?\n\s*\r?\n/);
+  const paragraphs: string[] = [];
+
+  for (const s of sections) {
+    const cleanParagraph = s
+      .split(/\r?\n/)
+      .map(line => line.trim())
+      .filter(Boolean)
+      .join(' ');
+      
+    if (cleanParagraph) {
+      paragraphs.push(cleanParagraph);
+    }
+  }
+
+  return paragraphs.map(p => `<p>${p}</p>`).join('');
+}
+
+export function autoCalculateCategory(title: string, contentHtml: string, categories: string[]): string | null {
+  if (categories.length === 0) return null;
+  
+  const text = (title + ' ' + (contentHtml ? contentHtml.replace(/<[^>]+>/g, ' ').replace(/&nbsp;/gi, ' ') : ''))
+    .toLowerCase();
+
+  const rules: { keywords: string[]; categoryMatch: string }[] = [
+    {
+      categoryMatch: 'power',
+      keywords: ['power', 'grid', 'transmission', 'blackout', 'electricity', 'megawatt', 'mw', 'voltage', 'tariff', 'load-shedding', 'load shedding', 'substation', 'pgcb', 'bpdb', 'desco', 'dpdc']
+    },
+    {
+      categoryMatch: 'energy',
+      keywords: ['energy', 'gas', 'lng', 'coal', 'petroleum', 'oil', 'fuel', 'refinery', 'diesel', 'octane', 'bapex', 'petrobangla', 'pipeline', 'drilling', 'exploration']
+    },
+    {
+      categoryMatch: 'solar',
+      keywords: ['solar', 'renewable', 'wind', 'green', 'pv', 'panel', 'photovoltaic', 'biomass', 'hydro', 'clean energy', 'rooftop', 'net metering', 'sustainability']
+    },
+    {
+      categoryMatch: 'finance',
+      keywords: ['finance', 'tax', 'budget', 'bank', 'inflation', 'revenue', 'cost', 'dollar', 'investment', 'profit', 'trade', 'loan', 'subsidy', 'gdp', 'adp']
+    },
+    {
+      categoryMatch: 'environment',
+      keywords: ['environment', 'climate', 'carbon', 'emissions', 'warming', 'heatwave', 'flood', 'pollution', 'river', 'forest', 'disaster', 'temperature', 'cop26', 'cop27', 'cop28']
+    },
+    {
+      categoryMatch: 'technology',
+      keywords: ['technology', 'software', 'smart', 'digital', 'app', 'system', 'automation', 'meter', 'internet', 'fiber', 'network', 'data', 'ai', 'telecom']
+    }
+  ];
+
+  const scores = categories.map((catName) => {
+    const catLower = catName.toLowerCase();
+    let score = 0;
+
+    for (const rule of rules) {
+      if (catLower.includes(rule.categoryMatch) || rule.categoryMatch.includes(catLower)) {
+        for (const kw of rule.keywords) {
+          const regex = new RegExp(`\\b${kw}\\b`, 'g');
+          const matches = text.match(regex);
+          if (matches) {
+            score += matches.length * 2;
+          }
+        }
+      }
+    }
+
+    const catNameRegex = new RegExp(`\\b${catLower}\\b`, 'g');
+    const directMatches = text.match(catNameRegex);
+    if (directMatches) {
+      score += directMatches.length * 5;
+    }
+
+    const titleLower = title.toLowerCase();
+    if (titleLower.includes(catLower)) {
+      score += 15;
+    }
+    for (const rule of rules) {
+      if (catLower.includes(rule.categoryMatch) || rule.categoryMatch.includes(catLower)) {
+        for (const kw of rule.keywords) {
+          if (titleLower.includes(kw)) {
+            score += 8;
+          }
+        }
+      }
+    }
+
+    return { name: catName, score };
+  });
+
+  scores.sort((a, b) => b.score - a.score);
+  return scores[0].score > 0 ? scores[0].name : null;
+}

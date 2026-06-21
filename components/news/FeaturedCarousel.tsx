@@ -11,6 +11,7 @@ import { useLocale } from '@/components/shared/LocaleProvider';
 import { ModernTooltip } from '@/components/shared/ModernTooltip';
 import { NoImage } from '@/components/shared/NoImage';
 import { hasArticleImage } from '@/lib/article-image';
+import { heroImageStyle } from '@/lib/hero-image';
 
 interface FeaturedItem {
   slug: string;
@@ -23,6 +24,7 @@ interface FeaturedItem {
   isBreaking?: boolean;
   isFeatured?: boolean;
   isPinned?: boolean;
+  heroMeta?: any;
 }
 
 export function FeaturedCarousel({
@@ -241,10 +243,12 @@ export function FeaturedCarousel({
                         alt={item.title}
                         fill
                         priority={idx === 0}
-                        className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-700 ease-out ${
+                        className={`absolute inset-0 h-full w-full transition-opacity duration-700 ease-out ${
                           idx === current ? 'opacity-100' : 'opacity-0 pointer-events-none'
                         }`}
-                        style={idx === current ? undefined : { visibility: 'hidden' }}
+                        style={{
+                          ...(idx === current ? heroImageStyle(item.heroMeta || undefined) : { visibility: 'hidden' }),
+                        }}
                         sizes="(max-width: 768px) 100vw, 50vw"
                       />
                     ) : (

@@ -15,6 +15,7 @@ export type DraftPreviewInput = {
   isFeatured?: boolean;
   isPinned?: boolean;
   isBreaking?: boolean;
+  isTrending?: boolean;
 };
 
 function toCard(draft: DraftPreviewInput, id = 'preview-draft'): PublicArticleCard {
@@ -33,6 +34,7 @@ function toCard(draft: DraftPreviewInput, id = 'preview-draft'): PublicArticleCa
     isFeatured: draft.isFeatured,
     isBreaking: draft.isBreaking,
     isPinned: draft.isPinned,
+    isTrending: draft.isTrending,
   };
 }
 
@@ -48,6 +50,7 @@ function toCarouselItem(draft: DraftPreviewInput): CarouselItem {
     isBreaking: draft.isBreaking,
     isFeatured: draft.isFeatured,
     isPinned: draft.isPinned,
+    heroMeta: draft.heroMeta,
   };
 }
 
@@ -126,6 +129,19 @@ function restFromArticles(
       articleSlug: article.slug,
       article,
     }));
+}
+
+export function mergeDraftIntoTrending(
+  trending: PublicArticleCard[],
+  draft: DraftPreviewInput,
+  limit = 5,
+): PublicArticleCard[] {
+  const entry = toCard(draft);
+  const rest = trending.filter((a) => a.slug !== entry.slug);
+  if (draft.isTrending) {
+    return [entry, ...rest].slice(0, limit);
+  }
+  return rest.slice(0, limit);
 }
 
 export function findCategoryColor(categories: PublicCategory[], name: string): string | null {

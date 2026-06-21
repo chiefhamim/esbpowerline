@@ -3,6 +3,7 @@
 import { Moon, MoonStar, Sun } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { SITE_THEMES, type SiteTheme } from '@/lib/site-theme';
+import { ModernTooltip } from '@/components/shared/ModernTooltip';
 
 const ICONS: Record<SiteTheme, typeof Sun> = {
   midnight: MoonStar,
@@ -23,17 +24,25 @@ export function PreviewThemeToggle({
         const Icon = ICONS[t.id];
         const active = theme === t.id;
         return (
-          <button
+          <ModernTooltip
             key={t.id}
-            type="button"
-            title={t.label}
-            onClick={() => onChange(t.id)}
-            className={cn('cms-preview-theme-toggle__btn', active && 'cms-preview-theme-toggle__btn--active')}
-            aria-pressed={active}
+            label={`${t.label} Theme`}
+            hint={`Switch preview mode to the site's ${t.label.toLowerCase()} visual appearance`}
+            variant="editor"
+            alwaysShow
+            fast
+            side="top"
           >
-            <Icon className="h-3.5 w-3.5" />
-            <span>{t.label}</span>
-          </button>
+            <button
+              type="button"
+              onClick={() => onChange(t.id)}
+              className={cn('cms-preview-theme-toggle__btn', active && 'cms-preview-theme-toggle__btn--active')}
+              aria-pressed={active}
+            >
+              <Icon className="h-3.5 w-3.5" />
+              <span>{t.label}</span>
+            </button>
+          </ModernTooltip>
         );
       })}
     </div>

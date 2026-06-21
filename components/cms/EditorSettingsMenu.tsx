@@ -19,7 +19,7 @@ export function EditorSettingsMenu({ variant = 'default' }: EditorSettingsMenuPr
   const {
     preferences,
     setGuidanceMode,
-    setStickyAuthorByline,
+    setStickyTipTapToolbar,
     setClockFormat,
   } = useEditorPreferences();
 
@@ -82,28 +82,28 @@ export function EditorSettingsMenu({ variant = 'default' }: EditorSettingsMenuPr
 
             <div className="h-px bg-border/40 my-2 mx-3" />
 
-            {/* Sticky Byline Toggle */}
+            {/* Sticky Editor Toolbar Toggle */}
             <div className="px-4 py-2">
               <span className="text-[10px] font-bold uppercase tracking-[0.12em] text-sky-400 flex items-center gap-1.5 mb-1.5">
                 <Pin className="h-3 w-3" />
-                Byline Behavior
+                Toolbar Behavior
               </span>
               <button
                 type="button"
-                onClick={() => setStickyAuthorByline(!preferences.stickyAuthorByline)}
+                onClick={() => setStickyTipTapToolbar(!preferences.stickyTipTapToolbar)}
                 className="w-full text-left px-2.5 py-1.5 rounded-lg text-xs flex items-center justify-between transition-colors hover:bg-muted/50"
               >
                 <div className="flex flex-col">
-                  <span>Sticky author byline</span>
-                  <span className="text-[10px] text-muted-foreground">Pin byline while writing</span>
+                  <span>Sticky editor toolbar</span>
+                  <span className="text-[10px] text-muted-foreground">Pin toolbar while writing</span>
                 </div>
                 <div className={cn(
                   'w-8 h-4 rounded-full p-0.5 transition-colors duration-200 focus:outline-none',
-                  preferences.stickyAuthorByline ? 'bg-sky-500' : 'bg-muted'
+                  preferences.stickyTipTapToolbar ? 'bg-sky-500' : 'bg-muted'
                 )}>
                   <div className={cn(
                     'w-3 h-3 rounded-full bg-white transition-transform duration-200',
-                    preferences.stickyAuthorByline ? 'translate-x-4' : 'translate-x-0'
+                    preferences.stickyTipTapToolbar ? 'translate-x-4' : 'translate-x-0'
                   )} />
                 </div>
               </button>

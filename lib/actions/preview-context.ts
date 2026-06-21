@@ -10,12 +10,13 @@ import { getPinnedCoverageArticles, resolveCoverageSlots } from '@/lib/coverage-
 import {
   getPublicCategories,
   getPublishedArticlesForPublic,
+  getTrendingPublishedArticles,
 } from '@/lib/category-content';
 
 export async function getArticlePreviewContext() {
   const settings = await getPublicSettingsMap();
 
-  const [carouselItems, categories, sectorArticles, coverageSlots, pinnedArticles] = await Promise.all([
+  const [carouselItems, categories, sectorArticles, coverageSlots, pinnedArticles, trendingArticles] = await Promise.all([
     getCarouselItems(settings),
     getPublicCategories(),
     getPublishedArticlesForPublic(12),
@@ -25,6 +26,7 @@ export async function getArticlePreviewContext() {
       return resolveCoverageSlots(withPlacement);
     })(),
     getPinnedCoverageArticles(),
+    getTrendingPublishedArticles(5),
   ]);
 
   return {
@@ -33,5 +35,6 @@ export async function getArticlePreviewContext() {
     sectorArticles,
     coverageSlots,
     pinnedArticles,
+    trendingArticles,
   };
 }

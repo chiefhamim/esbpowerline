@@ -97,6 +97,7 @@ export function PublicFooter({ categories = [] }: { categories?: PublicCategory[
       <div className="container container--shell py-10 md:py-12">
         <div className="flex flex-col items-start gap-4 border-b border-border/40 pb-8 sm:flex-row sm:items-center sm:gap-6">
           <BrandLogo
+            className="public-footer-logo"
             frameClassName="shrink-0 rounded-md border-0 bg-transparent px-0 py-0 shadow-none"
             imageClassName="h-11 w-auto max-w-[240px]"
           />

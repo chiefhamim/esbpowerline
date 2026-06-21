@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import type { PreviewDevice } from '@/components/editor/ArticlePreviewModal';
+import type { PreviewDevice } from '@/components/editor/ArticlePreviewPanel';
 
 const TABLET_WIDTH = 768;
 const MOBILE_WIDTH = 390;

@@ -11,6 +11,7 @@ export type PublicArticleDetail = PublicArticleCard & {
   tags: string[];
   heroImage?: HeroImageMeta;
   imageCredit?: string | null;
+  collaborators?: { id: string; name: string }[];
 };
 
 
@@ -38,6 +39,7 @@ function mapArticle(a: {
   isBreaking?: boolean;
   isPinned?: boolean;
   isTrending?: boolean;
+  postAsNewsDesk?: boolean;
   author?: { name: string } | null;
   seo?: any;
 }): PublicArticleCard {
@@ -47,7 +49,7 @@ function mapArticle(a: {
     title: a.title,
     excerpt: a.excerpt ?? '',
     category: a.category,
-    author: a.author?.name ?? 'ESB PowerLine',
+    author: a.postAsNewsDesk ? 'ESB News Desk' : (a.author?.name ?? 'ESB PowerLine'),
     date: (a.publishedAt ?? a.createdAt).toISOString(),
     readTime: a.readTime,
     views: a.views,
@@ -131,6 +133,20 @@ export async function getPublishedArticleBySlug(slug: string): Promise<PublicArt
     include: { author: { select: { name: true } } },
   });
   if (!article) return null;
+
+  let collaborators: { id: string; name: string }[] = [];
+  const collaboratorIds = Array.isArray(article.collaboratorIds)
+    ? (article.collaboratorIds as string[])
+    : [];
+
+  if (collaboratorIds.length > 0) {
+    const users = await prisma.user.findMany({
+      where: { id: { in: collaboratorIds } },
+      select: { id: true, name: true },
+    });
+    collaborators = users;
+  }
+
   const seo = (article.seo ?? {}) as { heroImage?: HeroImageMeta };
   return {
     ...mapArticle(article),
@@ -138,8 +154,8 @@ export async function getPublishedArticleBySlug(slug: string): Promise<PublicArt
     tags: (article.tags as string[]) ?? [],
     heroImage: seo.heroImage,
     imageCredit: article.imageCredit,
+    collaborators,
   };
-
 }
 
 export async function getRelatedPublishedArticles(

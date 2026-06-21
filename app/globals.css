@@ -5514,11 +5514,70 @@ button.grid-explorer-link {
 .tiptap ul, .tiptap ol { @apply pl-6 mb-4 space-y-1; }
 .tiptap blockquote { @apply border-l-4 border-primary/60 pl-5 italic text-muted-foreground my-4; }
 .tiptap img { @apply max-w-full rounded-xl my-4 shadow-sm; }
-.tiptap a { @apply text-primary underline underline-offset-2; }
-.tiptap table { @apply w-full border-collapse my-4 text-sm; }
-.tiptap th, .tiptap td { @apply border border-border px-3 py-2 align-top; }
+.tiptap img.ProseMirror-selectednode {
+  outline: 2px solid hsl(var(--primary));
+  box-shadow: 0 0 0 4px hsla(var(--primary) / 0.2);
+}
+.tiptap a { @apply text-primary underline underline-offset-2 cursor-pointer; }
+.tiptap table { @apply w-full border-collapse my-4 text-sm relative; }
+.tiptap th, .tiptap td { @apply border border-border px-3 py-2 align-top relative; }
 .tiptap th { @apply bg-muted/40 font-semibold text-left; }
+.tiptap td.selectedCell, .tiptap th.selectedCell {
+  background-color: hsla(var(--primary) / 0.12) !important;
+}
+.tiptap .column-resize-handle {
+  position: absolute;
+  right: -2px;
+  top: 0;
+  bottom: -2px;
+  width: 4px;
+  background-color: hsl(var(--primary));
+  pointer-events: none;
+}
 .tiptap hr { @apply my-6 border-border; }
+
+/* Real-time alignment previews */
+.tiptap .align-left, .article-body .align-left { text-align: left; }
+.tiptap .align-center, .article-body .align-center { text-align: center; }
+.tiptap .align-right, .article-body .align-right { text-align: right; }
+.tiptap .align-justify, .article-body .align-justify { text-align: justify; }
+
+/* Placeholder formatting */
+.tiptap p.is-editor-empty:first-child::before,
+.tiptap p.is-empty:first-child::before {
+  content: attr(data-placeholder);
+  float: left;
+  color: hsl(var(--muted-foreground) / 0.45);
+  pointer-events: none;
+  height: 0;
+}
+
+/* Pre & code blocks styles */
+.tiptap pre, .article-body pre {
+  background: hsl(var(--muted) / 0.6);
+  border-radius: 0.5rem;
+  padding: 0.75rem 1rem;
+  font-family: var(--font-mono, monospace);
+  font-size: 13px;
+  overflow-x: auto;
+  margin: 1rem 0;
+  border: 1px solid hsl(var(--border) / 0.35);
+}
+.tiptap code, .article-body code {
+  background: hsl(var(--muted) / 0.6);
+  border-radius: 0.25rem;
+  padding: 0.15rem 0.3rem;
+  font-family: var(--font-mono, monospace);
+  font-size: 0.9em;
+  border: 1px solid hsl(var(--border) / 0.2);
+}
+.tiptap pre code, .article-body pre code {
+  background: none;
+  padding: 0;
+  border-radius: 0;
+  font-size: inherit;
+  border: none;
+}
 
 /* Published article body — mirrors editor (.tiptap) typography */
 /* Sticky author byline — stays lower-left while scrolling long stories */
@@ -5771,6 +5830,7 @@ html.theme-white {
 .admin-shell {
   --admin-rose: 346 77% 58%;
   --admin-violet: 262 72% 62%;
+  --admin-red: 359 84% 62%;
   --admin-surface: 220 40% 8%;
   --admin-elevated: 220 35% 11%;
   --shell-gutter: clamp(0.75rem, 1.1vw, 1.25rem);
@@ -12904,13 +12964,14 @@ html[data-editor-guidance='pro'] .editor-settings-section__hint {
 
 .cms-editor-surface--resizable .tiptap-editor__body {
   flex: none;
-  min-height: 0;
-  overflow: visible;
+  min-height: 320px;
+  resize: vertical;
+  overflow: auto;
+  border-bottom: 1px solid hsl(var(--border) / 0.3);
 }
 
 .cms-editor-surface--resizable .tiptap-editor__body .tiptap {
   padding: 0.875rem 0.75rem 1rem;
-  overflow: visible;
 }
 
 @media (min-width: 768px) {
@@ -12925,6 +12986,13 @@ html[data-editor-guidance='pro'] .editor-settings-section__hint {
 
 .cms-story-tabs.segmented button {
   border-radius: 9999px;
+  height: 100%;
+  padding-top: 0;
+  padding-bottom: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.375rem;
 }
 
 .cms-story-tabs.segmented button[data-active='true'] {
@@ -12991,6 +13059,16 @@ html[data-editor-guidance='pro'] .editor-settings-section__hint {
   box-shadow: 0 1px 5px hsl(var(--admin-violet) / 0.12);
 }
 
+.cms-story-tabs__btn--preview[data-active='true'] {
+  color: hsl(var(--admin-red));
+  background: linear-gradient(
+    135deg,
+    hsl(var(--admin-red) / 0.16),
+    hsl(var(--admin-red) / 0.06)
+  );
+  box-shadow: 0 1px 5px hsl(var(--admin-red) / 0.12);
+}
+
 .theme-white .cms-story-tabs {
   background: linear-gradient(180deg, hsl(var(--muted) / 0.45), hsl(var(--muted) / 0.28));
   border-color: hsl(var(--border) / 0.6);
@@ -13002,6 +13080,10 @@ html[data-editor-guidance='pro'] .editor-settings-section__hint {
 
 .theme-white .cms-story-tabs__btn--seo[data-active='true'] {
   background: linear-gradient(135deg, hsl(var(--admin-violet) / 0.12), hsl(var(--admin-violet) / 0.04));
+}
+
+.theme-white .cms-story-tabs__btn--preview[data-active='true'] {
+  background: linear-gradient(135deg, hsl(var(--admin-red) / 0.12), hsl(var(--admin-red) / 0.04));
 }
 
 .cms-field {
@@ -15183,23 +15265,9 @@ html.theme-white .cms-datetime-grid-cell {
   padding-bottom: 1.5rem !important;
 }
 
-.cms-preview-device-frame--mobile .cms-preview-article-page h1 {
-  font-size: 1.65rem !important;
-  line-height: 1.15 !important;
-}
-
-.cms-preview-device-frame--tablet .cms-preview-article-page h1 {
-  font-size: 2rem !important;
-  line-height: 1.15 !important;
-}
-
-.cms-preview-device-frame--mobile .cms-preview-article-page .text-lg {
-  font-size: 0.95rem !important;
-}
-
+/* Fluid container query-based sizes automatically scale without manual frame overrides */
 .cms-preview-device-frame--mobile .cms-preview-article-page .article-body,
 .cms-preview-device-frame--tablet .cms-preview-article-page .article-body {
-  font-size: 0.95rem;
   overflow-wrap: anywhere;
 }
 
@@ -15761,14 +15829,7 @@ html.theme-white .cms-datetime-grid-cell {
   aspect-ratio: 16/9 !important;
 }
 
-.cms-preview-device-frame--mobile .cms-preview-article-page h1 {
-  font-size: 2.25rem !important;
-  line-height: 2.5rem !important;
-}
-.cms-preview-device-frame--tablet .cms-preview-article-page h1 {
-  font-size: 3rem !important;
-  line-height: 1 !important;
-}
+/* Defer preview page heading layout sizes to container queries */
 .cms-preview-device-frame--mobile .cms-preview-article-page .sm\:flex-row {
   flex-direction: column !important;
   align-items: flex-start !important;
@@ -16735,5 +16796,45 @@ html.theme-white .cms-datetime-grid-cell {
 .cms-shell:has(.cms-article-editor__workspace--focus) .cms-sidebar,
 .cms-shell:has(.cms-article-editor__workspace--focus) .admin-sidebar {
   display: none !important;
+}
+
+/* Container-query-based proportional article typography */
+.fluid-article-container {
+  container-type: inline-size !important;
+}
+
+.fluid-article-container h1.font-display {
+  font-size: clamp(1.85rem, 7.25cqw, 3.25rem) !important;
+  font-weight: 800 !important;
+  line-height: 1.08 !important;
+  letter-spacing: -0.025em !important;
+}
+
+.fluid-article-container .article-excerpt,
+.fluid-article-container p.article-excerpt {
+  font-size: clamp(1.125rem, 3.25cqw, 1.375rem) !important;
+  font-weight: 300 !important;
+  line-height: 1.52 !important;
+  letter-spacing: -0.015em !important;
+}
+
+.fluid-article-container .article-body {
+  font-size: clamp(0.975rem, 2.4cqw, 1.0625rem) !important;
+  line-height: 1.72 !important;
+}
+
+.fluid-article-container .article-body p {
+  font-size: clamp(0.975rem, 2.4cqw, 1.0625rem) !important;
+  line-height: 1.72 !important;
+}
+
+/* Footer logo background removal */
+.public-footer-logo .brand-logo__frame {
+  background: transparent !important;
+  background-color: transparent !important;
+  border: none !important;
+  border-width: 0 !important;
+  box-shadow: none !important;
+  padding: 0 !important;
 }
 

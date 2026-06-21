@@ -80,6 +80,7 @@ model Article {
   isBreaking  Boolean         @default(false)
   isPinned    Boolean         @default(false)
   isTrending  Boolean         @default(false)
+  postAsNewsDesk Boolean      @default(false)
   tags        Json?           // array of strings stored as JSON (sqlite does not support scalar lists natively in this setup)
   seo         Json?           // { metaTitle, metaDescription, focusKeyword, ogImage }
   collaboratorIds Json?       // array of user IDs

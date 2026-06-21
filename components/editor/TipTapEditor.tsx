@@ -16,8 +16,9 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import type { Editor } from '@tiptap/react';
 import { Mark, mergeAttributes } from '@tiptap/core';
 import { Button } from '@/components/ui/button';
-import { cn } from '@/lib/utils';
+import { cn, smartRearrangeText } from '@/lib/utils';
 import { optimizeImageToWebP } from '@/lib/image-optimizer';
+import { useEditorPreferences } from '@/components/cms/EditorPreferencesProvider';
 
 import { ModernTooltip } from '@/components/shared/ModernTooltip';
 import {
@@ -150,7 +151,6 @@ export const FontFamilyMark = Mark.create({
 
 
 interface TipTapEditorProps {
-
   content: string;
   onChange: (html: string) => void;
   placeholder?: string;
@@ -305,7 +305,6 @@ function FontSizeSelector({ editor }: { editor: any }) {
           size="sm"
           onClick={() => setOpen(!open)}
           className="h-8 px-2 text-xs font-semibold gap-1.5 rounded-md border border-border/30 bg-background/60 hover:bg-muted/60 text-muted-foreground hover:text-foreground transition-all flex items-center justify-between"
-          title="Font Size"
         >
           <span className="min-w-[28px] text-left">{activeSize === 'default' ? '16px' : activeSize}</span>
           <ChevronDown className="h-3.5 w-3.5 opacity-60" />
@@ -396,7 +395,6 @@ function TextColorSelector({ editor }: { editor: any }) {
           size="icon"
           onClick={() => setOpen(!open)}
           className="h-8 w-8 rounded-md hover:bg-muted/60 text-muted-foreground hover:text-foreground transition-all flex items-center justify-center relative"
-          title="Text Color"
         >
           <Palette className="h-4 w-4" />
           {activeColor !== 'Default' && (
@@ -488,7 +486,6 @@ function HighlightSelector({ editor }: { editor: any }) {
           size="icon"
           onClick={() => setOpen(!open)}
           className="h-8 w-8 rounded-md hover:bg-muted/60 text-muted-foreground hover:text-foreground transition-all flex items-center justify-center relative"
-          title="Highlight Text"
         >
           <Highlighter className="h-4 w-4" />
           {activeHighlight !== 'None' && (
@@ -584,7 +581,6 @@ function FontFamilySelector({ editor }: { editor: any }) {
           size="sm"
           onClick={() => setOpen(!open)}
           className="h-8 px-2 text-xs font-semibold gap-1.5 rounded-md border border-border/30 bg-background/60 hover:bg-muted/60 text-muted-foreground hover:text-foreground transition-all flex items-center justify-between"
-          title="Font Family"
         >
           <span className="min-w-[64px] text-left truncate max-w-[80px]">{displayLabel}</span>
           <ChevronDown className="h-3.5 w-3.5 opacity-60" />
@@ -630,9 +626,6 @@ function FontFamilySelector({ editor }: { editor: any }) {
 }
 
 export function TipTapEditor({
-
-
-
   content,
   onChange,
   placeholder = 'Start writing your article...',
@@ -640,6 +633,8 @@ export function TipTapEditor({
 }: TipTapEditorProps) {
   const editorRef = useRef<Editor | null>(null);
   const syncBodyHeightRef = useRef<(() => void) | null>(null);
+  const { preferences } = useEditorPreferences();
+  const isSticky = preferences.stickyTipTapToolbar;
 
   const editor = useEditor({
     extensions: [
@@ -675,9 +670,15 @@ export function TipTapEditor({
         class: 'tiptap focus:outline-none',
         style: `min-height: ${minBodyHeight}px`,
       },
-      handlePaste: (_view, _event) => {
+      handlePaste: () => {
         requestAnimationFrame(() => syncBodyHeightRef.current?.());
         return false;
+      },
+      transformPastedHTML: (html) => {
+        return html;
+      },
+      transformPastedText: (text) => {
+        return text;
       },
       handleKeyDown: (_view, event) => {
         const ed = editorRef.current;
@@ -690,6 +691,8 @@ export function TipTapEditor({
   useEffect(() => {
     editorRef.current = editor;
   }, [editor]);
+
+
 
   useEffect(() => {
     if (!editor) return;
@@ -780,8 +783,8 @@ export function TipTapEditor({
   const Divider = () => <span className="tiptap-toolbar__divider" aria-hidden />;
 
   return (
-    <div className="tiptap-editor tiptap-editor--sticky-toolbar">
-      <div className="tiptap-toolbar tiptap-toolbar--ribbon tiptap-toolbar--sticky">
+    <div className={cn("tiptap-editor", isSticky && "tiptap-editor--sticky-toolbar")}>
+      <div className={cn("tiptap-toolbar tiptap-toolbar--ribbon", isSticky && "tiptap-toolbar--sticky")}>
         <div className="tiptap-toolbar__group" role="group" aria-label="Text style">
           <ToolbarButton toolKey="bold" active={editor.isActive('bold')} onClick={() => editor.chain().focus().toggleBold().run()}>
             <Bold className="h-4 w-4" />

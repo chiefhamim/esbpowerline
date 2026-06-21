@@ -26,4 +26,5 @@ export type CarouselItem = {
   isBreaking?: boolean;
   isFeatured?: boolean;
   isPinned?: boolean;
+  heroMeta?: any;
 };

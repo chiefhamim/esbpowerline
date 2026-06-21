@@ -10,6 +10,13 @@ export const revalidate = 60;
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
+  if (slug === 'esb-news-desk') {
+    return {
+      title: 'ESB News Desk | ESB PowerLine',
+      description: 'The official editorial desk of ESB PowerLine, delivering authoritative, breaking, and in-depth energy sector news in Bangladesh.',
+    };
+  }
+
   const users = await prisma.user.findMany({ select: { name: true, bio: true } });
   const user = users.find(u => slugify(u.name) === slug);
   
@@ -24,23 +31,46 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 export default async function AuthorPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   
-  // Find author by matching slugified name
-  const users = await prisma.user.findMany({ 
-    select: { id: true, name: true, bio: true, avatar: true, email: true } 
-  });
-  const author = users.find(u => slugify(u.name) === slug);
-  
-  if (!author) notFound();
+  let author;
+  let articles;
 
-  // Get articles published by this author
-  const articles = await prisma.article.findMany({
-    where: { 
-      status: 'PUBLISHED',
-      authorId: author.id
-    },
-    include: { author: { select: { name: true } } },
-    orderBy: { publishedAt: 'desc' }
-  });
+  if (slug === 'esb-news-desk') {
+    author = {
+      id: 'esb-news-desk',
+      name: 'ESB News Desk',
+      bio: 'The official editorial desk of ESB PowerLine, delivering authoritative, breaking, and in-depth energy sector news in Bangladesh.',
+      avatar: null,
+      email: 'desk@esbpowerline.com',
+    };
+
+    articles = await prisma.article.findMany({
+      where: { 
+        status: 'PUBLISHED',
+        postAsNewsDesk: true,
+      },
+      include: { author: { select: { name: true } } },
+      orderBy: { publishedAt: 'desc' }
+    });
+  } else {
+    // Find author by matching slugified name
+    const users = await prisma.user.findMany({ 
+      select: { id: true, name: true, bio: true, avatar: true, email: true } 
+    });
+    author = users.find(u => slugify(u.name) === slug);
+    
+    if (!author) notFound();
+
+    // Get articles published by this author (only where not posted as news desk)
+    articles = await prisma.article.findMany({
+      where: { 
+        status: 'PUBLISHED',
+        authorId: author.id,
+        postAsNewsDesk: false,
+      },
+      include: { author: { select: { name: true } } },
+      orderBy: { publishedAt: 'desc' }
+    });
+  }
 
   // Map to PublicArticleCard format
   const mappedArticles = articles.map(a => ({
@@ -49,7 +79,7 @@ export default async function AuthorPage({ params }: { params: Promise<{ slug: s
     title: a.title,
     excerpt: a.excerpt ?? '',
     category: a.category,
-    author: a.author?.name ?? 'ESB PowerLine',
+    author: a.postAsNewsDesk ? 'ESB News Desk' : (a.author?.name ?? 'ESB PowerLine'),
     date: (a.publishedAt ?? a.createdAt).toISOString(),
     readTime: a.readTime,
     views: a.views,

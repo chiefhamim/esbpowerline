@@ -20,6 +20,7 @@ export default async function AdminArticlesPage() {
     isPinned: a.isPinned,
     isFeatured: a.isFeatured,
     isBreaking: a.isBreaking,
+    postAsNewsDesk: a.postAsNewsDesk,
   }));
 
   return (

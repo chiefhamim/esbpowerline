@@ -17,6 +17,7 @@ const articleFields = {
   isBreaking: z.boolean().optional(),
   isPinned: z.boolean().optional(),
   isTrending: z.boolean().optional(),
+  postAsNewsDesk: z.boolean().optional(),
   publishedAt: z.string().optional().nullable(),
   collaboratorIds: z.array(z.string()).optional(),
   seo: z

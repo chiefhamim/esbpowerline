@@ -20,6 +20,7 @@ function serializeArticles(articles: Awaited<ReturnType<typeof getArticles>>) {
     isPinned: a.isPinned,
     isFeatured: a.isFeatured,
     isBreaking: a.isBreaking,
+    postAsNewsDesk: a.postAsNewsDesk,
   }));
 }
 

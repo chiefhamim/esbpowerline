@@ -43,11 +43,11 @@ import { submitDraftForAdminReview } from '@/lib/actions/review-workflow';
 import { can, type Role } from '@/lib/constants';
 import { canSubmitArticleForReview } from '@/lib/editorial-review';
 import type { PublicCategory } from '@/lib/category-types';
-import { slugify, cn } from '@/lib/utils';
+import { slugify, cn, extractKeywords, autoCalculateCategory } from '@/lib/utils';
 import type { MediaItem } from '@/components/cms/MediaPicker';
 import { FeaturedImageEditor } from '@/components/cms/FeaturedImageEditor';
 import type { HeroImageMeta } from '@/lib/hero-image';
-import { ArticlePreviewModal } from '@/components/editor/ArticlePreviewModal';
+import { ArticlePreviewPanel } from '@/components/editor/ArticlePreviewPanel';
 import { CmsFormSelect } from '@/components/cms/CmsFormSelect';
 import { CmsCategorySelect } from '@/components/cms/CmsCategorySelect';
 import { CmsDateTimePicker } from '@/components/cms/CmsDateTimePicker';
@@ -57,6 +57,7 @@ import { StatusBadge } from '@/components/dashboard/StatusBadge';
 import { LiveArticleLink } from '@/components/shared/LiveArticleLink';
 import { ArticleAuthorSticky } from '@/components/shared/ArticleAuthorSticky';
 import { EditorCollaborators } from '@/components/editor/EditorCollaborators';
+import { getStaffForCollaboration } from '@/lib/actions/users';
 import { HEADLINE_BUDGET, EXCERPT_BUDGET, SLUG_BUDGET } from '@/lib/editorial-limits';
 import {
   formatPublishBlockerMessage,
@@ -69,7 +70,7 @@ import { useEditorPreferences } from '@/components/cms/EditorPreferencesProvider
 import { datetimeLocalToISO, toDatetimeLocal } from '@/lib/datetime-local';
 import {
   Eye, Save, Send, Clock, Sparkles, Tag, Layers, Globe, FileText,
-  FolderOpen, Archive, Link2, PenLine, ShieldCheck, Camera, Focus,
+  FolderOpen, Archive, Link2, PenLine, ShieldCheck, Camera, Focus, X,
 
 } from 'lucide-react';
 
@@ -110,10 +111,18 @@ interface ArticleFormProps {
     isBreaking: boolean;
     isPinned?: boolean;
     isTrending?: boolean;
+    postAsNewsDesk?: boolean;
     publishedAt?: string | Date | null;
     seo?: unknown;
   };
 }
+
+type StaffMember = {
+  id: string;
+  name: string;
+  role: string;
+  avatar: string | null;
+};
 
 const STATUS_OPTIONS = [
   { value: 'DRAFT', label: 'Draft', description: 'Work in progress, not visible' },
@@ -147,11 +156,21 @@ export function ArticleForm({
   const editorCtx = useCmsArticleEditor();
   const { showGuidanceHints } = useEditorPreferences();
   const [loading, setLoading] = useState(false);
-  const [preview, setPreview] = useState(false);
+  const [activeTab, setActiveTab] = useState('editor');
   const [focusMode, setFocusMode] = useState(false);
   const [reviewDialogOpen, setReviewDialogOpen] = useState(false);
   const [reviewNote, setReviewNote] = useState('');
   const [slugTouched, setSlugTouched] = useState(mode === 'edit');
+  const [staff, setStaff] = useState<StaffMember[]>([]);
+  const [loadingStaff, setLoadingStaff] = useState(false);
+
+  useEffect(() => {
+    setLoadingStaff(true);
+    getStaffForCollaboration()
+      .then((data) => setStaff(data))
+      .catch(() => setStaff([]))
+      .finally(() => setLoadingStaff(false));
+  }, []);
 
   const [title, setTitle] = useState(article?.title ?? '');
   const [slug, setSlug] = useState(article?.slug ?? '');
@@ -165,7 +184,13 @@ export function ArticleForm({
   const [status, setStatus] = useState(article?.status ?? 'DRAFT');
   const [imageUrl, setImageUrl] = useState(article?.imageUrl ?? '');
   const [imageCredit, setImageCredit] = useState(article?.imageCredit ?? '');
-  const [tags, setTags] = useState(((article?.tags as string[]) ?? []).join(', '));
+  const [tagsList, setTagsList] = useState<string[]>(
+    Array.isArray(article?.tags)
+      ? (article.tags as string[])
+      : []
+  );
+  const [tagInput, setTagInput] = useState('');
+  const [postAsNewsDesk, setPostAsNewsDesk] = useState(article?.postAsNewsDesk ?? false);
 
   const [collaboratorIds, setCollaboratorIds] = useState<string[]>(
     Array.isArray(article?.collaboratorIds)
@@ -234,18 +259,21 @@ export function ArticleForm({
       status: saveStatus as 'DRAFT' | 'PUBLISHED' | 'SCHEDULED' | 'ARCHIVED' | 'TRASH' | 'IN_REVIEW',
       imageUrl: imageUrl || undefined,
       imageCredit: imageCredit || null,
-      tags: tags.split(',').map((t) => t.trim()).filter(Boolean),
+      tags: tagsList.length > 0
+        ? tagsList
+        : extractKeywords(title, content),
       collaboratorIds,
       isFeatured,
       isBreaking,
       isPinned,
       isTrending,
+      postAsNewsDesk,
       publishedAt: resolvedPublishedAt ? datetimeLocalToISO(resolvedPublishedAt) : null,
       seo: { metaTitle, metaDescription, focusKeyword, heroImage: heroMeta },
     }),
     [
-      title, slug, excerpt, content, category, imageUrl, imageCredit, tags, collaboratorIds,
-      isFeatured, isBreaking, isPinned, isTrending, resolvedPublishedAt, metaTitle, metaDescription,
+      title, slug, excerpt, content, category, imageUrl, imageCredit, tagsList, collaboratorIds,
+      isFeatured, isBreaking, isPinned, isTrending, postAsNewsDesk, resolvedPublishedAt, metaTitle, metaDescription,
       focusKeyword, heroMeta,
     ],
   );
@@ -357,6 +385,45 @@ export function ArticleForm({
       return () => clearInterval(interval);
     }
   }, [mode, status, article, buildSavePayload]);
+
+  // 1. Auto-calculate category & tags when title/content changes
+  useEffect(() => {
+    if (categories.length > 0) {
+      const computedCat = autoCalculateCategory(title, content, categories.map((c) => c.name));
+      if (computedCat && (!category || category === 'General' || category === '')) {
+        setCategory(computedCat);
+      }
+    }
+    if (tagsList.length === 0 && (title || content)) {
+      const computedTags = extractKeywords(title, content);
+      setTagsList(computedTags);
+    }
+  }, [title, content, categories, category, tagsList.length]);
+
+  // 2. Auto-generate focus keyword & meta description when empty
+  useEffect(() => {
+    // Auto-generate focus keyword from title (first 1-2 words longer than 4 chars)
+    if (!focusKeyword && title) {
+      const words = title.toLowerCase()
+        .replace(/[^\w\s]/g, '')
+        .split(/\s+/)
+        .filter(w => w.length > 4 && !['about', 'after', 'again', 'would', 'their', 'there', 'these', 'under', 'while', 'which'].includes(w));
+      if (words.length > 0) {
+        setFocusKeyword(words.slice(0, 2).join(' '));
+      }
+    }
+
+    // Auto-generate meta description from body content plain text
+    if (!metaDescription && content) {
+      const plainText = content.replace(/<[^>]+>/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+      if (plainText.length > 0) {
+        const truncated = plainText.length > 155 ? plainText.slice(0, 152) + '...' : plainText;
+        setMetaDescription(truncated);
+      }
+    }
+  }, [title, content, focusKeyword, metaDescription]);
 
   const heroTitle = writeMeta?.title ?? (mode === 'create' ? 'New story' : 'Edit story');
   const heroSubtitle = writeMeta?.subtitle
@@ -535,7 +602,7 @@ export function ArticleForm({
         )}
 
         <section className="cms-editor-panel cms-editor-panel--body cms-article-editor__story">
-          <Tabs defaultValue="editor" className="cms-editor-tabs cms-editor-tabs--fill">
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="cms-editor-tabs cms-editor-tabs--fill">
             <div className="cms-editor-panel__head cms-editor-panel__head--tabs">
               <div className="flex items-center gap-2 min-w-0">
                 <Layers className="h-4 w-4 text-sky-500 shrink-0" />
@@ -552,19 +619,23 @@ export function ArticleForm({
                   <TabsTrigger value="seo" className="cms-story-tabs__btn cms-story-tabs__btn--seo text-xs gap-1.5 px-3">
                     <Globe className="h-3.5 w-3.5" /> SEO
                   </TabsTrigger>
+                  <TabsTrigger value="preview" className="cms-story-tabs__btn cms-story-tabs__btn--preview text-xs gap-1.5 px-3">
+                    <Eye className="h-3.5 w-3.5" /> Preview
+                  </TabsTrigger>
                 </TabsList>
-                <ModernTooltip label="Preview" hint="See how readers will see it" variant="editor" fast side="top">
-                  <Button type="button" variant="ghost" size="sm" onClick={() => setPreview(true)} className="h-9 text-xs shrink-0">
-                    <Eye className="h-3.5 w-3.5 mr-1.5" /> Preview
-                  </Button>
-                </ModernTooltip>
+
                 <ModernTooltip label={focusMode ? "Exit Focus" : "Focus Mode"} hint={focusMode ? "Show all panels" : "Hide distraction panels"} variant="editor" fast side="top">
                   <Button 
                     type="button" 
-                    variant={focusMode ? "secondary" : "ghost"} 
+                    variant="ghost" 
                     size="sm" 
                     onClick={() => setFocusMode(!focusMode)} 
-                    className={cn("h-9 text-xs shrink-0 gap-1.5", focusMode && "text-sky-500 bg-sky-500/10 hover:bg-sky-500/20")}
+                    className={cn(
+                      "h-8 rounded-full text-xs font-semibold shrink-0 gap-1.5 px-3 transition-all",
+                      focusMode 
+                        ? "text-sky-500 bg-sky-500/10 hover:bg-sky-500/15 border border-sky-500/20 shadow-sm" 
+                        : "text-muted-foreground hover:text-foreground hover:bg-muted/40 border border-transparent"
+                    )}
                   >
                     <Focus className="h-3.5 w-3.5" /> {focusMode ? "Focused" : "Focus"}
                   </Button>
@@ -577,6 +648,10 @@ export function ArticleForm({
                 authorName={authorName} 
                 collaboratorIds={collaboratorIds} 
                 onChange={setCollaboratorIds} 
+                postAsNewsDesk={postAsNewsDesk}
+                onPostAsNewsDeskChange={setPostAsNewsDesk}
+                staff={staff}
+                loading={loadingStaff}
               />
               <div className="cms-editor-surface cms-editor-surface--resizable cms-editor-surface--aligned mt-2">
                 <TipTapEditor content={content} onChange={setContent} minBodyHeight={320} />
@@ -619,6 +694,28 @@ export function ArticleForm({
                   <span className="cms-field__hint">Auto-generated from headline — edit to customize</span>
                 )}
               </div>
+            </TabsContent>
+            <TabsContent value="preview" className="cms-editor-panel__body cms-editor-panel__body--fill mt-0">
+              <ArticlePreviewPanel
+                active={activeTab === 'preview'}
+                title={title}
+                excerpt={excerpt}
+                content={content}
+                imageUrl={imageUrl}
+                imageCredit={imageCredit}
+                category={category}
+                authorName={postAsNewsDesk ? 'ESB News Desk' : authorName}
+                readTime={readTime}
+                publishedAt={resolvedPublishedAt}
+                slug={slug || 'preview'}
+                heroMeta={heroMeta}
+                isFeatured={isFeatured}
+                isPinned={isPinned}
+                isBreaking={isBreaking}
+                isTrending={isTrending}
+                tags={tagsList}
+                collaborators={staff.filter(s => collaboratorIds.includes(s.id)).map(c => ({ id: c.id, name: c.name }))}
+              />
             </TabsContent>
           </Tabs>
         </section>
@@ -724,11 +821,70 @@ export function ArticleForm({
               />
             </div>
             <div className="cms-field">
-              <label className="cms-field__label flex items-center gap-1.5">
-                <Tag className="h-3 w-3" /> Tags
-              </label>
-              <Input value={tags} onChange={(e) => setTags(e.target.value)} className="cms-field__input" placeholder="solar, policy, grid" />
-              <span className="cms-field__hint">Comma-separated topics</span>
+              <div className="cms-field__label-row">
+                <label className="cms-field__label flex items-center gap-1.5">
+                  <Tag className="h-3 w-3" /> Tags
+                </label>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const picked = extractKeywords(title, content);
+                    setTagsList(picked);
+                  }}
+                  className="text-[10px] font-semibold text-sky-400 hover:text-sky-300 hover:underline transition-all"
+                >
+                  Auto-pick from story
+                </button>
+              </div>
+              <div className="flex flex-wrap gap-1.5 p-2 rounded-md border border-input bg-background/50 focus-within:ring-1 focus-within:ring-ring focus-within:border-ring min-h-[40px] items-center">
+                {tagsList.map((tag) => (
+                  <span
+                    key={tag}
+                    className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] bg-sky-500/10 text-sky-400 border border-sky-500/20 font-medium"
+                  >
+                    #{tag}
+                    <button
+                      type="button"
+                      onClick={() => setTagsList(prev => prev.filter(t => t !== tag))}
+                      className="text-sky-400/60 hover:text-sky-300 transition-colors ml-0.5"
+                      aria-label={`Remove tag ${tag}`}
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </span>
+                ))}
+                <input
+                  type="text"
+                  value={tagInput}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    if (val.endsWith(',')) {
+                      const newTag = val.slice(0, -1).trim();
+                      if (newTag && !tagsList.includes(newTag)) {
+                        setTagsList(prev => [...prev, newTag]);
+                      }
+                      setTagInput('');
+                    } else {
+                      setTagInput(val);
+                    }
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      const newTag = tagInput.trim();
+                      if (newTag && !tagsList.includes(newTag)) {
+                        setTagsList(prev => [...prev, newTag]);
+                      }
+                      setTagInput('');
+                    } else if (e.key === 'Backspace' && !tagInput && tagsList.length > 0) {
+                      setTagsList(prev => prev.slice(0, -1));
+                    }
+                  }}
+                  placeholder={tagsList.length === 0 ? "Type and comma-separate..." : ""}
+                  className="flex-1 bg-transparent border-0 p-0 text-xs focus:ring-0 focus:outline-none placeholder:text-muted-foreground/50 min-w-[120px]"
+                />
+              </div>
+              <span className="cms-field__hint">Type word and press comma (,) or Enter to add a tag pill</span>
             </div>
             <FeaturedImageEditor
               items={mediaItems}
@@ -792,26 +948,6 @@ export function ArticleForm({
           </div>
         </div>
       )}
-
-      <ArticlePreviewModal
-        open={preview}
-        onClose={() => setPreview(false)}
-        title={title}
-        excerpt={excerpt}
-        content={content}
-        imageUrl={imageUrl}
-        imageCredit={imageCredit}
-        category={category}
-
-        authorName={authorName}
-        readTime={readTime}
-        publishedAt={resolvedPublishedAt}
-        slug={slug || 'preview'}
-        heroMeta={heroMeta}
-        isFeatured={isFeatured}
-        isPinned={isPinned}
-        isBreaking={isBreaking}
-      />
     </div>
   );
 }

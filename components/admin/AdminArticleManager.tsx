@@ -41,6 +41,7 @@ export type AdminArticleRow = {
   isPinned?: boolean;
   isFeatured?: boolean;
   isBreaking?: boolean;
+  postAsNewsDesk?: boolean;
 };
 
 type SortKey =
@@ -75,7 +76,11 @@ const SORT_OPTIONS: { value: SortKey; label: string; description?: string }[] = 
 ];
 
 function authorName(a: AdminArticleRow) {
-  return typeof a.author === 'string' ? a.author : a.author?.name ?? '';
+  const base = typeof a.author === 'string' ? a.author : a.author?.name ?? '';
+  if (a.postAsNewsDesk) {
+    return `${base} (as ESB ND)`;
+  }
+  return base;
 }
 
 function authorId(a: AdminArticleRow): string | undefined {

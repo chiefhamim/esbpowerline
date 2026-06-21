@@ -4,8 +4,8 @@ export type EditorClockFormat = '12' | '24';
 export type EditorPreferences = {
   /** noob = tooltips, panel subtitles, and field hints; pro = headings only */
   guidanceMode: EditorGuidanceMode;
-  /** Keep author byline pinned while writing long stories */
-  stickyAuthorByline: boolean;
+  /** Keep TipTap editor toolbar sticky at the top while writing */
+  stickyTipTapToolbar: boolean;
   clockFormat: EditorClockFormat;
 };
 
@@ -14,7 +14,7 @@ export const EDITOR_CLOCK_FORMAT_KEY = 'cms-editor-clock-format';
 
 export const DEFAULT_EDITOR_PREFERENCES: EditorPreferences = {
   guidanceMode: 'noob',
-  stickyAuthorByline: true,
+  stickyTipTapToolbar: true,
   clockFormat: '12',
 };
 
@@ -36,10 +36,17 @@ function normalizeGuidanceMode(value: unknown): EditorGuidanceMode {
 
 export function parseEditorPreferences(raw: unknown): EditorPreferences {
   if (!raw || typeof raw !== 'object') return { ...DEFAULT_EDITOR_PREFERENCES };
-  const data = raw as Partial<EditorPreferences>;
+  const data = raw as any;
+  
+  // Gracefully handle legacy stickyAuthorByline preference if present
+  const legacySticky = data.stickyAuthorByline;
+  const stickyTipTapToolbar = data.stickyTipTapToolbar !== undefined
+    ? !!data.stickyTipTapToolbar
+    : (legacySticky !== undefined ? !!legacySticky : true);
+
   return {
     guidanceMode: normalizeGuidanceMode(data.guidanceMode),
-    stickyAuthorByline: data.stickyAuthorByline !== false,
+    stickyTipTapToolbar,
     clockFormat: normalizeClockFormat(data.clockFormat),
   };
 }

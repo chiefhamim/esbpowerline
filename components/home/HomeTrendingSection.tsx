@@ -12,6 +12,7 @@ import { useLocale } from '@/components/shared/LocaleProvider';
 import { hasArticleImage } from '@/lib/article-image';
 import type { PublicArticleCard } from '@/lib/category-types';
 import { formatExactDate } from '@/lib/utils';
+import { heroImageStyle } from '@/lib/hero-image';
 
 function formatTrendingTime(date: string, locale: 'en' | 'bn') {
   return formatExactDate(date);
@@ -193,7 +194,7 @@ function TrendingHeroRailWave({ trending }: { trending: PublicArticleCard[] }) {
                     src={article.imageUrl}
                     alt=""
                     fill
-                    className="object-cover"
+                    style={heroImageStyle(article.heroMeta || undefined)}
                     sizes="(max-width: 768px) 100vw, 280px"
                   />
                 ) : (
@@ -458,7 +459,7 @@ export function HomeTrendingSection({
                 src={lead.imageUrl}
                 alt=""
                 fill
-                className="object-cover transition-transform duration-300 group-hover:scale-[1.03]"
+                style={heroImageStyle(lead.heroMeta || undefined)}
                 sizes="(max-width: 768px) 96px, 128px"
               />
             ) : (

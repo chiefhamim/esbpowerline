@@ -28,7 +28,7 @@ type EditorPreferencesContextValue = {
   showTooltips: boolean;
   showGuidanceHints: boolean;
   setGuidanceMode: (mode: EditorGuidanceMode) => void;
-  setStickyAuthorByline: (enabled: boolean) => void;
+  setStickyTipTapToolbar: (enabled: boolean) => void;
   setClockFormat: (format: EditorClockFormat) => void;
   updatePreferences: (patch: Partial<EditorPreferences>) => void;
 };
@@ -68,7 +68,7 @@ export function EditorPreferencesProvider({ children }: { children: ReactNode })
     showTooltips: showEditorTooltips(preferences.guidanceMode),
     showGuidanceHints: showEditorGuidanceHints(preferences.guidanceMode),
     setGuidanceMode: (mode) => updatePreferences({ guidanceMode: mode }),
-    setStickyAuthorByline: (enabled) => updatePreferences({ stickyAuthorByline: enabled }),
+    setStickyTipTapToolbar: (enabled) => updatePreferences({ stickyTipTapToolbar: enabled }),
     setClockFormat: (format) => updatePreferences({ clockFormat: format }),
     updatePreferences,
   }), [preferences, updatePreferences]);
@@ -97,7 +97,7 @@ export function useEditorPreferences() {
       showTooltips: true,
       showGuidanceHints: true,
       setGuidanceMode: () => {},
-      setStickyAuthorByline: () => {},
+      setStickyTipTapToolbar: () => {},
       setClockFormat: () => {},
       updatePreferences: () => {},
     } satisfies EditorPreferencesContextValue;

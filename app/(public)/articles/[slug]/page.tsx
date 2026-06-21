@@ -1,7 +1,7 @@
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
-import { formatDate, formatExactDate, formatNumber, slugify } from '@/lib/utils';
+import { formatDate, formatExactDate, formatNumber, slugify, extractKeywords } from '@/lib/utils';
 import { heroImageStyle } from '@/lib/hero-image';
 import { ArticleCard } from '@/components/news/ArticleCard';
 import {
@@ -72,7 +72,7 @@ export default async function ArticlePage({ params }: { params: Promise<{ slug: 
   };
 
   return (
-    <div className="container py-10 max-w-3xl article-page--with-sticky-author">
+    <div className="container py-10 max-w-3xl article-page--with-sticky-author fluid-article-container">
       <ArticleViewTracker articleId={article.id} />
       <Link href="/articles" className="text-sm text-primary hover:underline">← Back to news</Link>
 
@@ -80,11 +80,11 @@ export default async function ArticlePage({ params }: { params: Promise<{ slug: 
         <div className="flex items-center gap-2 mb-5">
           <span className="text-sm font-bold uppercase tracking-widest text-primary">{article.category}</span>
         </div>
-        <h1 className="text-4xl md:text-5xl lg:text-[3.5rem] font-display font-extrabold tracking-tight leading-[1.05] text-foreground mb-6 line-clamp-2">
+        <h1 className="font-display font-extrabold tracking-tight leading-[1.05] text-foreground mb-6">
           {article.title}
         </h1>
         {article.excerpt && (
-          <p className="text-xl md:text-2xl text-muted-foreground leading-snug font-light mb-8 line-clamp-3">
+          <p className="text-muted-foreground leading-snug font-light mb-8 article-excerpt">
             {article.excerpt.replace(/\[&hellip;\]/g, '...').replace(/&hellip;/g, '...')}
           </p>
         )}
@@ -95,9 +95,30 @@ export default async function ArticlePage({ params }: { params: Promise<{ slug: 
               {article.author.substring(0, 2)}
             </Link>
             <div className="flex flex-col">
-              <Link href={`/authors/${slugify(article.author)}`} className="text-base font-semibold text-foreground hover:text-primary transition-colors">
-                {article.author}
-              </Link>
+              <div className="flex flex-wrap items-center gap-x-1.5 text-base font-semibold text-foreground">
+                <Link href={`/authors/${slugify(article.author)}`} className="hover:text-primary transition-colors">
+                  {article.author}
+                </Link>
+                {article.collaborators && article.collaborators.length > 0 && (
+                  <>
+                    <span className="text-xs font-normal text-muted-foreground">with:</span>
+                    <Link
+                      href={`/authors/${slugify(article.collaborators[0].name)}`}
+                      className="hover:text-primary transition-colors underline decoration-dotted underline-offset-2"
+                    >
+                      {article.collaborators[0].name}
+                    </Link>
+                    {article.collaborators.length > 1 && (
+                      <span
+                        className="bg-muted-foreground/10 px-1.5 py-0.5 rounded text-[10px] font-bold text-muted-foreground cursor-help"
+                        title={article.collaborators.slice(1).map((c) => c.name).join(', ')}
+                      >
+                        +{article.collaborators.length - 1}
+                      </span>
+                    )}
+                  </>
+                )}
+              </div>
               <span className="text-sm text-muted-foreground">{formatExactDate(article.date)} <span className="mx-1.5 opacity-50">•</span> {article.readTime} min read</span>
             </div>
           </div>
@@ -144,11 +165,22 @@ export default async function ArticlePage({ params }: { params: Promise<{ slug: 
 
       <div className="article-body mt-8 text-lg md:text-xl leading-relaxed pb-safe" dangerouslySetInnerHTML={{ __html: sanitizeArticleHtml(article.content) }} />
 
-      <div className="mt-8 flex flex-wrap gap-2">
-        {article.tags.map((t: string) => (
-          <Link key={t} href={`/tags/${t}`} className="tag">#{t}</Link>
-        ))}
-      </div>
+      {(() => {
+        const displayTags = article.tags && article.tags.length > 0
+          ? article.tags
+          : extractKeywords(article.title, article.content);
+        if (displayTags.length === 0) return null;
+        return (
+          <div className="mt-10 pt-6 border-t border-border/30">
+            <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground/60 block mb-3">Trending Keywords</span>
+            <div className="flex flex-wrap gap-2">
+              {displayTags.map((t: string) => (
+                <Link key={t} href={`/tags/${t}`} className="tag">#{t}</Link>
+              ))}
+            </div>
+          </div>
+        );
+      })()}
 
       <div className="mt-10">
         <ArticleCommentSection
