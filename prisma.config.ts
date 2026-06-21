@@ -6,12 +6,18 @@ const migrationsDir =
     ? 'prisma/migrations_postgresql'
     : 'prisma/migrations');
 
+const dbUrl =
+  process.env.DATABASE_URL ||
+  (process.env.PRISMA_SCHEMA_PROVIDER === 'postgresql'
+    ? 'postgresql://postgres:postgres@localhost:5432/postgres'
+    : 'file:./dev.db');
+
 export default defineConfig({
   schema: 'prisma/schema.prisma',
   migrations: {
     path: migrationsDir,
   },
   datasource: {
-    url: env('DATABASE_URL'),
+    url: dbUrl,
   },
 });
