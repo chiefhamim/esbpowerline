@@ -71,6 +71,8 @@ model Article {
   categoryId  String?
   categoryRef Category?       @relation(fields: [categoryId], references: [id], onDelete: Restrict)
   imageUrl    String?
+  imageCredit String?
+
   readTime    Int             @default(1)
   views       Int             @default(0)
   likes       Int             @default(0)

@@ -5,6 +5,8 @@ import { Image as ImageIcon, Upload, X, Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { cmsToast } from '@/lib/cms-toast';
+import { optimizeImageToWebP } from '@/lib/image-optimizer';
+
 
 export type MediaItem = {
   id: string;
@@ -36,10 +38,12 @@ export function MediaPicker({
       const file = input.files?.[0];
       if (!file) return;
       setUploading(true);
-      const form = new FormData();
-      form.append('file', file);
       try {
+        const optimizedFile = await optimizeImageToWebP(file);
+        const form = new FormData();
+        form.append('file', optimizedFile);
         const res = await fetch('/api/upload', { method: 'POST', body: form });
+
         if (!res.ok) throw new Error('Upload failed');
         const data = await res.json();
         onChange(data.url ?? data.path ?? '');

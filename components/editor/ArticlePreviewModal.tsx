@@ -44,6 +44,7 @@ type ArticlePreviewModalProps = {
   excerpt: string;
   content: string;
   imageUrl: string;
+  imageCredit?: string | null;
   category: string;
   authorName: string;
   readTime: number;
@@ -55,6 +56,7 @@ type ArticlePreviewModalProps = {
   isBreaking?: boolean;
 };
 
+
 // PreviewMeta removed
 
 export function ArticlePreviewModal({
@@ -64,6 +66,7 @@ export function ArticlePreviewModal({
   excerpt,
   content,
   imageUrl,
+  imageCredit,
   category,
   authorName,
   readTime,
@@ -74,6 +77,7 @@ export function ArticlePreviewModal({
   isPinned,
   isBreaking,
 }: ArticlePreviewModalProps) {
+
   const [placement, setPlacement] = useState<PreviewPlacement>('carousel');
   const [device, setDevice] = useState<PreviewDevice>('desktop');
   const [theme, setTheme] = useState<SiteTheme>('midnight');
@@ -402,19 +406,26 @@ export function ArticlePreviewModal({
 
                   {imageUrl && (
                     <figure className="mt-6">
-                      <div className="cms-preview-hero-frame rounded-xl overflow-hidden border border-border aspect-video">
+                      <div className="image-container-with-credit rounded-xl overflow-hidden border border-border aspect-video">
                         <img
                           src={imageUrl}
                           alt={heroMeta?.alt ?? displayTitle}
                           className="cms-preview-hero-frame__img w-full h-full"
                           style={heroImageStyle(heroMeta)}
                         />
+                        {imageCredit && (
+                          <span className="image-credit-overlay">
+                            Photo: {imageCredit}
+                          </span>
+                        )}
                       </div>
                       {heroMeta?.caption && (
                         <figcaption className="mt-2 text-center text-sm text-muted-foreground italic">{heroMeta.caption}</figcaption>
                       )}
                     </figure>
                   )}
+
+
                   <div className="article-body mt-8" dangerouslySetInnerHTML={{ __html: cleanContent }} />
                   <div className="mt-8 pt-6 text-sm text-muted-foreground flex flex-wrap gap-4">
                     <span>{formatNumber(0)} views</span>

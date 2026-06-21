@@ -10,7 +10,9 @@ export type PublicArticleDetail = PublicArticleCard & {
   content: string;
   tags: string[];
   heroImage?: HeroImageMeta;
+  imageCredit?: string | null;
 };
+
 
 export type PublicMagazineIssue = {
   id: string;
@@ -135,7 +137,9 @@ export async function getPublishedArticleBySlug(slug: string): Promise<PublicArt
     content: article.content,
     tags: (article.tags as string[]) ?? [],
     heroImage: seo.heroImage,
+    imageCredit: article.imageCredit,
   };
+
 }
 
 export async function getRelatedPublishedArticles(

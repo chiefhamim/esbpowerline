@@ -8,6 +8,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { cmsToast } from '@/lib/cms-toast';
+import { optimizeImageToWebP } from '@/lib/image-optimizer';
+
 import { useBodyScrollLock } from '@/hooks/useBodyScrollLock';
 import type { MediaItem } from '@/components/cms/MediaPicker';
 import {
@@ -65,42 +67,8 @@ export function FeaturedImageEditor({
 
         // 2. Compress to WebP
         setUploadState('compressing');
-        const compressedBlob = await new Promise<Blob>((resolve, reject) => {
-          const img = new Image();
-          img.onload = () => {
-            let { width, height } = img;
-            const maxDim = 1920; // Maintain standard quality but prevent extreme sizes
-            if (width > maxDim || height > maxDim) {
-              if (width > height) {
-                height = Math.round((height * maxDim) / width);
-                width = maxDim;
-              } else {
-                width = Math.round((width * maxDim) / height);
-                height = maxDim;
-              }
-            }
+        const webpFile = await optimizeImageToWebP(file, { quality: 0.8 });
 
-            const canvas = document.createElement('canvas');
-            canvas.width = width;
-            canvas.height = height;
-            const ctx = canvas.getContext('2d');
-            if (!ctx) return reject(new Error('Failed to get canvas context'));
-            
-            ctx.drawImage(img, 0, 0, width, height);
-            
-            // Compress to WebP with 0.8 quality
-            canvas.toBlob((blob) => {
-              if (blob) resolve(blob);
-              else reject(new Error('Blob conversion failed'));
-            }, 'image/webp', 0.8);
-          };
-          img.onerror = () => reject(new Error('Invalid image file'));
-          img.src = URL.createObjectURL(file);
-        });
-
-        const webpFile = new File([compressedBlob], file.name.replace(/\.[^/.]+$/, '') + '.webp', {
-          type: 'image/webp',
-        });
 
         // 3. Upload the optimized file
         setUploadState('uploading');

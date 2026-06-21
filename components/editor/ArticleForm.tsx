@@ -43,7 +43,7 @@ import { submitDraftForAdminReview } from '@/lib/actions/review-workflow';
 import { can, type Role } from '@/lib/constants';
 import { canSubmitArticleForReview } from '@/lib/editorial-review';
 import type { PublicCategory } from '@/lib/category-types';
-import { slugify } from '@/lib/utils';
+import { slugify, cn } from '@/lib/utils';
 import type { MediaItem } from '@/components/cms/MediaPicker';
 import { FeaturedImageEditor } from '@/components/cms/FeaturedImageEditor';
 import type { HeroImageMeta } from '@/lib/hero-image';
@@ -69,7 +69,8 @@ import { useEditorPreferences } from '@/components/cms/EditorPreferencesProvider
 import { datetimeLocalToISO, toDatetimeLocal } from '@/lib/datetime-local';
 import {
   Eye, Save, Send, Clock, Sparkles, Tag, Layers, Globe, FileText,
-  FolderOpen, Archive, Link2, PenLine, ShieldCheck,
+  FolderOpen, Archive, Link2, PenLine, ShieldCheck, Camera, Focus,
+
 } from 'lucide-react';
 
 type ArticleFormPermissions = {
@@ -101,7 +102,9 @@ interface ArticleFormProps {
     category: string;
     status: string;
     imageUrl?: string | null;
+    imageCredit?: string | null;
     tags?: unknown;
+
     collaboratorIds?: unknown;
     isFeatured: boolean;
     isBreaking: boolean;
@@ -145,6 +148,7 @@ export function ArticleForm({
   const { showGuidanceHints } = useEditorPreferences();
   const [loading, setLoading] = useState(false);
   const [preview, setPreview] = useState(false);
+  const [focusMode, setFocusMode] = useState(false);
   const [reviewDialogOpen, setReviewDialogOpen] = useState(false);
   const [reviewNote, setReviewNote] = useState('');
   const [slugTouched, setSlugTouched] = useState(mode === 'edit');
@@ -160,7 +164,9 @@ export function ArticleForm({
   });
   const [status, setStatus] = useState(article?.status ?? 'DRAFT');
   const [imageUrl, setImageUrl] = useState(article?.imageUrl ?? '');
+  const [imageCredit, setImageCredit] = useState(article?.imageCredit ?? '');
   const [tags, setTags] = useState(((article?.tags as string[]) ?? []).join(', '));
+
   const [collaboratorIds, setCollaboratorIds] = useState<string[]>(
     Array.isArray(article?.collaboratorIds)
       ? (article.collaboratorIds as string[])
@@ -227,6 +233,7 @@ export function ArticleForm({
       category,
       status: saveStatus as 'DRAFT' | 'PUBLISHED' | 'SCHEDULED' | 'ARCHIVED' | 'TRASH' | 'IN_REVIEW',
       imageUrl: imageUrl || undefined,
+      imageCredit: imageCredit || null,
       tags: tags.split(',').map((t) => t.trim()).filter(Boolean),
       collaboratorIds,
       isFeatured,
@@ -237,11 +244,12 @@ export function ArticleForm({
       seo: { metaTitle, metaDescription, focusKeyword, heroImage: heroMeta },
     }),
     [
-      title, slug, excerpt, content, category, imageUrl, tags, collaboratorIds,
+      title, slug, excerpt, content, category, imageUrl, imageCredit, tags, collaboratorIds,
       isFeatured, isBreaking, isPinned, isTrending, resolvedPublishedAt, metaTitle, metaDescription,
       focusKeyword, heroMeta,
     ],
   );
+
 
   const handleSubmitForReview = useCallback(async () => {
     if (!article) return;
@@ -358,42 +366,45 @@ export function ArticleForm({
 
   return (
     <div className="cms-article-editor">
-      <section className="cms-editor-panel cms-write-hero">
-        <div className="cms-write-hero__inner">
-          <div className="cms-write-hero__icon">
-            <PenLine className="h-4 w-4" strokeWidth={2.25} />
-          </div>
-          <div className="cms-write-hero__copy min-w-0 flex-1">
-            <div className="flex items-center gap-2 flex-wrap">
-              <h1 className="cms-write-hero__title">{heroTitle}</h1>
-              {writeMeta?.status ? (
-                <StatusBadge status={writeMeta.status} />
-              ) : (
-                <span className="cms-write-page__badge">
-                  <Sparkles className="h-3 w-3" /> Editorial Suite
-                </span>
+      {!focusMode && (
+        <section className="cms-editor-panel cms-write-hero">
+          <div className="cms-write-hero__inner">
+            <div className="cms-write-hero__icon">
+              <PenLine className="h-4 w-4" strokeWidth={2.25} />
+            </div>
+            <div className="cms-write-hero__copy min-w-0 flex-1">
+              <div className="flex items-center gap-2 flex-wrap">
+                <h1 className="cms-write-hero__title">{heroTitle}</h1>
+                {writeMeta?.status ? (
+                  <StatusBadge status={writeMeta.status} />
+                ) : (
+                  <span className="cms-write-page__badge">
+                    <Sparkles className="h-3 w-3" /> Editorial Suite
+                  </span>
+                )}
+              </div>
+              <p className="cms-write-hero__desc">{heroSubtitle}</p>
+              {(writeMeta?.showLiveLink || writeMeta?.showBackLink) && (
+                <div className="cms-write-hero__extras">
+                  {writeMeta.showLiveLink && article?.slug ? (
+                    <LiveArticleLink slug={article.slug} className="cms-write-hero__link" />
+                  ) : null}
+                  {writeMeta.showBackLink ? (
+                    <Link href="/cms/articles" className="cms-write-hero__link">
+                      ← All articles
+                    </Link>
+                  ) : null}
+                </div>
               )}
             </div>
-            <p className="cms-write-hero__desc">{heroSubtitle}</p>
-            {(writeMeta?.showLiveLink || writeMeta?.showBackLink) && (
-              <div className="cms-write-hero__extras">
-                {writeMeta.showLiveLink && article?.slug ? (
-                  <LiveArticleLink slug={article.slug} className="cms-write-hero__link" />
-                ) : null}
-                {writeMeta.showBackLink ? (
-                  <Link href="/cms/articles" className="cms-write-hero__link">
-                    ← All articles
-                  </Link>
-                ) : null}
-              </div>
-            )}
           </div>
-        </div>
-      </section>
+        </section>
+      )}
 
-      <div className="cms-article-editor__workspace">
+      <div className={cn("cms-article-editor__workspace", focusMode && "cms-article-editor__workspace--focus")}>
         <div className="cms-article-editor__main">
-        <section className="cms-editor-panel cms-article-editor__headline">
+        {!focusMode && (
+          <section className="cms-editor-panel cms-article-editor__headline">
           <div className="cms-editor-panel__head">
             <FileText className="h-4 w-4 text-sky-500" />
             <div>
@@ -521,6 +532,7 @@ export function ArticleForm({
             </div>
           </div>
         </section>
+        )}
 
         <section className="cms-editor-panel cms-editor-panel--body cms-article-editor__story">
           <Tabs defaultValue="editor" className="cms-editor-tabs cms-editor-tabs--fill">
@@ -544,6 +556,17 @@ export function ArticleForm({
                 <ModernTooltip label="Preview" hint="See how readers will see it" variant="editor" fast side="top">
                   <Button type="button" variant="ghost" size="sm" onClick={() => setPreview(true)} className="h-9 text-xs shrink-0">
                     <Eye className="h-3.5 w-3.5 mr-1.5" /> Preview
+                  </Button>
+                </ModernTooltip>
+                <ModernTooltip label={focusMode ? "Exit Focus" : "Focus Mode"} hint={focusMode ? "Show all panels" : "Hide distraction panels"} variant="editor" fast side="top">
+                  <Button 
+                    type="button" 
+                    variant={focusMode ? "secondary" : "ghost"} 
+                    size="sm" 
+                    onClick={() => setFocusMode(!focusMode)} 
+                    className={cn("h-9 text-xs shrink-0 gap-1.5", focusMode && "text-sky-500 bg-sky-500/10 hover:bg-sky-500/20")}
+                  >
+                    <Focus className="h-3.5 w-3.5" /> {focusMode ? "Focused" : "Focus"}
                   </Button>
                 </ModernTooltip>
               </div>
@@ -601,7 +624,8 @@ export function ArticleForm({
         </section>
         </div>
 
-        <aside className="cms-article-editor__sidebar">
+        {!focusMode && (
+          <aside className="cms-article-editor__sidebar">
         <section className="cms-sidebar-card cms-article-editor__publish">
           <div className="cms-sidebar-card__head">
             <Send className="h-4 w-4" />
@@ -713,9 +737,25 @@ export function ArticleForm({
               meta={heroMeta}
               onMetaChange={setHeroMeta}
             />
+            {imageUrl && (
+              <div className="cms-field mt-3">
+                <label className="cms-field__label flex items-center gap-1.5">
+                  <Camera className="h-3.5 w-3.5" /> Image Credit
+                </label>
+                <Input
+                  value={imageCredit}
+                  onChange={(e) => setImageCredit(e.target.value)}
+                  className="cms-field__input"
+                  placeholder="e.g., Reuters / Jane Doe"
+                />
+                <span className="cms-field__hint">Credit for the featured image (visible on live story)</span>
+              </div>
+            )}
+
           </div>
         </section>
         </aside>
+        )}
       </div>
 
       {reviewDialogOpen && (
@@ -760,7 +800,9 @@ export function ArticleForm({
         excerpt={excerpt}
         content={content}
         imageUrl={imageUrl}
+        imageCredit={imageCredit}
         category={category}
+
         authorName={authorName}
         readTime={readTime}
         publishedAt={resolvedPublishedAt}

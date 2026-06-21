@@ -12,6 +12,8 @@ import {
 import { formatEditorialTimestamp } from '@/lib/utils';
 import { publicArticleUrl } from '@/lib/public-site-url';
 import { deleteMedia, updateMedia, type MediaLibraryItem } from '@/lib/actions/media';
+import { optimizeImageToWebP } from '@/lib/image-optimizer';
+
 
 function formatBytes(bytes: number | null | undefined) {
   if (!bytes) return '—';
@@ -204,10 +206,12 @@ export function MediaUpload({ items }: { items: MediaLibraryItem[] }) {
       const file = input.files?.[0];
       if (!file) return;
       setUploading(true);
-      const form = new FormData();
-      form.append('file', file);
       try {
+        const optimizedFile = await optimizeImageToWebP(file);
+        const form = new FormData();
+        form.append('file', optimizedFile);
         const res = await fetch('/api/upload', { method: 'POST', body: form });
+
         if (!res.ok) throw new Error('Upload failed');
         toast.success('Uploaded');
         router.refresh();

@@ -16,6 +16,8 @@ const ARTICLE_ALLOWED_TAGS = [
   'hr',
   'span',
   'div',
+  'sub',
+  'sup',
 ];
 
 const ARTICLE_SANITIZE_OPTIONS: sanitizeHtml.IOptions = {
@@ -27,9 +29,21 @@ const ARTICLE_SANITIZE_OPTIONS: sanitizeHtml.IOptions = {
     td: ['colspan', 'rowspan', 'align'],
     th: ['colspan', 'rowspan', 'align'],
     table: ['class'],
-    span: ['class'],
-    div: ['class'],
-    p: ['class'],
+    span: ['class', 'style'],
+    div: ['class', 'style'],
+    p: ['class', 'style'],
+    h1: ['class', 'style'],
+    h2: ['class', 'style'],
+    h3: ['class', 'style'],
+  },
+  allowedStyles: {
+    '*': {
+      'font-size': [/.*/],
+      'font-family': [/.*/],
+      'color': [/.*/],
+      'background-color': [/.*/],
+      'text-align': [/.*/],
+    },
   },
   allowedSchemes: ['http', 'https', 'mailto'],
   allowedSchemesByTag: {

@@ -114,16 +114,23 @@ export default async function ArticlePage({ params }: { params: Promise<{ slug: 
       </header>
 
       <figure className="mt-6">
-        <div className="rounded-xl w-full aspect-video border border-border overflow-hidden bg-muted/40 flex items-center justify-center relative">
+        <div className="image-container-with-credit rounded-xl w-full aspect-video border border-border overflow-hidden bg-muted/40 flex items-center justify-center">
           {hasArticleImage(article.imageUrl) ? (
-            <Image
-              src={article.imageUrl}
-              alt={article.heroImage?.alt ?? article.title}
-              fill
-              priority
-              style={heroImageStyle(article.heroImage)}
-              sizes="(max-width: 768px) 100vw, 800px"
-            />
+            <>
+              <Image
+                src={article.imageUrl}
+                alt={article.heroImage?.alt ?? article.title}
+                fill
+                priority
+                style={heroImageStyle(article.heroImage)}
+                sizes="(max-width: 768px) 100vw, 800px"
+              />
+              {article.imageCredit && (
+                <span className="image-credit-overlay">
+                  Photo: {article.imageCredit}
+                </span>
+              )}
+            </>
           ) : (
             <NoImage className="absolute inset-0 h-full w-full" />
           )}
@@ -132,6 +139,8 @@ export default async function ArticlePage({ params }: { params: Promise<{ slug: 
           <figcaption className="mt-2 text-center text-sm text-muted-foreground italic">{article.heroImage.caption}</figcaption>
         )}
       </figure>
+
+
 
       <div className="article-body mt-8 text-lg md:text-xl leading-relaxed pb-safe" dangerouslySetInnerHTML={{ __html: sanitizeArticleHtml(article.content) }} />
 

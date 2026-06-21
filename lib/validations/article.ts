@@ -10,6 +10,8 @@ const articleFields = {
   category: z.string().min(1, 'Category is required'),
   status: articleStatusEnum,
   imageUrl: z.string().optional(),
+  imageCredit: z.string().optional().nullable(),
+
   tags: z.array(z.string()).optional(),
   isFeatured: z.boolean().optional(),
   isBreaking: z.boolean().optional(),

@@ -499,6 +499,8 @@ export async function createArticle(data: ArticleInput) {
       categoryId: categoryRef.id,
       status: parsed.status,
       imageUrl: parsed.imageUrl,
+      imageCredit: parsed.imageCredit,
+
       tags: parsed.tags ?? [],
       collaboratorIds: parsed.collaboratorIds ?? [],
       isFeatured: placement.isFeatured,
@@ -569,6 +571,8 @@ export async function updateArticle(id: string, data: ArticleInput) {
       categoryId: categoryRef.id,
       status: parsed.status,
       imageUrl: parsed.imageUrl,
+      imageCredit: parsed.imageCredit,
+
       tags: parsed.tags ?? [],
       collaboratorIds: parsed.collaboratorIds ?? [],
       isFeatured: placement.isFeatured,

@@ -12,19 +12,145 @@ import { TableRow } from '@tiptap/extension-table-row';
 import { TableCell } from '@tiptap/extension-table-cell';
 import { TableHeader } from '@tiptap/extension-table-header';
 import HorizontalRule from '@tiptap/extension-horizontal-rule';
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import type { Editor } from '@tiptap/react';
+import { Mark, mergeAttributes } from '@tiptap/core';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { optimizeImageToWebP } from '@/lib/image-optimizer';
+
 import { ModernTooltip } from '@/components/shared/ModernTooltip';
 import {
   Bold, Italic, Underline as UnderlineIcon, Strikethrough, Heading1, Heading2, Heading3,
   List, ListOrdered, Quote, Link as LinkIcon, Image as ImageIcon, Undo, Redo, Code,
   AlignLeft, AlignCenter, AlignRight, AlignJustify, Table as TableIcon, Minus, RemoveFormatting,
-  Pilcrow, Code2, CornerDownLeft, IndentIncrease, IndentDecrease,
+  Pilcrow, Code2, CornerDownLeft, IndentIncrease, IndentDecrease, ChevronDown,
+  Palette, Highlighter, Subscript, Superscript,
 } from 'lucide-react';
 
+
+
+export const FontSizeMark = Mark.create({
+  name: 'fontSize',
+
+  addAttributes() {
+    return {
+      size: {
+        default: null,
+        parseHTML: (element) => element.style.fontSize,
+        renderHTML: (attributes) => {
+          if (!attributes.size) {
+            return {};
+          }
+          return { style: `font-size: ${attributes.size}` };
+        },
+      },
+    };
+  },
+
+  parseHTML() {
+    return [
+      {
+        tag: 'span[style*="font-size"]',
+      },
+    ];
+  },
+
+  renderHTML({ HTMLAttributes }) {
+    return ['span', mergeAttributes(HTMLAttributes), 0];
+  },
+});
+
+export const TextColorMark = Mark.create({
+  name: 'textColor',
+  addAttributes() {
+    return {
+      color: {
+        default: null,
+        parseHTML: (element) => element.style.color,
+        renderHTML: (attributes) => {
+          if (!attributes.color) return {};
+          return { style: `color: ${attributes.color}` };
+        },
+      },
+    };
+  },
+  parseHTML() {
+    return [{ tag: 'span[style*="color"]' }];
+  },
+  renderHTML({ HTMLAttributes }) {
+    return ['span', mergeAttributes(HTMLAttributes), 0];
+  },
+});
+
+export const HighlightMark = Mark.create({
+  name: 'highlightColor',
+  addAttributes() {
+    return {
+      color: {
+        default: null,
+        parseHTML: (element) => element.style.backgroundColor,
+        renderHTML: (attributes) => {
+          if (!attributes.color) return {};
+          return { style: `background-color: ${attributes.color}` };
+        },
+      },
+    };
+  },
+  parseHTML() {
+    return [{ tag: 'span[style*="background-color"]' }];
+  },
+  renderHTML({ HTMLAttributes }) {
+    return ['span', mergeAttributes(HTMLAttributes), 0];
+  },
+});
+
+export const SubscriptMark = Mark.create({
+  name: 'subscript',
+  parseHTML() {
+    return [{ tag: 'sub' }, { style: 'vertical-align: sub' }];
+  },
+  renderHTML() {
+    return ['sub', 0];
+  },
+});
+
+export const SuperscriptMark = Mark.create({
+  name: 'superscript',
+  parseHTML() {
+    return [{ tag: 'sup' }, { style: 'vertical-align: super' }];
+  },
+  renderHTML() {
+    return ['sup', 0];
+  },
+});
+
+export const FontFamilyMark = Mark.create({
+  name: 'fontFamily',
+  addAttributes() {
+    return {
+      font: {
+        default: null,
+        parseHTML: (element) => element.style.fontFamily,
+        renderHTML: (attributes) => {
+          if (!attributes.font) return {};
+          return { style: `font-family: ${attributes.font}` };
+        },
+      },
+    };
+  },
+  parseHTML() {
+    return [{ tag: 'span[style*="font-family"]' }];
+  },
+  renderHTML({ HTMLAttributes }) {
+    return ['span', mergeAttributes(HTMLAttributes), 0];
+  },
+});
+
+
+
 interface TipTapEditorProps {
+
   content: string;
   onChange: (html: string) => void;
   placeholder?: string;
@@ -61,7 +187,10 @@ const TOOLBAR_ITEMS: Record<string, { label: string; hint: string; shortcut?: st
   undo: { label: 'Undo', hint: 'Revert last change', shortcut: `${MOD}+Z` },
   redo: { label: 'Redo', hint: 'Reapply undone change', shortcut: `${MOD}+Shift+Z` },
   paragraph: { label: 'Paragraph', hint: 'Return selection to body text', shortcut: `${MOD}+Alt+0` },
+  subscript: { label: 'Subscript', hint: 'Lowered text (for chemical formulas)' },
+  superscript: { label: 'Superscript', hint: 'Raised text (for footnotes/math)' },
 };
+
 
 function ToolbarButton({
   onClick,
@@ -131,7 +260,379 @@ function runEditorShortcut(editor: Editor, event: KeyboardEvent): boolean {
   return false;
 }
 
+function FontSizeSelector({ editor }: { editor: any }) {
+  const [open, setOpen] = useState(false);
+  const containerRef = useRef<HTMLDivElement | null>(null);
+
+  const fontSizes = [
+    { label: '8px', value: '8px', desc: 'Micro' },
+    { label: '10px', value: '10px', desc: 'Mini' },
+    { label: '12px', value: '12px', desc: 'Tiny' },
+    { label: '14px', value: '14px', desc: 'Small' },
+    { label: '16px', value: 'default', desc: 'Default' },
+    { label: '18px', value: '18px', desc: 'Medium' },
+    { label: '20px', value: '20px', desc: 'Large' },
+    { label: '24px', value: '24px', desc: 'X-Large' },
+    { label: '30px', value: '30px', desc: 'XX-Large' },
+  ];
+
+  const activeSize = editor.getAttributes('fontSize').size || '16px';
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+        setOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  return (
+    <div className="relative inline-flex" ref={containerRef}>
+      <ModernTooltip
+        label="Font Size"
+        hint="Scale story typography size"
+        variant="editor"
+        fast
+        side="top"
+        showDelayMs={120}
+        className="tiptap-toolbar__item"
+      >
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          onClick={() => setOpen(!open)}
+          className="h-8 px-2 text-xs font-semibold gap-1.5 rounded-md border border-border/30 bg-background/60 hover:bg-muted/60 text-muted-foreground hover:text-foreground transition-all flex items-center justify-between"
+          title="Font Size"
+        >
+          <span className="min-w-[28px] text-left">{activeSize === 'default' ? '16px' : activeSize}</span>
+          <ChevronDown className="h-3.5 w-3.5 opacity-60" />
+        </Button>
+      </ModernTooltip>
+
+
+      {open && (
+        <div className="absolute top-full left-0 mt-1 z-50 min-w-[130px] rounded-lg border border-border bg-popover p-1 shadow-md animate-in fade-in slide-in-from-top-1 duration-100 overflow-hidden">
+
+
+          <div className="px-2 py-1 text-[8px] uppercase tracking-wider text-muted-foreground/60 font-bold">
+            Size
+          </div>
+          {fontSizes.map((size) => {
+            const isActive = activeSize === size.value || (size.value === 'default' && (activeSize === '16px' || !activeSize));
+            return (
+              <button
+                key={size.value}
+                type="button"
+                onClick={() => {
+                  if (size.value === 'default') {
+                    editor.chain().focus().unsetMark('fontSize').run();
+                  } else {
+                    editor.chain().focus().setMark('fontSize', { size: size.value }).run();
+                  }
+                  setOpen(false);
+                }}
+                className={cn(
+                  "w-full text-left px-2 py-1 rounded-md text-xs flex items-center justify-between transition-colors",
+                  isActive 
+                    ? "bg-primary/10 text-primary font-semibold" 
+                    : "text-foreground/80 hover:bg-muted hover:text-foreground"
+                )}
+              >
+                <span>{size.label}</span>
+                <span className="text-[10px] opacity-40">{size.desc}</span>
+              </button>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function TextColorSelector({ editor }: { editor: any }) {
+  const [open, setOpen] = useState(false);
+  const containerRef = useRef<HTMLDivElement | null>(null);
+
+  const colors = [
+    { label: 'Default', value: 'default', color: 'inherit' },
+    { label: 'Red', value: '#ef4444', color: '#ef4444' },
+    { label: 'Orange', value: '#f97316', color: '#f97316' },
+    { label: 'Yellow', value: '#eab308', color: '#eab308' },
+    { label: 'Green', value: '#22c55e', color: '#22c55e' },
+    { label: 'Blue', value: '#3b82f6', color: '#3b82f6' },
+    { label: 'Purple', value: '#a855f7', color: '#a855f7' },
+    { label: 'Gray', value: '#6b7280', color: '#6b7280' },
+  ];
+
+  const activeColor = editor.getAttributes('textColor').color || 'Default';
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+        setOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  return (
+    <div className="relative inline-flex" ref={containerRef}>
+      <ModernTooltip
+        label="Text Color"
+        hint="Apply custom color to selected text"
+        variant="editor"
+        fast
+        side="top"
+        showDelayMs={120}
+        className="tiptap-toolbar__item"
+      >
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          onClick={() => setOpen(!open)}
+          className="h-8 w-8 rounded-md hover:bg-muted/60 text-muted-foreground hover:text-foreground transition-all flex items-center justify-center relative"
+          title="Text Color"
+        >
+          <Palette className="h-4 w-4" />
+          {activeColor !== 'Default' && (
+            <span 
+              className="absolute bottom-1 right-1 w-1.5 h-1.5 rounded-full border border-background"
+              style={{ backgroundColor: activeColor }}
+            />
+          )}
+        </Button>
+      </ModernTooltip>
+
+
+      {open && (
+        <div className="absolute top-full left-0 mt-1 z-50 min-w-[120px] rounded-lg border border-border bg-popover p-1 shadow-md animate-in fade-in slide-in-from-top-1 duration-100 overflow-hidden">
+          <div className="px-2 py-1 text-[8px] uppercase tracking-wider text-muted-foreground/60 font-bold">
+            Text Color
+          </div>
+          {colors.map((c) => {
+            const isActive = activeColor === c.value || (c.value === 'default' && activeColor === 'Default');
+            return (
+              <button
+                key={c.value}
+                type="button"
+                onClick={() => {
+                  if (c.value === 'default') {
+                    editor.chain().focus().unsetMark('textColor').run();
+                  } else {
+                    editor.chain().focus().setMark('textColor', { color: c.value }).run();
+                  }
+                  setOpen(false);
+                }}
+                className={cn(
+                  "w-full text-left px-2 py-1 rounded-md text-xs flex items-center gap-2 transition-colors",
+                  isActive 
+                    ? "bg-primary/10 text-primary font-semibold" 
+                    : "text-foreground/80 hover:bg-muted hover:text-foreground"
+                )}
+              >
+                <span className="w-2.5 h-2.5 rounded-full border border-border" style={{ backgroundColor: c.color }} />
+                <span>{c.label}</span>
+              </button>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function HighlightSelector({ editor }: { editor: any }) {
+  const [open, setOpen] = useState(false);
+  const containerRef = useRef<HTMLDivElement | null>(null);
+
+  const highlights = [
+    { label: 'None', value: 'default', color: 'transparent' },
+    { label: 'Yellow', value: 'rgba(234, 179, 8, 0.25)', color: 'rgba(234, 179, 8, 0.6)' },
+    { label: 'Green', value: 'rgba(34, 197, 94, 0.25)', color: 'rgba(34, 197, 94, 0.6)' },
+    { label: 'Blue', value: 'rgba(59, 130, 246, 0.25)', color: 'rgba(59, 130, 246, 0.6)' },
+    { label: 'Red', value: 'rgba(239, 68, 68, 0.25)', color: 'rgba(239, 68, 68, 0.6)' },
+    { label: 'Purple', value: 'rgba(168, 85, 247, 0.25)', color: 'rgba(168, 85, 247, 0.6)' },
+  ];
+
+  const activeHighlight = editor.getAttributes('highlightColor').color || 'None';
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+        setOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  return (
+    <div className="relative inline-flex" ref={containerRef}>
+      <ModernTooltip
+        label="Highlight Color"
+        hint="Highlight text backdrop"
+        variant="editor"
+        fast
+        side="top"
+        showDelayMs={120}
+        className="tiptap-toolbar__item"
+      >
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          onClick={() => setOpen(!open)}
+          className="h-8 w-8 rounded-md hover:bg-muted/60 text-muted-foreground hover:text-foreground transition-all flex items-center justify-center relative"
+          title="Highlight Text"
+        >
+          <Highlighter className="h-4 w-4" />
+          {activeHighlight !== 'None' && (
+            <span 
+              className="absolute bottom-1 right-1 w-1.5 h-1.5 rounded-full border border-background"
+              style={{ backgroundColor: activeHighlight }}
+            />
+          )}
+        </Button>
+      </ModernTooltip>
+
+
+      {open && (
+        <div className="absolute top-full left-0 mt-1 z-50 min-w-[120px] rounded-lg border border-border bg-popover p-1 shadow-md animate-in fade-in slide-in-from-top-1 duration-100 overflow-hidden">
+          <div className="px-2 py-1 text-[8px] uppercase tracking-wider text-muted-foreground/60 font-bold">
+            Highlight Color
+          </div>
+          {highlights.map((h) => {
+            const isActive = activeHighlight === h.value || (h.value === 'default' && activeHighlight === 'None');
+            return (
+              <button
+                key={h.value}
+                type="button"
+                onClick={() => {
+                  if (h.value === 'default') {
+                    editor.chain().focus().unsetMark('highlightColor').run();
+                  } else {
+                    editor.chain().focus().setMark('highlightColor', { color: h.value }).run();
+                  }
+                  setOpen(false);
+                }}
+                className={cn(
+                  "w-full text-left px-2 py-1 rounded-md text-xs flex items-center gap-2 transition-colors",
+                  isActive 
+                    ? "bg-primary/10 text-primary font-semibold" 
+                    : "text-foreground/80 hover:bg-muted hover:text-foreground"
+                )}
+              >
+                <span className="w-2.5 h-2.5 rounded border border-border" style={{ backgroundColor: h.color }} />
+                <span>{h.label}</span>
+              </button>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function FontFamilySelector({ editor }: { editor: any }) {
+  const [open, setOpen] = useState(false);
+  const containerRef = useRef<HTMLDivElement | null>(null);
+
+  const fonts = [
+    { label: 'Default', value: 'default', font: 'inherit', desc: 'Theme Font' },
+    { label: 'Georgia', value: 'Georgia, serif', font: 'Georgia, serif', desc: 'News Serif' },
+    { label: 'Merriweather', value: 'Merriweather, serif', font: 'Merriweather, serif', desc: 'Readability Serif' },
+    { label: 'Playfair Display', value: '"Playfair Display", serif', font: '"Playfair Display", serif', desc: 'Editorial Serif' },
+    { label: 'Helvetica / Arial', value: '"Helvetica Neue", Helvetica, Arial, sans-serif', font: '"Helvetica Neue", Helvetica, Arial, sans-serif', desc: 'Classic Sans' },
+    { label: 'Inter', value: 'Inter, sans-serif', font: 'Inter, sans-serif', desc: 'Modern Sans' },
+    { label: 'Courier New', value: '"Courier New", Courier, monospace', font: '"Courier New", Courier, monospace', desc: 'Data Mono' },
+  ];
+
+  const activeFont = editor.getAttributes('fontFamily').font || 'Default';
+
+  // Find user-friendly label for currently active font
+  const displayLabel = fonts.find(f => activeFont.includes(f.label) || activeFont === f.value)?.label || 'Font';
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+        setOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  return (
+    <div className="relative inline-flex" ref={containerRef}>
+      <ModernTooltip
+        label="Font Family"
+        hint="Choose an editorial font family"
+        variant="editor"
+        fast
+        side="top"
+        showDelayMs={120}
+        className="tiptap-toolbar__item"
+      >
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          onClick={() => setOpen(!open)}
+          className="h-8 px-2 text-xs font-semibold gap-1.5 rounded-md border border-border/30 bg-background/60 hover:bg-muted/60 text-muted-foreground hover:text-foreground transition-all flex items-center justify-between"
+          title="Font Family"
+        >
+          <span className="min-w-[64px] text-left truncate max-w-[80px]">{displayLabel}</span>
+          <ChevronDown className="h-3.5 w-3.5 opacity-60" />
+        </Button>
+      </ModernTooltip>
+
+      {open && (
+        <div className="absolute top-full left-0 mt-1 z-50 min-w-[170px] rounded-lg border border-border bg-popover p-1 shadow-md animate-in fade-in slide-in-from-top-1 duration-100 overflow-hidden">
+          <div className="px-2 py-1 text-[8px] uppercase tracking-wider text-muted-foreground/60 font-bold">
+            Font Family
+          </div>
+          {fonts.map((f) => {
+            const isActive = activeFont === f.value || (f.value === 'default' && (activeFont === 'Default' || !activeFont));
+            return (
+              <button
+                key={f.value}
+                type="button"
+                onClick={() => {
+                  if (f.value === 'default') {
+                    editor.chain().focus().unsetMark('fontFamily').run();
+                  } else {
+                    editor.chain().focus().setMark('fontFamily', { font: f.value }).run();
+                  }
+                  setOpen(false);
+                }}
+                className={cn(
+                  "w-full text-left px-2 py-1.5 rounded-md text-xs flex items-center justify-between transition-colors",
+                  isActive 
+                    ? "bg-primary/10 text-primary font-semibold" 
+                    : "text-foreground/80 hover:bg-muted hover:text-foreground"
+                )}
+                style={{ fontFamily: f.value !== 'default' ? f.value : undefined }}
+              >
+                <span>{f.label}</span>
+                <span className="text-[10px] opacity-40 font-sans">{f.desc}</span>
+              </button>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function TipTapEditor({
+
+
+
   content,
   onChange,
   placeholder = 'Start writing your article...',
@@ -153,6 +654,15 @@ export function TipTapEditor({
       Image.configure({ inline: false }),
       Link.configure({ openOnClick: false }),
       Placeholder.configure({ placeholder }),
+      FontSizeMark,
+      TextColorMark,
+      HighlightMark,
+      SubscriptMark,
+      SuperscriptMark,
+      FontFamilyMark,
+
+
+
     ],
     content,
     immediatelyRender: false,
@@ -222,15 +732,21 @@ export function TipTapEditor({
     input.onchange = async () => {
       const file = input.files?.[0];
       if (!file || !editor) return;
-      const form = new FormData();
-      form.append('file', file);
-      const res = await fetch('/api/upload', { method: 'POST', body: form });
-      if (!res.ok) return;
-      const { url } = await res.json();
-      editor.chain().focus().setImage({ src: url }).run();
+      try {
+        const optimizedFile = await optimizeImageToWebP(file);
+        const form = new FormData();
+        form.append('file', optimizedFile);
+        const res = await fetch('/api/upload', { method: 'POST', body: form });
+        if (!res.ok) return;
+        const { url } = await res.json();
+        editor.chain().focus().setImage({ src: url }).run();
+      } catch (err) {
+        console.error('Editor image upload failed:', err);
+      }
     };
     input.click();
   }, [editor]);
+
 
   const setLink = useCallback(() => {
     if (!editor) return;
@@ -279,8 +795,39 @@ export function TipTapEditor({
           <ToolbarButton toolKey="strike" active={editor.isActive('strike')} onClick={() => editor.chain().focus().toggleStrike().run()}>
             <Strikethrough className="h-4 w-4" />
           </ToolbarButton>
+          <ToolbarButton toolKey="subscript" active={editor.isActive('subscript')} onClick={() => {
+            if (editor.isActive('subscript')) {
+              editor.chain().focus().unsetMark('subscript').run();
+            } else {
+              editor.chain().focus().unsetMark('superscript').setMark('subscript').run();
+            }
+          }}>
+            <Subscript className="h-4 w-4" />
+          </ToolbarButton>
+          <ToolbarButton toolKey="superscript" active={editor.isActive('superscript')} onClick={() => {
+            if (editor.isActive('superscript')) {
+              editor.chain().focus().unsetMark('superscript').run();
+            } else {
+              editor.chain().focus().unsetMark('subscript').setMark('superscript').run();
+            }
+          }}>
+            <Superscript className="h-4 w-4" />
+          </ToolbarButton>
         </div>
         <Divider />
+        <div className="tiptap-toolbar__group" role="group" aria-label="Font settings">
+          <FontFamilySelector editor={editor} />
+          <FontSizeSelector editor={editor} />
+        </div>
+        <Divider />
+
+        <div className="tiptap-toolbar__group" role="group" aria-label="Color style">
+          <TextColorSelector editor={editor} />
+          <HighlightSelector editor={editor} />
+        </div>
+        <Divider />
+
+
         <div className="tiptap-toolbar__group" role="group" aria-label="Structure">
           <ToolbarButton toolKey="paragraph" active={editor.isActive('paragraph')} onClick={() => editor.chain().focus().setParagraph().run()}>
             <Pilcrow className="h-4 w-4" />
