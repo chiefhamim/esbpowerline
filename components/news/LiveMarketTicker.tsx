@@ -103,7 +103,7 @@ export function LiveMarketTicker({
         const ChangeIcon = isPositive ? TrendingUp : TrendingDown;
         return (
           <div key={`${item.id}-${idx}`} className="flex shrink-0 items-center gap-2 text-muted-foreground">
-            <span className={cn('font-medium text-foreground/90', textSize)}>{item.name}</span>
+            <span className={cn('font-medium text-foreground', textSize)}>{item.name}</span>
             <span className={cn('font-mono tabular-nums text-foreground', textSize)}>
               {item.prefix}
               {item.value.toLocaleString(locale === 'bn' ? 'bn-BD' : 'en-US')}
@@ -170,7 +170,7 @@ export function LiveMarketTicker({
       )}
     >
       {label}
-      <div className={cn('market-ticker__viewport mask-fade', compact ? 'ml-2' : 'ml-3')}>{track}</div>
+      <div className={cn('market-ticker__viewport', compact ? 'pl-2 -mr-3' : 'pl-3 -mr-3')}>{track}</div>
     </div>
   );
 

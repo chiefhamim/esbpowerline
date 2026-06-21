@@ -234,7 +234,7 @@ export function PublicNavbar({
                   className={`category-nav-cell group relative transition-all duration-200 select-none w-full overflow-hidden ${
                     isActive
                       ? `${colors.activeBg} font-semibold text-foreground`
-                      : `${colors.hoverBg} font-medium text-muted-foreground/85 hover:text-foreground`
+                      : `${colors.hoverBg} font-medium text-foreground hover:text-foreground`
                   }`}
                 >
                   <span
@@ -280,7 +280,7 @@ export function PublicNavbar({
                     className={`category-nav-cell group relative font-semibold transition-all duration-200 select-none min-w-0 ${
                       isActive
                         ? `${colors.activeBg} ${colors.useCustom ? 'category-nav--custom' : colors.text}`
-                        : `${colors.hoverBg} text-muted-foreground hover:text-foreground`
+                        : `${colors.hoverBg} text-foreground hover:text-foreground`
                     }`}
                   >
                     <span className="category-nav-cell__inline">

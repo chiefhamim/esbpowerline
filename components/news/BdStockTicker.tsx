@@ -74,7 +74,7 @@ export function BdStockTicker({
           </span>
         </div>
       )}
-      <div className="market-ticker__viewport mask-fade ml-2 md:ml-3">
+      <div className="market-ticker__viewport pl-2 md:pl-3 -mr-3">
         <div
           className="market-ticker__track flex w-max items-center gap-7 whitespace-nowrap animate-[marquee_38s_linear_infinite]"
           style={{ animationPlayState: 'running' }}
