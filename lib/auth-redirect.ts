@@ -2,9 +2,29 @@
 export function safeAuthRedirectPath(raw: string | null | undefined, fallback: string): string {
   if (!raw?.trim()) return fallback;
   const value = raw.trim();
-  if (!value.startsWith('/') || value.startsWith('//')) return fallback;
-  if (value.includes('://') || value.includes('\\')) return fallback;
-  return value;
+  
+  // Same-origin relative paths are safe
+  if (value.startsWith('/') && !value.startsWith('//') && !value.includes('\\')) {
+    return value;
+  }
+
+  // Absolute URLs that point to our own workspaces are safe
+  try {
+    const url = new URL(value);
+    const hostname = url.hostname;
+    const isLocal = hostname === 'localhost' || hostname === '127.0.0.1';
+    const isProdDomain =
+      hostname === 'esbpowerline.com' ||
+      hostname.endsWith('.esbpowerline.com') ||
+      hostname === 'esbpowerline' ||
+      hostname.endsWith('.vercel.app');
+
+    if (isLocal || isProdDomain) {
+      return value;
+    }
+  } catch {}
+
+  return fallback;
 }
 
 export type PasswordResetAudience = 'staff' | 'member';
