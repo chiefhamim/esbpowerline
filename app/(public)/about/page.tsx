@@ -135,7 +135,7 @@ export default async function AboutPage() {
                     </p>
                   </div>
                   <p className="text-xs text-muted-foreground leading-relaxed font-light">
-                    Crafting the portal's UI/UX architecture, digital magazine layout layouts, and data analytics dashboards.
+                    Directs the visual identity across all platforms, designing motion graphics, corporate logos, marketing banners, and managing the overall aesthetic of our monthly magazine.
                   </p>
                 </div>
               </div>
@@ -158,13 +158,13 @@ export default async function AboutPage() {
                     </p>
                   </div>
                   <p className="text-xs text-muted-foreground leading-relaxed font-light">
-                    Curating energy reports, coordinating news releases, managing breaking bulletins, and content scheduling.
+                    Leads content curation and energy sector research, tracking policy revisions, aggregating data points, and compiling valuable briefs for the monthly publications.
                   </p>
                 </div>
               </div>
             </div>
 
-            {/* Obaidul Haque — Accounting */}
+            {/* Obaidul Haque — Assistant Manager & Accounting */}
             <div className="relative group overflow-hidden rounded-2xl border border-border/40 bg-card/15 p-5 hover:border-amber-500/40 transition-all duration-300 shadow-md hover:shadow-amber-500/5">
               <div className="absolute top-0 right-0 h-24 w-24 bg-amber-500/5 rounded-bl-full -mr-6 -mt-6 blur-xl group-hover:bg-amber-500/10 transition-colors" />
               <div className="flex items-start gap-5 relative z-10">
@@ -177,11 +177,11 @@ export default async function AboutPage() {
                       Obaidul Haque
                     </h4>
                     <p className="text-[11px] font-bold text-amber-500 uppercase tracking-widest mt-0.5">
-                      Accounting
+                      Assistant Manager & Accounting
                     </p>
                   </div>
                   <p className="text-xs text-muted-foreground leading-relaxed font-light">
-                    Managing subscriber invoicing, corporate billing, financial ledger, and advertising campaign budgets.
+                    Manages corporate finance, billing ledgers, and operational logistics, acting as a direct representative for key face-to-face deals and business relations.
                   </p>
                 </div>
               </div>
@@ -200,11 +200,11 @@ export default async function AboutPage() {
                       Riazul Islam
                     </h4>
                     <p className="text-[11px] font-bold text-emerald-500 uppercase tracking-widest mt-0.5">
-                      CISO (Chief Info Security Officer)
+                      CISO (Hosting & Infrastructure)
                     </p>
                   </div>
                   <p className="text-xs text-muted-foreground leading-relaxed font-light">
-                    Securing critical infrastructure assets, encryption, audit trails, and staff authentication flows.
+                    Administers cloud hosting systems, secure domain infrastructure, network routing stability, and enforces platform-wide security compliance.
                   </p>
                 </div>
               </div>
