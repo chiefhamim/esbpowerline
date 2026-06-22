@@ -312,7 +312,13 @@ export function ArticlePreviewPanel({
               ? ((focusMode && placement === 'article')
                   ? { width: '100%', maxWidth: '100%', zoom: 1 }
                   : { width: '100%', maxWidth: '1280px' })
-              : { width: deviceWidth, maxWidth: '100%' }
+              : { 
+                  width: deviceWidth, 
+                  maxWidth: '100%',
+                  height: device === 'mobile' ? '720px' : '900px',
+                  display: 'flex',
+                  flexDirection: 'column'
+                }
           }
         >
           {!isDesktop && (
@@ -330,6 +336,7 @@ export function ArticlePreviewPanel({
               (!focusMode || placement !== 'article') && 'rounded-b-xl overflow-hidden',
               `theme-${theme}`,
               theme === 'white' ? 'light' : 'dark',
+              !isDesktop && 'flex-1 overflow-y-auto'
             )}
           >
             {focusMode && placement === 'article' && (
