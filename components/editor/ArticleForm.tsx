@@ -158,6 +158,7 @@ export function ArticleForm({
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState('editor');
   const [focusMode, setFocusMode] = useState(false);
+  const [previewPlacement, setPreviewPlacement] = useState<'article' | 'carousel' | 'card' | 'coverage-hero' | 'trending' | 'facebook'>('article');
   const [reviewDialogOpen, setReviewDialogOpen] = useState(false);
   const [reviewNote, setReviewNote] = useState('');
   const [slugTouched, setSlugTouched] = useState(mode === 'edit');
@@ -171,6 +172,7 @@ export function ArticleForm({
       .catch(() => setStaff([]))
       .finally(() => setLoadingStaff(false));
   }, []);
+
 
   const [title, setTitle] = useState(article?.title ?? '');
   const [slug, setSlug] = useState(article?.slug ?? '');
@@ -202,6 +204,19 @@ export function ArticleForm({
   const [isBreaking, setIsBreaking] = useState(article?.isBreaking ?? false);
   const [isPinned, setIsPinned] = useState(article?.isPinned ?? false);
   const [isTrending, setIsTrending] = useState(article?.isTrending ?? false);
+
+  useEffect(() => {
+    if (isFeatured || isBreaking) {
+      setPreviewPlacement('carousel');
+    } else if (isPinned) {
+      setPreviewPlacement('coverage-hero');
+    } else if (isTrending) {
+      setPreviewPlacement('trending');
+    } else {
+      setPreviewPlacement('article');
+    }
+  }, [isFeatured, isBreaking, isPinned, isTrending]);
+
   const [publishedAt, setPublishedAt] = useState(() => toDatetimeLocal(article?.publishedAt));
   const articleSeo = (article?.seo ?? {}) as {
     metaTitle?: string;
@@ -468,7 +483,11 @@ export function ArticleForm({
         </section>
       )}
 
-      <div className={cn("cms-article-editor__workspace", focusMode && "cms-article-editor__workspace--focus")}>
+      <div className={cn(
+        "cms-article-editor__workspace",
+        focusMode && "cms-article-editor__workspace--focus",
+        focusMode && activeTab === 'preview' && previewPlacement === 'article' && "cms-article-editor__workspace--preview-active"
+      )}>
         <div className="cms-article-editor__main">
         {!focusMode && (
           <section className="cms-editor-panel cms-article-editor__headline">
@@ -698,6 +717,9 @@ export function ArticleForm({
             <TabsContent value="preview" className="cms-editor-panel__body cms-editor-panel__body--fill mt-0">
               <ArticlePreviewPanel
                 active={activeTab === 'preview'}
+                focusMode={focusMode}
+                placement={previewPlacement}
+                onPlacementChange={setPreviewPlacement}
                 title={title}
                 excerpt={excerpt}
                 content={content}

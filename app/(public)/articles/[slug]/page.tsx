@@ -1,7 +1,8 @@
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
-import { formatDate, formatExactDate, formatNumber, slugify, extractKeywords } from '@/lib/utils';
+import { formatDate, formatExactDate, formatArticleDate, formatArticleHoverDate, formatNumber, slugify, extractKeywords } from '@/lib/utils';
+import { ModernTooltip } from '@/components/shared/ModernTooltip';
 import { heroImageStyle } from '@/lib/hero-image';
 import { ArticleCard } from '@/components/news/ArticleCard';
 import {
@@ -76,26 +77,26 @@ export default async function ArticlePage({ params }: { params: Promise<{ slug: 
       <ArticleViewTracker articleId={article.id} />
       <Link href="/articles" className="text-sm text-primary hover:underline">← Back to news</Link>
 
-      <header className="article-header mb-8 mt-6">
-        <div className="flex items-center gap-2 mb-5">
+      <header className="article-header">
+        <div className="article-category-wrap flex items-center gap-2">
           <span className="text-sm font-bold uppercase tracking-widest text-primary">{article.category}</span>
         </div>
-        <h1 className="font-display font-extrabold tracking-tight leading-[1.05] text-foreground mb-6">
+        <h1 className="font-display font-extrabold tracking-tight leading-[1.05] text-foreground">
           {article.title}
         </h1>
         {article.excerpt && (
-          <p className="text-muted-foreground leading-snug font-light mb-8 article-excerpt">
+          <p className="text-muted-foreground leading-snug font-light article-excerpt">
             {article.excerpt.replace(/\[&hellip;\]/g, '...').replace(/&hellip;/g, '...')}
           </p>
         )}
         
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-2 pb-5">
-          <div className="flex items-center gap-4">
-            <Link href={`/authors/${slugify(article.author)}`} className="w-12 h-12 rounded-full bg-muted flex items-center justify-center font-bold text-muted-foreground text-lg uppercase shadow-sm hover:ring-2 hover:ring-primary transition-all shrink-0">
+        <div className="article-meta-row">
+          <div className="article-meta-left-group">
+            <Link href={`/authors/${slugify(article.author)}`} className="article-meta-avatar rounded-full bg-muted flex items-center justify-center font-bold text-muted-foreground uppercase shadow-sm hover:ring-2 hover:ring-primary transition-all shrink-0">
               {article.author.substring(0, 2)}
             </Link>
-            <div className="flex flex-col">
-              <div className="flex flex-wrap items-center gap-x-1.5 text-base font-semibold text-foreground">
+            <div className="article-meta-text flex flex-col min-w-0">
+              <div className="article-meta-author">
                 <Link href={`/authors/${slugify(article.author)}`} className="hover:text-primary transition-colors">
                   {article.author}
                 </Link>
@@ -119,11 +120,30 @@ export default async function ArticlePage({ params }: { params: Promise<{ slug: 
                   </>
                 )}
               </div>
-              <span className="text-sm text-muted-foreground">{formatExactDate(article.date)} <span className="mx-1.5 opacity-50">•</span> {article.readTime} min read</span>
+              <div className="article-meta-subline">
+                <div className="article-meta-date-wrapper">
+                  <ModernTooltip 
+                    label={formatArticleHoverDate(article.date)}
+                    variant="member"
+                    alwaysShow
+                    side="bottom"
+                  >
+                    <span className="article-meta-date article-meta-details cursor-help hover:text-foreground transition-colors">
+                      {formatArticleDate(article.date)}
+                    </span>
+                  </ModernTooltip>
+                </div>
+                <span className="article-meta-separator article-meta-mobile-hide">•</span>
+                <div className="article-meta-stats-wrapper">
+                  <span className="article-meta-read-time article-meta-details">{article.readTime} min read</span>
+                  <span className="article-meta-separator">•</span>
+                  <span className="article-meta-views-count article-meta-details">{formatNumber(article.views)} views</span>
+                </div>
+              </div>
             </div>
           </div>
-          <div className="flex items-center gap-3">
-            <span className="text-sm text-muted-foreground mr-2 font-medium">{formatNumber(article.views)} views</span>
+          
+          <div className="article-meta-actions">
             <SaveArticleButton
               articleId={article.id}
               articleSlug={slug}
@@ -134,7 +154,7 @@ export default async function ArticlePage({ params }: { params: Promise<{ slug: 
         </div>
       </header>
 
-      <figure className="mt-6">
+      <figure>
         <div className="image-container-with-credit rounded-xl w-full aspect-video border border-border overflow-hidden bg-muted/40 flex items-center justify-center">
           {hasArticleImage(article.imageUrl) ? (
             <>

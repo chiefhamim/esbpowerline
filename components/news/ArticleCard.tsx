@@ -2,7 +2,8 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
-import { formatExactDate } from '@/lib/utils';
+import { formatExactDate, formatArticleDate, formatArticleHoverDate } from '@/lib/utils';
+import { ModernTooltip } from '@/components/shared/ModernTooltip';
 import { ArticlePlacementBadge } from '@/components/shared/ArticlePlacementBadge';
 import { CategoryLabel } from '@/components/i18n/CategoryLabel';
 import { NoImage } from '@/components/shared/NoImage';
@@ -69,9 +70,14 @@ export function ArticleCard({
       <div className="p-5">
         <h3 className="font-semibold tracking-[-0.015em] leading-tight line-clamp-3 group-hover:text-primary transition-colors">{title}</h3>
         {excerpt && <p className="mt-2.5 text-[13px] text-muted-foreground line-clamp-4 leading-snug">{excerpt.replace(/\[&hellip;\]/g, '...').replace(/&hellip;/g, '...')}</p>}
-        <div className="mt-4 flex items-center justify-between text-ui-xs text-muted-foreground">
-          <span className="font-medium">{author || t('common.esbStaff')}</span>
-          <span>{timeAgo} {readTime ? `· ${readTime} ${t('common.min')}` : ''}</span>
+        <div className="mt-4 flex items-center gap-1.5 text-ui-xs text-muted-foreground">
+          {date ? (
+            <span>
+              {formatArticleDate(date).replace('Published on ', '')}
+            </span>
+          ) : null}
+          {date && readTime ? <span className="opacity-45">·</span> : null}
+          {readTime ? <span>{readTime} {t('common.min')}</span> : null}
         </div>
       </div>
     </Link>

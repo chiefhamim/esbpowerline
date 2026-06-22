@@ -146,6 +146,9 @@ export function CmsShell({ children }: { children: React.ReactNode }) {
     const urls = resolveStaffWorkspaceUrls();
     setPublicSiteUrl(urls.publicSiteUrl);
     setAdminUrl(urls.adminUrl);
+    if (typeof window !== 'undefined' && window.innerWidth < 1024) {
+      setIsCollapsed(true);
+    }
   }, []);
 
   useEffect(() => {
@@ -239,7 +242,12 @@ export function CmsShell({ children }: { children: React.ReactNode }) {
 
       <div className="admin-sidebar-footer">
         {session?.user && (
-          <button type="button" className="admin-user-capsule text-left w-full hover:bg-muted/50 transition-colors" onClick={() => setShowProfileSettings(true)}>
+          <button
+            type="button"
+            className="admin-user-capsule text-left w-full hover:bg-muted/50 transition-colors"
+            title={isCollapsed ? (session.user.name ?? undefined) : undefined}
+            onClick={() => setShowProfileSettings(true)}
+          >
             <div
               className="admin-user-avatar"
               style={{ background: 'hsl(var(--admin-rose) / 0.2)', color: 'hsl(var(--admin-rose))' }}
@@ -264,7 +272,7 @@ export function CmsShell({ children }: { children: React.ReactNode }) {
   return (
     <EditorPreferencesProvider>
     <div className={cn("admin-shell cms-shell min-h-screen flex min-h-[100dvh]", isCollapsed && "admin-shell--collapsed")} style={cmsThemeStyles}>
-      <aside className={cn("admin-sidebar cms-sidebar hidden md:flex flex-col shrink-0", isCollapsed && "admin-sidebar--collapsed")}>
+      <aside className={cn("admin-sidebar cms-sidebar flex flex-col shrink-0", isCollapsed && "admin-sidebar--collapsed")}>
         {sidebar}
       </aside>
 
@@ -283,7 +291,7 @@ export function CmsShell({ children }: { children: React.ReactNode }) {
             <button
               type="button"
               onClick={() => setIsCollapsed(!isCollapsed)}
-              className="admin-icon-btn hidden md:flex"
+              className="admin-icon-btn admin-collapse-toggle hidden md:flex"
               aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
             >
               {isCollapsed ? <PanelLeft className="h-[18px] w-[18px]" /> : <PanelLeftClose className="h-[18px] w-[18px]" />}
@@ -295,9 +303,8 @@ export function CmsShell({ children }: { children: React.ReactNode }) {
               <span className="admin-header-title truncate">{getPageTitle(pathname)}</span>
             </div>
 
-            <div className="md:hidden flex items-center gap-2 min-w-0">
+            <div className="md:hidden flex items-center gap-2">
               <Feather className="h-4 w-4 text-sky-400 shrink-0" />
-              <span className="text-sm font-semibold tracking-tight truncate">{getPageTitle(pathname)}</span>
             </div>
           </div>
 
@@ -313,31 +320,38 @@ export function CmsShell({ children }: { children: React.ReactNode }) {
               title="View public site"
             >
               <ExternalLink className="h-3.5 w-3.5 shrink-0" />
-              <span className="hidden md:inline">Public</span>
+              <span className="hidden lg:inline">Public</span>
             </Link>
             <SiteThemeToggle className="cms-theme-toggle" />
             <Button
               variant="ghost"
               size="sm"
-              className="sign-out-control hidden md:flex admin-header-signout"
+              className="sign-out-control flex admin-header-signout"
               onClick={() => setShowSignOutConfirm(true)}
             >
-              <LogOut className="h-3.5 w-3.5 mr-1.5" />
-              Sign out
+              <LogOut className="h-3.5 w-3.5 lg:mr-1.5" />
+              <span className="hidden lg:inline">Sign out</span>
             </Button>
           </div>
         </header>
 
-        {mobileOpen && (
-          <div className="md:hidden fixed inset-0 z-50 bg-black/70 backdrop-blur-sm" onClick={() => setMobileOpen(false)}>
-            <aside
-              className="admin-sidebar admin-sidebar--drawer cms-sidebar h-full flex flex-col shadow-2xl"
-              onClick={(e) => e.stopPropagation()}
-            >
-              {sidebar}
-            </aside>
-          </div>
-        )}
+        <div 
+          className={cn(
+            "md:hidden fixed inset-0 z-50 bg-black/70 backdrop-blur-sm transition-all duration-300 ease-in-out",
+            mobileOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
+          )} 
+          onClick={() => setMobileOpen(false)}
+        >
+          <aside
+            className={cn(
+              "admin-sidebar admin-sidebar--drawer cms-sidebar h-full flex flex-col shadow-2xl transition-transform duration-300 ease-out transform",
+              mobileOpen ? "translate-x-0" : "-translate-x-full"
+            )}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {sidebar}
+          </aside>
+        </div>
 
         <main className="admin-main cms-main flex-1 overflow-auto min-h-0">
           <div className={cn('admin-main-inner cms-main-inner', isWriteWorkspace && 'cms-main-inner--write')}>

@@ -1,9 +1,9 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { Monitor, Tablet, Smartphone, LayoutGrid, Newspaper, Pin, Star, Flame, Facebook, Globe } from 'lucide-react';
+import { Monitor, Tablet, Smartphone, LayoutGrid, Newspaper, Pin, Star, Flame, Facebook, Globe, Bookmark } from 'lucide-react';
 import { ModernTooltip } from '@/components/shared/ModernTooltip';
-import { cn, formatExactDate, formatNumber, extractKeywords, smartRearrangeText } from '@/lib/utils';
+import { cn, formatExactDate, formatArticleDate, formatArticleHoverDate, formatNumber, extractKeywords, smartRearrangeText } from '@/lib/utils';
 import { FeaturedCarousel } from '@/components/news/FeaturedCarousel';
 import { ArticleCard } from '@/components/news/ArticleCard';
 import { HomeTrendingSection } from '@/components/home/HomeTrendingSection';
@@ -13,6 +13,8 @@ import { PreviewThemeToggle } from '@/components/editor/PreviewThemeToggle';
 import { PreviewCategoryPill } from '@/components/editor/PreviewCategoryPill';
 import { getArticlePreviewContext } from '@/lib/actions/preview-context';
 import { sanitizeArticleHtml } from '@/lib/sanitize-article-html';
+import { PublicNavbar } from '@/components/shared/PublicNavbar';
+import { PublicFooter } from '@/components/shared/PublicFooter';
 import {
   mergeDraftIntoCarousel,
   mergeDraftIntoArticles,
@@ -58,6 +60,9 @@ type ArticlePreviewPanelProps = {
   isTrending?: boolean;
   tags?: string[];
   collaborators?: { id: string; name: string }[];
+  focusMode?: boolean;
+  placement?: PreviewPlacement;
+  onPlacementChange?: (placement: PreviewPlacement) => void;
 };
 
 export function ArticlePreviewPanel({
@@ -79,8 +84,13 @@ export function ArticlePreviewPanel({
   isTrending,
   tags = [],
   collaborators = [],
+  focusMode = false,
+  placement: placementProp,
+  onPlacementChange: onPlacementChangeProp,
 }: ArticlePreviewPanelProps) {
-  const [placement, setPlacement] = useState<PreviewPlacement>('article');
+  const [internalPlacement, setInternalPlacement] = useState<PreviewPlacement>('article');
+  const placement = placementProp ?? internalPlacement;
+  const setPlacement = onPlacementChangeProp ?? setInternalPlacement;
   const [device, setDevice] = useState<PreviewDevice>('desktop');
   const [theme, setTheme] = useState<SiteTheme>('midnight');
   const [context, setContext] = useState<PreviewContext | null>(null);
@@ -189,7 +199,12 @@ export function ArticlePreviewPanel({
   const isDesktop = device === 'desktop';
 
   return (
-    <div className="cms-preview-panel flex flex-col w-full bg-background border border-border/40 rounded-xl overflow-hidden shadow-sm mt-3">
+    <div className={cn(
+      "cms-preview-panel flex flex-col w-full bg-background overflow-hidden",
+      (focusMode && placement === 'article')
+        ? "border-none rounded-none shadow-none mt-0 min-h-screen" 
+        : "border border-border/40 rounded-xl shadow-sm mt-3"
+    )}>
       <div className="cms-preview-modal__toolbar flex flex-wrap items-center justify-between gap-4 p-3 border-b border-border/45 bg-muted/5">
         <div className="cms-preview-modal__toolbar-group">
           <span className="cms-preview-modal__toolbar-label">Placement</span>
@@ -234,7 +249,8 @@ export function ArticlePreviewPanel({
                     disabled && 'opacity-50 grayscale cursor-not-allowed'
                   )}
                 >
-                  <Icon className="h-3 w-3" /> {label}
+                  <Icon className="h-3 w-3" />
+                  <span className="cms-preview-chip-text">{label}</span>
                 </button>
               </ModernTooltip>
             );
@@ -278,7 +294,12 @@ export function ArticlePreviewPanel({
         </div>
       </div>
 
-      <div className="cms-preview-viewport flex-1 overflow-auto bg-muted/20 p-4 min-h-[500px]">
+      <div 
+        className={cn(
+          "cms-preview-viewport flex-1 overflow-auto bg-muted/20 min-h-[500px]",
+          (focusMode && placement === 'article' && isDesktop) ? "p-0" : "p-4"
+        )}
+      >
         <div
           className={cn(
             'cms-preview-device-frame mx-auto',
@@ -286,7 +307,13 @@ export function ArticlePreviewPanel({
             device === 'tablet' && 'cms-preview-device-frame--tablet',
             device === 'mobile' && 'cms-preview-device-frame--mobile',
           )}
-          style={isDesktop ? { width: '100%', maxWidth: '1280px' } : { width: deviceWidth, maxWidth: '100%' }}
+          style={
+            isDesktop
+              ? ((focusMode && placement === 'article')
+                  ? { width: '100%', maxWidth: '100%', zoom: 1 }
+                  : { width: '100%', maxWidth: '1280px' })
+              : { width: deviceWidth, maxWidth: '100%' }
+          }
         >
           {!isDesktop && (
             <div className="cms-preview-device-chrome">
@@ -299,11 +326,20 @@ export function ArticlePreviewPanel({
 
           <div
             className={cn(
-              'cms-preview-public-surface rounded-b-xl overflow-hidden',
+              'cms-preview-public-surface',
+              (!focusMode || placement !== 'article') && 'rounded-b-xl overflow-hidden',
               `theme-${theme}`,
               theme === 'white' ? 'light' : 'dark',
             )}
           >
+            {focusMode && placement === 'article' && (
+              <div className="pointer-events-none select-none">
+                <PublicNavbar
+                  categories={context?.categories ?? []}
+                />
+              </div>
+            )}
+
             {loadingContext && (
               <div className="cms-preview-loading py-8 text-center text-sm text-muted-foreground animate-pulse">
                 Loading live homepage context…
@@ -584,27 +620,27 @@ export function ArticlePreviewPanel({
             )}
 
             {placement === 'article' && (
-              <div className="container py-10 max-w-3xl cms-preview-article-page fluid-article-container">
-                <header className="article-header mb-8 mt-2">
-                  <div className="flex items-center gap-2 mb-5">
+              <div className="container py-10 max-w-3xl cms-preview-article-page article-page--with-sticky-author fluid-article-container">
+                <header className="article-header">
+                  <div className="article-category-wrap flex items-center gap-2">
                     <PreviewCategoryPill category={category} color={categoryColor} className="text-sm font-bold uppercase tracking-widest text-primary" />
                   </div>
-                  <h1 className="font-display font-extrabold tracking-tight leading-[1.05] text-foreground mb-6">
+                  <h1 className="font-display font-extrabold tracking-tight leading-[1.05] text-foreground">
                     {displayTitle}
                   </h1>
                   {excerpt && (
-                    <p className="text-muted-foreground leading-snug font-light mb-8 article-excerpt">
+                    <p className="text-muted-foreground leading-snug font-light article-excerpt">
                       {excerpt.replace(/\[&hellip;\]/g, '...').replace(/&hellip;/g, '...')}
                     </p>
                   )}
 
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-2 pb-5">
-                    <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center font-bold text-muted-foreground text-lg uppercase shadow-sm shrink-0">
+                  <div className="article-meta-row">
+                    <div className="article-meta-left-group">
+                      <div className="article-meta-avatar rounded-full bg-muted flex items-center justify-center font-bold text-muted-foreground uppercase shadow-sm shrink-0">
                         {authorName ? authorName.substring(0, 2) : 'ES'}
                       </div>
-                      <div className="flex flex-col">
-                        <div className="flex flex-wrap items-center gap-x-1.5 text-base font-semibold text-foreground">
+                      <div className="article-meta-text flex flex-col min-w-0">
+                        <div className="article-meta-author">
                           <span className="hover:text-primary transition-colors cursor-pointer">{authorName || 'ESB PowerLine'}</span>
                           {collaborators && collaborators.length > 0 && (
                             <>
@@ -631,17 +667,44 @@ export function ArticlePreviewPanel({
                             </>
                           )}
                         </div>
-                        <span className="text-sm text-muted-foreground">{formatExactDate(previewDate)} <span className="mx-1.5 opacity-50">•</span> {readTime} min read</span>
+                        <div className="article-meta-subline">
+                          <div className="article-meta-date-wrapper">
+                            <ModernTooltip 
+                              label={formatArticleHoverDate(previewDate)}
+                              variant="member"
+                              alwaysShow
+                              side="bottom"
+                            >
+                              <span className="article-meta-date article-meta-details cursor-help hover:text-foreground transition-colors">
+                                {formatArticleDate(previewDate)}
+                              </span>
+                            </ModernTooltip>
+                          </div>
+                          <span className="article-meta-separator article-meta-mobile-hide">•</span>
+                          <div className="article-meta-stats-wrapper">
+                            <span className="article-meta-read-time article-meta-details">{readTime} min read</span>
+                            <span className="article-meta-separator">•</span>
+                            <span className="article-meta-views-count article-meta-details">0 views</span>
+                          </div>
+                        </div>
                       </div>
                     </div>
-                    <div className="flex items-center gap-3">
-                      <span className="text-sm text-muted-foreground font-medium">0 views</span>
+
+                    <div className="article-meta-actions">
+                      <button
+                        type="button"
+                        disabled
+                        className="btn btn-secondary inline-flex items-center gap-2 text-sm opacity-60 cursor-not-allowed"
+                      >
+                        <Bookmark className="h-4 w-4" />
+                        <span className="article-save-btn-text">Save article</span>
+                      </button>
                     </div>
                   </div>
                 </header>
 
                 {imageUrl && (
-                  <figure className="mt-6">
+                  <figure>
                     <div className="image-container-with-credit rounded-xl overflow-hidden border border-border aspect-video">
                       <img
                         src={imageUrl}
@@ -661,7 +724,7 @@ export function ArticlePreviewPanel({
                   </figure>
                 )}
 
-                <div className="article-body mt-8" dangerouslySetInnerHTML={{ __html: cleanContent }} />
+                <div className="article-body mt-8 text-lg md:text-xl leading-relaxed pb-safe" dangerouslySetInnerHTML={{ __html: cleanContent }} />
 
                 {draftTags.length > 0 && (
                   <div className="mt-8 flex flex-wrap gap-2 pt-4 border-t border-border/30">
@@ -677,6 +740,12 @@ export function ArticlePreviewPanel({
                   <span>{formatNumber(0)} views</span>
                   <span>{readTime} min read</span>
                 </div>
+              </div>
+            )}
+
+            {focusMode && placement === 'article' && (
+              <div className="pointer-events-none select-none">
+                <PublicFooter categories={context?.categories ?? []} />
               </div>
             )}
           </div>

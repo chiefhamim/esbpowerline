@@ -186,7 +186,6 @@ export function FeaturedCarousel({
 
                 <div className="featured-hero__byline flex items-center justify-between gap-3 overflow-hidden">
                   <p className="featured-hero__byline-text min-w-0 truncate text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                    {t('carousel.byAuthor', { author: currentItem.author })} •{' '}
                     {t('carousel.minRead', { minutes: currentItem.readTime })}
                   </p>
                   <div className="featured-hero__transport flex shrink-0 items-center">

@@ -6,6 +6,8 @@ import type { PublicArticleCard } from '@/lib/category-types';
 import type { CoverageLayoutId } from '@/lib/coverage-types';
 import { heroImageStyle } from '@/lib/hero-image';
 import { ArticleCard } from './ArticleCard';
+import { formatArticleDate, formatArticleHoverDate } from '@/lib/utils';
+import { ModernTooltip } from '@/components/shared/ModernTooltip';
 
 type ArticleProps = {
   article: PublicArticleCard;
@@ -13,14 +15,17 @@ type ArticleProps = {
 };
 
 function MetaRow({ article }: { article: PublicArticleCard }) {
-  const timeAgo = formatDistanceToNow(new Date(article.date), { addSuffix: true });
   return (
-    <div className="mt-3 flex items-center justify-between gap-2 text-[11px] text-muted-foreground">
-      <span className="font-medium truncate">{article.author}</span>
-      <span className="shrink-0">
-        {timeAgo}
-        {article.readTime ? ` · ${article.readTime} min` : ''}
+    <div className="mt-3 flex items-center gap-1.5 text-[11px] text-muted-foreground min-w-0">
+      <span>
+        {formatArticleDate(article.date).replace('Published on ', '')}
       </span>
+      {article.readTime ? (
+        <>
+          <span className="opacity-45">·</span>
+          <span>{article.readTime} min</span>
+        </>
+      ) : null}
     </div>
   );
 }

@@ -61,7 +61,7 @@ export function AdminReviewNoteDialog({
           : copy.description
       }
       confirmLabel={copy.confirmLabel}
-      variant={action === 'return' ? 'destructive' : 'primary'}
+      variant={action === 'return' ? 'destructive' : 'success'}
       requirePassword={false}
       showAuthorNote
       authorNoteRequired={copy.requireNote}

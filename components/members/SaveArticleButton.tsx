@@ -28,7 +28,7 @@ export function SaveArticleButton({
         className="btn btn-secondary inline-flex items-center gap-2 text-sm"
       >
         <Bookmark className="h-4 w-4" />
-        Save article
+        <span className="article-save-btn-text">Save article</span>
       </Link>
     );
   }
@@ -56,7 +56,7 @@ export function SaveArticleButton({
       )}
     >
       <Bookmark className={cn('h-4 w-4', saved && 'fill-current')} />
-      {saved ? 'Saved' : 'Save article'}
+      <span className="article-save-btn-text">{saved ? 'Saved' : 'Save article'}</span>
     </button>
   );
 }

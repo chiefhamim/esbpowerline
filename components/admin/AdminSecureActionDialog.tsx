@@ -25,7 +25,7 @@ export function AdminSecureActionDialog({
   title: string;
   description: string;
   confirmLabel?: string;
-  variant?: 'destructive' | 'primary';
+  variant?: 'destructive' | 'primary' | 'success';
   requirePassword?: boolean;
   showAuthorNote?: boolean;
   authorNoteRequired?: boolean;
@@ -124,7 +124,10 @@ export function AdminSecureActionDialog({
               type="submit"
               size="sm"
               disabled={loading}
-              className={cn(variant === 'destructive' && 'bg-destructive hover:bg-destructive/90')}
+              className={cn(
+                variant === 'destructive' && 'bg-destructive hover:bg-destructive/90',
+                variant === 'success' && 'bg-emerald-600 hover:bg-emerald-500 text-white'
+              )}
             >
               {loading ? 'Working…' : confirmLabel}
             </Button>

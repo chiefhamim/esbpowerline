@@ -87,7 +87,11 @@ export function CmsStatCard({
         )}
       </div>
       <div className="admin-stat-value">{value}</div>
-      {change && <p className="admin-stat-change">{change}</p>}
+      {change ? (
+        <p className="admin-stat-change">{change}</p>
+      ) : (
+        <p className="admin-stat-change opacity-0 select-none" aria-hidden="true">&nbsp;</p>
+      )}
     </div>
   );
 }

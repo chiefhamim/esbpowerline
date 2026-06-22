@@ -73,6 +73,51 @@ export function formatExactDate(dateStr: string | Date): string {
   return exact;
 }
 
+function getRelativeDuration(date: Date): string {
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const diffSecs = Math.floor(diffMs / 1000);
+  const diffMins = Math.floor(diffSecs / 60);
+  const diffHrs = Math.floor(diffMins / 60);
+  const diffDays = Math.floor(diffHrs / 24);
+  const diffWeeks = Math.floor(diffDays / 7);
+  const diffMonths = Math.floor(diffDays / 30);
+  const diffYears = Math.floor(diffDays / 365);
+
+  if (diffMins < 1) return 'Just now';
+  if (diffMins < 60) return `${diffMins} ${diffMins === 1 ? 'minute' : 'minutes'} ago`;
+  if (diffHrs < 24) return `${diffHrs} ${diffHrs === 1 ? 'hour' : 'hours'} ago`;
+  if (diffDays < 7) return `${diffDays} ${diffDays === 1 ? 'day' : 'days'} ago`;
+  if (diffWeeks < 4) return `${diffWeeks} ${diffWeeks === 1 ? 'week' : 'weeks'} ago`;
+  if (diffMonths < 12) return `${diffMonths} ${diffMonths === 1 ? 'month' : 'months'} ago`;
+  return `${diffYears} ${diffYears === 1 ? 'year' : 'years'} ago`;
+}
+
+export function formatArticleDate(dateStr: string | Date, clockFormat: '12' | '24' = '12'): string {
+  const date = new Date(dateStr);
+  const dateString = date.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+  const hour12 = clockFormat === '12';
+  const timeString = date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12 });
+  return `Published on ${dateString} at ${timeString}`;
+}
+
+export function formatArticleHoverDate(dateStr: string | Date, clockFormat: '12' | '24' = '12'): string {
+  const date = new Date(dateStr);
+  const weekday = date.toLocaleDateString('en-US', { weekday: 'long' });
+  const hours = date.getHours().toString().padStart(2, '0');
+  const minutes = date.getMinutes().toString().padStart(2, '0');
+  
+  let timeStr = '';
+  if (clockFormat === '12') {
+    timeStr = `${hours}:${minutes}`;
+  } else {
+    timeStr = date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+  }
+  
+  const relative = getRelativeDuration(date);
+  return `${weekday} at ${timeStr} (${relative})`;
+}
+
 export function truncate(text: string, length = 120): string {
   if (text.length <= length) return text;
   return text.slice(0, length).trim() + '...';

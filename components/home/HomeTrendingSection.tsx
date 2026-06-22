@@ -11,11 +11,11 @@ import { NoImage } from '@/components/shared/NoImage';
 import { useLocale } from '@/components/shared/LocaleProvider';
 import { hasArticleImage } from '@/lib/article-image';
 import type { PublicArticleCard } from '@/lib/category-types';
-import { formatExactDate } from '@/lib/utils';
+import { formatArticleDate } from '@/lib/utils';
 import { heroImageStyle } from '@/lib/hero-image';
 
 function formatTrendingTime(date: string, locale: 'en' | 'bn') {
-  return formatExactDate(date);
+  return formatArticleDate(date).replace('Published on ', '');
 }
 
 function TrendingListItem({
@@ -442,7 +442,7 @@ export function HomeTrendingSection({
   }
 
   const [lead, ...rest] = trending;
-  const leadTimeAgo = formatExactDate(lead.date);
+  const leadTimeAgo = formatTrendingTime(lead.date, locale);
 
   return (
     <section className="container home-block" aria-labelledby="home-trending-title">
