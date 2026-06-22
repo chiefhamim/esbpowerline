@@ -17476,35 +17476,38 @@ html.theme-white .cms-datetime-grid-cell {
    ADMIN & CMS MOBILE + TABLET RESPONSIVE FIXES
    ═══════════════════════════════════════════ */
 
-/* Lock HTML and body to screen size when admin/cms shell is active to enable internal content-only scrolling */
-html:has(.admin-shell),
-html:has(.cms-shell),
-body:has(.admin-shell),
-body:has(.cms-shell) {
-  height: 100dvh !important;
-  max-height: 100dvh !important;
-  overflow: hidden !important;
-  position: relative;
-  padding-bottom: 0 !important;
-  margin-bottom: 0 !important;
+@media (min-width: 1024px) {
+  /* Lock HTML and body to screen size when admin/cms shell is active to enable internal content-only scrolling */
+  html:has(.admin-shell),
+  html:has(.cms-shell),
+  body:has(.admin-shell),
+  body:has(.cms-shell) {
+    height: 100dvh !important;
+    max-height: 100dvh !important;
+    overflow: hidden !important;
+    position: relative;
+    padding-bottom: 0 !important;
+    margin-bottom: 0 !important;
+  }
+
+  /* Ensure the admin/cms shell fills the full viewport exactly and doesn't scroll the window */
+  .admin-shell,
+  .cms-shell {
+    height: 100dvh !important;
+    max-height: 100dvh !important;
+    min-height: 100dvh !important;
+    overflow: hidden !important;
+  }
+
+  /* Force vertical scrollbar inside the main content area only */
+  .admin-main {
+    flex: 1 !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    min-height: 0 !important;
+  }
 }
 
-/* Ensure the admin/cms shell fills the full viewport exactly and doesn't scroll the window */
-.admin-shell,
-.cms-shell {
-  height: 100dvh !important;
-  max-height: 100dvh !important;
-  min-height: 100dvh !important;
-  overflow: hidden !important;
-}
-
-/* Force vertical scrollbar inside the main content area only */
-.admin-main {
-  flex: 1 !important;
-  overflow-y: auto !important;
-  overflow-x: hidden !important;
-  min-height: 0 !important;
-}
 
 @media (max-width: 767px) {
   /* 1. Hide the traditional desktop collapse/expand sidebar button strictly on mobile */
