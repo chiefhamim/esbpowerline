@@ -241,7 +241,7 @@ export async function updateUser(id: string, data: Partial<UserInput>) {
 
   const existing = await prisma.user.findUnique({
     where: { id },
-    select: { email: true, name: true, role: true },
+    select: { email: true, name: true, role: true, status: true, passwordHash: true },
   });
   if (!existing) throw new Error('User not found');
 
@@ -256,46 +256,60 @@ export async function updateUser(id: string, data: Partial<UserInput>) {
     assertRoleAssignment(admin.role as Role, parsed.role as Role, existing.role as Role);
   }
 
+  // Track original values for potential rollback
+  const originalData: Record<string, unknown> = {};
+  for (const key of Object.keys(updateData)) {
+    originalData[key] = (existing as any)[key];
+  }
+
   const user = await prisma.user.update({ where: { id }, data: updateData as any });
 
-  const nextName = parsed.name ?? existing.name;
-  const nextRole = (parsed.role ?? existing.role) as UserInput['role'];
+  try {
+    const nextName = parsed.name ?? existing.name;
+    const nextRole = (parsed.role ?? existing.role) as UserInput['role'];
+    const nextStatus = (parsed.status ?? user.status) as UserInput['status'];
 
-  const nextStatus = (parsed.status ?? user.status) as UserInput['status'];
-
-  if (parsed.password) {
-    const supabaseUserId = await upsertSupabaseAuthUser({
-      email: existing.email,
-      password: parsed.password,
-      name: nextName,
-      role: nextRole,
-      status: nextStatus,
-    });
-    if (supabaseUserId) {
-      await prisma.user.update({
-        where: { id },
-        data: { supabaseUserId },
+    if (parsed.password) {
+      const supabaseUserId = await upsertSupabaseAuthUser({
+        email: existing.email,
+        password: parsed.password,
+        name: nextName,
+        role: nextRole,
+        status: nextStatus,
+      });
+      if (supabaseUserId) {
+        await prisma.user.update({
+          where: { id },
+          data: { supabaseUserId },
+        });
+      }
+    } else if (parsed.name || parsed.role || parsed.status) {
+      await syncSupabaseAuthUserMetadata({
+        email: existing.email,
+        name: nextName,
+        role: nextRole,
+        status: nextStatus,
       });
     }
-  } else if (parsed.name || parsed.role || parsed.status) {
-    await syncSupabaseAuthUserMetadata({
-      email: existing.email,
-      name: nextName,
-      role: nextRole,
-      status: nextStatus,
-    });
-  }
 
-  if (parsed.status === 'SUSPENDED') {
-    await syncSupabaseAuthUserStatus(existing.email, 'SUSPENDED');
-    await invalidateSupabaseAuthSession(existing.email);
-  } else if (parsed.status === 'ACTIVE') {
-    await syncSupabaseAuthUserStatus(existing.email, 'ACTIVE');
-  }
+    if (parsed.status === 'SUSPENDED') {
+      await syncSupabaseAuthUserStatus(existing.email, 'SUSPENDED');
+      await invalidateSupabaseAuthSession(existing.email);
+    } else if (parsed.status === 'ACTIVE') {
+      await syncSupabaseAuthUserStatus(existing.email, 'ACTIVE');
+    }
 
-  // Force immediate session invalidation if role is reduced
-  if (parsed.role && ROLES[parsed.role].level < ROLES[existing.role].level) {
-    await invalidateSupabaseAuthSession(existing.email);
+    // Force immediate session invalidation if role is reduced
+    if (parsed.role && ROLES[parsed.role].level < ROLES[existing.role].level) {
+      await invalidateSupabaseAuthSession(existing.email);
+    }
+  } catch (error: any) {
+    // Rollback local changes on Supabase sync failure
+    await prisma.user.update({
+      where: { id },
+      data: originalData as any,
+    }).catch(() => undefined);
+    throw new Error(`User update failed (Supabase sync error: ${error.message || error})`);
   }
 
   revalidatePath('/admin/users');

@@ -36,15 +36,15 @@ export function HomeBottomRow({
   const isStack = layout === 'stack';
 
   const magazineCard = (
-    <div className="card home-bottom-row__card bg-card hover:shadow-xl transition-all duration-300">
+    <div className="card home-bottom-row__card group bg-card">
       <div>
         <div className="flex items-center gap-2 text-emerald-500 dark:text-emerald-400 mb-2.5">
           <BookOpen className="h-4 w-4" />
           <span className="section-kicker">{t('home.monthlyMagazine')}</span>
         </div>
         <div className={`flex gap-3.5 items-start ${isStack ? 'flex-col sm:flex-row' : ''}`}>
-          <div className="w-16 sm:w-[4.5rem] shrink-0 relative group/cover">
-            <div className="aspect-[3/4] rounded border border-border/40 overflow-hidden bg-muted shadow-md transition-transform duration-300 group-hover/cover:-translate-y-0.5 relative">
+          <div className="w-16 sm:w-[4.5rem] shrink-0 relative">
+            <div className="aspect-[3/4] rounded border border-border/40 overflow-hidden bg-muted shadow-md transition-all duration-300 group-hover:-translate-y-1 group-hover:scale-[1.04] group-hover:shadow-lg relative">
               <Image
                 src={magazine.coverUrl}
                 alt={magazine.title}

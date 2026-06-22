@@ -559,12 +559,12 @@ export function AdminArticleManager({
                 </button>
               </TableHead>
               <TableHead>Title</TableHead>
-              {showAuthorColumn && <TableHead>Author</TableHead>}
-              <TableHead>Category</TableHead>
+              {showAuthorColumn && <TableHead className="hidden md:table-cell">Author</TableHead>}
+              <TableHead className="hidden sm:table-cell">Category</TableHead>
               <TableHead>Status</TableHead>
-              <TableHead>Views</TableHead>
-              <TableHead>Updated</TableHead>
-              {showBulkFlags && <TableHead className="w-24">Flags</TableHead>}
+              <TableHead className="hidden sm:table-cell">Views</TableHead>
+              <TableHead className="hidden md:table-cell">Updated</TableHead>
+              {showBulkFlags && <TableHead className="hidden lg:table-cell w-24">Flags</TableHead>}
               <TableHead className="w-10" />
             </TableRow>
           </TableHeader>
@@ -606,18 +606,18 @@ export function AdminArticleManager({
                     </div>
                   </TableCell>
                   {showAuthorColumn && (
-                    <TableCell className="text-muted-foreground text-[12px] max-w-[120px] truncate">
+                    <TableCell className="text-muted-foreground text-[12px] max-w-[120px] truncate hidden md:table-cell">
                       {authorName(a) || '—'}
                     </TableCell>
                   )}
-                  <TableCell className="text-[12px] whitespace-nowrap max-w-[130px] truncate">{a.category}</TableCell>
+                  <TableCell className="text-[12px] whitespace-nowrap max-w-[130px] truncate hidden sm:table-cell">{a.category}</TableCell>
                   <TableCell><StatusBadge status={a.status} /></TableCell>
-                  <TableCell className="tabular-nums text-[12px]">{formatNumber(a.views)}</TableCell>
-                  <TableCell className="text-muted-foreground text-[11px] whitespace-nowrap">
+                  <TableCell className="tabular-nums text-[12px] hidden sm:table-cell">{formatNumber(a.views)}</TableCell>
+                  <TableCell className="text-muted-foreground text-[11px] whitespace-nowrap hidden md:table-cell">
                     {a.updatedAt ? new Date(a.updatedAt).toLocaleDateString() : '—'}
                   </TableCell>
                   {showBulkFlags && (
-                    <TableCell>
+                    <TableCell className="hidden lg:table-cell">
                       <AdminArticleFlags
                         articleId={a.id}
                         isPinned={a.isPinned ?? false}

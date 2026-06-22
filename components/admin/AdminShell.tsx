@@ -221,7 +221,7 @@ function AdminShellInner({ children }: { children: React.ReactNode }) {
         {sidebar}
       </aside>
 
-      <div className="flex-1 flex flex-col min-w-0 min-h-0">
+      <div className="admin-shell-main flex-1 flex flex-col min-w-0 min-h-0">
         <header className="admin-header">
           <div className="flex items-center gap-3 min-w-0">
             <button

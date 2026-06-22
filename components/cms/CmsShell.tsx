@@ -272,11 +272,11 @@ export function CmsShell({ children }: { children: React.ReactNode }) {
   return (
     <EditorPreferencesProvider>
     <div className={cn("admin-shell cms-shell min-h-screen flex min-h-[100dvh]", isCollapsed && "admin-shell--collapsed")} style={cmsThemeStyles}>
-      <aside className={cn("admin-sidebar cms-sidebar flex flex-col shrink-0", isCollapsed && "admin-sidebar--collapsed")}>
+      <aside className={cn("admin-sidebar cms-sidebar hidden md:flex flex-col shrink-0", isCollapsed && "admin-sidebar--collapsed")}>
         {sidebar}
       </aside>
 
-      <div className="flex-1 flex flex-col min-w-0 min-h-0">
+      <div className="admin-shell-main flex-1 flex flex-col min-w-0 min-h-0">
         <header className="admin-header cms-header">
           <div className="flex items-center gap-3 min-w-0">
             <button

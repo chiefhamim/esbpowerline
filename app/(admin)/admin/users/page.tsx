@@ -58,11 +58,11 @@ export default async function AdminUsersPage({ searchParams }: PageProps) {
           <TableHeader>
             <TableRow>
               <TableHead>Name</TableHead>
-              <TableHead>Email</TableHead>
+              <TableHead className="hidden md:table-cell">Email</TableHead>
               <TableHead>Role</TableHead>
               <TableHead>Status</TableHead>
-              <TableHead>{filter === 'members' ? 'Library' : 'Articles'}</TableHead>
-              <TableHead>Last Login</TableHead>
+              <TableHead className="hidden sm:table-cell">{filter === 'members' ? 'Library' : 'Articles'}</TableHead>
+              <TableHead className="hidden lg:table-cell">Last Login</TableHead>
               <TableHead className="w-16" />
             </TableRow>
           </TableHeader>
@@ -70,15 +70,15 @@ export default async function AdminUsersPage({ searchParams }: PageProps) {
             {users.map((u) => (
               <TableRow key={u.id}>
                 <TableCell className="font-medium">{u.name}</TableCell>
-                <TableCell className="text-muted-foreground">{u.email}</TableCell>
+                <TableCell className="text-muted-foreground hidden md:table-cell">{u.email}</TableCell>
                 <TableCell><RoleBadge role={u.role as Role} /></TableCell>
                 <TableCell><StatusBadge status={u.status} /></TableCell>
-                <TableCell className="tabular-nums text-muted-foreground text-sm">
+                <TableCell className="tabular-nums text-muted-foreground text-sm hidden sm:table-cell">
                   {u.role === 'SUBSCRIBER'
                     ? `${u.savedCount} saved · ${u.commentCount} comments`
                     : u.articlesCount}
                 </TableCell>
-                <TableCell className="text-muted-foreground">
+                <TableCell className="text-muted-foreground hidden lg:table-cell">
                   {u.lastLoginAt ? new Date(u.lastLoginAt).toLocaleDateString() : '—'}
                 </TableCell>
                 <TableCell>

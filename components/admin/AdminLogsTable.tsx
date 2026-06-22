@@ -16,25 +16,25 @@ export function AdminLogsTable({ logs }: { logs: AdminLogRow[] }) {
     <Table>
       <TableHeader>
         <TableRow>
-          <TableHead>Time</TableHead>
-          <TableHead>Type</TableHead>
-          <TableHead>Message</TableHead>
-          <TableHead>User</TableHead>
+          <TableHead className="w-[160px]">Time</TableHead>
+          <TableHead className="w-[110px] hidden sm:table-cell">Type</TableHead>
+          <TableHead className="min-w-[240px]">Message</TableHead>
+          <TableHead className="w-[140px] hidden md:table-cell">User</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
         {logs.map((log) => (
           <TableRow key={log.id}>
-            <TableCell className="text-muted-foreground whitespace-nowrap">
+            <TableCell className="text-muted-foreground whitespace-nowrap text-[12px]">
               <AdminFormattedTime value={log.timestamp} />
             </TableCell>
-            <TableCell>
+            <TableCell className="hidden sm:table-cell">
               <span className="inline-flex px-2 py-0.5 rounded-full text-[10px] font-mono font-medium bg-muted/60 border border-border/50">
                 {log.type}
               </span>
             </TableCell>
-            <TableCell>{log.message}</TableCell>
-            <TableCell className="text-muted-foreground">{log.userLabel}</TableCell>
+            <TableCell className="text-[13px] font-medium text-foreground/90">{log.message}</TableCell>
+            <TableCell className="text-muted-foreground text-[12px] hidden md:table-cell">{log.userLabel}</TableCell>
           </TableRow>
         ))}
         {logs.length === 0 && (

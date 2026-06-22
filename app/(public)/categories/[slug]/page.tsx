@@ -7,8 +7,16 @@ import { createTranslator } from '@/lib/i18n/messages';
 import { getServerSiteLocale } from '@/lib/locale-server';
 import { categoryIconWrapStyle, categoryTextStyle } from '@/lib/category-icons';
 import { CategoryIconDisplay } from '@/components/category/CategoryIconDisplay';
+import prisma from '@/lib/prisma';
 
 export const revalidate = 60;
+
+export async function generateStaticParams() {
+  const categories = await prisma.category.findMany({
+    select: { slug: true },
+  });
+  return categories.map((cat) => ({ slug: cat.slug }));
+}
 
 interface Props {
   params: Promise<{ slug: string }>;

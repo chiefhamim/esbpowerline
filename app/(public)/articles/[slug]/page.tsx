@@ -19,8 +19,19 @@ import { ArticleAuthorSticky } from '@/components/shared/ArticleAuthorSticky';
 import { NoImage } from '@/components/shared/NoImage';
 import { hasArticleImage } from '@/lib/article-image';
 import { sanitizeArticleHtml } from '@/lib/sanitize-article-html';
+import prisma from '@/lib/prisma';
 
 export const revalidate = 60;
+
+export async function generateStaticParams() {
+  const articles = await prisma.article.findMany({
+    where: { status: 'PUBLISHED' },
+    orderBy: { publishedAt: 'desc' },
+    take: 20,
+    select: { slug: true },
+  });
+  return articles.map((article) => ({ slug: article.slug }));
+}
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;

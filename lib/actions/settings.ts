@@ -63,6 +63,18 @@ export async function updateSettingsBatch(updates: Record<string, unknown>) {
     }),
   );
 
+  // Record audit log for configuration updates
+  const keysStr = keys.join(', ');
+  await prisma.auditLog.create({
+    data: {
+      type: 'settings.update',
+      message: `Updated settings keys: ${keysStr}`,
+      userId: admin.id,
+    },
+  }).catch((err) => {
+    console.error('Failed to log settings updates to auditLog:', err);
+  });
+
   const { PUBLIC_REVALIDATE_PATHS } = await import('@/lib/public-paths');
   for (const path of PUBLIC_REVALIDATE_PATHS) revalidatePath(path);
   revalidatePath('/admin/settings');

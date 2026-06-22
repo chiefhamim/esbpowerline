@@ -78,6 +78,26 @@ export type MessageKey =
   | 'home.gridExplorerBlurb'
   | 'home.gridExplorerCta'
   | 'home.browseAllNews'
+  | 'home.aboutKicker'
+  | 'home.aboutTitle'
+  | 'home.aboutLead'
+  | 'home.aboutAudience'
+  | 'home.aboutPillarCoverage'
+  | 'home.aboutPillarCoverageDesc'
+  | 'home.aboutPillarPolicy'
+  | 'home.aboutPillarPolicyDesc'
+  | 'home.aboutPillarMagazine'
+  | 'home.aboutPillarMagazineDesc'
+  | 'home.aboutLearnMore'
+  | 'home.aboutEditor'
+  | 'about.missionTitle'
+  | 'about.missionP1'
+  | 'about.missionP2'
+  | 'about.teamTitle'
+  | 'about.teamSub'
+  | 'about.ctaTitle'
+  | 'about.ctaNews'
+  | 'about.ctaContact'
   | 'common.min'
   | 'common.views'
   | 'common.esbStaff'
@@ -225,6 +245,33 @@ const EN: Record<MessageKey, string> = {
     'Generation mix, transmission corridors, demand curves and project pipelines — interactive sector data.',
   'home.gridExplorerCta': 'Open Grid Explorer',
   'home.browseAllNews': 'Browse archive',
+  'home.aboutKicker': 'Editorial identity',
+  'home.aboutTitle': 'About ESB PowerLine',
+  'home.aboutLead':
+    "Bangladesh's dedicated energy news wire — daily reporting, sector data, and analysis for the professionals shaping the power value chain.",
+  'home.aboutAudience': 'Utilities · Regulators · IPPs · Investors · Policymakers',
+  'home.aboutPillarCoverage': 'Authoritative coverage',
+  'home.aboutPillarCoverageDesc':
+    'Comprehensive updates from ministries, utilities, IPPs, and stakeholders across the energy value chain.',
+  'home.aboutPillarPolicy': 'Policy & regulatory focus',
+  'home.aboutPillarPolicyDesc':
+    'BERC tariff orders, Ministry masterplans, cross-border imports, and public hearings — tracked in detail.',
+  'home.aboutPillarMagazine': 'Monthly magazine',
+  'home.aboutPillarMagazineDesc':
+    'Deep dives, sector data reports, project checklists, and executive interviews in our digital print edition.',
+  'home.aboutLearnMore': 'Our story & team',
+  'home.aboutEditor': 'Farid Uddin Ahmed — Editor & Publisher',
+  'about.missionTitle': 'Our Mission',
+  'about.missionP1':
+    "Founded with the commitment to provide accurate and timely energy journalism, ESB PowerLine stands as a primary beacon for Bangladesh's power and energy sectors. We bring transparent visibility into capacity management, fuel supply realities, tariff reform, and the transition toward clean, sustainable energy options.",
+  'about.missionP2':
+    'Our publications, both in digital news wire formats and our monthly subscription-based magazine, are curated for utility executives, regulatory officers, IPP investors, policy analysts, and stakeholders shaping the nation\'s energy future.',
+  'about.teamTitle': 'Publishing & Operations Team',
+  'about.teamSub':
+    "Meet the professionals managing Bangladesh's premier energy news wire, quarterly data briefs, and monthly magazine.",
+  'about.ctaTitle': 'Ready to explore further?',
+  'about.ctaNews': 'Read Latest News',
+  'about.ctaContact': 'Get in Touch',
   'common.min': 'min',
   'common.views': 'views',
   'common.esbStaff': 'ESB Staff',
@@ -378,6 +425,33 @@ const BN: Record<MessageKey, string> = {
     'উৎপাদন মিক্স, ট্রান্সমিশন লাইন, চাহিদা ও প্রকল্পের তথ্য — ইন্টারঅ্যাক্টিভ গ্রিড ড্যাশবোর্ড।',
   'home.gridExplorerCta': 'গ্রিড তথ্য দেখুন',
   'home.browseAllNews': 'সব সংবাদ দেখুন',
+  'home.aboutKicker': 'সম্পাদকীয় পরিচিতি',
+  'home.aboutTitle': 'ইএসবি পাওয়ারলাইন সম্পর্কে',
+  'home.aboutLead':
+    'বাংলাদেশের নিবেদিত বিদ্যুৎ সংবাদ ওয়্যার — বিদ্যুৎ মূল্যশৃঙ্খলা গঠনকারী পেশাদারদের জন্য দৈনিক প্রতিবেদন, খাতভিত্তিক তথ্য ও বিশ্লেষণ।',
+  'home.aboutAudience': 'বিদ্যুৎ কোম্পানি · নিয়ন্ত্রক · আইপিপি · বিনিয়োগকারী · নীতিনির্ধারক',
+  'home.aboutPillarCoverage': 'নির্ভরযোগ্য সংবাদ',
+  'home.aboutPillarCoverageDesc':
+    'মন্ত্রণালয়, বিদ্যুৎ কোম্পানি, আইপিপি ও সংশ্লিষ্ট স্টেকহোল্ডারদের বিদ্যুৎ মূল্যশৃঙ্খলা জুড়ে বিস্তৃত আপডেট।',
+  'home.aboutPillarPolicy': 'নীতি ও নিয়ন্ত্রণ',
+  'home.aboutPillarPolicyDesc':
+    'বিইআরসি ট্যারিফ, মন্ত্রণালয়ের মাস্টারপ্ল্যান, সীমান্তপার্শ্ব আমদানি ও জনশুনানি — বিস্তারিত অনুসরণ।',
+  'home.aboutPillarMagazine': 'মাসিক ম্যাগাজিন',
+  'home.aboutPillarMagazineDesc':
+    'গভীর বিশ্লেষণ, খাতভিত্তিক তথ্য, প্রকল্প চেকলিস্ট ও নির্বাহী সাক্ষাৎকার — ডিজিটাল প্রিন্ট সংস্করণে।',
+  'home.aboutLearnMore': 'আমাদের গল্প ও দল',
+  'home.aboutEditor': 'ফরিদ উদ্দিন আহমেদ — সম্পাদক ও প্রকাশক',
+  'about.missionTitle': 'আমাদের লক্ষ্য',
+  'about.missionP1':
+    'নির্ভুল ও সময়োপযোগী বিদ্যুৎ সাংবাদিকতার প্রতিশ্রুতি নিয়ে প্রতিষ্ঠিত ইএসবি পাওয়ারলাইন বাংলাদেশের বিদ্যুৎ ও জ্বালানি খাতের প্রধান সংবাদ উৎস। আমরা উৎপাদন ক্ষমতা, জ্বালানি সরবরাহ, ট্যারিফ সংস্কার ও পরিষ্কার-টেকসই জ্বালানিতে রূপান্তরের স্বচ্ছ তথ্য সরবরাহ করি।',
+  'about.missionP2':
+    'ডিজিটাল নিউজ ওয়্যার ও মাসিক সাবস্ক্রিপশন ম্যাগাজিন — উভয়ই বিদ্যুৎ কোম্পানির নির্বাহী, নিয়ন্ত্রক কর্মকর্তা, আইপিপি বিনিয়োগকারী, নীতি বিশ্লেষক ও জাতীয় জ্বালানি ভবিষ্যৎ গঠনকারীদের জন্য তৈরি।',
+  'about.teamTitle': 'প্রকাশনা ও পরিচালনা দল',
+  'about.teamSub':
+    'বাংলাদেশের শীর্ষস্থানীয় বিদ্যুৎ সংবাদ ওয়্যার, ত্রৈমাসিক তথ্য ব্রিফ ও মাসিক ম্যাগাজিন পরিচালনাকারী পেশাদারদের সাথে পরিচিত হন।',
+  'about.ctaTitle': 'আরও জানতে চান?',
+  'about.ctaNews': 'সর্বশেষ সংবাদ পড়ুন',
+  'about.ctaContact': 'যোগাযোগ করুন',
   'common.min': 'মিনিট',
   'common.views': 'পাঠ',
   'common.esbStaff': 'ইএসবি রিপোর্টার',

@@ -67,10 +67,12 @@ export function ArticleCard({
           {isBreaking ? <ArticlePlacementBadge type="breaking" compact /> : null}
         </div>
       </div>
-      <div className="p-5">
-        <h3 className="font-semibold tracking-[-0.015em] leading-tight line-clamp-3 group-hover:text-primary transition-colors">{title}</h3>
-        {excerpt && <p className="mt-2.5 text-[13px] text-muted-foreground line-clamp-4 leading-snug">{excerpt.replace(/\[&hellip;\]/g, '...').replace(/&hellip;/g, '...')}</p>}
-        <div className="mt-4 flex items-center gap-1.5 text-ui-xs text-muted-foreground">
+      <div className="p-5 flex-1 flex flex-col justify-between">
+        <div>
+          <h3 className="font-semibold tracking-[-0.015em] leading-tight line-clamp-2 group-hover:text-primary transition-colors">{title}</h3>
+          {excerpt && <p className="mt-2.5 text-[13px] text-muted-foreground line-clamp-3 leading-snug">{excerpt.replace(/\[&hellip;\]/g, '...').replace(/&hellip;/g, '...')}</p>}
+        </div>
+        <div className="mt-4 flex items-center gap-1.5 text-ui-xs text-muted-foreground pt-1">
           {date ? (
             <span>
               {formatArticleDate(date).replace('Published on ', '')}
