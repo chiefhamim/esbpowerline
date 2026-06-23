@@ -18,7 +18,7 @@ const PERIODS: { key: PeriodKey; label: string; header: string }[] = [
 ];
 
 const PERIOD_ACCENTS: Record<SortKey, string> = {
-  total: '#10b981', // Live (emerald/green)
+  total: '#f59e0b', // Live (amber/yellow)
   day: '#3b82f6',   // Today (blue)
   week: '#8b5cf6',  // Week (purple)
   month: '#f43f5e', // Month (rose)
