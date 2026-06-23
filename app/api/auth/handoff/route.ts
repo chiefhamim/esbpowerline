@@ -7,8 +7,10 @@ export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 function safeCallbackUrl(raw: string | null): string {
-  if (!raw?.startsWith('/')) return '/';
-  if (raw.startsWith('//')) return '/';
+  if (!raw) return '/';
+  if (!raw.startsWith('/') || raw.startsWith('//') || raw.startsWith('/\\') || raw.includes('\\')) {
+    return '/';
+  }
   return raw;
 }
 

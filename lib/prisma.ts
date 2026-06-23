@@ -49,9 +49,7 @@ function getPrismaClient(): PrismaClient {
     cached.$disconnect().catch((err) => console.error('[prisma] Error disconnecting old client:', err));
   }
   const client = createPrismaClient();
-  if (process.env.NODE_ENV !== 'production') {
-    globalForPrisma.prisma = client;
-  }
+  globalForPrisma.prisma = client;
   return client;
 }
 

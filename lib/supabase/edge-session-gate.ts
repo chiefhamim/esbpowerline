@@ -36,7 +36,7 @@ async function loadProfileRow(
 }
 
 /**
- * Edge-safe session gate for proxy.ts — profiles + app_metadata only (no Prisma).
+ * Edge-safe session gate for middleware.ts — profiles + app_metadata only (no Prisma).
  */
 export async function resolveEdgeSession(
   user: User | null,

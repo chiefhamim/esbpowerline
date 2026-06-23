@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 import { isCronAuthorized } from '@/lib/api/cron-auth';
 import { checkDbHealth } from '@/lib/db-health';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(request: Request) {
   if (!isCronAuthorized(request)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });

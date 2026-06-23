@@ -47,7 +47,9 @@ import { slugify, cn, extractKeywords, autoCalculateCategory } from '@/lib/utils
 import type { MediaItem } from '@/components/cms/MediaPicker';
 import { FeaturedImageEditor } from '@/components/cms/FeaturedImageEditor';
 import type { HeroImageMeta } from '@/lib/hero-image';
-import { ArticlePreviewPanel } from '@/components/editor/ArticlePreviewPanel';
+import { ArticlePreviewPanel, type PreviewDevice } from '@/components/editor/ArticlePreviewPanel';
+import { PreviewThemeToggle } from '@/components/editor/PreviewThemeToggle';
+import type { SiteTheme } from '@/lib/site-theme';
 import { CmsFormSelect } from '@/components/cms/CmsFormSelect';
 import { CmsCategorySelect } from '@/components/cms/CmsCategorySelect';
 import { CmsDateTimePicker } from '@/components/cms/CmsDateTimePicker';
@@ -71,7 +73,8 @@ import { datetimeLocalToISO, toDatetimeLocal } from '@/lib/datetime-local';
 import {
   Eye, Save, Send, Clock, Sparkles, Tag, Layers, Globe, FileText,
   FolderOpen, Archive, Link2, PenLine, ShieldCheck, Camera, Focus, X,
-  Settings,
+  Settings, Pin, LayoutGrid, Star, Flame, Facebook, Newspaper, Monitor,
+  Tablet, Smartphone,
 } from 'lucide-react';
 
 type ArticleFormPermissions = {
@@ -159,6 +162,8 @@ export function ArticleForm({
   const [activeTab, setActiveTab] = useState('editor');
   const [focusMode, setFocusMode] = useState(false);
   const [previewPlacement, setPreviewPlacement] = useState<'article' | 'carousel' | 'card' | 'coverage-hero' | 'trending' | 'facebook'>('article');
+  const [previewDevice, setPreviewDevice] = useState<PreviewDevice>('desktop');
+  const [previewTheme, setPreviewTheme] = useState<SiteTheme>('midnight');
   const [reviewDialogOpen, setReviewDialogOpen] = useState(false);
   const [reviewNote, setReviewNote] = useState('');
   const [slugTouched, setSlugTouched] = useState(mode === 'edit');
@@ -486,7 +491,7 @@ export function ArticleForm({
       <div className={cn(
         "cms-article-editor__workspace",
         focusMode && "cms-article-editor__workspace--focus",
-        focusMode && activeTab === 'preview' && previewPlacement === 'article' && "cms-article-editor__workspace--preview-active"
+        focusMode && activeTab === 'preview' && "cms-article-editor__workspace--preview-active"
       )}>
         <div className="cms-article-editor__main">
         {!focusMode && (
@@ -623,27 +628,93 @@ export function ArticleForm({
         <section className="cms-editor-panel cms-editor-panel--body cms-article-editor__story">
           <Tabs value={activeTab} onValueChange={setActiveTab} className="cms-editor-tabs cms-editor-tabs--fill">
             <div className="cms-editor-panel__head cms-editor-panel__head--tabs">
-              <div className="flex items-center gap-2 min-w-0">
-                <Layers className="h-4 w-4 text-sky-500 shrink-0" />
-                <div className="min-w-0">
-                  <h2 className="cms-editor-panel__title">Story content</h2>
-                  <p className="cms-editor-panel__desc hidden sm:block">Grows automatically as you write and paste</p>
+              {!(focusMode && activeTab === 'preview') ? (
+                <div className="flex items-center gap-2 min-w-0">
+                  <Layers className="h-4 w-4 text-sky-500 shrink-0" />
+                  <div className="min-w-0">
+                    <h2 className="cms-editor-panel__title">Story content</h2>
+                    <p className="cms-editor-panel__desc hidden sm:block">Grows automatically as you write and paste</p>
+                  </div>
                 </div>
-              </div>
+              ) : (
+                <div className="flex items-center gap-3 flex-wrap">
+                  {/* Placement Icons */}
+                  <div className="flex items-center gap-1 bg-muted/30 p-1 rounded-xl border border-border/20">
+                    {([
+                      ['carousel', Pin, 'Carousel'],
+                      ['coverage-hero', LayoutGrid, 'Coverage'],
+                      ['card', Star, 'Home cards'],
+                      ['trending', Flame, 'Trending'],
+                      ['article', Newspaper, 'Article'],
+                      ['facebook', Facebook, 'Facebook'],
+                    ] as const).map(([id, Icon, label]) => {
+                      const disabled =
+                        (id === 'carousel' && !isFeatured && !isBreaking) ||
+                        (id === 'coverage-hero' && !isFeatured && !isBreaking && !isPinned) ||
+                        (id === 'trending' && !isTrending);
+                      
+                      return (
+                        <ModernTooltip key={id} label={label} hint={disabled ? 'Enable flag to preview' : `Show ${label} view`} variant="editor" fast side="bottom">
+                          <button
+                            type="button"
+                            disabled={disabled}
+                            onClick={() => setPreviewPlacement(id)}
+                            className={cn(
+                              'h-7 w-7 rounded-lg flex items-center justify-center text-muted-foreground transition-all hover:bg-muted/65 hover:text-foreground',
+                              previewPlacement === id && 'bg-sky-500/10 text-sky-500 border border-sky-500/20 shadow-sm',
+                              disabled && 'opacity-25 grayscale cursor-not-allowed'
+                            )}
+                            aria-label={label}
+                          >
+                            <Icon className="h-3.5 w-3.5" />
+                          </button>
+                        </ModernTooltip>
+                      );
+                    })}
+                  </div>
+
+                  {/* Device Icons */}
+                  <div className="flex items-center gap-1 bg-muted/30 p-1 rounded-xl border border-border/20">
+                    {([
+                      ['desktop', Monitor, 'Desktop'],
+                      ['tablet', Tablet, 'Tablet'],
+                      ['mobile', Smartphone, 'Mobile'],
+                    ] as const).map(([id, Icon, label]) => (
+                      <ModernTooltip key={id} label={label} hint={`Simulate ${label} view`} variant="editor" fast side="bottom">
+                        <button
+                          type="button"
+                          onClick={() => setPreviewDevice(id)}
+                          className={cn(
+                            'h-7 w-7 rounded-lg flex items-center justify-center text-muted-foreground transition-all hover:bg-muted/65 hover:text-foreground',
+                            previewDevice === id && 'bg-sky-500/10 text-sky-500 border border-sky-500/20 shadow-sm',
+                          )}
+                          aria-label={label}
+                        >
+                          <Icon className="h-3.5 w-3.5" />
+                        </button>
+                      </ModernTooltip>
+                    ))}
+                  </div>
+
+                  {/* Theme Toggle */}
+                  <PreviewThemeToggle theme={previewTheme} onChange={setPreviewTheme} />
+                </div>
+              )}
               <div className="flex items-center gap-2 flex-wrap justify-end">
                 <TabsList className="cms-story-tabs h-9">
                   <TabsTrigger value="editor" className="cms-story-tabs__btn cms-story-tabs__btn--body text-xs gap-1.5 px-3">
-                    <FileText className="h-3.5 w-3.5" /> Body
+                    <FileText className="h-3.5 w-3.5" />
+                    <span className="cms-tab-label">Body</span>
                   </TabsTrigger>
                   <TabsTrigger value="seo" className="cms-story-tabs__btn cms-story-tabs__btn--seo text-xs gap-1.5 px-3">
-                    <Globe className="h-3.5 w-3.5" /> SEO
+                    <Globe className="h-3.5 w-3.5" />
+                    <span className="cms-tab-label">SEO</span>
                   </TabsTrigger>
                   <TabsTrigger value="preview" className="cms-story-tabs__btn cms-story-tabs__btn--preview text-xs gap-1.5 px-3">
-                    <Eye className="h-3.5 w-3.5" /> Preview
+                    <Eye className="h-3.5 w-3.5" />
+                    <span className="cms-tab-label">Preview</span>
                   </TabsTrigger>
-                  <TabsTrigger value="settings" className="cms-story-tabs__btn cms-story-tabs__btn--settings text-xs gap-1.5 px-3 md:hidden">
-                    <Settings className="h-3.5 w-3.5" /> Settings
-                  </TabsTrigger>
+                  
                 </TabsList>
 
                 <ModernTooltip label={focusMode ? "Exit Focus" : "Focus Mode"} hint={focusMode ? "Show all panels" : "Hide distraction panels"} variant="editor" fast side="top">
@@ -653,13 +724,14 @@ export function ArticleForm({
                     size="sm" 
                     onClick={() => setFocusMode(!focusMode)} 
                     className={cn(
-                      "h-8 rounded-full text-xs font-semibold shrink-0 gap-1.5 px-3 transition-all",
+                      "cms-focus-btn h-8 rounded-full text-xs font-semibold shrink-0 gap-1.5 px-3 transition-all",
                       focusMode 
                         ? "text-sky-500 bg-sky-500/10 hover:bg-sky-500/15 border border-sky-500/20 shadow-sm" 
                         : "text-muted-foreground hover:text-foreground hover:bg-muted/40 border border-transparent"
                     )}
                   >
-                    <Focus className="h-3.5 w-3.5" /> {focusMode ? "Focused" : "Focus"}
+                    <Focus className="h-3.5 w-3.5" />
+                    <span className="cms-focus-label">{focusMode ? "Focused" : "Focus"}</span>
                   </Button>
                 </ModernTooltip>
               </div>
@@ -723,6 +795,10 @@ export function ArticleForm({
                 focusMode={focusMode}
                 placement={previewPlacement}
                 onPlacementChange={setPreviewPlacement}
+                device={previewDevice}
+                onDeviceChange={setPreviewDevice}
+                theme={previewTheme}
+                onThemeChange={setPreviewTheme}
                 title={title}
                 excerpt={excerpt}
                 content={content}
@@ -742,196 +818,7 @@ export function ArticleForm({
                 collaborators={staff.filter(s => collaboratorIds.includes(s.id)).map(c => ({ id: c.id, name: c.name }))}
               />
             </TabsContent>
-            <TabsContent value="settings" className="cms-editor-panel__body cms-editor-panel__body--stack mt-0 md:hidden space-y-6">
-              {/* Publish card */}
-              <div className="cms-sidebar-card cms-article-editor__publish p-0 border-0 bg-transparent shadow-none">
-                <div className="cms-sidebar-card__head px-0 pt-0">
-                  <Send className="h-4 w-4" />
-                  <h3>Publish</h3>
-                </div>
-                <div className="cms-sidebar-card__body px-0">
-                  <div className="cms-field">
-                    <label className="cms-field__label">Status</label>
-                    <CmsFormSelect
-                      value={status}
-                      onChange={setStatus}
-                      options={statusSelectOptions}
-                      placeholder="Status"
-                      menuTitle="Article status"
-                    />
-                  </div>
-                  {canPublish && (
-                    <div className="cms-field cms-field--datetime">
-                      <label className="cms-field__label flex items-center gap-1.5">
-                        <Clock className="h-3 w-3" />
-                        {status === 'SCHEDULED'
-                          ? 'Go live at'
-                          : status === 'PUBLISHED'
-                            ? 'Publish date'
-                            : 'Go-live date'}
-                      </label>
-                      <CmsDateTimePicker value={resolvedPublishedAt} onChange={setPublishedAt} />
-                    </div>
-                  )}
-                  <div className="cms-publish-actions cms-publish-actions--sidebar mt-4">
-                    <Button onClick={() => handleSubmit()} disabled={loading || !hasCategories} className="cms-publish-btn w-full">
-                      <Save className="h-4 w-4" />
-                      {loading ? 'Saving…' : 'Save changes'}
-                    </Button>
-                    {canPublish && (
-                      <>
-                        <Button variant="secondary" onClick={() => handleSubmit('PUBLISHED')} disabled={loading} className="cms-publish-btn cms-publish-btn--publish w-full">
-                          <Send className="h-4 w-4" /> Publish now
-                        </Button>
-                        <Button
-                          variant="outline"
-                          onClick={() => handleSubmit('SCHEDULED')}
-                          disabled={loading}
-                          className="cms-publish-btn cms-publish-btn--schedule w-full"
-                        >
-                          <Clock className="h-4 w-4" /> Schedule
-                        </Button>
-                      </>
-                    )}
-                    {mode === 'edit' && status === 'PUBLISHED' && (
-                      <Button
-                        variant="ghost"
-                        onClick={() => handleSubmit('DRAFT')}
-                        disabled={loading}
-                        className="cms-publish-btn w-full text-muted-foreground"
-                      >
-                        <Archive className="h-4 w-4" /> Move to draft
-                      </Button>
-                    )}
-                    {canSubmitForReview && status !== 'IN_REVIEW' && (
-                      <Button
-                        variant="outline"
-                        onClick={() => setReviewDialogOpen(true)}
-                        disabled={loading}
-                        className="cms-publish-btn cms-publish-btn--review w-full"
-                      >
-                        <ShieldCheck className="h-4 w-4" /> Send to admin for review
-                      </Button>
-                    )}
-                    {status === 'IN_REVIEW' && (
-                      <p className="cms-field__hint text-center">
-                        Awaiting admin sign-off. You will be notified in Editorial when approved or returned.
-                      </p>
-                    )}
-                    {autosaveError && status === 'DRAFT' && (
-                      <p className="cms-field__hint text-center text-destructive">
-                        Autosave failed: {autosaveError}
-                      </p>
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              {/* Organize card */}
-              <div className="cms-sidebar-card cms-article-editor__organize p-0 border-0 bg-transparent shadow-none pt-6 border-t border-border/40">
-                <div className="cms-sidebar-card__head px-0 pt-0">
-                  <FolderOpen className="h-4 w-4" />
-                  <h3>Organize</h3>
-                </div>
-                <div className="cms-sidebar-card__body px-0">
-                  <div className="cms-field">
-                    <label className="cms-field__label">Category</label>
-                    <CmsCategorySelect
-                      value={category}
-                      onChange={setCategory}
-                      categories={categories}
-                    />
-                  </div>
-                  <div className="cms-field">
-                    <div className="cms-field__label-row">
-                      <label className="cms-field__label flex items-center gap-1.5">
-                        <Tag className="h-3 w-3" /> Tags
-                      </label>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const picked = extractKeywords(title, content);
-                          setTagsList(picked);
-                        }}
-                        className="text-[10px] font-semibold text-sky-400 hover:text-sky-300 hover:underline transition-all"
-                      >
-                        Auto-pick from story
-                      </button>
-                    </div>
-                    <div className="flex flex-wrap gap-1.5 p-2 rounded-md border border-input bg-background/50 focus-within:ring-1 focus-within:ring-ring focus-within:border-ring min-h-[40px] items-center">
-                      {tagsList.map((tag) => (
-                        <span
-                          key={tag}
-                          className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] bg-sky-500/10 text-sky-400 border border-sky-500/20 font-medium"
-                        >
-                          #{tag}
-                          <button
-                            type="button"
-                            onClick={() => setTagsList(prev => prev.filter(t => t !== tag))}
-                            className="text-sky-400/60 hover:text-sky-300 transition-colors ml-0.5"
-                            aria-label={`Remove tag ${tag}`}
-                          >
-                            <X className="h-3 w-3" />
-                          </button>
-                        </span>
-                      ))}
-                      <input
-                        type="text"
-                        value={tagInput}
-                        onChange={(e) => {
-                          const val = e.target.value;
-                          if (val.endsWith(',')) {
-                            const newTag = val.slice(0, -1).trim();
-                            if (newTag && !tagsList.includes(newTag)) {
-                              setTagsList(prev => [...prev, newTag]);
-                            }
-                            setTagInput('');
-                          } else {
-                            setTagInput(val);
-                          }
-                        }}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter') {
-                            e.preventDefault();
-                            const newTag = tagInput.trim();
-                            if (newTag && !tagsList.includes(newTag)) {
-                              setTagsList(prev => [...prev, newTag]);
-                            }
-                            setTagInput('');
-                          } else if (e.key === 'Backspace' && !tagInput && tagsList.length > 0) {
-                            setTagsList(prev => prev.slice(0, -1));
-                          }
-                        }}
-                        placeholder={tagsList.length === 0 ? "Type and comma-separate..." : ""}
-                        className="flex-1 bg-transparent border-0 p-0 text-xs focus:ring-0 focus:outline-none placeholder:text-muted-foreground/50 min-w-[120px]"
-                      />
-                    </div>
-                    <span className="cms-field__hint">Type word and press comma (,) or Enter to add a tag pill</span>
-                  </div>
-                  <FeaturedImageEditor
-                    items={mediaItems}
-                    value={imageUrl}
-                    onChange={setImageUrl}
-                    meta={heroMeta}
-                    onMetaChange={setHeroMeta}
-                  />
-                  {imageUrl && (
-                    <div className="cms-field mt-3">
-                      <label className="cms-field__label flex items-center gap-1.5">
-                        <Camera className="h-3.5 w-3.5" /> Image Credit
-                      </label>
-                      <Input
-                        value={imageCredit}
-                        onChange={(e) => setImageCredit(e.target.value)}
-                        className="cms-field__input"
-                        placeholder="e.g., Reuters / Jane Doe"
-                      />
-                      <span className="cms-field__hint">Credit for the featured image (visible on live story)</span>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </TabsContent>
+            
           </Tabs>
         </section>
         </div>

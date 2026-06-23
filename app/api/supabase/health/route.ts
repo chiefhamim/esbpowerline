@@ -4,6 +4,8 @@ import { isCronAuthorized } from '@/lib/api/cron-auth';
 import { canAccessAdminPanel } from '@/lib/constants';
 import { checkSupabaseHealth } from '@/lib/supabase/health';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(request: Request) {
   const cronAuthorized = isCronAuthorized(request);
   const session = cronAuthorized ? null : await auth();

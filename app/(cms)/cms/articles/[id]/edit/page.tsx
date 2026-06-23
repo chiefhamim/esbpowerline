@@ -47,7 +47,7 @@ export default async function EditArticlePage({ params }: { params: Promise<{ id
         }}
       />
 
-      <div className="mt-6">
+      <div className="mt-6 cms-revision-history-section">
         <RevisionHistory
           articleId={id}
           revisions={revisions.map((r) => ({

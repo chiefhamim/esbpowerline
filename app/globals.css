@@ -5509,6 +5509,10 @@ button.grid-explorer-link {
   overflow: hidden;
 }
 
+.tiptap-editor--sticky-toolbar {
+  overflow: visible !important;
+}
+
 .tiptap-toolbar {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(8.25rem, 1fr));
@@ -5984,6 +5988,7 @@ html.theme-white {
   --admin-rose: 346 77% 58%;
   --admin-violet: 262 72% 62%;
   --admin-red: 359 84% 62%;
+  --admin-yellow: 42 94% 53%;
   --admin-blue: 217 91% 60%;
   --admin-green: 142 71% 45%;
   --admin-surface: 220 40% 8%;
@@ -11363,6 +11368,12 @@ html[data-editor-guidance='pro'] .editor-settings-section__hint {
   border-color: hsl(var(--primary) / 0.35);
 }
 
+.cms-publish-btn--review:hover:not(:disabled) {
+  background-color: hsl(262 72% 54%) !important;
+  border-color: hsl(262 72% 48%) !important;
+  color: hsl(0 0% 100%) !important;
+}
+
 .admin-platform-menu-header {
   font-size: 10px;
   font-weight: 600;
@@ -13258,13 +13269,13 @@ html[data-editor-guidance='pro'] .editor-settings-section__hint {
 }
 
 .cms-story-tabs__btn--preview[data-active='true'] {
-  color: hsl(var(--admin-red));
+  color: hsl(var(--admin-yellow));
   background: linear-gradient(
     135deg,
-    hsl(var(--admin-red) / 0.16),
-    hsl(var(--admin-red) / 0.06)
+    hsl(var(--admin-yellow) / 0.16),
+    hsl(var(--admin-yellow) / 0.06)
   );
-  box-shadow: 0 1px 5px hsl(var(--admin-red) / 0.12);
+  box-shadow: 0 1px 5px hsl(var(--admin-yellow) / 0.12);
 }
 
 .theme-white .cms-story-tabs {
@@ -13281,7 +13292,7 @@ html[data-editor-guidance='pro'] .editor-settings-section__hint {
 }
 
 .theme-white .cms-story-tabs__btn--preview[data-active='true'] {
-  background: linear-gradient(135deg, hsl(var(--admin-red) / 0.12), hsl(var(--admin-red) / 0.04));
+  background: linear-gradient(135deg, hsl(var(--admin-yellow) / 0.12), hsl(var(--admin-yellow) / 0.04));
 }
 
 .cms-field {
@@ -16535,21 +16546,7 @@ html.theme-white .cms-datetime-grid-cell {
    ========================================= */
 
 /* Custom Sleek Scrollbar */
-::-webkit-scrollbar {
-  width: 10px;
-  height: 10px;
-}
-::-webkit-scrollbar-track {
-  background: var(--scroll-track, #161619);
-}
-::-webkit-scrollbar-thumb {
-  background: var(--scroll-thumb, #64748b);
-  border-radius: 5px;
-  border: 2px solid var(--scroll-track, #161619);
-}
-::-webkit-scrollbar-thumb:hover {
-  background: var(--scroll-thumb-hover, #94a3b8);
-}
+
 
 @layer utilities {
   /* Safe area insets for mobile bezels/home bars */
@@ -17302,6 +17299,11 @@ html.theme-white .cms-datetime-grid-cell {
 }
 
 /* Ensure mobile styling overrides inside simulated mobile preview frame */
+.cms-preview-device-frame--mobile,
+.cms-preview-device-frame--tablet {
+  transform: translate3d(0, 0, 0) !important;
+}
+
 .cms-preview-device-frame--mobile .public-nav-bar__menu-btn {
   display: flex !important;
 }
@@ -17842,5 +17844,145 @@ html.theme-white .cms-datetime-grid-cell {
 .admin-shell .cms-write-page__title {
   font-family: var(--font-sans), sans-serif !important;
 }
+
+/* Hide Revision History section when workspace is focused */
+.cms-write-page:has(.cms-article-editor__workspace--focus) .cms-revision-history-section {
+  display: none !important;
+}
+
+/* Enforce uniform aspect ratios on preview card images to prevent viewport-dependent scaling differences */
+.cms-preview-viewport .article-card__image,
+.cms-preview-viewport .featured-hero__image,
+.cms-preview-viewport .coverage-card img,
+.cms-preview-viewport img {
+  height: auto !important;
+  aspect-ratio: 16/9 !important;
+  object-fit: cover !important;
+  min-height: 0 !important;
+  max-height: none !important;
+}
+
+.cms-preview-viewport .featured-hero__image-wrap,
+.cms-preview-viewport .article-card__image-wrapper {
+  aspect-ratio: 16/9 !important;
+  height: auto !important;
+  min-height: 0 !important;
+  max-height: none !important;
+}
+
+/* Render the bullet separator in article metadata across all viewports */
+.cms-preview-viewport .article-meta-mobile-hide {
+  display: inline !important;
+}
+
+/* Improve scrolling feel inside preview panels and prevent "lose screw" sensation */
+.cms-preview-viewport,
+.cms-preview-public-surface,
+.cms-preview-viewport * {
+  scroll-behavior: smooth !important;
+  -webkit-overflow-scrolling: touch !important;
+}
+
+/* Make preview scrollbars wider so they remain easily grabby and clickable even when scaled down */
+.cms-preview-viewport ::-webkit-scrollbar,
+.cms-preview-public-surface::-webkit-scrollbar,
+.cms-preview-device-frame ::-webkit-scrollbar,
+.cms-preview-device-wrapper ::-webkit-scrollbar,
+iframe::-webkit-scrollbar {
+  width: 10px !important;
+  height: 10px !important;
+}
+
+.cms-preview-viewport ::-webkit-scrollbar-thumb,
+.cms-preview-public-surface::-webkit-scrollbar-thumb,
+.cms-preview-device-frame ::-webkit-scrollbar-thumb,
+.cms-preview-device-wrapper ::-webkit-scrollbar-thumb,
+iframe::-webkit-scrollbar-thumb {
+  background: var(--scroll-thumb) !important;
+  border: 2px solid var(--scroll-track) !important;
+  border-radius: 6px !important;
+}
+
+.cms-preview-viewport ::-webkit-scrollbar-thumb:hover,
+.cms-preview-public-surface::-webkit-scrollbar-thumb:hover,
+.cms-preview-device-frame ::-webkit-scrollbar-thumb:hover,
+.cms-preview-device-wrapper ::-webkit-scrollbar-thumb:hover,
+iframe::-webkit-scrollbar-thumb:hover {
+  background: var(--scroll-thumb-hover) !important;
+}
+
+.cms-preview-viewport ::-webkit-scrollbar-track,
+.cms-preview-public-surface::-webkit-scrollbar-track,
+.cms-preview-device-frame ::-webkit-scrollbar-track,
+.cms-preview-device-wrapper ::-webkit-scrollbar-track,
+iframe::-webkit-scrollbar-track {
+  background: var(--scroll-track) !important;
+}
+
+/* Sticky headers in Focus Preview Mode - edge to edge with CMS navbar */
+.cms-article-editor__workspace--preview-active .cms-editor-panel__head--tabs {
+  position: sticky !important;
+  top: 0 !important;
+  z-index: 30 !important;
+  background-color: hsl(var(--card) / 0.85) !important;
+  backdrop-filter: blur(8px) !important;
+  -webkit-backdrop-filter: blur(8px) !important;
+  border-bottom: 1px solid hsl(var(--border) / 0.5) !important;
+  margin-top: 0 !important;
+  width: 100% !important;
+}
+
+.cms-article-editor__workspace--preview-active .cms-preview-modal__toolbar {
+  position: sticky !important;
+  top: 56px !important; /* height of the tab bar */
+  z-index: 29 !important;
+  background-color: hsl(var(--card) / 0.85) !important;
+  backdrop-filter: blur(8px) !important;
+  -webkit-backdrop-filter: blur(8px) !important;
+  border-bottom: 1px solid hsl(var(--border) / 0.5) !important;
+  width: 100% !important;
+}
+
+/* Hide CMS top header navbar in Focus Preview Mode */
+.cms-shell:has(.cms-article-editor__workspace--preview-active) .cms-header {
+  display: none !important;
+}
+
+/* Ensure no padding at the top of main content in Focus Preview Mode so sticky header is flush */
+.cms-shell:has(.cms-article-editor__workspace--preview-active) .cms-main-inner {
+  padding-top: 0 !important;
+}
+
+/* Hide text labels on the sticky tabs/editor header in Focus Preview Mode */
+.cms-article-editor__workspace--preview-active .cms-editor-panel__head--tabs .cms-tab-label,
+.cms-article-editor__workspace--preview-active .cms-editor-panel__head--tabs .cms-focus-label {
+  display: none !important;
+}
+
+/* Make sure the icons are centered and buttons are compact when text is hidden */
+.cms-article-editor__workspace--preview-active .cms-editor-panel__head--tabs .cms-story-tabs__btn {
+  padding-left: 0.5rem !important;
+  padding-right: 0.5rem !important;
+  gap: 0 !important;
+}
+
+.cms-article-editor__workspace--preview-active .cms-editor-panel__head--tabs .cms-focus-btn {
+  padding-left: 0.5rem !important;
+  padding-right: 0.5rem !important;
+  gap: 0 !important;
+}
+
+/* Hide theme toggle text spans in Focus Preview Mode */
+.cms-article-editor__workspace--preview-active .cms-editor-panel__head--tabs .cms-preview-theme-toggle__btn span {
+  display: none !important;
+}
+
+.cms-article-editor__workspace--preview-active .cms-editor-panel__head--tabs .cms-preview-theme-toggle__btn {
+  padding: 0.25rem !important;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+}
+
 
 

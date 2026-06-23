@@ -56,6 +56,8 @@ export function createPgPoolConfig(connectionString: string) {
   return {
     connectionString: poolUrl,
     ssl: remote ? { rejectUnauthorized: false as const } : undefined,
+    max: process.env.NODE_ENV === 'production' ? 2 : 10,
+    idleTimeoutMillis: 15000,
   };
 }
 
