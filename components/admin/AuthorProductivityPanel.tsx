@@ -5,6 +5,7 @@ import { ArrowUpDown } from 'lucide-react';
 import { cn, formatNumber } from '@/lib/utils';
 import { ROLES, type Role } from '@/lib/constants';
 import type { AuthorPublishingStat } from '@/lib/actions/analytics';
+import { RoleBadge } from '@/components/dashboard/RoleBadge';
 
 type PeriodKey = 'day' | 'week' | 'month' | 'year';
 type SortKey = 'total' | PeriodKey;
@@ -108,9 +109,7 @@ export function AuthorProductivityPanel({ authors }: { authors: AuthorPublishing
                   <span className="admin-author-productivity__name font-medium">{author.name}</span>
                 </td>
                 <td className="py-2.5 px-3">
-                  <span className="admin-role-pill text-[10px] font-bold py-0.5 px-2 rounded-full border border-border bg-muted/40">
-                    {ROLES[author.role as Role]?.name ?? author.role}
-                  </span>
+                  <RoleBadge role={author.role as Role} />
                 </td>
                 <td className={cn(
                   "admin-author-productivity__num tabular-nums font-semibold py-2.5 px-3 text-right text-[13px]",
