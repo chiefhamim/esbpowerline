@@ -49,6 +49,7 @@ import { FeaturedImageEditor } from '@/components/cms/FeaturedImageEditor';
 import type { HeroImageMeta } from '@/lib/hero-image';
 import { ArticlePreviewPanel, type PreviewDevice } from '@/components/editor/ArticlePreviewPanel';
 import { PreviewThemeToggle } from '@/components/editor/PreviewThemeToggle';
+import { RevisionHistory } from '@/components/cms/RevisionHistory';
 import type { SiteTheme } from '@/lib/site-theme';
 import { CmsFormSelect } from '@/components/cms/CmsFormSelect';
 import { CmsCategorySelect } from '@/components/cms/CmsCategorySelect';
@@ -71,7 +72,7 @@ import { useCmsArticleEditor } from '@/components/cms/CmsArticleEditorContext';
 import { useEditorPreferences } from '@/components/cms/EditorPreferencesProvider';
 import { datetimeLocalToISO, toDatetimeLocal } from '@/lib/datetime-local';
 import {
-  Eye, Save, Send, Clock, Sparkles, Tag, Layers, Globe, FileText,
+  Eye, Save, Send, Clock, History, Sparkles, Tag, Layers, Globe, FileText,
   FolderOpen, Archive, Link2, PenLine, ShieldCheck, Camera, Focus, X,
   Settings, Pin, LayoutGrid, Star, Flame, Facebook, Newspaper, Monitor,
   Tablet, Smartphone,
@@ -118,6 +119,12 @@ interface ArticleFormProps {
     publishedAt?: string | Date | null;
     seo?: unknown;
   };
+  revisions?: {
+    id: string;
+    content: string;
+    note: string | null;
+    createdAt: Date;
+  }[];
 }
 
 type StaffMember = {
@@ -144,6 +151,7 @@ export function ArticleForm({
   mediaItems = [],
   permissions = {},
   writeMeta,
+  revisions = [],
 }: ArticleFormProps & { categories?: Pick<PublicCategory, 'name' | 'color' | 'icon' | 'iconImageUrl'>[] }) {
   const {
     canPublish = true,
@@ -714,7 +722,12 @@ export function ArticleForm({
                     <Eye className="h-3.5 w-3.5" />
                     <span className="cms-tab-label">Preview</span>
                   </TabsTrigger>
-                  
+                  {mode === 'edit' && revisions.length > 0 && (
+                    <TabsTrigger value="history" className="cms-story-tabs__btn cms-story-tabs__btn--history text-xs gap-1.5 px-3">
+                      <History className="h-3.5 w-3.5" />
+                      <span className="cms-tab-label">History</span>
+                    </TabsTrigger>
+                  )}
                 </TabsList>
 
                 <ModernTooltip label={focusMode ? "Exit Focus" : "Focus Mode"} hint={focusMode ? "Show all panels" : "Hide distraction panels"} variant="editor" fast side="top">
@@ -818,7 +831,14 @@ export function ArticleForm({
                 collaborators={staff.filter(s => collaboratorIds.includes(s.id)).map(c => ({ id: c.id, name: c.name }))}
               />
             </TabsContent>
-            
+            {mode === 'edit' && revisions.length > 0 && (
+              <TabsContent value="history" className="cms-editor-panel__body cms-editor-panel__body--stack mt-0">
+                <RevisionHistory
+                  articleId={article?.id ?? ''}
+                  revisions={revisions}
+                />
+              </TabsContent>
+            )}
           </Tabs>
         </section>
         </div>

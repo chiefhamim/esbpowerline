@@ -129,6 +129,7 @@ export async function approveReviewSubmission(
       publishedAt: true,
       imageUrl: true,
       tags: true,
+      collaboratorIds: true,
     },
   });
   if (!article) throw new Error('Article not found');
@@ -165,6 +166,11 @@ export async function approveReviewSubmission(
       ? `Approved and published: “${article.title}”.`
       : `Approved for publication: “${article.title}”. You may publish when ready.`);
 
+  const recipients = new Set<string>();
+  if (article.authorId) recipients.add(article.authorId);
+  const collabs = parseCollaboratorIds(article.collaboratorIds);
+  collabs.forEach((c) => recipients.add(c));
+
   await prisma.$transaction([
     prisma.article.update({
       where: { id: articleId },
@@ -177,16 +183,18 @@ export async function approveReviewSubmission(
       where: { articleId, type: 'REVIEW_SUBMISSION', status: 'PENDING' },
       data: { status: 'RESOLVED' },
     }),
-    prisma.editorialNotice.create({
-      data: {
-        type: 'REVIEW_APPROVED',
-        message: approvalMessage,
-        recipientId: article.authorId,
-        senderId: user.id,
-        articleId,
-        metadata: { articleTitle: article.title, published: publish },
-      },
-    }),
+    ...Array.from(recipients).map((recId) =>
+      prisma.editorialNotice.create({
+        data: {
+          type: 'REVIEW_APPROVED',
+          message: approvalMessage,
+          recipientId: recId,
+          senderId: user.id,
+          articleId,
+          metadata: { articleTitle: article.title, published: publish },
+        },
+      })
+    ),
   ]);
 
   await prisma.auditLog.create({
@@ -194,6 +202,16 @@ export async function approveReviewSubmission(
       type: publish ? 'article.review_publish' : 'article.review_approve',
       message: `${publish ? 'Published' : 'Approved'} after review: ${article.title}`,
       userId: user.id,
+      undoPayload: JSON.stringify({
+        action: publish ? 'article.review_publish' : 'article.review_approve',
+        articles: [
+          {
+            id: article.id,
+            status: article.status,
+            publishedAt: article.publishedAt,
+          },
+        ],
+      }),
     },
   });
 
@@ -213,10 +231,15 @@ export async function returnReviewSubmission(articleId: string, note: string) {
 
   const article = await prisma.article.findUnique({
     where: { id: articleId },
-    select: { id: true, title: true, status: true, authorId: true },
+    select: { id: true, title: true, status: true, authorId: true, collaboratorIds: true },
   });
   if (!article) throw new Error('Article not found');
   if (article.status !== 'IN_REVIEW') throw new Error('Article is not awaiting review');
+
+  const recipients = new Set<string>();
+  if (article.authorId) recipients.add(article.authorId);
+  const collabs = parseCollaboratorIds(article.collaboratorIds);
+  collabs.forEach((c) => recipients.add(c));
 
   await prisma.$transaction([
     prisma.article.update({
@@ -227,16 +250,18 @@ export async function returnReviewSubmission(articleId: string, note: string) {
       where: { articleId, type: 'REVIEW_SUBMISSION', status: 'PENDING' },
       data: { status: 'RESOLVED' },
     }),
-    prisma.editorialNotice.create({
-      data: {
-        type: 'REVISION_REQUEST',
-        message: note.trim(),
-        recipientId: article.authorId,
-        senderId: user.id,
-        articleId,
-        metadata: { articleTitle: article.title, fromReview: true },
-      },
-    }),
+    ...Array.from(recipients).map((recId) =>
+      prisma.editorialNotice.create({
+        data: {
+          type: 'REVISION_REQUEST',
+          message: note.trim(),
+          recipientId: recId,
+          senderId: user.id,
+          articleId,
+          metadata: { articleTitle: article.title, fromReview: true },
+        },
+      })
+    ),
   ]);
 
   await prisma.auditLog.create({
@@ -244,6 +269,15 @@ export async function returnReviewSubmission(articleId: string, note: string) {
       type: 'article.review_return',
       message: `Returned from review: ${article.title}`,
       userId: user.id,
+      undoPayload: JSON.stringify({
+        action: 'article.review_return',
+        articles: [
+          {
+            id: article.id,
+            status: article.status,
+          },
+        ],
+      }),
     },
   });
 

@@ -1,7 +1,6 @@
 import { notFound } from 'next/navigation';
 import { auth } from '@/lib/auth';
 import { ArticleForm } from '@/components/editor/ArticleForm';
-import { RevisionHistory } from '@/components/cms/RevisionHistory';
 import { getArticle, getArticleRevisions } from '@/lib/actions/articles';
 import { getCategories } from '@/lib/actions/categories';
 import { getMedia } from '@/lib/actions/media';
@@ -45,19 +44,13 @@ export default async function EditArticlePage({ params }: { params: Promise<{ id
           showLiveLink: article.status === 'PUBLISHED',
           showBackLink: true,
         }}
+        revisions={revisions.map((r) => ({
+          id: r.id,
+          content: r.content,
+          note: r.note,
+          createdAt: r.createdAt,
+        }))}
       />
-
-      <div className="mt-6 cms-revision-history-section">
-        <RevisionHistory
-          articleId={id}
-          revisions={revisions.map((r) => ({
-            id: r.id,
-            content: r.content,
-            note: r.note,
-            createdAt: r.createdAt,
-          }))}
-        />
-      </div>
     </div>
   );
 }

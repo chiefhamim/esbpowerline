@@ -82,7 +82,7 @@ export type MediaLibraryItem = {
   createdAt: Date;
   usageCount: number;
   usedInTitles: string[];
-  usedInArticles: { id: string; title: string; slug: string }[];
+  usedInArticles: { id: string; title: string; slug: string; imageCredit?: string | null; seo?: any }[];
   canDelete: boolean;
 };
 
@@ -97,7 +97,7 @@ export async function getMediaLibrary(): Promise<MediaLibraryItem[]> {
         status: { not: 'TRASH' },
         editorTrash: false,
       },
-      select: { id: true, slug: true, imageUrl: true, title: true },
+      select: { id: true, slug: true, imageUrl: true, title: true, imageCredit: true, seo: true },
     }),
     prisma.user.findMany({
       select: { id: true, name: true },
@@ -111,13 +111,19 @@ export async function getMediaLibrary(): Promise<MediaLibraryItem[]> {
     if (u.name) userMap.set(u.id, u.name);
   }
 
-  const usageMap = new Map<string, { count: number; titles: string[]; articles: { id: string; title: string; slug: string }[] }>();
+  const usageMap = new Map<string, { count: number; titles: string[]; articles: { id: string; title: string; slug: string; imageCredit?: string | null; seo?: any }[] }>();
   for (const article of articles) {
     if (!article.imageUrl) continue;
     const entry = usageMap.get(article.imageUrl) ?? { count: 0, titles: [], articles: [] };
     entry.count += 1;
     entry.titles.push(article.title);
-    entry.articles.push({ id: article.id, title: article.title, slug: article.slug });
+    entry.articles.push({
+      id: article.id,
+      title: article.title,
+      slug: article.slug,
+      imageCredit: article.imageCredit,
+      seo: article.seo,
+    });
     usageMap.set(article.imageUrl, entry);
   }
 
@@ -218,4 +224,130 @@ export async function deleteMedia(id: string) {
   await deleteStoredMedia(media.url).catch(() => undefined);
   revalidatePath('/cms/media');
   revalidatePath('/admin/media');
+}
+
+export async function replaceMediaAndFeaturedImage(
+  mediaId: string,
+  data: {
+    name?: string;
+    altText?: string;
+    caption?: string;
+    newUrl?: string;      // if a new file was uploaded
+    newSize?: number;     // size of the new file
+    newMimeType?: string; // mimeType of the new file
+    imageCredit?: string;
+    zoom?: number;
+    fitMode?: string;
+    filter?: string;
+    panX?: number;
+    panY?: number;
+  }
+) {
+  const session = await auth();
+  if (!session?.user || !can(session.user.role, 'article.edit_own')) {
+    throw new Error('Forbidden');
+  }
+
+  // 1. Get the current media record
+  const media = await prisma.media.findUnique({
+    where: { id: mediaId }
+  });
+  if (!media) throw new Error('Media not found');
+
+  const oldUrl = media.url;
+  const newUrl = data.newUrl || oldUrl;
+
+  // 2. Update the media record itself
+  await prisma.media.update({
+    where: { id: mediaId },
+    data: {
+      name: data.name ?? media.name,
+      url: newUrl,
+      size: data.newSize ?? media.size,
+      mimeType: data.newMimeType ?? media.mimeType,
+      altText: data.altText !== undefined ? data.altText : undefined,
+      caption: data.caption !== undefined ? data.caption : undefined,
+    }
+  });
+
+  // 3. Find all articles using this media URL (both old and new URLs to be safe)
+  const articles = await prisma.article.findMany({
+    where: {
+      imageUrl: { in: [oldUrl, newUrl] }
+    }
+  });
+
+  // 4. Update each article
+  await prisma.$transaction(
+    articles.map((article) => {
+      let seoObj: any = {};
+      if (article.seo) {
+        if (typeof article.seo === 'string') {
+          try { seoObj = JSON.parse(article.seo); } catch (e) {}
+        } else {
+          seoObj = article.seo;
+        }
+      }
+
+      seoObj.heroImage = seoObj.heroImage || {};
+      
+      if (data.zoom !== undefined) seoObj.heroImage.zoom = data.zoom;
+      if (data.panX !== undefined) seoObj.heroImage.panX = data.panX;
+      if (data.panY !== undefined) seoObj.heroImage.panY = data.panY;
+      if (data.fitMode !== undefined) seoObj.heroImage.fitMode = data.fitMode;
+      if (data.filter !== undefined) seoObj.heroImage.filter = data.filter;
+      if (data.altText !== undefined) seoObj.heroImage.alt = data.altText;
+      if (data.caption !== undefined) seoObj.heroImage.caption = data.caption;
+
+      return prisma.article.update({
+        where: { id: article.id },
+        data: {
+          imageUrl: newUrl,
+          imageCredit: data.imageCredit !== undefined ? data.imageCredit : article.imageCredit,
+          seo: seoObj,
+        }
+      });
+    })
+  );
+
+  // 5. Create an audit log entry for this administrative activity
+  await prisma.auditLog.create({
+    data: {
+      type: 'media.replace',
+      message: `Replaced media/featured image details for media: ${media.name}`,
+      userId: session.user.id,
+      undoPayload: JSON.stringify({
+        action: 'media.replace',
+        articles: articles.map((a) => {
+          let seoObj: any = {};
+          if (a.seo) {
+            if (typeof a.seo === 'string') {
+              try { seoObj = JSON.parse(a.seo); } catch (e) {}
+            } else {
+              seoObj = a.seo;
+            }
+          }
+          return {
+            id: a.id,
+            imageUrl: a.imageUrl,
+            imageCredit: a.imageCredit,
+            seo: seoObj
+          };
+        }),
+        media: {
+          id: media.id,
+          name: media.name,
+          url: media.url,
+          size: media.size,
+          mimeType: media.mimeType
+        }
+      })
+    }
+  });
+
+  revalidatePath('/cms/media');
+  revalidatePath('/admin/media');
+  revalidatePath('/admin/articles');
+  revalidatePath('/cms/articles');
+  revalidatePath('/');
 }

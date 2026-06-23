@@ -1,13 +1,15 @@
 'use client';
 
-import { useMemo, useState, useTransition } from 'react';
+import { useMemo, useState, useTransition, useEffect, useRef } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { createPortal } from 'react-dom';
 import { toast } from 'sonner';
 import {
   Search, ArrowUpDown, Tag, User, Star, Pin,
   Trash2, RotateCcw, Send, FileEdit, Archive, Flame, X, Check,
   MoreHorizontal, Pencil, Eye, MessageSquare,
+  ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, ChevronDown
 } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { AdminTableShell } from '@/components/admin/AdminUI';
@@ -127,6 +129,22 @@ function sortArticles(list: AdminArticleRow[], sort: SortKey) {
   return copy;
 }
 
+function getPageNumbers(current: number, total: number) {
+  const pages: (number | string)[] = [];
+  if (total <= 7) {
+    for (let i = 1; i <= total; i++) pages.push(i);
+  } else {
+    if (current <= 4) {
+      pages.push(1, 2, 3, 4, 5, '...', total);
+    } else if (current >= total - 3) {
+      pages.push(1, '...', total - 4, total - 3, total - 2, total - 1, total);
+    } else {
+      pages.push(1, '...', current - 1, current, current + 1, '...', total);
+    }
+  }
+  return pages;
+}
+
 const SECURE_ACTIONS = new Set<BulkArticleAction>(['trash', 'delete_permanent', 'archive']);
 
 const SECURE_ACTION_COPY: Record<string, { title: string; description: string; confirm: string }> = {
@@ -164,62 +182,109 @@ function ArticleRowMenu({
   limitedActions?: boolean;
   allowEdit?: boolean;
 }) {
-  const { open, toggle, close } = useAdminDropdown();
   const isTrash = article.status === 'TRASH';
+  const [open, setOpen] = useState(false);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const [menuRect, setMenuRect] = useState<{ top: number; left: number } | null>(null);
+
+  useEffect(() => {
+    if (!open || !triggerRef.current) {
+      setMenuRect(null);
+      return;
+    }
+    const update = () => {
+      const rect = triggerRef.current!.getBoundingClientRect();
+      setMenuRect({
+        top: rect.bottom + 4,
+        left: rect.right - 176, // w-44 is 11rem (176px)
+      });
+    };
+    update();
+    window.addEventListener('resize', update);
+    window.addEventListener('scroll', update, true);
+    return () => {
+      window.removeEventListener('resize', update);
+      window.removeEventListener('scroll', update, true);
+    };
+  }, [open]);
+
+  const hasLowerSection = (!isTrash && allowEdit && !limitedActions) || isTrash;
 
   return (
-    <div className="relative">
-      <button type="button" onClick={toggle} className="admin-row-menu-btn" aria-label="Article actions">
+    <>
+      <button
+        ref={triggerRef}
+        type="button"
+        className="admin-row-menu-btn"
+        aria-expanded={open}
+        aria-label="Article actions"
+        onClick={() => setOpen((o) => !o)}
+      >
         <MoreHorizontal className="h-3.5 w-3.5" />
       </button>
-      {open && (
+
+      {open && menuRect && typeof document !== 'undefined' && createPortal(
         <>
-          <AdminDropdownBackdrop onClose={close} />
-          <AdminDropdownPanel className="admin-row-menu-panel" align="right">
+          <AdminDropdownBackdrop onClose={() => setOpen(false)} />
+          <div
+            className="w-44 p-1 bg-popover border border-border/80 rounded-xl shadow-xl backdrop-blur-md flex flex-col"
+            style={{
+              position: 'fixed',
+              top: menuRect.top,
+              left: menuRect.left,
+              zIndex: 100000,
+            }}
+          >
             {allowEdit && (
-              <Link href={`${editBase}/${article.id}/edit`} className="admin-row-menu-item" onClick={close}>
+              <Link href={`${editBase}/${article.id}/edit`} className="admin-row-menu-item" onClick={() => setOpen(false)}>
                 <Pencil className="h-3.5 w-3.5" /><span>Edit article</span>
               </Link>
             )}
-            <LiveArticleLink slug={article.slug} className="admin-row-menu-item" title="View live" onClick={close}>
+            <LiveArticleLink slug={article.slug} className="admin-row-menu-item" title="View live" onClick={() => setOpen(false)}>
               <Eye className="h-3.5 w-3.5" /><span>View live</span>
             </LiveArticleLink>
-            <div className="admin-platform-divider my-1" />
-            {!isTrash && showRevisionRequest && !allowEdit && (
-              <button type="button" className="admin-row-menu-item" onClick={() => { onRequestRevision(); close(); }}>
+            
+            {!isTrash && showRevisionRequest && (
+              <button type="button" className="admin-row-menu-item" onClick={() => { onRequestRevision(); setOpen(false); }}>
                 <MessageSquare className="h-3.5 w-3.5" /><span>Return to author</span>
               </button>
             )}
+            
+            {hasLowerSection && (
+              <div className="admin-platform-divider my-1 border-t border-border/40" />
+            )}
+            
             {!isTrash && allowEdit && (
               <>
-                <button type="button" className="admin-row-menu-item" onClick={() => { onAction('publish'); close(); }}>
+                <button type="button" className="admin-row-menu-item" onClick={() => { onAction('publish'); setOpen(false); }}>
                   <Send className="h-3.5 w-3.5" /><span>Publish</span>
                 </button>
-                <button type="button" className="admin-row-menu-item" onClick={() => { onAction('draft'); close(); }}>
+                <button type="button" className="admin-row-menu-item" onClick={() => { onAction('draft'); setOpen(false); }}>
                   <FileEdit className="h-3.5 w-3.5" /><span>Move to draft</span>
                 </button>
-                <button type="button" className="admin-row-menu-item" onClick={() => { onAction('archive'); close(); }}>
+                <button type="button" className="admin-row-menu-item" onClick={() => { onAction('archive'); setOpen(false); }}>
                   <Archive className="h-3.5 w-3.5" /><span>Archive</span>
                 </button>
-                <button type="button" className="admin-row-menu-item admin-row-menu-item--danger" onClick={() => { onAction('trash'); close(); }}>
+                <button type="button" className="admin-row-menu-item admin-row-menu-item--danger" onClick={() => { onAction('trash'); setOpen(false); }}>
                   <Trash2 className="h-3.5 w-3.5" /><span>Move to trash</span>
                 </button>
               </>
             )}
             {isTrash && (
               <>
-                <button type="button" className="admin-row-menu-item" onClick={() => { onAction('restore'); close(); }}>
+                <button type="button" className="admin-row-menu-item" onClick={() => { onAction('restore'); setOpen(false); }}>
                   <RotateCcw className="h-3.5 w-3.5" /><span>Restore to draft</span>
                 </button>
-                <button type="button" className="admin-row-menu-item admin-row-menu-item--danger" onClick={() => { onAction('delete_permanent'); close(); }}>
+                <button type="button" className="admin-row-menu-item admin-row-menu-item--danger" onClick={() => { onAction('delete_permanent'); setOpen(false); }}>
                   <Trash2 className="h-3.5 w-3.5" /><span>Delete permanently</span>
                 </button>
               </>
             )}
-          </AdminDropdownPanel>
-        </>
+          </div>
+        </>,
+        document.body
       )}
-    </div>
+    </>
   );
 }
 
@@ -252,6 +317,9 @@ export function AdminArticleManager({
     useOwnBulkActions = false,
   } = options;
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const reviewId = searchParams.get('review');
+
   const [pending, startTransition] = useTransition();
   const [query, setQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('ALL');
@@ -262,6 +330,25 @@ export function AdminArticleManager({
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [secureAction, setSecureAction] = useState<{ action: BulkArticleAction; ids: string[] } | null>(null);
   const [revisionIds, setRevisionIds] = useState<string[] | null>(null);
+
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(25);
+
+  // Auto-filter based on review link
+  useEffect(() => {
+    if (reviewId) {
+      const art = articles.find((a) => a.id === reviewId);
+      if (art) {
+        setStatusFilter(art.status);
+      }
+    }
+  }, [reviewId, articles]);
+
+  // Reset to first page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [query, statusFilter, categoryFilter, authorFilter, flagFilter, sort]);
 
   const categories = useMemo(() => {
     const set = new Set(articles.map((a) => a.category));
@@ -298,6 +385,15 @@ export function AdminArticleManager({
     });
     return sortArticles(list, sort);
   }, [articles, query, statusFilter, categoryFilter, authorFilter, flagFilter, sort]);
+
+  // Pagination calculations
+  const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
+  const activePage = Math.min(currentPage, totalPages);
+  const startIndex = (activePage - 1) * pageSize;
+  const endIndex = startIndex + pageSize;
+  const paginatedArticles = useMemo(() => {
+    return filtered.slice(startIndex, endIndex);
+  }, [filtered, startIndex, endIndex]);
 
   const filteredIds = useMemo(() => new Set(filtered.map((a) => a.id)), [filtered]);
   const selectedCount = selected.size;
@@ -569,17 +665,24 @@ export function AdminArticleManager({
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filtered.length === 0 && (
+            {paginatedArticles.length === 0 && (
               <TableRow>
                 <TableCell colSpan={showAuthorColumn ? 9 : 8} className="text-center text-muted-foreground py-10">
                   No articles match your filters.
                 </TableCell>
               </TableRow>
             )}
-            {filtered.map((a) => {
+            {paginatedArticles.map((a) => {
               const isSelected = selected.has(a.id);
+              const isBeingReviewed = a.id === reviewId;
               return (
-                <TableRow key={a.id} className={cn(isSelected && 'admin-table-row--selected')}>
+                <TableRow
+                  key={a.id}
+                  className={cn(
+                    isSelected && 'admin-table-row--selected',
+                    isBeingReviewed && 'bg-sky-500/10 border-l-2 border-l-sky-500 font-semibold'
+                  )}
+                >
                   <TableCell>
                     <button
                       type="button"
@@ -643,6 +746,136 @@ export function AdminArticleManager({
           </TableBody>
         </Table>
       </AdminTableShell>
+
+      {/* Sleek Pagination Panel */}
+      {filtered.length > 0 && (
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-4 px-4 py-3 rounded-xl border border-border/40 bg-card/25 backdrop-blur-sm shadow-sm transition-all duration-300">
+          
+          {/* Left section: Showing range */}
+          <div className="text-xs text-muted-foreground font-medium order-2 sm:order-1">
+            Showing{' '}
+            <span className="text-foreground font-semibold tabular-nums">
+              {filtered.length === 0 ? 0 : startIndex + 1}
+            </span>{' '}
+            to{' '}
+            <span className="text-foreground font-semibold tabular-nums">
+              {Math.min(endIndex, filtered.length)}
+            </span>{' '}
+            of{' '}
+            <span className="text-foreground font-semibold tabular-nums">{filtered.length}</span>{' '}
+            articles
+          </div>
+
+          {/* Right section: Page options and page navigation */}
+          <div className="flex flex-wrap items-center gap-4 order-1 sm:order-2 w-full sm:w-auto justify-between sm:justify-end">
+            {/* Page Size Select */}
+            <div className="flex items-center gap-2">
+              <span className="text-[11px] text-muted-foreground font-medium">Show</span>
+              <div className="relative">
+                <select
+                  value={pageSize}
+                  onChange={(e) => {
+                    setPageSize(Number(e.target.value));
+                    setCurrentPage(1);
+                  }}
+                  className="h-8 rounded-lg border border-border/40 bg-background/45 hover:bg-background/85 hover:border-border/80 pl-2.5 pr-8 text-[11px] font-semibold text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring transition-all cursor-pointer appearance-none shadow-sm"
+                >
+                  <option value={25}>25 per page</option>
+                  <option value={50}>50 per page</option>
+                  <option value={100}>100 per page</option>
+                </select>
+                <ChevronDown className="h-3.5 w-3.5 absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
+              </div>
+            </div>
+
+            {/* Page Navigation */}
+            {totalPages > 1 && (
+              <div className="flex items-center gap-1.5">
+                {/* First Page */}
+                <button
+                  type="button"
+                  disabled={activePage === 1 || pending}
+                  onClick={() => setCurrentPage(1)}
+                  className="flex h-8 w-8 items-center justify-center rounded-lg border border-border/30 bg-background/30 text-muted-foreground hover:bg-background/85 hover:text-foreground disabled:opacity-30 disabled:hover:bg-background/30 disabled:hover:text-muted-foreground disabled:cursor-not-allowed transition-all shadow-sm"
+                  title="First Page"
+                >
+                  <ChevronsLeft className="h-3.5 w-3.5" />
+                </button>
+
+                {/* Prev Page */}
+                <button
+                  type="button"
+                  disabled={activePage === 1 || pending}
+                  onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                  className="flex h-8 w-8 items-center justify-center rounded-lg border border-border/30 bg-background/30 text-muted-foreground hover:bg-background/85 hover:text-foreground disabled:opacity-30 disabled:hover:bg-background/30 disabled:hover:text-muted-foreground disabled:cursor-not-allowed transition-all shadow-sm"
+                  title="Previous Page"
+                >
+                  <ChevronLeft className="h-3.5 w-3.5" />
+                </button>
+
+                {/* Page Numbers */}
+                <div className="hidden sm:flex items-center gap-1">
+                  {getPageNumbers(activePage, totalPages).map((p, idx) => {
+                    if (p === '...') {
+                      return (
+                        <span
+                          key={`dots-${idx}`}
+                          className="flex h-8 w-8 items-center justify-center text-[11px] font-semibold text-muted-foreground/60 select-none"
+                        >
+                          &bull;&bull;&bull;
+                        </span>
+                      );
+                    }
+                    const isCurrent = p === activePage;
+                    return (
+                      <button
+                        key={`page-${p}`}
+                        type="button"
+                        onClick={() => setCurrentPage(p as number)}
+                        className={cn(
+                          "flex h-8 min-w-[2rem] items-center justify-center rounded-lg px-1.5 text-[11px] font-semibold transition-all shadow-sm",
+                          isCurrent
+                            ? "bg-gradient-to-br from-rose-500 to-violet-600 text-white border border-rose-500/25 shadow-md shadow-rose-500/10"
+                            : "border border-border/30 bg-background/30 text-muted-foreground hover:bg-background/85 hover:text-foreground"
+                        )}
+                      >
+                        {p}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* Mobile current indicator (only visible on mobile instead of all page numbers) */}
+                <div className="flex sm:hidden items-center text-[11px] font-semibold px-2.5 py-1 rounded-lg border border-border/30 bg-background/30 text-foreground tabular-nums">
+                  {activePage} / {totalPages}
+                </div>
+
+                {/* Next Page */}
+                <button
+                  type="button"
+                  disabled={activePage === totalPages || pending}
+                  onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                  className="flex h-8 w-8 items-center justify-center rounded-lg border border-border/30 bg-background/30 text-muted-foreground hover:bg-background/85 hover:text-foreground disabled:opacity-30 disabled:hover:bg-background/30 disabled:hover:text-muted-foreground disabled:cursor-not-allowed transition-all shadow-sm"
+                  title="Next Page"
+                >
+                  <ChevronRight className="h-3.5 w-3.5" />
+                </button>
+
+                {/* Last Page */}
+                <button
+                  type="button"
+                  disabled={activePage === totalPages || pending}
+                  onClick={() => setCurrentPage(totalPages)}
+                  className="flex h-8 w-8 items-center justify-center rounded-lg border border-border/30 bg-background/30 text-muted-foreground hover:bg-background/85 hover:text-foreground disabled:opacity-30 disabled:hover:bg-background/30 disabled:hover:text-muted-foreground disabled:cursor-not-allowed transition-all shadow-sm"
+                  title="Last Page"
+                >
+                  <ChevronsRight className="h-3.5 w-3.5" />
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       <AdminSecureActionDialog
         open={!!secureAction}

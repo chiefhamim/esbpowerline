@@ -258,9 +258,34 @@ export async function toggleArticleFlag(
     updates.isPinned = false;
   }
 
+  const article = await prisma.article.findUnique({
+    where: { id: articleId },
+    select: { id: true, title: true, isFeatured: true, isPinned: true, isBreaking: true },
+  });
+  if (!article) throw new Error('Article not found');
+
   await prisma.article.update({
     where: { id: articleId },
     data: updates,
+  });
+
+  await prisma.auditLog.create({
+    data: {
+      type: 'article.flag_toggle',
+      message: `Toggled ${flag} to ${value} on article: ${article.title}`,
+      userId: session.user.id,
+      undoPayload: JSON.stringify({
+        action: 'article.flag_toggle',
+        articles: [
+          {
+            id: article.id,
+            isFeatured: article.isFeatured,
+            isPinned: article.isPinned,
+            isBreaking: article.isBreaking,
+          },
+        ],
+      }),
+    },
   });
 
   revalidatePath('/admin/articles');

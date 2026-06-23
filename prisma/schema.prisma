@@ -337,12 +337,13 @@ model DashboardStat {
 // SUPPORTING (Logs, Newsletter, Ads, Settings, Pages)
 // ============================================
 model AuditLog {
-  id        String   @id @default(cuid())
-  type      String
-  message   String
-  userId    String?
+  id          String   @id @default(cuid())
+  type        String
+  message     String
+  userId      String?
+  undoPayload String?
   // user relation removed to satisfy Prisma validation in current dev setup
-  timestamp DateTime @default(now())
+  timestamp   DateTime @default(now())
 }
 
 model NewsletterSub {

@@ -71,27 +71,39 @@ export function PlatformControl() {
   const canReview = session?.user?.role ? can(session.user.role, 'article.review') : false;
   const canModerate = session?.user?.role ? can(session.user.role, 'comment.moderate_any') : false;
 
-  const loadSnapshot = useCallback(async () => {
-    setLoadState('loading');
+  const loadSnapshot = useCallback(async (silent = false) => {
+    if (!silent) setLoadState('loading');
     try {
       const data = await getAdminDeskSnapshot();
       setSnapshot(data);
       setLoadState('ready');
     } catch {
-      setSnapshot(EMPTY);
-      setLoadState('error');
+      if (!silent) {
+        setSnapshot(EMPTY);
+        setLoadState('error');
+      }
     }
   }, []);
 
   useEffect(() => {
-    if (open && session?.user && loadState === 'idle') loadSnapshot();
-  }, [open, session?.user, loadState, loadSnapshot]);
+    if (!session?.user) return;
+
+    if (loadState === 'idle') {
+      loadSnapshot(false);
+    }
+
+    const interval = setInterval(() => {
+      loadSnapshot(true);
+    }, 15000);
+
+    return () => clearInterval(interval);
+  }, [session?.user, loadState, loadSnapshot]);
 
   useEffect(() => {
     if (open && session?.user && loadState === 'ready') {
-      void loadSnapshot();
+      void loadSnapshot(true);
     }
-  }, [open]); // eslint-disable-line react-hooks/exhaustive-deps -- refresh when reopened
+  }, [open, session?.user, loadState, loadSnapshot]);
 
   function handleRevalidate() {
     if (!canEditSettings) return;

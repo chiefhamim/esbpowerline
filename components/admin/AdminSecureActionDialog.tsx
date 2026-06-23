@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { X, Lock, MessageSquare } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -37,6 +38,12 @@ export function AdminSecureActionDialog({
 }) {
   const [password, setPassword] = useState('');
   const [authorNote, setAuthorNote] = useState('');
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+    return () => setMounted(false);
+  }, []);
 
   useEffect(() => {
     if (!open) {
@@ -45,7 +52,7 @@ export function AdminSecureActionDialog({
     }
   }, [open]);
 
-  if (!open) return null;
+  if (!open || !mounted) return null;
 
   function handleClose() {
     setPassword('');
@@ -61,7 +68,7 @@ export function AdminSecureActionDialog({
     });
   }
 
-  return (
+  return createPortal(
     <div className="admin-secure-dialog-backdrop" onClick={handleClose}>
       <div
         className="admin-secure-dialog"
@@ -117,7 +124,14 @@ export function AdminSecureActionDialog({
           )}
 
           <div className="admin-secure-dialog-actions">
-            <Button type="button" variant="outline" size="sm" onClick={handleClose} disabled={loading}>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={handleClose}
+              disabled={loading}
+              className="text-rose-500 hover:text-rose-400 hover:bg-rose-500/10 border-rose-500/20 hover:border-rose-500/30"
+            >
               Cancel
             </Button>
             <Button
@@ -134,6 +148,7 @@ export function AdminSecureActionDialog({
           </div>
         </form>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

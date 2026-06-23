@@ -63,8 +63,8 @@ export function EditorialPlatformControl() {
     setDismissed(getDeskDismissedIds());
   }, []);
 
-  const loadSnapshot = useCallback(() => {
-    setLoadState('loading');
+  const loadSnapshot = useCallback((silent = false) => {
+    if (!silent) setLoadState('loading');
     startTransition(async () => {
       try {
         const data = await getEditorialWorkspaceSnapshot();
@@ -72,23 +72,33 @@ export function EditorialPlatformControl() {
         setLoadState('ready');
         refreshDismissed();
       } catch {
-        setSnapshot(EMPTY);
-        setLoadState('error');
+        if (!silent) {
+          setSnapshot(EMPTY);
+          setLoadState('error');
+        }
       }
     });
   }, [refreshDismissed]);
 
   useEffect(() => {
-    if (session?.user && loadState === 'idle') {
+    if (!session?.user) return;
+
+    if (loadState === 'idle') {
       refreshDismissed();
-      loadSnapshot();
+      loadSnapshot(false);
     }
+
+    const interval = setInterval(() => {
+      loadSnapshot(true);
+    }, 15000);
+
+    return () => clearInterval(interval);
   }, [session?.user, loadState, loadSnapshot, refreshDismissed]);
 
   useEffect(() => {
     if (open && session?.user && loadState !== 'idle') {
       refreshDismissed();
-      loadSnapshot();
+      loadSnapshot(true);
     }
   }, [open, session?.user, loadSnapshot, refreshDismissed]);
 

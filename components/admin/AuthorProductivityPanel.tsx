@@ -1,26 +1,46 @@
 'use client';
 
 import { useMemo, useState } from 'react';
+import { ArrowUpDown } from 'lucide-react';
 import { cn, formatNumber } from '@/lib/utils';
 import { ROLES, type Role } from '@/lib/constants';
 import type { AuthorPublishingStat } from '@/lib/actions/analytics';
 
 type PeriodKey = 'day' | 'week' | 'month' | 'year';
+type SortKey = 'total' | PeriodKey;
 
-const PERIODS: { key: PeriodKey; label: string; short: string }[] = [
-  { key: 'day', label: 'Today', short: 'Day' },
-  { key: 'week', label: 'This week', short: 'Week' },
-  { key: 'month', label: 'This month', short: 'Month' },
-  { key: 'year', label: 'This year', short: 'Year' },
+const PERIODS: { key: PeriodKey; label: string; header: string }[] = [
+  { key: 'day', label: 'Today', header: 'Today' },
+  { key: 'week', label: 'This week', header: 'Week' },
+  { key: 'month', label: 'This month', header: 'Month' },
+  { key: 'year', label: 'This year', header: 'Year' },
 ];
 
 export function AuthorProductivityPanel({ authors }: { authors: AuthorPublishingStat[] }) {
-  const [period, setPeriod] = useState<PeriodKey>('month');
+  const [sortBy, setSortBy] = useState<SortKey>('month');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
 
-  const sorted = useMemo(
-    () => [...authors].sort((a, b) => b[period] - a[period] || a.name.localeCompare(b.name)),
-    [authors, period],
-  );
+  const handleSort = (key: SortKey) => {
+    if (sortBy === key) {
+      setSortOrder((o) => (o === 'asc' ? 'desc' : 'asc'));
+    } else {
+      setSortBy(key);
+      setSortOrder('desc');
+    }
+  };
+
+  const sorted = useMemo(() => {
+    const list = [...authors];
+    list.sort((a, b) => {
+      const valA = sortBy === 'total' ? a.total : a[sortBy];
+      const valB = sortBy === 'total' ? b.total : b[sortBy];
+      if (valA !== valB) {
+        return sortOrder === 'desc' ? valB - valA : valA - valB;
+      }
+      return a.name.localeCompare(b.name);
+    });
+    return list;
+  }, [authors, sortBy, sortOrder]);
 
   const totals = useMemo(
     () => ({
@@ -42,55 +62,68 @@ export function AuthorProductivityPanel({ authors }: { authors: AuthorPublishing
   }
 
   return (
-    <div className="admin-author-productivity">
-      <div className="admin-filter-tabs admin-author-productivity__tabs">
-        {PERIODS.map((p) => (
-          <button
-            key={p.key}
-            type="button"
-            className={cn('admin-filter-tab', period === p.key && 'admin-filter-tab--active')}
-            onClick={() => setPeriod(p.key)}
-          >
-            {p.label}
-            <span className="admin-filter-tab__count">{formatNumber(totals[p.key])}</span>
-          </button>
-        ))}
-      </div>
-
+    <div className="admin-author-productivity mt-1">
       <div className="admin-author-productivity__table-wrap">
         <table className="admin-author-productivity__table">
           <thead>
             <tr>
-              <th>Author</th>
-              <th>Role</th>
-              <th className="admin-author-productivity__num">Live</th>
-              <th className="admin-author-productivity__num">Today</th>
-              <th className="admin-author-productivity__num">Week</th>
-              <th className="admin-author-productivity__num">Month</th>
-              <th className="admin-author-productivity__num">Year</th>
+              <th className="py-2.5 px-3 font-semibold">Author</th>
+              <th className="py-2.5 px-3 font-semibold">Role</th>
+              
+              <th
+                onClick={() => handleSort('total')}
+                className="admin-author-productivity__num cursor-pointer hover:bg-muted/30 select-none py-2.5 px-3 transition-colors text-right"
+              >
+                <div className="flex items-center justify-end gap-1">
+                  <span>Live</span>
+                  <ArrowUpDown className={cn(
+                    "h-3 w-3 transition-colors", 
+                    sortBy === 'total' ? "text-sky-500" : "text-muted-foreground/30"
+                  )} />
+                </div>
+              </th>
+
+              {PERIODS.map((p) => (
+                <th
+                  key={p.key}
+                  onClick={() => handleSort(p.key)}
+                  className="admin-author-productivity__num cursor-pointer hover:bg-muted/30 select-none py-2.5 px-3 transition-colors text-right"
+                >
+                  <div className="flex items-center justify-end gap-1">
+                    <span>{p.header}</span>
+                    <ArrowUpDown className={cn(
+                      "h-3 w-3 transition-colors", 
+                      sortBy === p.key ? "text-sky-500" : "text-muted-foreground/30"
+                    )} />
+                  </div>
+                </th>
+              ))}
             </tr>
           </thead>
           <tbody>
             {sorted.map((author, index) => (
-              <tr key={author.id}>
-                <td>
-                  <span className="admin-author-productivity__rank">{index + 1}</span>
-                  <span className="admin-author-productivity__name">{author.name}</span>
+              <tr key={author.id} className="transition-colors hover:bg-muted/20">
+                <td className="py-2.5 px-3">
+                  <span className="admin-author-productivity__rank font-semibold">{index + 1}</span>
+                  <span className="admin-author-productivity__name font-medium">{author.name}</span>
                 </td>
-                <td>
-                  <span className="admin-role-pill">
+                <td className="py-2.5 px-3">
+                  <span className="admin-role-pill text-[10px] font-bold py-0.5 px-2 rounded-full border border-border bg-muted/40">
                     {ROLES[author.role as Role]?.name ?? author.role}
                   </span>
                 </td>
-                <td className="admin-author-productivity__num tabular-nums font-medium">
+                <td className={cn(
+                  "admin-author-productivity__num tabular-nums font-semibold py-2.5 px-3 text-right text-[13px]",
+                  sortBy === 'total' && "text-sky-500 bg-sky-500/5 font-bold"
+                )}>
                   {formatNumber(author.total)}
                 </td>
                 {PERIODS.map((p) => (
                   <td
                     key={p.key}
                     className={cn(
-                      'admin-author-productivity__num tabular-nums',
-                      period === p.key && 'admin-author-productivity__num--active',
+                      'admin-author-productivity__num tabular-nums py-2.5 px-3 text-right text-[13px]',
+                      sortBy === p.key && 'text-sky-500 bg-sky-500/5 font-bold',
                     )}
                   >
                     {formatNumber(author[p.key])}
@@ -100,17 +133,20 @@ export function AuthorProductivityPanel({ authors }: { authors: AuthorPublishing
             ))}
           </tbody>
           <tfoot>
-            <tr>
-              <td colSpan={2} className="admin-author-productivity__total-label">Newsroom total</td>
-              <td className="admin-author-productivity__num tabular-nums font-semibold">
+            <tr className="bg-muted/10 font-semibold border-t border-border/40">
+              <td colSpan={2} className="admin-author-productivity__total-label py-2.5 px-3">Newsroom total</td>
+              <td className={cn(
+                "admin-author-productivity__num tabular-nums py-2.5 px-3 text-right font-bold text-[13px]",
+                sortBy === 'total' && "text-sky-500 bg-sky-500/5 font-extrabold"
+              )}>
                 {formatNumber(totals.total)}
               </td>
               {PERIODS.map((p) => (
                 <td
                   key={p.key}
                   className={cn(
-                    'admin-author-productivity__num tabular-nums font-semibold',
-                    period === p.key && 'admin-author-productivity__num--active',
+                    'admin-author-productivity__num tabular-nums py-2.5 px-3 text-right font-bold text-[13px]',
+                    sortBy === p.key && 'text-sky-500 bg-sky-500/5 font-extrabold',
                   )}
                 >
                   {formatNumber(totals[p.key])}

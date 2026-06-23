@@ -254,7 +254,7 @@ export function PublicNavbar({
                     key={c.slug}
                     href={href}
                     style={categoryColorVars(c.color)}
-                    className={`category-nav-cell group relative transition-all duration-200 select-none w-full overflow-hidden font-semibold ${
+                    className={`category-nav-cell group relative transition-all duration-200 select-none w-full overflow-hidden font-medium ${
                       isActive
                         ? `${colors.activeBg} text-foreground`
                         : `${colors.hoverBg} text-foreground hover:text-foreground`
@@ -272,8 +272,8 @@ export function PublicNavbar({
                         icon={c.icon}
                         iconImageUrl={c.iconImageUrl}
                         name={c.name}
-                        size={14}
-                        className={`relative z-[1] h-3.5 w-3.5 shrink-0 transition-transform duration-200 group-hover:scale-110 ${
+                        size={12}
+                        className={`relative z-[1] h-3 w-3 shrink-0 transition-transform duration-200 group-hover:scale-110 ${
                           colors.useCustom ? 'category-nav--custom' : colors.text
                         }`}
                         style={colors.useCustom ? categoryTextStyle(c.color) : undefined}
@@ -325,8 +325,8 @@ export function PublicNavbar({
                           icon={c.icon} 
                           iconImageUrl={c.iconImageUrl} 
                           name={c.name} 
-                          size={16}
-                          className={`transition-transform duration-200 group-hover:scale-110 shrink-0 ${
+                          size={12}
+                          className={`transition-transform duration-200 group-hover:scale-110 shrink-0 h-3 w-3 ${
                             colors.useCustom ? 'category-nav--custom' : colors.text
                           }`}
                           style={colors.useCustom ? categoryTextStyle(c.color) : undefined}

@@ -306,7 +306,17 @@ export async function bulkArticleAction(
 
   const articles = await prisma.article.findMany({
     where: { id: { in: ids } },
-    select: { id: true, title: true, slug: true, status: true, publishedAt: true, authorId: true },
+    select: { 
+      id: true, 
+      title: true, 
+      slug: true, 
+      status: true, 
+      publishedAt: true, 
+      authorId: true,
+      isFeatured: true,
+      isPinned: true,
+      isBreaking: true
+    },
   });
   if (articles.length === 0) throw new Error('No articles found');
 
@@ -446,6 +456,17 @@ export async function bulkArticleAction(
       type: `article.bulk_${action}`,
       message: `Bulk ${action} on ${affected} article(s)`,
       userId: user.id,
+      undoPayload: JSON.stringify({
+        action: `article.bulk_${action}`,
+        articles: articles.map((a) => ({
+          id: a.id,
+          status: a.status,
+          publishedAt: a.publishedAt,
+          isFeatured: a.isFeatured,
+          isPinned: a.isPinned,
+          isBreaking: a.isBreaking,
+        })),
+      }),
     },
   });
 

@@ -10,6 +10,8 @@ export const ADMIN_AUDIT_LOG_WHERE: Prisma.AuditLogWhereInput = {
     { type: { startsWith: 'article.review_' } },
     { type: { startsWith: 'article.bulk_' } },
     { type: { startsWith: 'article.revision_' } },
+    { type: { startsWith: 'media.' } },
+    { type: { startsWith: 'settings.' } },
     { type: 'system' },
   ],
 };
@@ -25,10 +27,14 @@ export function adminActivityBadgeLabel(type: string): string {
     'article.review_publish': 'PUBLISH',
     'article.review_return': 'RETURN',
     'article.revision_request': 'REVISION',
+    'media.replace': 'MEDIA',
+    'settings.update': 'SETTINGS',
     system: 'SYSTEM',
   };
   if (map[type]) return map[type];
   if (type.startsWith('article.bulk_')) return 'BULK';
+  if (type.startsWith('media.')) return 'MEDIA';
+  if (type.startsWith('settings.')) return 'SETTINGS';
   const tail = type.split('.').pop();
   return (tail ?? 'ACTIVITY').replace(/_/g, ' ').toUpperCase().slice(0, 12);
 }

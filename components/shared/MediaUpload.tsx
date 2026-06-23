@@ -1,19 +1,22 @@
-'use client';
+"use client";
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import {
-  Upload, Trash2, FileImage, FileText, Lock, Copy, ExternalLink, Pencil, X, Check, Newspaper,
+  Upload, Trash2, FileImage, FileText, Lock, Copy, ExternalLink, Pencil, X, Check, Newspaper, SlidersHorizontal, Camera, RefreshCw, ChevronDown
 } from 'lucide-react';
-import { formatEditorialTimestamp } from '@/lib/utils';
+import { cn, formatEditorialTimestamp } from '@/lib/utils';
 import { publicArticleUrl } from '@/lib/public-site-url';
-import { deleteMedia, updateMedia, type MediaLibraryItem } from '@/lib/actions/media';
+import { deleteMedia, updateMedia, replaceMediaAndFeaturedImage, type MediaLibraryItem } from '@/lib/actions/media';
 import { optimizeImageToWebP } from '@/lib/image-optimizer';
-
+import { ModernTooltip } from '@/components/shared/ModernTooltip';
+import { heroImageStyle } from '@/lib/hero-image';
 
 function formatBytes(bytes: number | null | undefined) {
   if (bytes === null || bytes === undefined) return '—';
@@ -44,6 +47,396 @@ function getFileFormat(mime: string | null | undefined, name: string, url: strin
   return type.toUpperCase();
 }
 
+function ReplaceMediaModal({
+  item,
+  open,
+  onClose,
+  onUpdated,
+}: {
+  item: MediaLibraryItem;
+  open: boolean;
+  onClose: () => void;
+  onUpdated: () => void;
+}) {
+  const [mounted, setMounted] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [name, setName] = useState(item.name);
+  const [newUrl, setNewUrl] = useState<string>('');
+  const [newSize, setNewSize] = useState<number | undefined>(undefined);
+  const [newMimeType, setNewMimeType] = useState<string | undefined>(undefined);
+
+  // Article featured image options (loaded from the first article using this media)
+  const article = item.usedInArticles[0];
+  const [imageCredit, setImageCredit] = useState('');
+  const [altText, setAltText] = useState('');
+  const [caption, setCaption] = useState('');
+  const [fitMode, setFitMode] = useState('fill');
+  const [zoom, setZoom] = useState(100);
+  const [panX, setPanX] = useState(50);
+  const [panY, setPanY] = useState(50);
+  const [filter, setFilter] = useState('none');
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (!open) return;
+    setName(item.name);
+    setNewUrl('');
+    setNewSize(undefined);
+    setNewMimeType(undefined);
+
+    if (article) {
+      setImageCredit(article.imageCredit ?? '');
+      let seoObj = article.seo;
+      if (seoObj) {
+        if (typeof seoObj === 'string') {
+          try { seoObj = JSON.parse(seoObj); } catch (e) {}
+        }
+        const hero = seoObj.heroImage || {};
+        setAltText(hero.alt ?? item.altText ?? '');
+        setCaption(hero.caption ?? item.caption ?? '');
+        setFitMode(hero.fitMode ?? 'fill');
+        setZoom(hero.zoom ?? 100);
+        setPanX(hero.panX ?? 50);
+        setPanY(hero.panY ?? 50);
+        setFilter(hero.filter ?? 'none');
+      } else {
+        setAltText(item.altText ?? '');
+        setCaption(item.caption ?? '');
+        setFitMode('fill');
+        setZoom(100);
+        setPanX(50);
+        setPanY(50);
+        setFilter('none');
+      }
+    } else {
+      setImageCredit('');
+      setAltText(item.altText ?? '');
+      setCaption(item.caption ?? '');
+      setFitMode('fill');
+      setZoom(100);
+      setPanX(50);
+      setPanY(50);
+      setFilter('none');
+    }
+  }, [open, item, article]);
+
+  if (!open || !mounted) return null;
+
+  async function handleUploadReplacement() {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*';
+    input.onchange = async () => {
+      const file = input.files?.[0];
+      if (!file) return;
+      setUploading(true);
+      try {
+        const optimizedFile = await optimizeImageToWebP(file);
+        const form = new FormData();
+        form.append('file', optimizedFile);
+        const res = await fetch('/api/upload', { method: 'POST', body: form });
+
+        if (!res.ok) throw new Error('Upload failed');
+        const data = await res.json();
+        setNewUrl(data.url);
+        setNewSize(optimizedFile.size);
+        setNewMimeType(optimizedFile.type);
+        toast.success('Replacement file uploaded successfully');
+      } catch {
+        toast.error('Replacement upload failed');
+      } finally {
+        setUploading(false);
+      }
+    };
+    input.click();
+  }
+
+  async function handleSave() {
+    setSaving(true);
+    try {
+      await replaceMediaAndFeaturedImage(item.id, {
+        name,
+        altText,
+        caption,
+        newUrl: newUrl || undefined,
+        newSize,
+        newMimeType,
+        imageCredit,
+        zoom,
+        fitMode,
+        filter,
+        panX,
+        panY,
+      });
+      toast.success('Featured image options replaced successfully');
+      onUpdated();
+      onClose();
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : 'Save failed');
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return createPortal(
+    <div className="admin-secure-dialog-backdrop" onClick={onClose}>
+      <div
+        className="admin-secure-dialog max-w-lg bg-background border border-border/80 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]"
+        onClick={(e) => e.stopPropagation()}
+        role="dialog"
+        aria-modal="true"
+      >
+        <div className="admin-secure-dialog-header border-b border-border/40 p-4">
+          <div>
+            <h3 className="admin-secure-dialog-title flex items-center gap-2">
+              <SlidersHorizontal className="h-4 w-4 text-sky-400" />
+              Replace featured image details
+            </h3>
+            <p className="admin-secure-dialog-desc">
+              Directly edit image parameters across referencing stories.
+            </p>
+          </div>
+          <button type="button" className="admin-secure-dialog-close ui-close-btn" onClick={onClose} aria-label="Close">
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+
+        <div className="overflow-y-auto p-4 space-y-4 flex-1">
+          {/* Real-time Large Preview Panel */}
+          <div className="space-y-1.5">
+            <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider block">Real-time Image Preview (Edit & Confirm)</span>
+            <div className="relative aspect-video w-full rounded-xl border border-border/60 bg-neutral-950 overflow-hidden shadow-inner flex items-center justify-center">
+              <img
+                src={newUrl || item.url}
+                alt="Staged replacement preview"
+                style={heroImageStyle({
+                  fitMode: fitMode as any,
+                  zoom,
+                  panX,
+                  panY,
+                  filter: filter as any,
+                }, { animate: true })}
+                className="w-full h-full"
+              />
+              <div className="absolute bottom-2.5 right-2.5 px-2 py-0.5 rounded bg-black/75 text-white font-mono text-[9px] uppercase tracking-wider backdrop-blur border border-white/5">
+                {newUrl ? 'Staged Replacement' : 'Current Source'}
+              </div>
+            </div>
+          </div>
+
+          {/* File replacement controls */}
+          <div className="bg-muted/15 border border-border/30 rounded-xl p-3.5 space-y-3">
+            <div className="flex items-center gap-3">
+              <div className="flex-1 min-w-0">
+                <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block">Image source</span>
+                <span className="text-xs font-semibold text-foreground truncate block mt-0.5">{item.name}</span>
+                {newUrl && <span className="text-[10px] text-emerald-400 font-bold block mt-0.5">New replacement file staged</span>}
+              </div>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="shrink-0 h-8 text-[11px]"
+                onClick={handleUploadReplacement}
+                disabled={uploading || saving}
+              >
+                <Upload className="h-3 w-3 mr-1" />
+                {uploading ? 'Staging…' : 'Upload file'}
+              </Button>
+            </div>
+            <div>
+              <label className="admin-secure-dialog-label text-[10px]">Media record name</label>
+              <Input
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                className="h-8 text-xs bg-background"
+                placeholder="Enter file name"
+              />
+            </div>
+          </div>
+
+          <div className="space-y-3">
+            {item.usedInArticles.length > 0 ? (
+              <div className="border border-border/40 rounded-xl bg-sky-500/5 p-3">
+                <span className="text-[11px] font-semibold text-sky-400 uppercase tracking-wider block mb-1">Referenced in</span>
+                <ul className="space-y-1.5">
+                  {item.usedInArticles.map((art) => (
+                    <li key={art.id} className="text-xs font-medium flex items-center justify-between gap-2">
+                      <span className="truncate text-foreground/80">{art.title}</span>
+                      <Link href={`/cms/articles/${art.id}/edit`} className="text-sky-400 hover:underline shrink-0 text-[10px]">Edit story</Link>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ) : (
+              <div className="border border-border/40 rounded-xl bg-neutral-500/5 p-3">
+                <span className="text-[10px] font-medium text-muted-foreground block">
+                  This image is not currently used as a featured image in any articles, but you can configure its default styles and metadata here.
+                </span>
+              </div>
+            )}
+
+            {/* Adjustments */}
+            <div className="space-y-3.5">
+              <div>
+                <label className="admin-secure-dialog-label text-[10px]">Image Credit</label>
+                <Input
+                  value={imageCredit}
+                  onChange={(e) => setImageCredit(e.target.value)}
+                  className="h-8 text-xs"
+                  placeholder="e.g., Reuters / John Doe"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="admin-secure-dialog-label text-[10px]">Alt text</label>
+                  <Input
+                    value={altText}
+                    onChange={(e) => setAltText(e.target.value)}
+                    className="h-8 text-xs"
+                    placeholder="Alt text for accessibility"
+                  />
+                </div>
+                <div>
+                  <label className="admin-secure-dialog-label text-[10px]">Caption</label>
+                  <Input
+                    value={caption}
+                    onChange={(e) => setCaption(e.target.value)}
+                    className="h-8 text-xs"
+                    placeholder="Optional image caption"
+                  />
+                </div>
+              </div>
+
+              <div className="border-t border-border/40 my-3" />
+
+              <div className="flex items-center justify-between">
+                <label className="admin-secure-dialog-label text-[10px] m-0">Frame fit</label>
+                <div className="flex items-center gap-1.5">
+                  <button
+                    type="button"
+                    onClick={() => { setFitMode('fit'); setZoom(100); }}
+                    className={cn(
+                      'text-[10px] font-bold px-2 py-0.5 rounded border border-border/60 transition-colors',
+                      fitMode === 'fit' ? 'border-sky-500 bg-sky-500/10 text-sky-400' : 'text-muted-foreground hover:border-border'
+                    )}
+                  >
+                    Fit
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => { setFitMode('fill'); setZoom(100); }}
+                    className={cn(
+                      'text-[10px] font-bold px-2 py-0.5 rounded border border-border/60 transition-colors',
+                      fitMode === 'fill' ? 'border-sky-500 bg-sky-500/10 text-sky-400' : 'text-muted-foreground hover:border-border'
+                    )}
+                  >
+                    Fill
+                  </button>
+                </div>
+              </div>
+
+              <div>
+                <div className="flex justify-between items-center text-[10px] text-muted-foreground font-semibold mb-1">
+                  <span>ZOOM</span>
+                  <span>{zoom}%</span>
+                </div>
+                <input
+                  type="range"
+                  min={100}
+                  max={200}
+                  value={zoom}
+                  onChange={(e) => setZoom(Number(e.target.value))}
+                  className="w-full h-1 bg-border/40 rounded-lg appearance-none cursor-pointer accent-sky-500"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <div className="flex justify-between items-center text-[10px] text-muted-foreground font-semibold mb-1">
+                    <span>PAN X</span>
+                    <span>{panX}%</span>
+                  </div>
+                  <input
+                    type="range"
+                    min={0}
+                    max={100}
+                    value={panX}
+                    onChange={(e) => setPanX(Number(e.target.value))}
+                    className="w-full h-1 bg-border/40 rounded-lg appearance-none cursor-pointer accent-sky-500"
+                  />
+                </div>
+                <div>
+                  <div className="flex justify-between items-center text-[10px] text-muted-foreground font-semibold mb-1">
+                    <span>PAN Y</span>
+                    <span>{panY}%</span>
+                  </div>
+                  <input
+                    type="range"
+                    min={0}
+                    max={100}
+                    value={panY}
+                    onChange={(e) => setPanY(Number(e.target.value))}
+                    className="w-full h-1 bg-border/40 rounded-lg appearance-none cursor-pointer accent-sky-500"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="admin-secure-dialog-label text-[10px]">Filter</label>
+                <div className="flex flex-wrap gap-1 mt-1">
+                  {['none', 'warm', 'cool', 'mono', 'contrast'].map((f) => (
+                    <button
+                      key={f}
+                      type="button"
+                      onClick={() => setFilter(f)}
+                      className={cn(
+                        'rounded-full border px-2.5 py-0.5 text-[9px] font-bold capitalize transition-colors',
+                        filter === f
+                          ? 'border-sky-500/50 bg-sky-500/10 text-sky-400'
+                          : 'border-border/60 text-muted-foreground hover:border-border',
+                      )}
+                    >
+                      {f}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="admin-secure-dialog-actions border-t border-border/40 p-4">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={onClose}
+            disabled={saving}
+            className="text-rose-500 hover:text-rose-400 hover:bg-rose-500/10 border-rose-500/20 hover:border-rose-500/30"
+          >
+            Cancel
+          </Button>
+          <Button
+            type="button"
+            size="sm"
+            onClick={handleSave}
+            disabled={saving || uploading}
+          >
+            {saving ? 'Replacing…' : 'Save changes'}
+          </Button>
+        </div>
+      </div>
+    </div>,
+    document.body
+  );
+}
+
 function MediaCard({
   item,
   onDelete,
@@ -60,6 +453,7 @@ function MediaCard({
   const [name, setName] = useState(item.name);
   const [altText, setAltText] = useState(item.altText ?? '');
   const [saving, setSaving] = useState(false);
+  const [replaceOpen, setReplaceOpen] = useState(false);
 
   const handleLoad = useCallback((e: React.SyntheticEvent<HTMLImageElement>) => {
     const img = e.currentTarget;
@@ -113,12 +507,14 @@ function MediaCard({
         </div>
       </div>
 
-      <div className="media-library-card__body">
+      <div className="media-library-card__body flex-1 flex flex-col">
         <div className="media-library-card__head">
           <div className="min-w-0 flex-1">
-            <h3 className="media-library-card__name" title={`${item.name} (Uploaded by ${item.uploadedByName ?? 'System'})`}>
-              {item.name}
-            </h3>
+            <ModernTooltip label={`Uploaded by ${item.uploadedByName ?? 'System'}`} variant="editor" alwaysShow>
+              <h3 className="media-library-card__name">
+                {item.name}
+              </h3>
+            </ModernTooltip>
             <span className="text-[10px] text-muted-foreground block truncate mt-0.5">
               by {item.uploadedByName ?? 'System'}
             </span>
@@ -143,15 +539,16 @@ function MediaCard({
                   <Link href={`/cms/articles/${article.id}/edit`} className="media-library-card__article-link">
                     {article.title}
                   </Link>
-                  <a
-                    href={publicArticleUrl(article.slug)}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="media-library-card__article-public"
-                    title="View live article"
-                  >
-                    <ExternalLink className="h-3 w-3" />
-                  </a>
+                  <ModernTooltip label="View live article" variant="editor" alwaysShow>
+                    <a
+                      href={publicArticleUrl(article.slug)}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="media-library-card__article-public"
+                    >
+                      <ExternalLink className="h-3 w-3" />
+                    </a>
+                  </ModernTooltip>
                 </li>
               ))}
               {item.usedInArticles.length > 3 && (
@@ -164,7 +561,7 @@ function MediaCard({
         )}
 
         {editing ? (
-          <div className="media-library-card__edit">
+          <div className="media-library-card__edit mt-auto">
             <Input value={name} onChange={(e) => setName(e.target.value)} className="h-8 text-xs" placeholder="File name" />
             {item.type === 'image' && (
               <Input value={altText} onChange={(e) => setAltText(e.target.value)} className="h-8 text-xs" placeholder="Alt text" />
@@ -184,39 +581,74 @@ function MediaCard({
             </div>
           </div>
         ) : (
-          <div className="media-library-card__actions">
-            <button type="button" className="media-library-card__action" onClick={copyUrl} title="Copy URL">
-              <Copy className="h-3.5 w-3.5" />
-              <span>Copy</span>
-            </button>
-            <a href={item.url} target="_blank" rel="noreferrer" className="media-library-card__action" title="Open file">
-              <ExternalLink className="h-3.5 w-3.5" />
-              <span>Open</span>
-            </a>
-            <button type="button" className="media-library-card__action" onClick={() => setEditing(true)} title="Edit details">
-              <Pencil className="h-3.5 w-3.5" />
-              <span>Edit</span>
-            </button>
-            {item.canDelete ? (
+          <div className="flex items-center justify-between gap-1 mt-auto pt-2.5 border-t border-border/40">
+            <ModernTooltip label="Copy URL" variant="editor" alwaysShow>
               <button
                 type="button"
-                className="media-library-card__action media-library-card__action--danger"
-                onClick={() => onDelete(item.id)}
-                disabled={pending}
-                title="Delete file"
+                className="h-7 w-7 rounded-md flex items-center justify-center border border-border/40 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
+                onClick={copyUrl}
               >
-                <Trash2 className="h-3.5 w-3.5" />
-                <span>Delete</span>
+                <Copy className="h-3.5 w-3.5 text-muted-foreground hover:text-foreground" />
               </button>
+            </ModernTooltip>
+            <ModernTooltip label="Open file" variant="editor" alwaysShow>
+              <a
+                href={item.url}
+                target="_blank"
+                rel="noreferrer"
+                className="h-7 w-7 rounded-md flex items-center justify-center border border-border/40 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
+              >
+                <ExternalLink className="h-3.5 w-3.5 text-muted-foreground hover:text-foreground" />
+              </a>
+            </ModernTooltip>
+            <ModernTooltip label="Edit details" variant="editor" alwaysShow>
+              <button
+                type="button"
+                className="h-7 w-7 rounded-md flex items-center justify-center border border-border/40 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
+                onClick={() => setEditing(true)}
+              >
+                <Pencil className="h-3.5 w-3.5 text-muted-foreground hover:text-foreground" />
+              </button>
+            </ModernTooltip>
+            {item.type === 'image' && (
+              <ModernTooltip label="Replace image/details" variant="editor" alwaysShow>
+                <button
+                  type="button"
+                  className="h-7 w-7 rounded-md flex items-center justify-center border border-border/40 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
+                  onClick={() => setReplaceOpen(true)}
+                >
+                  <SlidersHorizontal className="h-3.5 w-3.5 text-muted-foreground hover:text-foreground" />
+                </button>
+              </ModernTooltip>
+            )}
+            {item.canDelete ? (
+              <ModernTooltip label="Delete file" variant="editor" alwaysShow>
+                <button
+                  type="button"
+                  className="h-7 w-7 rounded-md flex items-center justify-center border border-rose-500/20 hover:border-rose-500/30 text-rose-500 hover:bg-rose-500/10 transition-colors"
+                  onClick={() => onDelete(item.id)}
+                  disabled={pending}
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                </button>
+              </ModernTooltip>
             ) : (
-              <span className="media-library-card__action media-library-card__action--locked" title={item.usageCount > 0 ? 'In use by articles' : 'Cannot delete'}>
-                <Lock className="h-3.5 w-3.5" />
-                <span>Locked</span>
-              </span>
+              <ModernTooltip label={item.usageCount > 0 ? 'In use by articles' : 'Cannot delete'} variant="editor" alwaysShow>
+                <span className="h-7 w-7 rounded-md flex items-center justify-center border border-border/40 text-muted-foreground/40 bg-muted/5 cursor-not-allowed">
+                  <Lock className="h-3.5 w-3.5" />
+                </span>
+              </ModernTooltip>
             )}
           </div>
         )}
       </div>
+
+      <ReplaceMediaModal
+        item={item}
+        open={replaceOpen}
+        onClose={() => setReplaceOpen(false)}
+        onUpdated={onUpdated}
+      />
     </article>
   );
 }
@@ -225,6 +657,10 @@ export function MediaUpload({ items }: { items: MediaLibraryItem[] }) {
   const router = useRouter();
   const [uploading, setUploading] = useState(false);
   const [pending, setPending] = useState(false);
+  const [query, setQuery] = useState('');
+  const [typeFilter, setTypeFilter] = useState<'all' | 'image' | 'file'>('all');
+  const [datePreset, setDatePreset] = useState<'all' | '24h' | '7d' | '30d' | '365d'>('all');
+  const [dateDropdownOpen, setDateDropdownOpen] = useState(false);
 
   async function handleUpload() {
     const input = document.createElement('input');
@@ -266,6 +702,43 @@ export function MediaUpload({ items }: { items: MediaLibraryItem[] }) {
     }
   }
 
+  const filteredItems = items.filter((item) => {
+    // 1. Filter by image/file type
+    if (typeFilter !== 'all' && item.type !== typeFilter) {
+      return false;
+    }
+
+    // 2. Filter by upload date presets
+    if (datePreset !== 'all') {
+      const createdDate = new Date(item.createdAt);
+      const now = new Date();
+      const diffMs = now.getTime() - createdDate.getTime();
+      if (datePreset === '24h' && diffMs > 24 * 60 * 60 * 1000) return false;
+      if (datePreset === '7d' && diffMs > 7 * 24 * 60 * 60 * 1000) return false;
+      if (datePreset === '30d' && diffMs > 30 * 24 * 60 * 60 * 1000) return false;
+      if (datePreset === '365d' && diffMs > 365 * 24 * 60 * 60 * 1000) return false;
+    }
+
+    // 3. Filter by search text (filename, alt text, caption, date string, or linked articles)
+    if (query.trim() !== '') {
+      const q = query.toLowerCase().trim();
+      const nameMatch = item.name.toLowerCase().includes(q);
+      const altMatch = (item.altText ?? '').toLowerCase().includes(q);
+      const captionMatch = (item.caption ?? '').toLowerCase().includes(q);
+      const articleMatch = item.usedInArticles.some((art) => art.title.toLowerCase().includes(q));
+
+      const dateString = new Date(item.createdAt).toLocaleDateString().toLowerCase();
+      const dateIso = new Date(item.createdAt).toISOString().toLowerCase();
+      const dateMatch = dateString.includes(q) || dateIso.includes(q);
+
+      if (!nameMatch && !altMatch && !captionMatch && !articleMatch && !dateMatch) {
+        return false;
+      }
+    }
+
+    return true;
+  });
+
   const images = items.filter((m) => m.type === 'image').length;
   const files = items.length - images;
 
@@ -291,6 +764,123 @@ export function MediaUpload({ items }: { items: MediaLibraryItem[] }) {
         </Button>
       </div>
 
+      {items.length > 0 && (
+        <div className="media-library__search-panel flex flex-wrap gap-2 items-center justify-between pb-3.5 border-b border-border/40 mb-4 mt-2">
+          <div className="flex flex-1 items-center gap-2 min-w-[240px]">
+            <div className="relative flex-1">
+              <input
+                type="text"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Search filename, alt text, or connected articles..."
+                className="w-full h-8 text-xs bg-background/50 border border-border/50 rounded-lg pl-8 pr-8 outline-none focus:border-sky-500/50 focus:ring-1 focus:ring-sky-500/20 placeholder:text-muted-foreground/60 transition-all text-foreground"
+              />
+              <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground/60">
+                <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+              </span>
+              {query && (
+                <button
+                  type="button"
+                  onClick={() => setQuery('')}
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground/60 hover:text-foreground text-[10px]"
+                >
+                  Clear
+                </button>
+              )}
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 flex-wrap">
+            {/* Type Filter */}
+            <div className="flex items-center gap-1 bg-muted/20 border border-border/40 rounded-lg p-0.5">
+              <button
+                type="button"
+                onClick={() => setTypeFilter('all')}
+                className={cn(
+                  'text-[10px] font-bold px-2.5 py-1 rounded-md transition-colors',
+                  typeFilter === 'all' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'
+                )}
+              >
+                All
+              </button>
+              <button
+                type="button"
+                onClick={() => setTypeFilter('image')}
+                className={cn(
+                  'text-[10px] font-bold px-2.5 py-1 rounded-md transition-colors',
+                  typeFilter === 'image' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'
+                )}
+              >
+                Images
+              </button>
+              <button
+                type="button"
+                onClick={() => setTypeFilter('file')}
+                className={cn(
+                  'text-[10px] font-bold px-2.5 py-1 rounded-md transition-colors',
+                  typeFilter === 'file' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'
+                )}
+              >
+                Files
+              </button>
+            </div>
+
+            {/* Date Filter */}
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => setDateDropdownOpen(!dateDropdownOpen)}
+                className="h-8 flex items-center justify-between gap-1.5 px-3 text-[10px] font-bold bg-muted/20 hover:bg-neutral-100 dark:hover:bg-neutral-800 border border-border/40 hover:border-border/60 rounded-lg transition-all text-muted-foreground hover:text-foreground shadow-sm focus:outline-none"
+              >
+                <span>{
+                  datePreset === 'all' ? 'All Dates' :
+                  datePreset === '24h' ? 'Last 24 Hours' :
+                  datePreset === '7d' ? 'Last 7 Days' :
+                  datePreset === '30d' ? 'Last 30 Days' :
+                  'Last Year'
+                }</span>
+                <ChevronDown className={cn('h-3 w-3 opacity-60 transition-transform duration-200', dateDropdownOpen && 'rotate-180')} />
+              </button>
+
+              {dateDropdownOpen && (
+                <>
+                  <div className="fixed inset-0 z-40" onClick={() => setDateDropdownOpen(false)} />
+                  <div className="absolute right-0 mt-1.5 w-40 rounded-xl bg-card border border-border/60 shadow-xl py-1 z-50 animate-fadeIn backdrop-blur-md">
+                    {[
+                      { value: 'all', label: 'All Dates' },
+                      { value: '24h', label: 'Last 24 Hours' },
+                      { value: '7d', label: 'Last 7 Days' },
+                      { value: '30d', label: 'Last 30 Days' },
+                      { value: '365d', label: 'Last Year' }
+                    ].map((opt) => (
+                      <button
+                        key={opt.value}
+                        type="button"
+                        onClick={() => {
+                          setDatePreset(opt.value as any);
+                          setDateDropdownOpen(false);
+                        }}
+                        className={cn(
+                          'w-full text-left px-3 py-1.5 text-xs transition-colors flex items-center justify-between',
+                          datePreset === opt.value
+                            ? 'bg-sky-500/10 text-sky-400 font-bold'
+                            : 'text-muted-foreground hover:bg-neutral-100 dark:hover:bg-neutral-800 hover:text-foreground'
+                        )}
+                      >
+                        <span>{opt.label}</span>
+                        {datePreset === opt.value && <Check className="h-3 w-3 text-sky-400" />}
+                      </button>
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
       {items.length === 0 ? (
         <div className="media-library__empty">
           <FileImage className="h-10 w-10 opacity-30" />
@@ -299,9 +889,23 @@ export function MediaUpload({ items }: { items: MediaLibraryItem[] }) {
             Upload your first file
           </Button>
         </div>
+      ) : filteredItems.length === 0 ? (
+        <div className="media-library__empty py-12 border border-dashed border-border/40 rounded-2xl bg-muted/5 flex flex-col items-center justify-center text-center">
+          <FileImage className="h-10 w-10 opacity-30 text-muted-foreground" />
+          <p className="text-sm font-medium text-muted-foreground mt-2">No matching assets found</p>
+          <p className="text-xs text-muted-foreground/60 max-w-[280px] mt-1">Adjust your search terms or filters to locate the media items.</p>
+          <Button
+            onClick={() => { setQuery(''); setTypeFilter('all'); setDatePreset('all'); }}
+            variant="outline"
+            size="sm"
+            className="mt-3.5 h-8 text-xs"
+          >
+            Reset all filters
+          </Button>
+        </div>
       ) : (
         <div className="media-library__grid media-library__grid--v2">
-          {items.map((m) => (
+          {filteredItems.map((m) => (
             <MediaCard
               key={m.id}
               item={m}
