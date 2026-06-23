@@ -21,6 +21,7 @@ import {
   LayoutGrid, UsersRound, LibraryBig, Activity, Settings2, FileClock,
   Images, Tag, Hash, BookOpenText, LogOut, ExternalLink, Zap, Menu, X, Shield,
   ChevronRight, ChevronLeft, Shapes, MessageCircleReply, PanelLeftClose, PanelLeft,
+  Mail,
 } from 'lucide-react';
 
 type NavItem = { href: string; label: string; icon: LucideIcon };
@@ -42,6 +43,7 @@ const NAV_GROUPS: { label: string; items: NavItem[] }[] = [
       { href: '/admin/magazine', label: 'Magazine', icon: BookOpenText },
       { href: '/admin/media', label: 'Media', icon: Images },
       { href: '/admin/comments', label: 'Comments', icon: MessageCircleReply },
+      { href: '/admin/messages', label: 'Messages', icon: Mail },
     ],
   },
   {
@@ -63,6 +65,7 @@ const PAGE_TITLES: Record<string, string> = {
   '/admin/magazine': 'Magazine',
   '/admin/media': 'Media',
   '/admin/comments': 'Comments',
+  '/admin/messages': 'Contact Messages',
   '/admin/users': 'Users',
   '/admin/users/new': 'New User',
   '/admin/settings': 'Settings',

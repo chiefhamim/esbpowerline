@@ -2,7 +2,7 @@
 
 import { useEffect } from 'react';
 
-/** Prevent background scroll while overlays (modals, pickers) are open */
+/** Prevent background scroll while overlays (modals, drawers, pickers) are open */
 export function useBodyScrollLock(locked: boolean) {
   useEffect(() => {
     if (!locked) return;

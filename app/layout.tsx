@@ -39,7 +39,7 @@ export const metadata: Metadata = {
     template: '%s | ESB PowerLine',
   },
   description: "Bangladesh's premier source for power sector news, renewable energy, policy, projects & tenders, grid explorer, and the monthly magazine.",
-  icons: { icon: '/images/esb-logo.png' },
+  icons: { icon: '/images/fav-icon.png' },
   openGraph: {
     siteName: 'ESB PowerLine',
     images: [{ url: '/og-image.png' }],

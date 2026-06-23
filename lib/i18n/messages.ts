@@ -191,9 +191,9 @@ const EN: Record<MessageKey, string> = {
   'footer.copyright': '© {year} ESB PowerLine. All rights reserved.',
   'footer.tagline':
     'Authoritative coverage for utilities, regulators, IPPs, investors and policymakers.',
-  'footer.about': 'About',
-  'footer.contact': 'Contact',
-  'footer.backToTop': 'Back to top',
+  'footer.about': 'About Us',
+  'footer.contact': 'Contact ESB',
+  'footer.backToTop': 'Back to Top',
   'brand.kicker': 'News portal & magazine',
   'brand.lede':
     "{portal} and the {magazine} — daily reporting, sector data, and analysis from generation and grid to policy and projects.",

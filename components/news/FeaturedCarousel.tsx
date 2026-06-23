@@ -39,6 +39,21 @@ export function FeaturedCarousel({
   const { t } = useLocale();
   const featured: FeaturedItem[] = items ?? [];
 
+  const getCategoryBadgeClasses = (cat: string): string => {
+    const lower = cat.toLowerCase();
+    if (lower.includes('generation')) return 'border-blue-500/25 text-blue-600 dark:text-blue-400 bg-blue-500/5';
+    if (lower.includes('renewable')) return 'border-emerald-500/25 text-emerald-600 dark:text-emerald-400 bg-emerald-500/5';
+    if (lower.includes('lng') || lower.includes('gas') || lower.includes('fossil') || lower.includes('commodit')) return 'border-amber-500/25 text-amber-600 dark:text-amber-400 bg-amber-500/5';
+    if (lower.includes('nuclear')) return 'border-violet-500/25 text-violet-600 dark:text-violet-400 bg-violet-500/5';
+    if (lower.includes('grid') || lower.includes('transmission')) return 'border-cyan-500/25 text-cyan-600 dark:text-cyan-400 bg-cyan-500/5';
+    if (lower.includes('policy')) return 'border-indigo-500/25 text-indigo-600 dark:text-indigo-400 bg-indigo-500/5';
+    if (lower.includes('rural') || lower.includes('distribution') || lower.includes('utilit')) return 'border-lime-500/25 text-lime-600 dark:text-lime-400 bg-lime-500/5';
+    if (lower.includes('efficiency')) return 'border-teal-500/25 text-teal-600 dark:text-teal-400 bg-teal-500/5';
+    if (lower.includes('international')) return 'border-sky-500/25 text-sky-600 dark:text-sky-400 bg-sky-500/5';
+    if (lower.includes('market') || lower.includes('finance')) return 'border-rose-500/25 text-rose-600 dark:text-rose-400 bg-rose-500/5';
+    return 'border-border text-muted-foreground bg-muted/5';
+  };
+
   const [current, setCurrent] = useState(0);
   const [isPlaying, setIsPlaying] = useState(true);
   const [progress, setProgress] = useState(0);
@@ -150,23 +165,25 @@ export function FeaturedCarousel({
               inBand ? 'py-0 featured-hero__body--band' : 'py-10 md:py-14'
             }`}
           >
-            <div
-              className={`featured-hero__split transition-opacity duration-300 ease-out ${
-                isTransitioning ? 'opacity-0' : 'opacity-100'
-              }`}
-            >
-              <div className="featured-hero__content min-w-0">
+            <div className="featured-hero__split">
+              <div
+                className={`featured-hero__content min-w-0 transition-opacity duration-200 ease-out ${
+                  isTransitioning ? 'opacity-0' : 'opacity-100'
+                }`}
+              >
                 <div className="featured-hero__meta flex items-center gap-2 overflow-hidden">
-                  <CategoryLabel
-                    name={currentItem.category}
-                    className="featured-hero__category section-category-label text-muted-foreground shrink-0"
-                  />
+                  <div
+                    className={`featured-hero__category inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-wider transition-colors duration-300 ${getCategoryBadgeClasses(currentItem.category)}`}
+                  >
+                    <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-current opacity-75" />
+                    <CategoryLabel name={currentItem.category} />
+                  </div>
                   {currentItem.isFeatured ? <ArticlePlacementBadge type="featured" /> : null}
                   {currentItem.isBreaking ? <ArticlePlacementBadge type="breaking" /> : null}
                 </div>
 
                 <div className="featured-hero__title-slot">
-                  <h1 className="featured-hero__title line-clamp-2">{currentItem.title}</h1>
+                  <h1 className="featured-hero__title">{currentItem.title}</h1>
                 </div>
 
                 <div className="featured-hero__excerpt-slot">
@@ -242,21 +259,18 @@ export function FeaturedCarousel({
                         alt={item.title}
                         fill
                         priority={idx === 0}
-                        className={`absolute inset-0 h-full w-full transition-opacity duration-700 ease-out ${
-                          idx === current ? 'opacity-100' : 'opacity-0 pointer-events-none'
+                        className={`absolute inset-0 h-full w-full transition-opacity duration-700 ease-in-out ${
+                          idx === current ? 'opacity-100 z-10' : 'opacity-0 pointer-events-none z-0'
                         }`}
-                        style={{
-                          ...(idx === current ? heroImageStyle(item.heroMeta || undefined) : { visibility: 'hidden' }),
-                        }}
+                        style={heroImageStyle(item.heroMeta || undefined)}
                         sizes="(max-width: 768px) 100vw, 50vw"
                       />
                     ) : (
                       <div
                         key={idx}
-                        className={`absolute inset-0 transition-opacity duration-700 ease-out ${
-                          idx === current ? 'opacity-100' : 'opacity-0 pointer-events-none'
+                        className={`absolute inset-0 transition-opacity duration-700 ease-in-out ${
+                          idx === current ? 'opacity-100 z-10' : 'opacity-0 pointer-events-none z-0'
                         }`}
-                        style={idx === current ? undefined : { visibility: 'hidden' }}
                       >
                         <NoImage className="h-full w-full" />
                       </div>

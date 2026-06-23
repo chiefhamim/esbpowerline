@@ -10,6 +10,7 @@ export const ADMIN_NAV_PERMISSIONS: Record<string, string> = {
   '/admin/tags': 'admin.access',
   '/admin/magazine': 'admin.access',
   '/admin/media': 'admin.access',
+  '/admin/messages': 'admin.access',
   '/admin/users': 'user.view',
   '/admin/comments': 'comment.moderate_any',
   '/admin/settings': 'settings.view',

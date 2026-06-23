@@ -442,3 +442,17 @@ model ArticleHistory {
   comment    String?
   createdAt  DateTime @default(now())
 }
+
+// ============================================
+// CONTACT MESSAGES (user feedback & contact queries)
+// ============================================
+model ContactMessage {
+  id        String   @id @default(cuid())
+  name      String
+  email     String
+  phone     String?  // Phone Number (WhatsApp)
+  subject   String?
+  message   String
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
