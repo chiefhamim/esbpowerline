@@ -107,7 +107,7 @@ export function LiveMarketTicker({
             <span className={cn('font-mono tabular-nums text-foreground', textSize)}>
               {item.prefix}
               {item.value.toLocaleString(locale === 'bn' ? 'bn-BD' : 'en-US')}
-              {item.unit && <span className="ml-0.5 text-muted-foreground/80">{item.unit}</span>}
+              {item.unit && <span className="ml-0.5 text-muted-foreground">{item.unit}</span>}
             </span>
             <span
               className={cn(

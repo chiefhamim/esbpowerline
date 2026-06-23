@@ -44,6 +44,10 @@ function getPrismaClient(): PrismaClient {
   if (cached && isPrismaClientCurrent(cached)) {
     return cached;
   }
+  if (cached) {
+    console.warn('[prisma] Outdated client detected on hot-reload. Disconnecting old instance to prevent pool leakage...');
+    cached.$disconnect().catch((err) => console.error('[prisma] Error disconnecting old client:', err));
+  }
   const client = createPrismaClient();
   if (process.env.NODE_ENV !== 'production') {
     globalForPrisma.prisma = client;

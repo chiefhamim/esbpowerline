@@ -46,7 +46,14 @@ export default async function AdminUsersPage({ searchParams }: PageProps) {
           <Link
             key={tab.id}
             href={`/admin/users?filter=${tab.id}`}
-            className={cn('admin-filter-tab', filter === tab.id && 'admin-filter-tab--active')}
+            className={cn(
+              'admin-filter-tab',
+              filter === tab.id && (
+                tab.id === 'editor' ? 'admin-filter-tab--active-blue' :
+                tab.id === 'members' ? 'admin-filter-tab--active-green' :
+                'admin-filter-tab--active'
+              )
+            )}
           >
             {tab.label}
           </Link>

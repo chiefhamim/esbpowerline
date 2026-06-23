@@ -76,7 +76,7 @@ export function resolveCrossSurfaceHref(path: string): string {
 /** Resolve cross-surface URLs for staff panels (public site, admin console). */
 export function resolveStaffWorkspaceUrls() {
   if (typeof window === 'undefined') {
-    return { publicSiteUrl: '/', adminUrl: '/admin' };
+    return { publicSiteUrl: '/', adminUrl: '/admin', cmsUrl: '/cms' };
   }
 
   const { hostname, host, protocol } = window.location;
@@ -84,17 +84,20 @@ export function resolveStaffWorkspaceUrls() {
 
   if (isLocal) {
     if (!isSplitSurfaceDev()) {
-      return { publicSiteUrl: '/', adminUrl: '/admin' };
+      return { publicSiteUrl: '/', adminUrl: '/admin', cmsUrl: '/cms' };
     }
     return {
       publicSiteUrl: 'http://localhost:3000',
       adminUrl: 'http://localhost:3002/admin',
+      cmsUrl: 'http://localhost:3001/cms',
     };
   }
 
   const baseDomain = host.replace(/^(cms\.|admin\.)/, '');
+  const cleanBase = hostname.replace(/^(cms\.|admin\.)/, '');
   return {
     publicSiteUrl: `${protocol}//${baseDomain}/`,
-    adminUrl: `${protocol}//admin.${hostname.replace(/^(cms\.|admin\.)/, '')}/admin`,
+    adminUrl: `${protocol}//admin.${cleanBase}/admin`,
+    cmsUrl: `${protocol}//cms.${cleanBase}/cms`,
   };
 }

@@ -66,9 +66,14 @@ export function MediaPicker({
           <img src={value} alt="" className="w-full aspect-video object-cover" />
           <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
             <Button type="button" size="sm" variant="secondary" onClick={() => setOpen(true)}>Change</Button>
-            <Button type="button" size="sm" variant="ghost" className="text-white" onClick={() => onChange('')}>
-              <X className="h-3.5 w-3.5" />
-            </Button>
+            <button
+              type="button"
+              className="h-8 w-8 rounded-lg flex items-center justify-center text-white/95 hover:bg-red-500/25 hover:text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500/30"
+              onClick={() => onChange('')}
+              title="Remove image"
+            >
+              <X className="h-4 w-4" />
+            </button>
           </div>
         </div>
       ) : (

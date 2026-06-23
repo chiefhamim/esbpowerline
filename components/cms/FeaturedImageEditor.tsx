@@ -277,9 +277,15 @@ export function FeaturedImageEditor({
                   <Button type="button" size="sm" variant="secondary" onMouseDown={(e) => e.preventDefault()} onClick={() => setIsRepositionMode(true)}>
                     <SlidersHorizontal className="h-3.5 w-3.5 mr-1" /> Reposition
                   </Button>
-                  <Button type="button" size="sm" variant="ghost" className="text-red-500 hover:text-red-600 hover:bg-red-500/20" onMouseDown={(e) => e.preventDefault()} onClick={() => { onChange(''); onMetaChange({}); }}>
-                    <X className="h-3.5 w-3.5" />
-                  </Button>
+                  <button
+                    type="button"
+                    className="h-9 w-9 rounded-xl flex items-center justify-center text-red-500 hover:bg-red-500/10 hover:text-red-600 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500/30"
+                    onMouseDown={(e) => e.preventDefault()}
+                    onClick={() => { onChange(''); onMetaChange({}); }}
+                    title="Remove image"
+                  >
+                    <X className="h-4.5 w-4.5" />
+                  </button>
                 </>
               )}
             </div>

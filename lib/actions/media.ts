@@ -5,6 +5,8 @@ import prisma from '@/lib/prisma';
 import { auth } from '@/lib/auth';
 import { can } from '@/lib/constants';
 import { deleteStoredMedia } from '@/lib/media-storage';
+import { statSync, existsSync } from 'fs';
+import path from 'path';
 
 async function requireAuth() {
   const session = await auth();
@@ -12,9 +14,58 @@ async function requireAuth() {
   return session.user;
 }
 
+async function backfillMissingMediaSizes(items: any[]) {
+  await Promise.all(
+    items.map(async (m) => {
+      if (m.size !== null && m.size > 0) return;
+
+      let size: number | null = null;
+      if (m.url.startsWith('/')) {
+        const localPath = path.join(process.cwd(), 'public', m.url);
+        if (existsSync(localPath)) {
+          try {
+            size = statSync(localPath).size;
+          } catch (e) {
+            console.error('Error getting local file size:', e);
+          }
+        }
+      } else if (m.url.startsWith('http://') || m.url.startsWith('https://')) {
+        try {
+          const res = await fetch(m.url, { method: 'HEAD' });
+          const len = res.headers.get('content-length');
+          if (len) {
+            size = parseInt(len, 10);
+          } else {
+            const getRes = await fetch(m.url, { method: 'GET' });
+            const getLen = getRes.headers.get('content-length');
+            if (getLen) {
+              size = parseInt(getLen, 10);
+            } else {
+              const blob = await getRes.blob();
+              size = blob.size;
+            }
+          }
+        } catch (err) {
+          console.warn(`[backfillMissingMediaSizes] Failed to resolve remote size for ${m.url}:`, err);
+        }
+      }
+
+      if (size !== null && size > 0) {
+        m.size = size;
+        await prisma.media.update({
+          where: { id: m.id },
+          data: { size },
+        }).catch((err) => console.error('Failed to save size to db:', err));
+      }
+    })
+  );
+}
+
 export async function getMedia() {
   await requireAuth();
-  return prisma.media.findMany({ orderBy: { createdAt: 'desc' } });
+  const items = await prisma.media.findMany({ orderBy: { createdAt: 'desc' } });
+  await backfillMissingMediaSizes(items);
+  return items;
 }
 
 export type MediaLibraryItem = {
@@ -27,6 +78,7 @@ export type MediaLibraryItem = {
   altText: string | null;
   caption: string | null;
   uploadedById: string | null;
+  uploadedByName: string | null;
   createdAt: Date;
   usageCount: number;
   usedInTitles: string[];
@@ -37,7 +89,7 @@ export type MediaLibraryItem = {
 export async function getMediaLibrary(): Promise<MediaLibraryItem[]> {
   const user = await requireAuth();
 
-  const [items, articles] = await Promise.all([
+  const [items, articles, users] = await Promise.all([
     prisma.media.findMany({ orderBy: { createdAt: 'desc' } }),
     prisma.article.findMany({
       where: {
@@ -47,7 +99,17 @@ export async function getMediaLibrary(): Promise<MediaLibraryItem[]> {
       },
       select: { id: true, slug: true, imageUrl: true, title: true },
     }),
+    prisma.user.findMany({
+      select: { id: true, name: true },
+    }),
   ]);
+
+  await backfillMissingMediaSizes(items);
+
+  const userMap = new Map<string, string>();
+  for (const u of users) {
+    if (u.name) userMap.set(u.id, u.name);
+  }
 
   const usageMap = new Map<string, { count: number; titles: string[]; articles: { id: string; title: string; slug: string }[] }>();
   for (const article of articles) {
@@ -78,6 +140,7 @@ export async function getMediaLibrary(): Promise<MediaLibraryItem[]> {
       altText: m.altText,
       caption: m.caption,
       uploadedById: m.uploadedById,
+      uploadedByName: m.uploadedById ? (userMap.get(m.uploadedById) ?? 'Unknown') : 'System',
       createdAt: m.createdAt,
       usageCount,
       usedInTitles: usage?.titles ?? [],

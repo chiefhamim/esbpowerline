@@ -257,7 +257,7 @@ export function PublicNavbar({
                     className={`category-nav-cell group relative transition-all duration-200 select-none w-full overflow-hidden font-semibold ${
                       isActive
                         ? `${colors.activeBg} text-foreground`
-                        : `${colors.hoverBg} text-foreground/80 hover:text-foreground`
+                        : `${colors.hoverBg} text-foreground hover:text-foreground`
                     }`}
                   >
                     <span
@@ -331,14 +331,7 @@ export function PublicNavbar({
                           }`}
                           style={colors.useCustom ? categoryTextStyle(c.color) : undefined}
                         />
-                        <span 
-                          className={`font-medium text-[14px] leading-tight transition-colors duration-200 ${
-                            isActive 
-                              ? (colors.useCustom ? 'category-nav--custom' : colors.text) 
-                              : 'text-foreground'
-                          }`}
-                          style={isActive && colors.useCustom ? categoryTextStyle(c.color) : undefined}
-                        >
+                        <span className="font-medium text-[14px] leading-tight transition-colors duration-200 text-foreground">
                           {c.name}
                         </span>
                       </PublicNavLink>

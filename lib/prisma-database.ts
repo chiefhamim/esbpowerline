@@ -8,14 +8,14 @@ export function resolveDatabaseUrl() {
         'DATABASE_URL is not set. Add your Supabase transaction pooler URL to production environment variables.',
       );
     }
-    const devPath = path.join(process.cwd(), 'dev.db');
+    const devPath = path.join(/*turbopackIgnore: true*/ process.cwd(), 'dev.db');
     return `file:${devPath}`;
   }
   if (raw.startsWith('file:')) {
     const filePath = raw.replace(/^file:/, '');
     const absolute = path.isAbsolute(filePath)
       ? filePath
-      : path.join(process.cwd(), filePath);
+      : path.join(/*turbopackIgnore: true*/ process.cwd(), filePath);
     return `file:${absolute}`;
   }
   return raw;

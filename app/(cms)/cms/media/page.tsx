@@ -8,9 +8,7 @@ export default async function CMSMediaPage() {
   return (
     <CmsSectionStack>
       <CmsPageHeader title="Media Library" description="Upload and manage images for your articles" icon={ImageIcon} />
-      <div className="admin-form-card">
-        <MediaUpload items={items} />
-      </div>
+      <MediaUpload items={items} />
     </CmsSectionStack>
   );
 }

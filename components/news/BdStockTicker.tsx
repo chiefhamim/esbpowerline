@@ -87,10 +87,10 @@ export function BdStockTicker({
             const ChangeIcon = isPositive ? TrendingUp : TrendingDown;
             return (
               <div key={`${item.id}-${idx}`} className="flex shrink-0 items-center gap-2 text-muted-foreground">
-                <span className="font-mono text-[10px] md:text-[11px] font-bold text-foreground/70">
+                <span className="font-mono text-[10px] md:text-[11px] font-bold text-foreground">
                   {item.symbol}
                 </span>
-                <span className="font-medium text-foreground/90">{item.label}</span>
+                <span className="font-medium text-foreground">{item.label}</span>
                 <span className="font-mono tabular-nums text-foreground">
                   ৳{item.price.toLocaleString(locale === 'bn' ? 'bn-BD' : 'en-US')}
                 </span>

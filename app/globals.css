@@ -2367,7 +2367,7 @@ html.locale-bn .article-card h3 {
   text-transform: uppercase;
   line-height: 1;
   white-space: normal;
-  color: hsl(var(--muted-foreground) / 0.92);
+  color: hsl(var(--muted-foreground));
 }
 
 .market-ticker-label__text {
@@ -3059,6 +3059,18 @@ html.locale-bn .public-nav-bar__hub-link span {
   background-color: color-mix(in srgb, hsl(var(--muted)) 35%, hsl(var(--background)));
 }
 
+html.theme-midnight .category-nav-ribbon--desktop,
+html[data-site-theme='midnight'] .category-nav-ribbon--desktop,
+html.theme-dark .category-nav-ribbon--desktop,
+html[data-site-theme='dark'] .category-nav-ribbon--desktop,
+html.theme-midnight #mobile-categories-panel,
+html[data-site-theme='midnight'] #mobile-categories-panel,
+html.theme-dark #mobile-categories-panel,
+html[data-site-theme='dark'] #mobile-categories-panel {
+  background-color: color-mix(in srgb, hsl(var(--muted)) 42%, hsl(var(--background))) !important;
+  border-color: hsl(var(--border) / 0.52) !important;
+}
+
 .category-nav-ribbon--desktop {
   align-items: stretch;
 }
@@ -3289,7 +3301,7 @@ html.locale-bn .public-nav-bar__hub-link span {
 
 /* Single frame — one elevation, one border (Vercel/Linear pattern) */
 .login-frame {
-  @apply relative z-[1] w-full max-w-[1040px] rounded-2xl border bg-card shadow-lg;
+  @apply relative z-[1] w-full max-w-[1040px] rounded-2xl border bg-card shadow-lg overflow-hidden;
   border-color: hsl(var(--login-accent) / 0.3);
   box-shadow:
     var(--shadow-lg),
@@ -5972,6 +5984,8 @@ html.theme-white {
   --admin-rose: 346 77% 58%;
   --admin-violet: 262 72% 62%;
   --admin-red: 359 84% 62%;
+  --admin-blue: 217 91% 60%;
+  --admin-green: 142 71% 45%;
   --admin-surface: 220 40% 8%;
   --admin-elevated: 220 35% 11%;
   --shell-gutter: clamp(0.75rem, 1.1vw, 1.25rem);
@@ -7107,6 +7121,7 @@ html.theme-white {
 
 .admin-stat-value {
   margin-top: 0.5rem;
+  font-family: ui-monospace, SFMono-Regular, "JetBrains Mono", monospace;
   font-size: 1.875rem;
   font-weight: 700;
   letter-spacing: -0.03em;
@@ -7315,6 +7330,18 @@ html.theme-white {
   color: hsl(var(--admin-rose));
   border-color: hsl(var(--admin-rose) / 0.35);
   background-color: hsl(var(--admin-rose) / 0.1);
+}
+
+.admin-filter-tab--active-blue {
+  color: hsl(var(--admin-blue));
+  border-color: hsl(var(--admin-blue) / 0.35);
+  background-color: hsl(var(--admin-blue) / 0.1);
+}
+
+.admin-filter-tab--active-green {
+  color: hsl(var(--admin-green));
+  border-color: hsl(var(--admin-green) / 0.35);
+  background-color: hsl(var(--admin-green) / 0.1);
 }
 
 .admin-filter-tab__count {
@@ -12578,8 +12605,10 @@ html[data-editor-guidance='pro'] .editor-settings-section__hint {
   scrollbar-color: var(--scroll-thumb) var(--scroll-track);
 }
 
-.cms-shell .cms-main {
-  overflow: visible !important;
+@media (max-width: 1023px) {
+  .cms-shell .cms-main {
+    overflow: visible !important;
+  }
 }
 
 .cms-shell .cms-main::-webkit-scrollbar,
@@ -13095,9 +13124,9 @@ html[data-editor-guidance='pro'] .editor-settings-section__hint {
   width: 100% !important;
 }
 
-@media (min-width: 1280px) {
+@media (min-width: 1024px) {
   .cms-editor-surface--resizable .tiptap-toolbar--sticky {
-    top: 46px !important;
+    top: 0 !important;
   }
 }
 
@@ -15907,9 +15936,9 @@ html.theme-white .cms-datetime-grid-cell {
   width: 100%;
 }
 
-@media (min-width: 1280px) {
+@media (min-width: 1024px) {
   .tiptap-toolbar--sticky {
-    top: 46px;
+    top: 0 !important;
   }
 }
 
@@ -17799,6 +17828,19 @@ html.theme-white .cms-datetime-grid-cell {
   .admin-card-header {
     margin-bottom: 0.375rem !important;
   }
+}
+
+/* Ensure the admin and CMS panels use consistent sans-serif fonts for all headings */
+.admin-shell h1,
+.admin-shell h2,
+.admin-shell h3,
+.admin-shell h4,
+.admin-shell h5,
+.admin-shell h6,
+.admin-shell .admin-page-title,
+.admin-shell .admin-card-title,
+.admin-shell .cms-write-page__title {
+  font-family: var(--font-sans), sans-serif !important;
 }
 
 

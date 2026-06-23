@@ -16,16 +16,32 @@ import { optimizeImageToWebP } from '@/lib/image-optimizer';
 
 
 function formatBytes(bytes: number | null | undefined) {
-  if (!bytes) return '—';
+  if (bytes === null || bytes === undefined) return '—';
+  if (bytes === 0) return '0 B';
   if (bytes < 1024) return `${bytes} B`;
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
-function formatMime(mime: string | null | undefined, type: string) {
-  if (!mime) return type.toUpperCase();
-  const ext = mime.split('/')[1]?.toUpperCase();
-  return ext ?? mime;
+function getFileFormat(mime: string | null | undefined, name: string, url: string, type: string) {
+  if (mime && mime.split('/')[1] && mime.split('/')[1] !== 'octet-stream') {
+    const ext = mime.split('/')[1].toUpperCase();
+    if (ext === 'JPEG') return 'JPG';
+    return ext;
+  }
+  const urlMatch = url ? url.match(/\.([a-zA-Z0-9]+)(?:[\?#]|$)/) : null;
+  if (urlMatch && urlMatch[1]) {
+    const ext = urlMatch[1].toUpperCase();
+    if (ext === 'JPEG') return 'JPG';
+    return ext;
+  }
+  const nameMatch = name ? name.match(/\.([a-zA-Z0-9]+)(?:[\?#]|$)/) : null;
+  if (nameMatch && nameMatch[1]) {
+    const ext = nameMatch[1].toUpperCase();
+    if (ext === 'JPEG') return 'JPG';
+    return ext;
+  }
+  return type.toUpperCase();
 }
 
 function MediaCard({
@@ -93,19 +109,26 @@ function MediaCard({
           </div>
         )}
         <div className="media-library-card__badge">
-          {formatMime(item.mimeType, item.type)}
+          {getFileFormat(item.mimeType, item.name, item.url, item.type)}
         </div>
       </div>
 
       <div className="media-library-card__body">
         <div className="media-library-card__head">
-          <h3 className="media-library-card__name" title={item.name}>{item.name}</h3>
-          <span className="media-library-card__size">{formatBytes(item.size)}</span>
+          <div className="min-w-0 flex-1">
+            <h3 className="media-library-card__name" title={`${item.name} (Uploaded by ${item.uploadedByName ?? 'System'})`}>
+              {item.name}
+            </h3>
+            <span className="text-[10px] text-muted-foreground block truncate mt-0.5">
+              by {item.uploadedByName ?? 'System'}
+            </span>
+          </div>
+          <span className="media-library-card__size shrink-0 ml-2">{formatBytes(item.size)}</span>
         </div>
 
         <dl className="media-library-card__facts">
           <div><dt>Uploaded</dt><dd>{formatEditorialTimestamp(item.createdAt)}</dd></div>
-          {dims && <div><dt>Size</dt><dd>{dims}</dd></div>}
+          {dims && <div><dt>Dimensions</dt><dd>{dims}</dd></div>}
         </dl>
 
         {item.usedInArticles.length > 0 && (
@@ -147,9 +170,14 @@ function MediaCard({
               <Input value={altText} onChange={(e) => setAltText(e.target.value)} className="h-8 text-xs" placeholder="Alt text" />
             )}
             <div className="media-library-card__edit-actions">
-              <Button type="button" size="sm" variant="ghost" className="h-7 px-2" onClick={() => setEditing(false)} disabled={saving}>
-                <X className="h-3 w-3" />
-              </Button>
+              <button
+                type="button"
+                className="h-7 w-7 rounded-lg flex items-center justify-center text-destructive hover:bg-destructive/10 hover:text-destructive transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-destructive/30"
+                onClick={() => setEditing(false)}
+                disabled={saving}
+              >
+                <X className="h-4 w-4" />
+              </button>
               <Button type="button" size="sm" className="h-7 px-2" onClick={saveEdits} disabled={saving}>
                 <Check className="h-3 w-3 mr-1" /> Save
               </Button>

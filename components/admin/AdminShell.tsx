@@ -117,6 +117,7 @@ function AdminShellInner({ children }: { children: React.ReactNode }) {
   const [showSignOutConfirm, setShowSignOutConfirm] = useState(false);
   const [showProfileSettings, setShowProfileSettings] = useState(false);
   const [publicSiteUrl, setPublicSiteUrl] = useState('/');
+  const [cmsUrl, setCmsUrl] = useState('/cms');
 
   function handleNavRequest(href: string, event: MouseEvent<HTMLAnchorElement>) {
     if (!hasChanges || href === pathname) return;
@@ -125,7 +126,9 @@ function AdminShellInner({ children }: { children: React.ReactNode }) {
   }
 
   useEffect(() => {
-    setPublicSiteUrl(resolveStaffWorkspaceUrls().publicSiteUrl);
+    const urls = resolveStaffWorkspaceUrls();
+    setPublicSiteUrl(urls.publicSiteUrl);
+    setCmsUrl(urls.cmsUrl || '/cms');
     if (typeof window !== 'undefined' && window.innerWidth < 1024) {
       setIsCollapsed(true);
     }
@@ -195,6 +198,23 @@ function AdminShellInner({ children }: { children: React.ReactNode }) {
             </div>
           </div>
         ))}
+
+        {cmsUrl && (
+          <div>
+            <div className="admin-nav-group-label">Workspace</div>
+            <Link
+              href={cmsUrl}
+              className="admin-nav-item group"
+              onClick={(event) => handleNavRequest('/cms', event)}
+            >
+              <span className="admin-nav-icon">
+                <BookOpenText className="h-[14px] w-[14px]" strokeWidth={2} />
+              </span>
+              <span className="flex-1 truncate">Editorial workspace</span>
+              <ExternalLink className="h-3 w-3 opacity-40 shrink-0" />
+            </Link>
+          </div>
+        )}
       </nav>
 
       <div className="admin-sidebar-footer">
