@@ -17,6 +17,14 @@ const PERIODS: { key: PeriodKey; label: string; header: string }[] = [
   { key: 'year', label: 'This year', header: 'Year' },
 ];
 
+const PERIOD_ACCENTS: Record<SortKey, string> = {
+  total: '#10b981', // Live (emerald/green)
+  day: '#3b82f6',   // Today (blue)
+  week: '#8b5cf6',  // Week (purple)
+  month: '#f43f5e', // Month (rose)
+  year: '#10b981',  // Year (emerald/green)
+};
+
 export function AuthorProductivityPanel({ authors }: { authors: AuthorPublishingStat[] }) {
   const [sortBy, setSortBy] = useState<SortKey>('month');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
@@ -73,14 +81,18 @@ export function AuthorProductivityPanel({ authors }: { authors: AuthorPublishing
               
               <th
                 onClick={() => handleSort('total')}
-                className="admin-author-productivity__num cursor-pointer hover:bg-muted/30 select-none py-2.5 px-3 transition-colors text-right"
+                className={cn(
+                  "admin-author-productivity__num cursor-pointer hover:bg-muted/30 select-none py-2.5 px-3 transition-colors text-right",
+                  sortBy === 'total' && "admin-author-productivity__num--active"
+                )}
+                style={sortBy === 'total' ? { '--col-accent': PERIOD_ACCENTS.total } as React.CSSProperties : undefined}
               >
                 <div className="flex items-center justify-end gap-1">
                   <span>Live</span>
-                  <ArrowUpDown className={cn(
-                    "h-3 w-3 transition-colors", 
-                    sortBy === 'total' ? "text-sky-500" : "text-muted-foreground/30"
-                  )} />
+                  <ArrowUpDown 
+                    className="h-3 w-3 transition-colors" 
+                    style={sortBy === 'total' ? { color: 'var(--col-accent)' } : { color: 'hsl(var(--muted-foreground) / 0.3)' }}
+                  />
                 </div>
               </th>
 
@@ -88,14 +100,18 @@ export function AuthorProductivityPanel({ authors }: { authors: AuthorPublishing
                 <th
                   key={p.key}
                   onClick={() => handleSort(p.key)}
-                  className="admin-author-productivity__num cursor-pointer hover:bg-muted/30 select-none py-2.5 px-3 transition-colors text-right"
+                  className={cn(
+                    "admin-author-productivity__num cursor-pointer hover:bg-muted/30 select-none py-2.5 px-3 transition-colors text-right",
+                    sortBy === p.key && "admin-author-productivity__num--active"
+                  )}
+                  style={sortBy === p.key ? { '--col-accent': PERIOD_ACCENTS[p.key] } as React.CSSProperties : undefined}
                 >
                   <div className="flex items-center justify-end gap-1">
                     <span>{p.header}</span>
-                    <ArrowUpDown className={cn(
-                      "h-3 w-3 transition-colors", 
-                      sortBy === p.key ? "text-sky-500" : "text-muted-foreground/30"
-                    )} />
+                    <ArrowUpDown 
+                      className="h-3 w-3 transition-colors" 
+                      style={sortBy === p.key ? { color: 'var(--col-accent)' } : { color: 'hsl(var(--muted-foreground) / 0.3)' }}
+                    />
                   </div>
                 </th>
               ))}
@@ -111,10 +127,13 @@ export function AuthorProductivityPanel({ authors }: { authors: AuthorPublishing
                 <td className="py-2.5 px-3">
                   <RoleBadge role={author.role as Role} />
                 </td>
-                <td className={cn(
-                  "admin-author-productivity__num tabular-nums font-semibold py-2.5 px-3 text-right text-[13px]",
-                  sortBy === 'total' && "text-sky-500 bg-sky-500/5 font-bold"
-                )}>
+                <td 
+                  className={cn(
+                    "admin-author-productivity__num tabular-nums py-2.5 px-3 text-right text-[13px]",
+                    sortBy === 'total' && "admin-author-productivity__num--active"
+                  )}
+                  style={sortBy === 'total' ? { '--col-accent': PERIOD_ACCENTS.total } as React.CSSProperties : undefined}
+                >
                   {formatNumber(author.total)}
                 </td>
                 {PERIODS.map((p) => (
@@ -122,8 +141,9 @@ export function AuthorProductivityPanel({ authors }: { authors: AuthorPublishing
                     key={p.key}
                     className={cn(
                       'admin-author-productivity__num tabular-nums py-2.5 px-3 text-right text-[13px]',
-                      sortBy === p.key && 'text-sky-500 bg-sky-500/5 font-bold',
+                      sortBy === p.key && 'admin-author-productivity__num--active',
                     )}
+                    style={sortBy === p.key ? { '--col-accent': PERIOD_ACCENTS[p.key] } as React.CSSProperties : undefined}
                   >
                     {formatNumber(author[p.key])}
                   </td>
@@ -134,19 +154,23 @@ export function AuthorProductivityPanel({ authors }: { authors: AuthorPublishing
           <tfoot>
             <tr className="bg-muted/10 font-semibold border-t border-border/40">
               <td colSpan={2} className="admin-author-productivity__total-label py-2.5 px-3">Newsroom total</td>
-              <td className={cn(
-                "admin-author-productivity__num tabular-nums py-2.5 px-3 text-right font-bold text-[13px]",
-                sortBy === 'total' && "text-sky-500 bg-sky-500/5 font-extrabold"
-              )}>
+              <td 
+                className={cn(
+                  "admin-author-productivity__num tabular-nums py-2.5 px-3 text-right text-[13px]",
+                  sortBy === 'total' && "admin-author-productivity__num--active font-bold"
+                )}
+                style={sortBy === 'total' ? { '--col-accent': PERIOD_ACCENTS.total } as React.CSSProperties : undefined}
+              >
                 {formatNumber(totals.total)}
               </td>
               {PERIODS.map((p) => (
                 <td
                   key={p.key}
                   className={cn(
-                    'admin-author-productivity__num tabular-nums py-2.5 px-3 text-right font-bold text-[13px]',
-                    sortBy === p.key && 'text-sky-500 bg-sky-500/5 font-extrabold',
+                    'admin-author-productivity__num tabular-nums py-2.5 px-3 text-right text-[13px]',
+                    sortBy === p.key && 'admin-author-productivity__num--active font-bold',
                   )}
+                  style={sortBy === p.key ? { '--col-accent': PERIOD_ACCENTS[p.key] } as React.CSSProperties : undefined}
                 >
                   {formatNumber(totals[p.key])}
                 </td>

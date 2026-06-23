@@ -6803,8 +6803,9 @@ html.theme-white {
 }
 
 .admin-author-productivity__num--active {
-  color: hsl(var(--admin-rose));
-  font-weight: 600;
+  color: var(--col-accent) !important;
+  background: color-mix(in srgb, var(--col-accent) 7%, transparent) !important;
+  font-weight: 650 !important;
 }
 
 .admin-author-productivity__rank {
