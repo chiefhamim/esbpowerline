@@ -176,7 +176,7 @@ export function UserForm({ mode, user }: UserFormProps) {
           <Textarea value={bio} onChange={(e) => setBio(e.target.value)} rows={3} />
         </div>
         <Button type="submit" disabled={loading}>
-          {loading ? 'Saving…' : mode === 'create' ? 'Create User' : 'Update User'}
+          <span>{loading ? 'Saving…' : mode === 'create' ? 'Create User' : 'Update User'}</span>
         </Button>
       </form>
     </AdminFormCard>

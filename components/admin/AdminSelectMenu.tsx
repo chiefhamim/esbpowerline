@@ -58,6 +58,7 @@ export function AdminSelectMenu({
   gridColumns = 4,
   menuPosition = 'default',
   menuMinHeight,
+  align = 'left',
 }: {
   value: string;
   onChange: (value: string) => void;
@@ -76,8 +77,9 @@ export function AdminSelectMenu({
   hideDot?: boolean;
   optionsLayout?: 'list' | 'grid';
   gridColumns?: number;
-  menuPosition?: 'default' | 'datetime';
+  menuPosition?: 'default' | 'datetime' | 'top';
   menuMinHeight?: number;
+  align?: 'left' | 'right';
 }) {
   const { open, toggle, close } = useAdminDropdown();
   const useDatetimePosition = portal && menuPosition === 'datetime';
@@ -103,11 +105,20 @@ export function AdminSelectMenu({
       const el = rootRef.current;
       if (!el) return;
       const rect = el.getBoundingClientRect();
-      setMenuRect({
-        top: rect.bottom + 6,
-        left: rect.left,
-        width: rect.width,
-      });
+      if (menuPosition === 'top') {
+        const approxHeight = options.length * 32 + 36;
+        setMenuRect({
+          top: rect.top - approxHeight - 6,
+          left: rect.left,
+          width: rect.width,
+        });
+      } else {
+        setMenuRect({
+          top: rect.bottom + 6,
+          left: rect.left,
+          width: rect.width,
+        });
+      }
     }
 
     updatePosition();
@@ -117,14 +128,19 @@ export function AdminSelectMenu({
       window.removeEventListener('resize', updatePosition);
       window.removeEventListener('scroll', updatePosition, true);
     };
-  }, [open, portal, useDatetimePosition]);
+  }, [open, portal, useDatetimePosition, menuPosition, options.length]);
 
   const menu = open ? (
     <>
       <AdminDropdownBackdrop onClose={close} />
       <AdminDropdownPanel
-        className={cn('admin-select-menu', portal && 'admin-select-menu--portal', menuClassName)}
-        align="left"
+        className={cn(
+          'admin-select-menu',
+          portal && 'admin-select-menu--portal',
+          menuPosition === 'top' && 'admin-dropdown-panel--up',
+          menuClassName
+        )}
+        align={align}
         style={
           portal && useDatetimePosition
             ? datetimeMenuStyle(datetimePosition.rect)

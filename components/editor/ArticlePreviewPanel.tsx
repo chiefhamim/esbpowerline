@@ -73,11 +73,13 @@ type ArticlePreviewPanelProps = {
 function PreviewIframe({
   children,
   theme,
+  device,
   className,
   focusMode = false,
 }: {
   children: React.ReactNode;
   theme: SiteTheme;
+  device: PreviewDevice;
   className?: string;
   focusMode?: boolean;
 }) {
@@ -137,12 +139,14 @@ function PreviewIframe({
 
     // Set class on body for styling
     doc.body.className = `theme-${theme} ${theme === 'white' ? 'light' : 'dark'} bg-background text-foreground m-0 p-0 ${
-      focusMode ? 'overflow-visible' : 'overflow-x-hidden w-full h-full'
-    }`;
+      focusMode ? 'overflow-visible' : 'overflow-hidden w-full h-full rounded-b-[1.25rem]'
+    } cms-preview-device-frame--${device}`;
     
-    // Make sure html fits mode
+    // Make sure html fits mode and inherits correct theme classes
     const html = doc.documentElement;
     if (html) {
+      html.className = `theme-${theme} ${theme === 'white' ? 'light' : 'dark'}`;
+      html.style.backgroundColor = 'transparent';
       if (focusMode) {
         html.style.height = 'auto';
         html.style.overflow = 'visible';
@@ -151,7 +155,7 @@ function PreviewIframe({
         html.style.overflow = 'hidden';
       }
     }
-  }, [mountNode, theme, focusMode]);
+  }, [mountNode, theme, focusMode, device]);
 
   useEffect(() => {
     if (!mountNode || !focusMode) {
@@ -182,7 +186,7 @@ function PreviewIframe({
   return (
     <iframe
       ref={handleRef}
-      className={cn("w-full border-none bg-background", className)}
+      className={cn("w-full border-none bg-transparent rounded-b-[1.25rem]", className)}
       style={focusMode ? { height: typeof iframeHeight === 'number' ? `${iframeHeight}px` : iframeHeight } : { height: '100%' }}
       title="Preview Frame"
     >
@@ -832,6 +836,8 @@ export function ArticlePreviewPanel({
 
     const devLabel = `${rawLabel} | Safe Fit: ${currentTelemetry.title.chars}/${currentTelemetry.limit.title.chars}ch Title, ${currentTelemetry.excerpt.chars}/${currentTelemetry.limit.excerpt.chars}ch Deck | ${currentTelemetry.title.words}/${currentTelemetry.limit.title.words}w Title, ${currentTelemetry.excerpt.words}/${currentTelemetry.limit.excerpt.words}w Deck`;
 
+    const isShellOnWrapper = !focusMode;
+
     const wrapperStyle = focusMode
       ? {
           width: `${targetWidth}px`,
@@ -847,7 +853,8 @@ export function ArticlePreviewPanel({
           justifyContent: 'flex-start',
           alignItems: 'flex-start',
           overflow: 'hidden',
-          transition: 'width 0.15s ease-out, height 0.15s ease-out',
+          transition: 'width 0.15s ease-out, height 0.15s ease-out, border-radius 0.15s ease-out',
+          borderRadius: `${1.25 * scale}rem`,
         };
 
     const frameStyle = {
@@ -862,16 +869,25 @@ export function ArticlePreviewPanel({
       flexDirection: 'column' as const,
     };
 
+    const wrapperClass = cn(
+      "cms-preview-device-wrapper shrink-0",
+      isShellOnWrapper && "cms-preview-device-shell",
+      isShellOnWrapper && !isDevDesktop && "cms-preview-device-shell--fixed"
+    );
+
+    const frameClass = cn(
+      "cms-preview-device-frame shrink-0 transition-shadow",
+      !isShellOnWrapper && "cms-preview-device-shell",
+      !isShellOnWrapper && !isDevDesktop && "cms-preview-device-shell--fixed",
+      dev === 'tablet' && 'cms-preview-device-frame--tablet',
+      dev === 'mobile' && 'cms-preview-device-frame--mobile'
+    );
+
     return (
-      <div style={wrapperStyle} className="cms-preview-device-wrapper shrink-0">
+      <div style={wrapperStyle} className={wrapperClass}>
         <div
           key={dev}
-          className={cn(
-            'cms-preview-device-frame border border-border bg-background shadow-md overflow-hidden shrink-0 transition-shadow rounded-2xl',
-            !isDevDesktop && 'cms-preview-device-frame--fixed',
-            dev === 'tablet' && 'cms-preview-device-frame--tablet',
-            dev === 'mobile' && 'cms-preview-device-frame--mobile',
-          )}
+          className={frameClass}
           style={frameStyle}
         >
           <div className="cms-preview-device-chrome shrink-0">
@@ -882,12 +898,11 @@ export function ArticlePreviewPanel({
           </div>
 
           {!isDevDesktop ? (
-            <PreviewIframe theme={theme} className="flex-1 overflow-hidden" focusMode={focusMode}>
+            <PreviewIframe theme={theme} device={dev} className="flex-1 overflow-hidden" focusMode={focusMode}>
               <div
                 className={cn(
-                  'cms-preview-public-surface w-full',
+                  'cms-preview-public-surface w-full rounded-b-[1.25rem]',
                   !focusMode ? 'min-h-full overflow-y-auto' : 'h-auto overflow-y-visible',
-                  placement !== 'article' && 'rounded-b-xl',
                   `theme-${theme}`,
                   theme === 'white' ? 'light' : 'dark'
                 )}
@@ -898,9 +913,8 @@ export function ArticlePreviewPanel({
           ) : (
             <div
               className={cn(
-                'cms-preview-public-surface flex-1',
+                'cms-preview-public-surface flex-1 rounded-b-[1.25rem]',
                 !focusMode ? 'overflow-y-auto' : 'h-auto overflow-y-visible',
-                placement !== 'article' && 'rounded-b-xl overflow-hidden',
                 `theme-${theme}`,
                 theme === 'white' ? 'light' : 'dark'
               )}
@@ -917,8 +931,8 @@ export function ArticlePreviewPanel({
     <div className={cn(
       "cms-preview-panel flex flex-col w-full bg-background overflow-hidden",
       focusMode
-        ? "border-none rounded-none shadow-none mt-0 min-h-screen" 
-        : "border border-border/40 rounded-xl shadow-sm mt-3"
+        ? "border border-border/40 rounded-2xl shadow-lg mt-0 h-[calc(100vh-var(--shell-header-h)-2rem)] m-4" 
+        : "border border-border/40 rounded-2xl shadow-sm mt-3"
     )}>
       {!focusMode && (
         <div className="cms-preview-modal__toolbar flex flex-wrap items-center justify-between gap-4 p-3 border-b border-border/45 bg-muted/5">

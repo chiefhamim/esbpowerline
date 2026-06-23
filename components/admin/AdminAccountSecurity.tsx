@@ -78,8 +78,10 @@ export function AdminAccountSecurity({ email }: { email: string }) {
           />
         </div>
         <Button type="submit" disabled={pending}>
-          {pending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-          Update password
+          <span className="inline-flex items-center justify-center gap-2">
+            {pending && <Loader2 className="h-4 w-4 animate-spin" />}
+            <span>Update password</span>
+          </span>
         </Button>
       </form>
     </AdminCard>

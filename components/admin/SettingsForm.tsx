@@ -750,7 +750,7 @@ export function SettingsForm({ settings, articlePickerList = [] }: SettingsFormP
         <div className="admin-settings-queue-hint__copy">
           <Layers className="h-4 w-4 shrink-0 text-primary" />
           <p className="text-xs text-muted-foreground">
-            Edits stack in the <strong className="text-foreground font-medium">Changes</strong> panel on the right.
+            Edits stack in the <strong className="text-foreground font-medium">Changes</strong>{' '}panel on the right.
             Review, remove mistakes, then save when ready — you&apos;ll be prompted before leaving with unsaved work.
           </p>
         </div>

@@ -17,6 +17,7 @@ import { deleteMedia, updateMedia, replaceMediaAndFeaturedImage, type MediaLibra
 import { optimizeImageToWebP } from '@/lib/image-optimizer';
 import { ModernTooltip } from '@/components/shared/ModernTooltip';
 import { heroImageStyle } from '@/lib/hero-image';
+import { getSavedSiteTheme, type SiteTheme } from '@/lib/site-theme';
 
 function formatBytes(bytes: number | null | undefined) {
   if (bytes === null || bytes === undefined) return '—';
@@ -437,16 +438,265 @@ function ReplaceMediaModal({
   );
 }
 
+interface LightboxItem {
+  url: string;
+  name: string;
+  dims: string | null;
+  size: number | null;
+}
+
+function ImageLightbox({
+  item,
+  onClose,
+}: {
+  item: LightboxItem | null;
+  onClose: () => void;
+}) {
+  const [mounted, setMounted] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const [imageCopied, setImageCopied] = useState(false);
+  const [theme, setTheme] = useState<SiteTheme>('midnight');
+
+  useEffect(() => {
+    setMounted(true);
+    setTheme(getSavedSiteTheme());
+
+    // Sync theme dynamically if user changes it
+    const observer = new MutationObserver(() => {
+      setTheme(getSavedSiteTheme());
+    });
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['class', 'data-site-theme'],
+    });
+    return () => observer.disconnect();
+  }, []);
+
+  // Listen for Escape key
+  useEffect(() => {
+    if (!item) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [item, onClose]);
+
+  if (!item || !mounted) return null;
+
+  const handleCopyUrl = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    try {
+      await navigator.clipboard.writeText(item.url);
+      setCopied(true);
+      toast.success('URL copied to clipboard');
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      toast.error('Failed to copy URL');
+    }
+  };
+
+  const handleCopyImage = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    try {
+      const proxyUrl = `/api/media-proxy?url=${encodeURIComponent(item.url)}`;
+      
+      // Fetch the image blob first
+      const response = await fetch(proxyUrl);
+      if (!response.ok) throw new Error('Failed to fetch image proxy');
+      const blob = await response.blob();
+      
+      let pngBlob: Blob;
+
+      if (blob.type === 'image/png') {
+        pngBlob = blob;
+      } else {
+        // Perform canvas conversion on the main thread
+        const img = new Image();
+        img.src = proxyUrl;
+        await new Promise((resolve, reject) => {
+          img.onload = resolve;
+          img.onerror = reject;
+        });
+
+        const canvas = document.createElement('canvas');
+        canvas.width = img.naturalWidth;
+        canvas.height = img.naturalHeight;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) throw new Error('Canvas context failed');
+        ctx.drawImage(img, 0, 0);
+
+        const converted = await new Promise<Blob | null>((resolve) => {
+          canvas.toBlob(resolve, 'image/png');
+        });
+        if (!converted) throw new Error('Format conversion failed');
+        pngBlob = converted;
+      }
+
+      // Write the resolved static blob to the clipboard
+      await navigator.clipboard.write([
+        new ClipboardItem({
+          'image/png': pngBlob
+        })
+      ]);
+
+      setImageCopied(true);
+      toast.success('Image copied to clipboard');
+      setTimeout(() => setImageCopied(false), 2000);
+    } catch {
+      toast.error('Failed to copy image: secure context required or unsupported format');
+    }
+  };
+
+  const handleDownload = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    try {
+      const proxyUrl = `/api/media-proxy?url=${encodeURIComponent(item.url)}`;
+      const response = await fetch(proxyUrl);
+      if (!response.ok) throw new Error('Failed to fetch image proxy');
+      const blob = await response.blob();
+      const blobUrl = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = blobUrl;
+      a.download = item.name || 'download';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(blobUrl);
+      toast.success('Download started');
+    } catch {
+      // Fallback: open in new tab
+      window.open(item.url, '_blank');
+    }
+  };
+
+  const isWhiteTheme = theme === 'white';
+
+  return createPortal(
+    <div
+      className={cn(
+        "fixed inset-0 z-[100] flex flex-col items-center justify-center p-4 md:p-8 media-lightbox-overlay cursor-zoom-out backdrop-blur-md transition-all duration-300",
+        isWhiteTheme ? "bg-slate-100/90 text-slate-900 light theme-white" : "bg-background/80 text-foreground dark theme-midnight"
+      )}
+      onClick={onClose}
+      role="dialog"
+      aria-modal="true"
+    >
+      {/* Close button */}
+      <button
+        type="button"
+        onClick={onClose}
+        className={cn(
+          "absolute top-4 right-4 z-50 p-2.5 rounded-full transition-all duration-200 shadow-md active:scale-95 cursor-pointer",
+          isWhiteTheme 
+            ? "text-slate-500 hover:text-slate-900 bg-slate-200/80 hover:bg-slate-300/90 border border-slate-300"
+            : "text-muted-foreground hover:text-foreground bg-muted/40 hover:bg-muted/60 border border-border/30"
+        )}
+        aria-label="Close Preview"
+      >
+        <X className="h-5 w-5" />
+      </button>
+
+      {/* Main Container */}
+      <div className="relative flex flex-col items-center max-w-[90vw] max-h-[85vh] select-none media-lightbox-content" onClick={(e) => e.stopPropagation()}>
+        {/* The Image */}
+        <div className={cn(
+          "relative overflow-hidden rounded-xl border shadow-2xl flex items-center justify-center",
+          isWhiteTheme ? "border-slate-200 bg-slate-200/30" : "border-border/40 bg-muted/20"
+        )}>
+          <img
+            src={item.url}
+            alt={item.name}
+            className="max-w-[90vw] max-h-[70vh] object-contain transition-all duration-300 transform scale-100 ease-out select-none"
+            draggable={false}
+          />
+        </div>
+
+        {/* Glassmorphic Metadata & Actions Panel */}
+        <div className={cn(
+          "w-full max-w-2xl mt-4 border backdrop-blur-md rounded-2xl p-4 shadow-2xl flex flex-col md:flex-row items-center justify-between gap-4",
+          isWhiteTheme 
+            ? "bg-white border-slate-200 text-slate-900"
+            : "bg-card/85 border-border/40 text-foreground"
+        )}>
+          <div className="min-w-0 flex-1 text-center md:text-left">
+            <h4 className={cn(
+              "text-sm font-bold truncate",
+              isWhiteTheme ? "text-slate-800" : "text-foreground"
+            )}>{item.name}</h4>
+            <div className={cn(
+              "flex items-center justify-center md:justify-start gap-2 mt-1 text-[11px] font-semibold",
+              isWhiteTheme ? "text-slate-500" : "text-muted-foreground"
+            )}>
+              {item.dims && <span>{item.dims.split('·')[0].trim()}</span>}
+              {item.dims && <span className="opacity-40">•</span>}
+              <span>{formatBytes(item.size)}</span>
+              {item.dims && <span className="opacity-40">•</span>}
+              {item.dims && <span>{item.dims.split('·')[1].trim()}</span>}
+            </div>
+          </div>
+
+          {/* Action buttons */}
+          <div className="flex items-center gap-2 shrink-0">
+            <button
+              type="button"
+              onClick={handleCopyUrl}
+              className={cn(
+                "h-8 px-3 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer",
+                isWhiteTheme
+                  ? "bg-slate-100 hover:bg-slate-200 text-slate-700 hover:text-slate-900 border border-slate-200"
+                  : "bg-muted/40 hover:bg-muted/60 text-foreground/90 hover:text-foreground border border-border/40"
+              )}
+            >
+              {copied ? <Check className="h-3.5 w-3.5 text-emerald-500" /> : <Copy className="h-3.5 w-3.5" />}
+              <span>{copied ? 'Copied Link' : 'Copy Link'}</span>
+            </button>
+            <button
+              type="button"
+              onClick={handleCopyImage}
+              className={cn(
+                "h-8 px-3 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer",
+                isWhiteTheme
+                  ? "bg-slate-100 hover:bg-slate-200 text-slate-700 hover:text-slate-900 border border-slate-200"
+                  : "bg-muted/40 hover:bg-muted/60 text-foreground/90 hover:text-foreground border border-border/40"
+              )}
+            >
+              {imageCopied ? <Check className="h-3.5 w-3.5 text-emerald-500" /> : <FileImage className="h-3.5 w-3.5" />}
+              <span>{imageCopied ? 'Copied Image' : 'Copy Image'}</span>
+            </button>
+            <button
+              type="button"
+              onClick={handleDownload}
+              className={cn(
+                "h-8 px-3 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 shadow-md active:scale-95 cursor-pointer",
+                isWhiteTheme
+                  ? "bg-primary hover:bg-primary/90 text-primary-foreground"
+                  : "bg-primary hover:bg-primary/95 text-primary-foreground"
+              )}
+            >
+              <Upload className="h-3.5 w-3.5 rotate-180" />
+              <span>Download</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>,
+    document.body
+  );
+}
+
 function MediaCard({
   item,
   onDelete,
   onUpdated,
   pending,
+  onPreviewImage,
 }: {
   item: MediaLibraryItem;
   onDelete: (id: string) => void;
   onUpdated: () => void;
   pending: boolean;
+  onPreviewImage: (url: string, name: string, dims: string | null, size: number | null) => void;
 }) {
   const [dims, setDims] = useState<string | null>(null);
   const [editing, setEditing] = useState(false);
@@ -592,14 +842,24 @@ function MediaCard({
               </button>
             </ModernTooltip>
             <ModernTooltip label="Open file" variant="editor" alwaysShow>
-              <a
-                href={item.url}
-                target="_blank"
-                rel="noreferrer"
-                className="h-7 w-7 rounded-md flex items-center justify-center border border-border/40 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
-              >
-                <ExternalLink className="h-3.5 w-3.5 text-muted-foreground hover:text-foreground" />
-              </a>
+              {item.type === 'image' ? (
+                <button
+                  type="button"
+                  className="h-7 w-7 rounded-md flex items-center justify-center border border-border/40 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors cursor-pointer"
+                  onClick={() => onPreviewImage(item.url, item.name, dims, item.size)}
+                >
+                  <ExternalLink className="h-3.5 w-3.5 text-muted-foreground hover:text-foreground" />
+                </button>
+              ) : (
+                <a
+                  href={item.url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="h-7 w-7 rounded-md flex items-center justify-center border border-border/40 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
+                >
+                  <ExternalLink className="h-3.5 w-3.5 text-muted-foreground hover:text-foreground" />
+                </a>
+              )}
             </ModernTooltip>
             <ModernTooltip label="Edit details" variant="editor" alwaysShow>
               <button
@@ -661,6 +921,12 @@ export function MediaUpload({ items }: { items: MediaLibraryItem[] }) {
   const [typeFilter, setTypeFilter] = useState<'all' | 'image' | 'file'>('all');
   const [datePreset, setDatePreset] = useState<'all' | '24h' | '7d' | '30d' | '365d'>('all');
   const [dateDropdownOpen, setDateDropdownOpen] = useState(false);
+  const [lightboxItem, setLightboxItem] = useState<{
+    url: string;
+    name: string;
+    dims: string | null;
+    size: number | null;
+  } | null>(null);
 
   async function handleUpload() {
     const input = document.createElement('input');
@@ -912,6 +1178,7 @@ export function MediaUpload({ items }: { items: MediaLibraryItem[] }) {
               onDelete={handleDelete}
               onUpdated={() => router.refresh()}
               pending={pending}
+              onPreviewImage={(url, name, dims, size) => setLightboxItem({ url, name, dims, size })}
             />
           ))}
         </div>
@@ -920,6 +1187,12 @@ export function MediaUpload({ items }: { items: MediaLibraryItem[] }) {
       <p className="media-library__hint">
         Each file links directly to stories that use it. Edit metadata, copy URLs, or delete when not in use.
       </p>
+
+      {/* Professional Lightbox Image Preview Popup */}
+      <ImageLightbox
+        item={lightboxItem}
+        onClose={() => setLightboxItem(null)}
+      />
     </div>
   );
 }

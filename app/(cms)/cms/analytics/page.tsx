@@ -86,96 +86,101 @@ export default async function CMSAnalyticsPage() {
       </CmsStatGrid>
 
       <CmsCardGrid cols={3}>
-        <CmsCard title="Editor leaderboard" icon={Users} className="lg:col-span-2">
-          <p className="text-[12px] text-muted-foreground admin-card-lead">
-            Published stories ranked by total views. {vsLabel}.
-          </p>
-          <CmsListStack>
-            {stats.peers.map((peer, i) => (
-              <div
-                key={peer.authorId}
-                className={cn(
-                  'admin-leaderboard-row',
-                  peer.isYou && 'admin-leaderboard-row--you',
-                )}
-              >
-                <div className="admin-leaderboard-row__main">
-                  <span className="admin-leaderboard-row__rank">{i + 1}</span>
-                  <div className="min-w-0">
-                    <div className="font-medium truncate">{peer.name}</div>
-                    <div className="text-[11px] text-muted-foreground">
-                      {peer.published} published · {formatNumber(peer.avgViews)} avg views
+        {/* Main Details (Left 2/3 Column) */}
+        <div className="lg:col-span-2 space-y-6">
+          <CmsCard title="Editor leaderboard" icon={Users}>
+            <p className="text-[12px] text-muted-foreground admin-card-lead">
+              Published stories ranked by total views. {vsLabel}.
+            </p>
+            <CmsListStack>
+              {stats.peers.map((peer, i) => (
+                <div
+                  key={peer.authorId}
+                  className={cn(
+                    'admin-leaderboard-row',
+                    peer.isYou && 'admin-leaderboard-row--you',
+                  )}
+                >
+                  <div className="admin-leaderboard-row__main">
+                    <span className="admin-leaderboard-row__rank">{i + 1}</span>
+                    <div className="min-w-0">
+                      <div className="font-medium truncate">{peer.name}</div>
+                      <div className="text-[11px] text-muted-foreground">
+                        {peer.published} published · {formatNumber(peer.avgViews)} avg views
+                      </div>
                     </div>
                   </div>
+                  <div className="admin-leaderboard-row__stats">
+                    <div className="font-semibold">{formatNumber(peer.views)}</div>
+                    <div className="text-[10px] text-muted-foreground">{formatNumber(peer.likes)} likes</div>
+                  </div>
                 </div>
-                <div className="admin-leaderboard-row__stats">
-                  <div className="font-semibold">{formatNumber(peer.views)}</div>
-                  <div className="text-[10px] text-muted-foreground">{formatNumber(peer.likes)} likes</div>
-                </div>
-              </div>
-            ))}
-            {stats.peers.length === 0 && (
-              <p className="text-[13px] text-muted-foreground py-2">No published editors yet.</p>
-            )}
-          </CmsListStack>
-        </CmsCard>
+              ))}
+              {stats.peers.length === 0 && (
+                <p className="text-[13px] text-muted-foreground py-2">No published editors yet.</p>
+              )}
+            </CmsListStack>
+          </CmsCard>
 
-        <CmsCard title="Benchmarks" icon={BarChart3}>
-          <CmsListStack>
-            <CmsMetricRow label="Your avg views" value={formatNumber(benchmarks.yourAvgViews)} />
-            <CmsMetricRow label="Newsroom avg" value={formatNumber(benchmarks.newsroomAvgViews)} />
-            <CmsMetricRow label="Views share" value={`${benchmarks.yourViewsShare}%`} />
-            <CmsMetricRow label="Scheduled" value={formatNumber(totals.scheduled)} />
-            <CmsMetricRow label="Drafts" value={formatNumber(totals.drafts)} />
-          </CmsListStack>
-        </CmsCard>
+          <CmsCard title="Top Articles" icon={BarChart3}>
+            <CmsListStack>
+              {stats.topArticles.map((a, i) => (
+                <CmsListRow
+                  key={a.id}
+                  rank={i + 1}
+                  title={a.title}
+                  href={publicArticleUrl(a.slug)}
+                  meta={a.category}
+                  value={`${formatNumber(a.views)} views`}
+                />
+              ))}
+              {stats.topArticles.length === 0 && (
+                <p className="text-[13px] text-muted-foreground py-2">No published articles yet.</p>
+              )}
+            </CmsListStack>
+          </CmsCard>
+
+          <CmsCard title="Recently Published" icon={Clock}>
+            <CmsListStack>
+              {stats.recentPublished.map((a) => (
+                <CmsListRow
+                  key={a.id}
+                  title={a.title}
+                  href={`/cms/articles/${a.id}/edit`}
+                  value={`${formatNumber(a.views)} views`}
+                />
+              ))}
+              {stats.recentPublished.length === 0 && (
+                <p className="text-[13px] text-muted-foreground py-2">No published articles yet.</p>
+              )}
+            </CmsListStack>
+          </CmsCard>
+        </div>
+
+        {/* Sidebar Summary (Right 1/3 Column) */}
+        <div className="lg:col-span-1 space-y-6">
+          <CmsCard title="Benchmarks" icon={BarChart3}>
+            <CmsListStack>
+              <CmsMetricRow label="Your avg views" value={formatNumber(benchmarks.yourAvgViews)} />
+              <CmsMetricRow label="Newsroom avg" value={formatNumber(benchmarks.newsroomAvgViews)} />
+              <CmsMetricRow label="Views share" value={`${benchmarks.yourViewsShare}%`} />
+              <CmsMetricRow label="Scheduled" value={formatNumber(totals.scheduled)} />
+              <CmsMetricRow label="Drafts" value={formatNumber(totals.drafts)} />
+            </CmsListStack>
+          </CmsCard>
+
+          <CmsCard title="Content Mix" icon={FileText}>
+            <CmsListStack>
+              {stats.categoryBreakdown.slice(0, 8).map((c) => (
+                <CmsMetricRow key={c.category} label={c.category} value={`${c.count} · ${formatNumber(c.views)} views`} />
+              ))}
+              {stats.categoryBreakdown.length === 0 && (
+                <p className="text-[13px] text-muted-foreground py-2">No category data yet.</p>
+              )}
+            </CmsListStack>
+          </CmsCard>
+        </div>
       </CmsCardGrid>
-
-      <CmsCardGrid cols={3}>
-        <CmsCard title="Top Articles" icon={BarChart3} className="lg:col-span-2">
-          <CmsListStack>
-            {stats.topArticles.map((a, i) => (
-              <CmsListRow
-                key={a.id}
-                rank={i + 1}
-                title={a.title}
-                href={publicArticleUrl(a.slug)}
-                meta={a.category}
-                value={`${formatNumber(a.views)} views`}
-              />
-            ))}
-            {stats.topArticles.length === 0 && (
-              <p className="text-[13px] text-muted-foreground py-2">No published articles yet.</p>
-            )}
-          </CmsListStack>
-        </CmsCard>
-
-        <CmsCard title="Content Mix" icon={FileText}>
-          <CmsListStack>
-            {stats.categoryBreakdown.slice(0, 8).map((c) => (
-              <CmsMetricRow key={c.category} label={c.category} value={`${c.count} · ${formatNumber(c.views)} views`} />
-            ))}
-            {stats.categoryBreakdown.length === 0 && (
-              <p className="text-[13px] text-muted-foreground py-2">No category data yet.</p>
-            )}
-          </CmsListStack>
-        </CmsCard>
-      </CmsCardGrid>
-
-      <CmsCard title="Recently Published" icon={Clock}>
-        <CmsScheduleList>
-          {stats.recentPublished.map((a) => (
-            <div key={a.id} className="flex items-center justify-between gap-2 text-[13px]">
-              <Link href={`/cms/articles/${a.id}/edit`} className="font-medium hover:text-sky-400 line-clamp-1 min-w-0">
-                {a.title}
-              </Link>
-              <span className="text-muted-foreground shrink-0 tabular-nums text-[12px]">
-                {formatNumber(a.views)} views
-              </span>
-            </div>
-          ))}
-        </CmsScheduleList>
-      </CmsCard>
     </CmsSectionStack>
   );
 }

@@ -50,70 +50,74 @@ export default async function AdminDashboardPage() {
       )}
 
       <AdminCardGrid cols={3}>
-        <AdminCard title="Top Content by Views" icon={BarChart3} className="lg:col-span-2">
-          <AdminListStack>
-            {stats.topArticles.map((a: { id: string; slug: string; title: string; views: number }, i: number) => (
-              <AdminListRow
-                key={a.id}
-                rank={i + 1}
-                title={a.title}
-                href={publicArticleUrl(a.slug)}
-                value={formatNumber(a.views)}
-              />
-            ))}
-          </AdminListStack>
-        </AdminCard>
+        {/* Main Details (Left 2/3 Column) */}
+        <div className="lg:col-span-2 space-y-6">
+          <AdminCard title="Top Content by Views" icon={BarChart3}>
+            <AdminListStack>
+              {stats.topArticles.map((a: { id: string; slug: string; title: string; views: number }, i: number) => (
+                <AdminListRow
+                  key={a.id}
+                  rank={i + 1}
+                  title={a.title}
+                  href={publicArticleUrl(a.slug)}
+                  value={formatNumber(a.views)}
+                />
+              ))}
+            </AdminListStack>
+          </AdminCard>
 
-        <AdminCard title="Sector Snapshot" icon={Zap}>
-          <AdminListStack>
-            {stats.dashboardStats.length > 0 ? stats.dashboardStats.map((s) => (
-              <AdminMetricRow
-                key={s.id}
-                label={s.statName}
-                value={`${s.value}${s.unit ? ` ${s.unit}` : ''}`}
-              />
-            )) : (
-              <>
-                <AdminMetricRow label="Published live" value={formatNumber(stats.publishedCount)} />
-                <AdminMetricRow label="Total views" value={formatNumber(stats.totalViews)} />
-              </>
-            )}
-            <AdminMetricRow label="Published this month" value={formatNumber(stats.publishedThisMonth)} />
-            <AdminMetricRow label="Added this month" value={formatNumber(stats.addedThisMonth)} highlight />
-          </AdminListStack>
-          <AdminCardFooter href={publicPathUrl('/data-reports/power-grid')} external className="admin-card-footer--link">
-            Open live grid data →
-          </AdminCardFooter>
-        </AdminCard>
-      </AdminCardGrid>
+          <AdminCard title="Author & Editor Output" icon={PenLine}>
+            <AuthorProductivityPanel authors={authorStats} />
+          </AdminCard>
 
-      <AdminCard title="Author & Editor Output" icon={PenLine}>
-        <AuthorProductivityPanel authors={authorStats} />
-      </AdminCard>
+          <AdminCard title="Administrative Activity" icon={Layers}>
+            <AdminRecentActivity logs={stats.recentLogs} />
+          </AdminCard>
+        </div>
 
-      <AdminCardGrid cols={2}>
-        <AdminCard title="Administrative Activity" icon={Layers}>
-          <AdminRecentActivity logs={stats.recentLogs} />
-        </AdminCard>
+        {/* Sidebar Summary & Actions (Right 1/3 Column) */}
+        <div className="lg:col-span-1 space-y-6">
+          <AdminCard title="Sector Snapshot" icon={Zap}>
+            <AdminListStack>
+              {stats.dashboardStats.length > 0 ? stats.dashboardStats.map((s) => (
+                <AdminMetricRow
+                  key={s.id}
+                  label={s.statName}
+                  value={`${s.value}${s.unit ? ` ${s.unit}` : ''}`}
+                />
+              )) : (
+                <>
+                  <AdminMetricRow label="Published live" value={formatNumber(stats.publishedCount)} />
+                  <AdminMetricRow label="Total views" value={formatNumber(stats.totalViews)} />
+                </>
+              )}
+              <AdminMetricRow label="Published this month" value={formatNumber(stats.publishedThisMonth)} />
+              <AdminMetricRow label="Added this month" value={formatNumber(stats.addedThisMonth)} highlight />
+            </AdminListStack>
+            <AdminCardFooter href={publicPathUrl('/data-reports/power-grid')} external className="admin-card-footer--link">
+              Open live grid data →
+            </AdminCardFooter>
+          </AdminCard>
 
-        <AdminCard title="Quick Actions" icon={Zap}>
-          <AdminActionsGrid>
-            {can(role, 'user.create') && (
-              <AdminActionPill href="/admin/users/new" label="Create user" icon={UserPlus} description="Add platform member" />
-            )}
-            <AdminActionPill href="/admin/articles" label="Review content" icon={FileText} description="Moderate articles" />
-            {can(role, 'comment.moderate_any') && (
-              <AdminActionPill href="/admin/comments" label="Moderate comments" icon={MessageSquare} description={`${stats.pendingComments} pending`} />
-            )}
-            <AdminActionPill href="/admin/users?filter=members" label="Members" icon={Users} description={`${stats.memberCount} accounts`} accent="emerald" />
-            {can(role, 'category.manage') && (
-              <AdminActionPill href="/admin/categories" label="Categories" icon={Tag} description="Organize topics" />
-            )}
-            {can(role, 'settings.view') && (
-              <AdminActionPill href="/admin/settings" label="Settings" icon={Settings} description="Platform config" />
-            )}
-          </AdminActionsGrid>
-        </AdminCard>
+          <AdminCard title="Quick Actions" icon={Zap}>
+            <AdminActionsGrid>
+              {can(role, 'user.create') && (
+                <AdminActionPill href="/admin/users/new" label="Create user" icon={UserPlus} description="Add platform member" />
+              )}
+              <AdminActionPill href="/admin/articles" label="Review content" icon={FileText} description="Moderate articles" />
+              {can(role, 'comment.moderate_any') && (
+                <AdminActionPill href="/admin/comments" label="Moderate comments" icon={MessageSquare} description={`${stats.pendingComments} pending`} />
+              )}
+              <AdminActionPill href="/admin/users?filter=members" label="Members" icon={Users} description={`${stats.memberCount} accounts`} accent="emerald" />
+              {can(role, 'category.manage') && (
+                <AdminActionPill href="/admin/categories" label="Categories" icon={Tag} description="Organize topics" />
+              )}
+              {can(role, 'settings.view') && (
+                <AdminActionPill href="/admin/settings" label="Settings" icon={Settings} description="Platform config" />
+              )}
+            </AdminActionsGrid>
+          </AdminCard>
+        </div>
       </AdminCardGrid>
     </AdminSectionStack>
   );

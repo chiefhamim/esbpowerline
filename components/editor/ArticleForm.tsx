@@ -710,6 +710,12 @@ export function ArticleForm({
               )}
               <div className="flex items-center gap-2 flex-wrap justify-end">
                 <TabsList className="cms-story-tabs h-9">
+                  {mode === 'edit' && revisions.length > 0 && (
+                    <TabsTrigger value="history" className="cms-story-tabs__btn cms-story-tabs__btn--history text-xs gap-1.5 px-3">
+                      <History className="h-3.5 w-3.5" />
+                      <span className="cms-tab-label">History</span>
+                    </TabsTrigger>
+                  )}
                   <TabsTrigger value="editor" className="cms-story-tabs__btn cms-story-tabs__btn--body text-xs gap-1.5 px-3">
                     <FileText className="h-3.5 w-3.5" />
                     <span className="cms-tab-label">Body</span>
@@ -722,12 +728,6 @@ export function ArticleForm({
                     <Eye className="h-3.5 w-3.5" />
                     <span className="cms-tab-label">Preview</span>
                   </TabsTrigger>
-                  {mode === 'edit' && revisions.length > 0 && (
-                    <TabsTrigger value="history" className="cms-story-tabs__btn cms-story-tabs__btn--history text-xs gap-1.5 px-3">
-                      <History className="h-3.5 w-3.5" />
-                      <span className="cms-tab-label">History</span>
-                    </TabsTrigger>
-                  )}
                 </TabsList>
 
                 <ModernTooltip label={focusMode ? "Exit Focus" : "Focus Mode"} hint={focusMode ? "Show all panels" : "Hide distraction panels"} variant="editor" fast side="top">

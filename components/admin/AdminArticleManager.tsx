@@ -14,7 +14,7 @@ import {
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { AdminTableShell } from '@/components/admin/AdminUI';
 import { AdminArticleFlags } from '@/components/admin/AdminArticleFlags';
-import { AdminSelectMenu } from '@/components/admin/AdminSelectMenu';
+import { AdminSelectMenu, type AdminSelectOption } from '@/components/admin/AdminSelectMenu';
 import { ArticleStatusFilter } from '@/components/admin/ArticleStatusFilter';
 import { StatusBadge } from '@/components/dashboard/StatusBadge';
 import { Input } from '@/components/ui/input';
@@ -75,6 +75,12 @@ const SORT_OPTIONS: { value: SortKey; label: string; description?: string }[] = 
   { value: 'views_desc', label: 'Most views' },
   { value: 'views_asc', label: 'Least views' },
   { value: 'status_asc', label: 'Status' },
+];
+
+const PAGE_SIZE_OPTIONS: AdminSelectOption[] = [
+  { value: '25', label: '25 per page' },
+  { value: '50', label: '50 per page' },
+  { value: '100', label: '100 per page' },
 ];
 
 function authorName(a: AdminArticleRow) {
@@ -771,21 +777,21 @@ export function AdminArticleManager({
             {/* Page Size Select */}
             <div className="flex items-center gap-2">
               <span className="text-[11px] text-muted-foreground font-medium">Show</span>
-              <div className="relative">
-                <select
-                  value={pageSize}
-                  onChange={(e) => {
-                    setPageSize(Number(e.target.value));
-                    setCurrentPage(1);
-                  }}
-                  className="h-8 rounded-lg border border-border/40 bg-background/45 hover:bg-background/85 hover:border-border/80 pl-2.5 pr-8 text-[11px] font-semibold text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring transition-all cursor-pointer appearance-none shadow-sm"
-                >
-                  <option value={25}>25 per page</option>
-                  <option value={50}>50 per page</option>
-                  <option value={100}>100 per page</option>
-                </select>
-                <ChevronDown className="h-3.5 w-3.5 absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
-              </div>
+              <AdminSelectMenu
+                value={String(pageSize)}
+                onChange={(val) => {
+                  setPageSize(Number(val));
+                  setCurrentPage(1);
+                }}
+                options={PAGE_SIZE_OPTIONS}
+                minWidth="7.75rem"
+                hideDot={true}
+                portal={false}
+                menuPosition="top"
+                align="right"
+                menuTitle="Show per page"
+                className="h-8 text-[11px] font-semibold"
+              />
             </div>
 
             {/* Page Navigation */}

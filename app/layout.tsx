@@ -75,7 +75,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <Analytics />
           <SpeedInsights />
           <Toaster
-            position="top-center"
+            position="bottom-right"
             closeButton
             toastOptions={{
               classNames: {

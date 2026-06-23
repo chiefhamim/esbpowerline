@@ -7,6 +7,7 @@ import { useState, useEffect, useMemo, memo } from 'react';
 import { cn } from '@/lib/utils';
 import { resolveStaffWorkspaceUrls } from '@/lib/workspace-urls';
 import { SiteThemeToggle } from '@/components/shared/SiteThemeToggle';
+import { ModernTooltip } from '@/components/shared/ModernTooltip';
 import { CmsArticleEditorProvider } from '@/components/cms/CmsArticleEditorContext';
 import {
   CmsWriteHeaderActionsLazy,
@@ -312,16 +313,17 @@ export function CmsShell({ children }: { children: React.ReactNode }) {
             {isWriteWorkspace ? <CmsWriteHeaderActionsLazy /> : null}
             <EditorSettingsMenuLazy variant="header" />
             <EditorialPlatformControlLazy />
-            <Link
-              href={publicSiteUrl}
-              target="_blank"
-              rel="noreferrer"
-              className="cms-header-public-link"
-              title="View public site"
-            >
-              <ExternalLink className="h-3.5 w-3.5 shrink-0" />
-              <span className="hidden lg:inline">Public</span>
-            </Link>
+            <ModernTooltip label="Visit homepage as an Admin" variant="chrome" alwaysShow={true}>
+              <Link
+                href={publicSiteUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="cms-header-public-link"
+              >
+                <ExternalLink className="h-3.5 w-3.5 shrink-0" />
+                <span className="hidden lg:inline">Visit Site</span>
+              </Link>
+            </ModernTooltip>
             <SiteThemeToggle className="cms-theme-toggle" />
             <Button
               variant="ghost"
