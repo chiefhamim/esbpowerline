@@ -126,28 +126,41 @@ async function enforcePinnedCapacity(articleId: string) {
   });
 }
 
-export async function getAuthorArticleStats(authorId: string) {
+export async function getAuthorArticleStats(authorId?: string) {
   const user = await requireEditorialReader();
-  const scopedAuthorId = resolveEditorialAuthorScope(user, authorId);
-  if (!scopedAuthorId) throw new Error('Forbidden');
-  const baseWhere = { authorId: scopedAuthorId, status: { not: 'TRASH' as const } };
+  const isReviewer = can(user.role, 'article.review');
+  const scopedAuthorId = authorId ? resolveEditorialAuthorScope(user, authorId) : undefined;
+  if (!isReviewer && !scopedAuthorId) throw new Error('Forbidden');
+
+  const baseWhere = {
+    ...(scopedAuthorId ? { authorId: scopedAuthorId } : {}),
+    status: { not: 'TRASH' as const },
+  };
+
   const [statusGroups, featured, breaking, viewsAgg, recent, topByViews, pendingNotices] = await Promise.all([
     prisma.article.groupBy({
       by: ['status'],
-      where: { authorId: scopedAuthorId },
+      where: scopedAuthorId ? { authorId: scopedAuthorId } : { status: { not: 'TRASH' } },
       _count: { _all: true },
     }),
     prisma.article.count({ where: { ...baseWhere, isFeatured: true } }),
     prisma.article.count({ where: { ...baseWhere, isBreaking: true } }),
     prisma.article.aggregate({ where: baseWhere, _sum: { views: true } }),
-    getArticles({ authorId: scopedAuthorId, limit: 8 }),
+    getArticles({ ...(scopedAuthorId ? { authorId: scopedAuthorId } : {}), limit: 8 }),
     prisma.article.findMany({
-      where: { authorId: scopedAuthorId, status: 'PUBLISHED' },
+      where: {
+        ...(scopedAuthorId ? { authorId: scopedAuthorId } : {}),
+        status: 'PUBLISHED',
+      },
       orderBy: { views: 'desc' },
       take: 5,
       select: { id: true, title: true, slug: true, views: true, category: true },
     }),
-    prisma.editorialNotice.count({ where: { recipientId: scopedAuthorId, status: 'PENDING' } }),
+    prisma.editorialNotice.count({
+      where: scopedAuthorId
+        ? { recipientId: scopedAuthorId, status: 'PENDING' }
+        : { status: 'PENDING' },
+    }),
   ]);
 
   const countByStatus = (status: string) =>

@@ -25,9 +25,10 @@ export default async function CMSDashboardPage() {
   const authorId = session?.user?.id;
   const role = session?.user?.role;
   const editorLead = isEditorLead(role);
+  const isReviewer = can(role, 'article.review');
 
   const [stats, notices, calendar] = await Promise.all([
-    authorId ? getAuthorArticleStats(authorId) : Promise.resolve({
+    authorId ? getAuthorArticleStats(isReviewer ? undefined : authorId) : Promise.resolve({
       total: 0, published: 0, drafts: 0, scheduled: 0, archived: 0, featured: 0, breaking: 0,
       totalViews: 0, recent: [], topByViews: [], pendingNotices: 0,
     }),

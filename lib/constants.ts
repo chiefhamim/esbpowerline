@@ -35,7 +35,7 @@ export const PERMISSIONS: Record<string, number> = {
   'article.create':       10,
   'article.edit_own':     20,
   'article.review':     60,
-  'article.edit_any':     80,
+  'article.edit_any':     60,
   'article.delete_own':   40,
   'article.delete_any':   80,
   'article.publish':      40,
