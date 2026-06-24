@@ -9,7 +9,7 @@ import 'dotenv/config';
 import bcrypt from 'bcryptjs';
 import { createScriptPrismaClient } from './client';
 import { CATEGORIES, CATEGORY_DETAILS } from '../lib/constants';
-import { EDITOR_EMAIL, EDITOR_NAME, MASTER_ADMIN_EMAIL } from '../lib/staff-accounts';
+import { EDITOR_EMAIL, EDITOR_NAME, MASTER_ADMIN_EMAIL, RASEL_EMAIL, RASEL_NAME } from '../lib/staff-accounts';
 import { DEFAULT_COVERAGE_SLOTS } from '../lib/coverage-defaults';
 import { slugify } from '../lib/utils';
 import { upsertSupabaseAuthUser } from '../lib/supabase/sync-auth-user';
@@ -48,8 +48,9 @@ async function main() {
   // === USERS (demo accounts — per-role dev passwords or env overrides) ===
   const adminPassword = seedPasswordForEmail(MASTER_ADMIN_EMAIL);
   const editorPassword = seedPasswordForEmail(EDITOR_EMAIL);
+  const raselPassword = seedPasswordForEmail(RASEL_EMAIL);
   const memberPassword = seedPasswordForEmail(MEMBER_DEMO_EMAIL);
-  if (!adminPassword || !editorPassword || !memberPassword) {
+  if (!adminPassword || !editorPassword || !raselPassword || !memberPassword) {
     throw new Error('Seed passwords not configured. Set SEED_DEMO_PASSWORD or per-account env vars.');
   }
 
@@ -77,6 +78,19 @@ async function main() {
     },
   });
 
+  const rasel = await prisma.user.create({
+    data: {
+      name: RASEL_NAME,
+      email: RASEL_EMAIL,
+      passwordHash: await bcrypt.hash(raselPassword, 10),
+      role: 'EDITOR',
+      status: 'ACTIVE',
+      bio: 'Senior Editor — ESB PowerLine',
+      articlesCount: 0,
+      totalViews: 0,
+    },
+  });
+
   const demoMember = await prisma.user.create({
     data: {
       name: 'Demo Member',
@@ -92,9 +106,10 @@ async function main() {
   // Sync to Supabase Auth if configured
   await upsertSupabaseAuthUser({ email: MASTER_ADMIN_EMAIL, password: adminPassword, name: 'System Admin', role: 'SUPER_ADMIN', status: 'ACTIVE' });
   await upsertSupabaseAuthUser({ email: EDITOR_EMAIL, password: editorPassword, name: EDITOR_NAME, role: 'EDITOR', status: 'ACTIVE' });
+  await upsertSupabaseAuthUser({ email: RASEL_EMAIL, password: raselPassword, name: RASEL_NAME, role: 'EDITOR', status: 'ACTIVE' });
   await upsertSupabaseAuthUser({ email: MEMBER_DEMO_EMAIL, password: memberPassword, name: 'Demo Member', role: 'SUBSCRIBER', status: 'ACTIVE' });
 
-  console.log('✓ Users seeded (admin, editor, member)');
+  console.log('✓ Users seeded (admin, editors, member)');
 
   // === CATEGORIES (optimized 10) ===
   const catRecords = await Promise.all(

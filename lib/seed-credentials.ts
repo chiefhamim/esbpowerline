@@ -1,6 +1,7 @@
 import {
   EDITOR_EMAIL,
   MASTER_ADMIN_EMAIL,
+  RASEL_EMAIL,
 } from '@/lib/staff-accounts';
 
 /** Demo member account — local/staging only. */
@@ -9,6 +10,7 @@ export const MEMBER_DEMO_EMAIL = 'member@esbpowerline.com';
 const DEV_PASSWORD_BY_EMAIL: Readonly<Record<string, string>> = {
   [MASTER_ADMIN_EMAIL.toLowerCase()]: 'admin007',
   [EDITOR_EMAIL.toLowerCase()]: 'editor007',
+  [RASEL_EMAIL.toLowerCase()]: 'editor007',
   [MEMBER_DEMO_EMAIL.toLowerCase()]: 'member007',
 };
 
@@ -28,7 +30,7 @@ export function seedPasswordForEmail(email: string): string | null {
     if (normalized === MASTER_ADMIN_EMAIL.toLowerCase()) {
       return process.env.MASTER_ADMIN_PASSWORD?.trim() || null;
     }
-    if (normalized === EDITOR_EMAIL.toLowerCase()) {
+    if (normalized === EDITOR_EMAIL.toLowerCase() || normalized === RASEL_EMAIL.toLowerCase()) {
       return process.env.EDITOR_PASSWORD?.trim() || process.env.MASTER_ADMIN_PASSWORD?.trim() || null;
     }
     if (normalized === MEMBER_DEMO_EMAIL.toLowerCase()) {
@@ -43,7 +45,7 @@ export function seedPasswordForEmail(email: string): string | null {
   if (normalized === MASTER_ADMIN_EMAIL.toLowerCase()) {
     return process.env.MASTER_ADMIN_PASSWORD?.trim() || DEV_PASSWORD_BY_EMAIL[normalized];
   }
-  if (normalized === EDITOR_EMAIL.toLowerCase()) {
+  if (normalized === EDITOR_EMAIL.toLowerCase() || normalized === RASEL_EMAIL.toLowerCase()) {
     return process.env.EDITOR_PASSWORD?.trim() || DEV_PASSWORD_BY_EMAIL[normalized];
   }
   if (normalized === MEMBER_DEMO_EMAIL.toLowerCase()) {

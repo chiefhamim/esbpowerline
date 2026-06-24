@@ -6,7 +6,7 @@ import { getCalendarArticles } from '@/lib/actions/articles';
 import { EditorialNoticesPanel } from '@/components/cms/EditorialNoticesPanel';
 import { publicArticleUrl } from '@/lib/public-site-url';
 import { formatNumber } from '@/lib/utils';
-import { can } from '@/lib/constants';
+import { can, isAdminRole } from '@/lib/constants';
 import { isEditorLead } from '@/lib/cms-nav';
 import {
   FileText, Eye, PenLine, Clock, BookOpen, Layers, Zap, Image as ImageIcon,
@@ -25,10 +25,10 @@ export default async function CMSDashboardPage() {
   const authorId = session?.user?.id;
   const role = session?.user?.role;
   const editorLead = isEditorLead(role);
-  const isReviewer = can(role, 'article.review');
+  const isAdmin = isAdminRole(role);
 
   const [stats, notices, calendar] = await Promise.all([
-    authorId ? getAuthorArticleStats(isReviewer ? undefined : authorId) : Promise.resolve({
+    authorId ? getAuthorArticleStats(isAdmin ? undefined : authorId) : Promise.resolve({
       total: 0, published: 0, drafts: 0, scheduled: 0, archived: 0, featured: 0, breaking: 0,
       totalViews: 0, recent: [], topByViews: [], pendingNotices: 0,
     }),

@@ -444,7 +444,13 @@ async function getOrCreateAuthor(prisma: PrismaClient, wpAuthorId: number, dryRu
     ) {
       name = 'ESB NEWS DESK';
     }
-    const email = `${slug}@esbpowerline.com`;
+    if (name === 'Rasel Sheikh' || slug === 'rasel') {
+      name = 'Sheikh Rasel';
+    }
+    let email = `${slug}@esbpowerline.com`;
+    if (slug === 'hamim') {
+      email = 'hamim2964@gmail.com';
+    }
     const avatar = wpUser.avatar_urls?.['96'] || wpUser.avatar_urls?.['48'] || null;
     const bio = wpUser.description || 'Contributor — ESB PowerLine';
 
@@ -464,7 +470,7 @@ async function getOrCreateAuthor(prisma: PrismaClient, wpAuthorId: number, dryRu
           avatar,
           bio,
           passwordHash,
-          role: 'EDITOR',
+          role: email === 'admin@esbpowerline.com' ? 'SUPER_ADMIN' : 'EDITOR',
           status: 'ACTIVE',
         },
       });
@@ -476,7 +482,7 @@ async function getOrCreateAuthor(prisma: PrismaClient, wpAuthorId: number, dryRu
           name,
           avatar: avatar || user.avatar,
           bio: bio || user.bio,
-          role: 'EDITOR',
+          role: user.role === 'SUPER_ADMIN' ? 'SUPER_ADMIN' : 'EDITOR',
           status: 'ACTIVE',
         },
       });

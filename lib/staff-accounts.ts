@@ -7,6 +7,9 @@ export const MASTER_ADMIN_NAME = 'System Admin';
 export const EDITOR_NAME = 'Mehedi Hasan Hamim';
 export const EDITOR_EMAIL = 'hamim2964@gmail.com';
 
+export const RASEL_NAME = 'Sheikh Rasel';
+export const RASEL_EMAIL = 'rasel@esbpowerline.com';
+
 /** Legacy editor alias — migrated to EDITOR_EMAIL; used only for cleanup/migration. */
 export const LEGACY_EDITOR_EMAIL = 'editor@esbpowerline.com';
 
@@ -19,4 +22,5 @@ export const REMOVED_DEMO_AUTHOR_EMAILS = [
   'nadia@esbpowerline.com',
   'mehedi@esbpowerline.com',
 ] as const;
+
 
