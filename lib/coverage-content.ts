@@ -7,28 +7,36 @@ import type { PublicArticleCard } from '@/lib/category-types';
 import { MAX_PINNED_COVERAGE } from '@/lib/placement-rules';
 import { normalizeArticleImageUrl } from '@/lib/article-image';
 
-function mapArticle(a: {
-  id: string;
-  slug: string;
-  title: string;
-  excerpt: string | null;
-  category: string;
-  readTime: number;
-  views: number;
-  imageUrl: string | null;
-  publishedAt: Date | null;
-  createdAt: Date;
-  isFeatured?: boolean;
-  isBreaking?: boolean;
-  isPinned?: boolean;
-  author?: { name: string } | null;
-  seo?: any;
-}): PublicArticleCard {
+function mapArticle(
+  a: {
+    id: string;
+    slug: string;
+    title: string;
+    excerpt: string | null;
+    category: string;
+    readTime: number;
+    views: number;
+    imageUrl: string | null;
+    publishedAt: Date | null;
+    createdAt: Date;
+    isFeatured?: boolean;
+    isBreaking?: boolean;
+    isPinned?: boolean;
+    author?: { name: string } | null;
+    seo?: any;
+    titleBn?: string | null;
+    excerptBn?: string | null;
+  },
+  locale?: string,
+): PublicArticleCard {
+  const displayTitle = locale === 'bn' && a.titleBn ? a.titleBn : a.title;
+  const displayExcerpt = locale === 'bn' && a.excerptBn ? a.excerptBn : (a.excerpt ?? '');
+
   return {
     id: a.id,
     slug: a.slug,
-    title: a.title,
-    excerpt: a.excerpt ?? '',
+    title: displayTitle,
+    excerpt: displayExcerpt,
     category: a.category,
     author: a.author?.name ?? 'ESB PowerLine',
     date: (a.publishedAt ?? a.createdAt).toISOString(),
@@ -42,17 +50,25 @@ function mapArticle(a: {
   };
 }
 
-export const getPinnedCoverageArticles = cache(async (): Promise<PublicArticleCard[]> => {
+export const getPinnedCoverageArticles = cache(async (locale?: string): Promise<PublicArticleCard[]> => {
   const articles = await prisma.article.findMany({
     where: { status: 'PUBLISHED', isPinned: true },
     include: { author: { select: { name: true } } },
     orderBy: { publishedAt: 'desc' },
-    take: MAX_PINNED_COVERAGE,
   });
-  return articles.map(mapArticle);
+  return articles
+    .filter((a) => {
+      if (locale === 'bn') {
+        return !!a.titleBn || /[\u0980-\u09FF]/.test(a.title);
+      } else {
+        return !/[\u0980-\u09FF]/.test(a.title);
+      }
+    })
+    .slice(0, MAX_PINNED_COVERAGE)
+    .map((a) => mapArticle(a, locale));
 });
 
-export const resolveCoverageSlots = cache(async (slots: CoverageSlot[]): Promise<ResolvedCoverageSlot[]> => {
+export const resolveCoverageSlots = cache(async (slots: CoverageSlot[], locale?: string): Promise<ResolvedCoverageSlot[]> => {
   const slugs = [...new Set(slots.map((slot) => slot.articleSlug).filter(Boolean))];
   const articles = slugs.length
     ? await prisma.article.findMany({
@@ -61,15 +77,33 @@ export const resolveCoverageSlots = cache(async (slots: CoverageSlot[]): Promise
       })
     : [];
 
-  const bySlug = new Map(articles.map((article) => [article.slug, mapArticle(article)]));
+  const bySlug = new Map(
+    articles
+      .filter((a) => {
+        if (locale === 'bn') {
+          return !!a.titleBn || /[\u0980-\u09FF]/.test(a.title);
+        } else {
+          return !/[\u0980-\u09FF]/.test(a.title);
+        }
+      })
+      .map((article) => [article.slug, mapArticle(article, locale)])
+  );
 
   const fallbackPool = await prisma.article.findMany({
     where: { status: 'PUBLISHED' },
     include: { author: { select: { name: true } } },
     orderBy: { publishedAt: 'desc' },
-    take: 12,
+    take: 36,
   });
-  const fallbackArticles = fallbackPool.map(mapArticle);
+  const fallbackArticles = fallbackPool
+    .filter((a) => {
+      if (locale === 'bn') {
+        return !!a.titleBn || /[\u0980-\u09FF]/.test(a.title);
+      } else {
+        return !/[\u0980-\u09FF]/.test(a.title);
+      }
+    })
+    .map((article) => mapArticle(article, locale));
   let fallbackIndex = 0;
   const usedArticleIds = new Set<string>();
 

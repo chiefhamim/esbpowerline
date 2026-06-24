@@ -84,19 +84,5 @@ function mapRssEntryToInterview(entry: RssEntry, index: number): Interview {
 }
 
 export const getLatestYoutubeInterviews = cache(async (limit = 4): Promise<Interview[]> => {
-  try {
-    const response = await fetch(ESB_YOUTUBE_RSS_URL, {
-      next: { revalidate: 60 },
-    });
-
-    if (!response.ok) return DEFAULT_INTERVIEWS.slice(0, limit);
-
-    const xml = await response.text();
-    const entries = parseYoutubeRss(xml).slice(0, limit);
-    if (entries.length === 0) return DEFAULT_INTERVIEWS.slice(0, limit);
-
-    return entries.map(mapRssEntryToInterview);
-  } catch {
-    return DEFAULT_INTERVIEWS.slice(0, limit);
-  }
+  return DEFAULT_INTERVIEWS.slice(0, limit);
 });

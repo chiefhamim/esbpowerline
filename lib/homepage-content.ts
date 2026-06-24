@@ -33,22 +33,30 @@ export const getGridSettingsMap = cache(async () => {
   return map;
 });
 
-function mapCarouselArticle(a: {
-  slug: string;
-  title: string;
-  excerpt: string | null;
-  imageUrl: string | null;
-  readTime: number;
-  category: string;
-  isBreaking: boolean;
-  isFeatured: boolean;
-  isPinned: boolean;
-  author?: { name: string } | null;
-}): CarouselItem {
+function mapCarouselArticle(
+  a: {
+    slug: string;
+    title: string;
+    excerpt: string | null;
+    imageUrl: string | null;
+    readTime: number;
+    category: string;
+    isBreaking: boolean;
+    isFeatured: boolean;
+    isPinned: boolean;
+    author?: { name: string } | null;
+    titleBn?: string | null;
+    excerptBn?: string | null;
+  },
+  locale?: string,
+): CarouselItem {
+  const displayTitle = locale === 'bn' && a.titleBn ? a.titleBn : a.title;
+  const displayExcerpt = locale === 'bn' && a.excerptBn ? a.excerptBn : (a.excerpt ?? '');
+
   return {
     slug: a.slug,
-    title: a.title,
-    excerpt: a.excerpt ?? '',
+    title: displayTitle,
+    excerpt: displayExcerpt,
     imageUrl: normalizeArticleImageUrl(a.imageUrl) ?? '',
     author: a.author?.name ?? 'ESB PowerLine',
     readTime: a.readTime ?? 5,
@@ -59,7 +67,7 @@ function mapCarouselArticle(a: {
   };
 }
 
-async function fetchManagedCarouselItems(): Promise<CarouselItem[]> {
+async function fetchManagedCarouselItems(locale?: string): Promise<CarouselItem[]> {
   const include = { author: { select: { name: true } } } as const;
 
   const prioritized = await prisma.article.findMany({
@@ -70,14 +78,22 @@ async function fetchManagedCarouselItems(): Promise<CarouselItem[]> {
     },
     include,
     orderBy: [{ isBreaking: 'desc' }, { isFeatured: 'desc' }, { publishedAt: 'desc' }],
-    take: MAX_CAROUSEL_ITEMS,
+    take: MAX_CAROUSEL_ITEMS * 2,
   });
 
-  if (prioritized.length >= MAX_CAROUSEL_ITEMS) {
-    return prioritized.map(mapCarouselArticle);
+  const filteredPrioritized = prioritized.filter((a) => {
+    if (locale === 'bn') {
+      return !!a.titleBn || /[\u0980-\u09FF]/.test(a.title);
+    } else {
+      return !/[\u0980-\u09FF]/.test(a.title);
+    }
+  });
+
+  if (filteredPrioritized.length >= MAX_CAROUSEL_ITEMS) {
+    return filteredPrioritized.slice(0, MAX_CAROUSEL_ITEMS).map((a) => mapCarouselArticle(a, locale));
   }
 
-  const usedIds = new Set(prioritized.map((a) => a.id));
+  const usedIds = new Set(filteredPrioritized.map((a) => a.id));
   const backfill = await prisma.article.findMany({
     where: {
       status: 'PUBLISHED',
@@ -86,14 +102,22 @@ async function fetchManagedCarouselItems(): Promise<CarouselItem[]> {
     },
     include,
     orderBy: { publishedAt: 'desc' },
-    take: MAX_CAROUSEL_ITEMS - prioritized.length,
+    take: MAX_CAROUSEL_ITEMS * 3,
   });
 
-  return [...prioritized, ...backfill].slice(0, MAX_CAROUSEL_ITEMS).map(mapCarouselArticle);
+  const filteredBackfill = backfill.filter((a) => {
+    if (locale === 'bn') {
+      return !!a.titleBn || /[\u0980-\u09FF]/.test(a.title);
+    } else {
+      return !/[\u0980-\u09FF]/.test(a.title);
+    }
+  });
+
+  return [...filteredPrioritized, ...filteredBackfill].slice(0, MAX_CAROUSEL_ITEMS).map((a) => mapCarouselArticle(a, locale));
 }
 
-export const getCarouselItems = cache(async (_settings: Record<string, unknown>): Promise<CarouselItem[]> => {
-  return fetchManagedCarouselItems();
+export const getCarouselItems = cache(async (_settings: Record<string, unknown>, locale?: string): Promise<CarouselItem[]> => {
+  return fetchManagedCarouselItems(locale);
 });
 
 /** Coverage slots come from admin settings; pinned stories render in a separate top row. */

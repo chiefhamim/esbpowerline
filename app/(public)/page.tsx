@@ -1,3 +1,4 @@
+import { getServerSiteLocale } from '@/lib/locale-server';
 import { HomeBottomRow } from '@/components/home/HomeBottomRow';
 import { HomePowerSector } from '@/components/home/HomePowerSector';
 import { HomeSnapshotPanel } from '@/components/home/HomeSnapshotPanel';
@@ -37,21 +38,22 @@ export const metadata = {
 };
 
 export default async function Home() {
+  const locale = await getServerSiteLocale();
   const settingsPromise = getPublicSettingsMap();
   const [settings, trending, magazineRow, categories, sectorArticles, carouselItems, coverageSlots, pinnedArticles, interviews] =
     await Promise.all([
       settingsPromise,
-      getTrendingPublishedArticles(5),
+      getTrendingPublishedArticles(5, locale),
       getLatestMagazineIssue(),
       getPublicCategories(),
-      getPublishedArticlesForPublic(24),
-      settingsPromise.then((map) => getCarouselItems(map)),
+      getPublishedArticlesForPublic(24, locale),
+      settingsPromise.then((map) => getCarouselItems(map, locale)),
       settingsPromise.then(async (map) => {
         const slots = getCoverageSlotsFromSettings(map);
         const withPlacement = await applyEditorialPlacementToCoverageSlots(slots);
-        return resolveCoverageSlots(withPlacement);
+        return resolveCoverageSlots(withPlacement, locale);
       }),
-      getPinnedCoverageArticles(),
+      getPinnedCoverageArticles(locale),
       getLatestYoutubeInterviews(4),
     ]);
 

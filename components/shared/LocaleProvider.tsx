@@ -43,6 +43,9 @@ export function LocaleProvider({ children }: { children: ReactNode }) {
   const setLocale = useCallback((next: SiteLocale) => {
     setLocaleState(next);
     applySiteLocale(next);
+    if (typeof window !== 'undefined') {
+      window.location.reload();
+    }
   }, []);
 
   const value = useMemo<LocaleContextValue>(

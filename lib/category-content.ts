@@ -24,30 +24,38 @@ export type PublicMagazineIssue = {
   summary: string;
 };
 
-function mapArticle(a: {
-  id: string;
-  slug: string;
-  title: string;
-  excerpt: string | null;
-  category: string;
-  readTime: number;
-  views: number;
-  imageUrl: string | null;
-  publishedAt: Date | null;
-  createdAt: Date;
-  isFeatured?: boolean;
-  isBreaking?: boolean;
-  isPinned?: boolean;
-  isTrending?: boolean;
-  postAsNewsDesk?: boolean;
-  author?: { name: string } | null;
-  seo?: any;
-}): PublicArticleCard {
+function mapArticle(
+  a: {
+    id: string;
+    slug: string;
+    title: string;
+    excerpt: string | null;
+    category: string;
+    readTime: number;
+    views: number;
+    imageUrl: string | null;
+    publishedAt: Date | null;
+    createdAt: Date;
+    isFeatured?: boolean;
+    isBreaking?: boolean;
+    isPinned?: boolean;
+    isTrending?: boolean;
+    postAsNewsDesk?: boolean;
+    author?: { name: string } | null;
+    seo?: any;
+    titleBn?: string | null;
+    excerptBn?: string | null;
+  },
+  locale?: string,
+): PublicArticleCard {
+  const displayTitle = locale === 'bn' && a.titleBn ? a.titleBn : a.title;
+  const displayExcerpt = locale === 'bn' && a.excerptBn ? a.excerptBn : (a.excerpt ?? '');
+
   return {
     id: a.id,
     slug: a.slug,
-    title: a.title,
-    excerpt: a.excerpt ?? '',
+    title: displayTitle,
+    excerpt: displayExcerpt,
     category: a.category,
     author: a.postAsNewsDesk ? 'ESB News Desk' : (a.author?.name ?? 'ESB PowerLine'),
     date: (a.publishedAt ?? a.createdAt).toISOString(),
@@ -108,31 +116,54 @@ export async function getCategoryBySlug(slug: string): Promise<PublicCategory | 
   };
 }
 
-export async function getPublishedArticlesByCategory(categoryName: string): Promise<PublicArticleCard[]> {
+export async function getPublishedArticlesByCategory(categoryName: string, locale?: string): Promise<PublicArticleCard[]> {
   const articles = await prisma.article.findMany({
     where: { status: 'PUBLISHED', category: categoryName },
     include: { author: { select: { name: true } } },
     orderBy: { publishedAt: 'desc' },
   });
-  return articles.map(mapArticle);
+  return articles
+    .filter((a) => {
+      if (locale === 'bn') {
+        return !!a.titleBn || /[\u0980-\u09FF]/.test(a.title);
+      } else {
+        return !/[\u0980-\u09FF]/.test(a.title);
+      }
+    })
+    .map((a) => mapArticle(a, locale));
 }
 
-export const getPublishedArticlesForPublic = cache(async (limit = 60): Promise<PublicArticleCard[]> => {
+export const getPublishedArticlesForPublic = cache(async (limit = 60, locale?: string): Promise<PublicArticleCard[]> => {
   const articles = await prisma.article.findMany({
     where: { status: 'PUBLISHED' },
     include: { author: { select: { name: true } } },
     orderBy: [{ isPinned: 'desc' }, { isFeatured: 'desc' }, { publishedAt: 'desc' }],
-    take: limit,
+    take: limit * 2,
   });
-  return articles.map(mapArticle);
+  return articles
+    .filter((a) => {
+      if (locale === 'bn') {
+        return !!a.titleBn || /[\u0980-\u09FF]/.test(a.title);
+      } else {
+        return !/[\u0980-\u09FF]/.test(a.title);
+      }
+    })
+    .slice(0, limit)
+    .map((a) => mapArticle(a, locale));
 });
 
-export async function getPublishedArticleBySlug(slug: string): Promise<PublicArticleDetail | null> {
+export async function getPublishedArticleBySlug(slug: string, locale?: string): Promise<PublicArticleDetail | null> {
   const article = await prisma.article.findFirst({
     where: { slug, status: 'PUBLISHED' },
     include: { author: { select: { name: true } } },
   });
   if (!article) return null;
+
+  if (locale === 'bn') {
+    if (!article.titleBn && !/[\u0980-\u09FF]/.test(article.title)) return null;
+  } else {
+    if (/[\u0980-\u09FF]/.test(article.title)) return null;
+  }
 
   let collaborators: { id: string; name: string }[] = [];
   const collaboratorIds = Array.isArray(article.collaboratorIds)
@@ -148,9 +179,10 @@ export async function getPublishedArticleBySlug(slug: string): Promise<PublicArt
   }
 
   const seo = (article.seo ?? {}) as { heroImage?: HeroImageMeta };
+  const displayContent = locale === 'bn' && article.contentBn ? article.contentBn : article.content;
   return {
-    ...mapArticle(article),
-    content: article.content,
+    ...mapArticle(article, locale),
+    content: displayContent,
     tags: (article.tags as string[]) ?? [],
     heroImage: seo.heroImage,
     imageCredit: article.imageCredit,
@@ -163,16 +195,25 @@ export async function getRelatedPublishedArticles(
   category: string,
   tags: string[],
   limit = 3,
+  locale?: string,
 ): Promise<PublicArticleCard[]> {
   const candidates = await prisma.article.findMany({
     where: { status: 'PUBLISHED', slug: { not: slug } },
     include: { author: { select: { name: true } } },
     orderBy: { views: 'desc' },
-    take: 30,
+    take: 60,
+  });
+
+  const filtered = candidates.filter((a) => {
+    if (locale === 'bn') {
+      return !!a.titleBn || /[\u0980-\u09FF]/.test(a.title);
+    } else {
+      return !/[\u0980-\u09FF]/.test(a.title);
+    }
   });
 
   const tagSet = new Set(tags);
-  const scored = candidates
+  const scored = filtered
     .map((a) => {
       const articleTags = (a.tags as string[]) ?? [];
       const tagOverlap = articleTags.filter((t) => tagSet.has(t)).length;
@@ -182,18 +223,27 @@ export async function getRelatedPublishedArticles(
     .filter((x) => x.score > 0)
     .sort((x, y) => y.score - x.score || y.a.views - x.a.views);
 
-  const picked = (scored.length > 0 ? scored.map((x) => x.a) : candidates).slice(0, limit);
-  return picked.map(mapArticle);
+  const picked = (scored.length > 0 ? scored.map((x) => x.a) : filtered).slice(0, limit);
+  return picked.map((a) => mapArticle(a, locale));
 }
 
-export const getTrendingPublishedArticles = cache(async (limit = 5): Promise<PublicArticleCard[]> => {
+export const getTrendingPublishedArticles = cache(async (limit = 5, locale?: string): Promise<PublicArticleCard[]> => {
   const articles = await prisma.article.findMany({
     where: { status: 'PUBLISHED' },
     include: { author: { select: { name: true } } },
     orderBy: [{ isTrending: 'desc' }, { views: 'desc' }],
-    take: limit,
+    take: limit * 2,
   });
-  return articles.map(mapArticle);
+  return articles
+    .filter((a) => {
+      if (locale === 'bn') {
+        return !!a.titleBn || /[\u0980-\u09FF]/.test(a.title);
+      } else {
+        return !/[\u0980-\u09FF]/.test(a.title);
+      }
+    })
+    .slice(0, limit)
+    .map((a) => mapArticle(a, locale));
 });
 
 export async function getPublicTagCounts(): Promise<{ tag: string; count: number }[]> {
@@ -212,15 +262,22 @@ export async function getPublicTagCounts(): Promise<{ tag: string; count: number
     .sort((a, b) => b.count - a.count || a.tag.localeCompare(b.tag));
 }
 
-export async function getPublishedArticlesByTag(tag: string): Promise<PublicArticleCard[]> {
+export async function getPublishedArticlesByTag(tag: string, locale?: string): Promise<PublicArticleCard[]> {
   const articles = await prisma.article.findMany({
     where: { status: 'PUBLISHED' },
     include: { author: { select: { name: true } } },
     orderBy: { publishedAt: 'desc' },
   });
   return articles
+    .filter((a) => {
+      if (locale === 'bn') {
+        return !!a.titleBn || /[\u0980-\u09FF]/.test(a.title);
+      } else {
+        return !/[\u0980-\u09FF]/.test(a.title);
+      }
+    })
     .filter((a) => ((a.tags as string[]) ?? []).includes(tag))
-    .map(mapArticle);
+    .map((a) => mapArticle(a, locale));
 }
 
 export const getLatestMagazineIssue = cache(async (): Promise<PublicMagazineIssue | null> => {

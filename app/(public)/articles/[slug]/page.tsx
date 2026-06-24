@@ -1,3 +1,4 @@
+import { getServerSiteLocale } from '@/lib/locale-server';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -34,8 +35,9 @@ export async function generateStaticParams() {
 }
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
+  const locale = await getServerSiteLocale();
   const { slug } = await params;
-  const article = await getPublishedArticleBySlug(slug);
+  const article = await getPublishedArticleBySlug(slug, locale);
   if (!article) return { title: 'Article not found | ESB PowerLine' };
 
   return {
@@ -50,12 +52,13 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 }
 
 export default async function ArticlePage({ params }: { params: Promise<{ slug: string }> }) {
+  const locale = await getServerSiteLocale();
   const { slug } = await params;
-  const article = await getPublishedArticleBySlug(slug);
+  const article = await getPublishedArticleBySlug(slug, locale);
   if (!article) notFound();
 
   const [related, session, comments, saved] = await Promise.all([
-    getRelatedPublishedArticles(slug, article.category, article.tags, 3),
+    getRelatedPublishedArticles(slug, article.category, article.tags, 3, locale),
     auth(),
     getArticleComments(article.id),
     getArticleSavedState(article.id),

@@ -1,3 +1,4 @@
+import { getServerSiteLocale } from '@/lib/locale-server';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { User, Twitter, Linkedin, Mail } from 'lucide-react';
@@ -29,6 +30,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 }
 
 export default async function AuthorPage({ params }: { params: Promise<{ slug: string }> }) {
+  const locale = await getServerSiteLocale();
   const { slug } = await params;
   
   let author;
@@ -73,22 +75,34 @@ export default async function AuthorPage({ params }: { params: Promise<{ slug: s
   }
 
   // Map to PublicArticleCard format
-  const mappedArticles = articles.map(a => ({
-    id: a.id,
-    slug: a.slug,
-    title: a.title,
-    excerpt: a.excerpt ?? '',
-    category: a.category,
-    author: a.postAsNewsDesk ? 'ESB News Desk' : (a.author?.name ?? 'ESB PowerLine'),
-    date: (a.publishedAt ?? a.createdAt).toISOString(),
-    readTime: a.readTime,
-    views: a.views,
-    imageUrl: a.imageUrl ?? '',
-    heroMeta: (a.seo as any)?.heroImage,
-    isFeatured: a.isFeatured,
-    isBreaking: a.isBreaking,
-    isPinned: a.isPinned,
-  }));
+  const mappedArticles = articles
+    .filter((a) => {
+      if (locale === 'bn') {
+        return !!a.titleBn || /[\u0980-\u09FF]/.test(a.title);
+      } else {
+        return !/[\u0980-\u09FF]/.test(a.title);
+      }
+    })
+    .map(a => {
+      const title = locale === 'bn' && a.titleBn ? a.titleBn : a.title;
+      const excerpt = locale === 'bn' && a.excerptBn ? a.excerptBn : (a.excerpt ?? '');
+      return {
+        id: a.id,
+        slug: a.slug,
+        title: title,
+        excerpt: excerpt,
+        category: a.category,
+        author: a.postAsNewsDesk ? 'ESB News Desk' : (a.author?.name ?? 'ESB PowerLine'),
+        date: (a.publishedAt ?? a.createdAt).toISOString(),
+        readTime: a.readTime,
+        views: a.views,
+        imageUrl: a.imageUrl ?? '',
+        heroMeta: (a.seo as any)?.heroImage,
+        isFeatured: a.isFeatured,
+        isBreaking: a.isBreaking,
+        isPinned: a.isPinned,
+      };
+    });
 
   return (
     <div className="container py-12 max-w-5xl">

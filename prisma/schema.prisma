@@ -72,6 +72,9 @@ model Article {
   categoryRef Category?       @relation(fields: [categoryId], references: [id], onDelete: Restrict)
   imageUrl    String?
   imageCredit String?
+  titleBn     String?
+  excerptBn   String?
+  contentBn   String?
 
   readTime    Int             @default(1)
   views       Int             @default(0)
@@ -87,6 +90,7 @@ model Article {
   createdAt   DateTime        @default(now())
   updatedAt   DateTime        @updatedAt
   version     Int             @default(1)
+  locale      String          @default("en")
   /** Private editor trash — hidden from admins; purged after 7 days */
   editorTrash Boolean         @default(false)
   trashedAt   DateTime?

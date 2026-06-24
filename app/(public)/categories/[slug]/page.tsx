@@ -45,7 +45,7 @@ export default async function CategoryPage({ params }: Props) {
   if (!category) notFound();
 
   const localized = localizeCategoryFields(locale, category);
-  const articles = await getPublishedArticlesByCategory(category.name);
+  const articles = await getPublishedArticlesByCategory(category.name, locale);
 
   return (
     <div className="container container--shell py-8 md:py-10">

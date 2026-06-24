@@ -33,8 +33,8 @@ export default async function ArticlesPage({ searchParams }: ArticlesPageProps) 
 
   const [categories, allArticles, trending] = await Promise.all([
     getPublicCategories(),
-    getPublishedArticlesForPublic(120),
-    getTrendingPublishedArticles(5),
+    getPublishedArticlesForPublic(120, locale),
+    getTrendingPublishedArticles(5, locale),
   ]);
 
   let articles = allArticles;

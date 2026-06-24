@@ -3,10 +3,29 @@
  * Auto-baselines when the DB already has tables (Prisma P3005).
  */
 import { spawnSync } from 'child_process';
-import { readdirSync } from 'fs';
+import { readdirSync, existsSync, readFileSync } from 'fs';
 import path from 'path';
 import { setTimeout as sleep } from 'timers/promises';
+import { parse } from 'dotenv';
 import { resolveMigrationDatabaseUrl } from './resolve-migration-database-url.mjs';
+
+function readEnvValue(file, key) {
+  if (!existsSync(file)) return '';
+  try {
+    return parse(readFileSync(file))[key]?.trim() ?? '';
+  } catch {
+    return '';
+  }
+}
+
+function getNonEmptyEnv(key) {
+  const val = process.env[key]?.trim();
+  if (val) return val;
+  return readEnvValue('.env.local', key) || readEnvValue('.env', key);
+}
+
+const directUrl = getNonEmptyEnv('DIRECT_URL') || getNonEmptyEnv('POSTGRES_URL_NON_POOLING');
+const databaseUrl = getNonEmptyEnv('DATABASE_URL') || getNonEmptyEnv('POSTGRES_PRISMA_URL');
 
 const migrationsDir =
   process.env.PRISMA_MIGRATIONS_DIR?.trim() || 'prisma/migrations_postgresql';
@@ -17,9 +36,7 @@ const BACKOFF_MS = [3000, 5000, 8000, 12000, 15000];
 
 let migrationDatabaseUrl;
 try {
-  const resolved = resolveMigrationDatabaseUrl(
-    process.env.DIRECT_URL?.trim() || process.env.DATABASE_URL?.trim(),
-  );
+  const resolved = resolveMigrationDatabaseUrl(directUrl || databaseUrl);
   migrationDatabaseUrl = resolved.url;
   if (process.env.PRISMA_SCHEMA_PROVIDER === 'postgresql') {
     if (!migrationDatabaseUrl) {

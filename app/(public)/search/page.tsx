@@ -11,7 +11,7 @@ export const metadata = {
 export default async function SearchPage() {
   const locale = await getServerSiteLocale();
   const t = createTranslator(locale);
-  const articles = await getPublishedArticlesForPublic(120);
+  const articles = await getPublishedArticlesForPublic(120, locale);
 
   return (
     <div className="container container--shell search-page py-8 md:py-10">

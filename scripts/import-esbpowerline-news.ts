@@ -1,18 +1,28 @@
 /**
- * Import the latest 20 articles from esbpowerline.com (WordPress REST API)
- * into the Prisma database. Removes existing demo articles, keeps categories/users.
+ * Import the latest articles from esbpowerline.com (WordPress REST API)
+ * into the Prisma database with full scale multilingual support, WebP conversion,
+ * keyword-based energy filtering, automatic author profiles, and CMS integration.
+ *
+ * Usage (development dry-run):
+ *   cross-env PRISMA_SCHEMA_PROVIDER=sqlite DATABASE_URL=file:./dev.db DRY_RUN=true LIMIT=5 npx tsx --conditions react-server scripts/import-esbpowerline-news.ts
+ *
+ * Usage (development batch run):
+ *   cross-env PRISMA_SCHEMA_PROVIDER=sqlite DATABASE_URL=file:./dev.db LIMIT=5 npx tsx --conditions react-server scripts/import-esbpowerline-news.ts
  *
  * Usage (production):
- *   ALLOW_PRODUCTION_SEED=true npx tsx scripts/import-esbpowerline-news.ts
- *
- * Requires DATABASE_URL (+ DIRECT_URL for migrations). Loads .env.production.local when present.
+ *   ALLOW_PRODUCTION_SEED=true cross-env PRISMA_SCHEMA_PROVIDER=postgresql npx tsx --conditions react-server scripts/import-esbpowerline-news.ts
  */
+
 import { config, parse } from 'dotenv';
 import { existsSync, readFileSync } from 'fs';
 import type { PrismaClient } from '@prisma/client';
 import { CATEGORIES, CATEGORY_DETAILS } from '../lib/constants';
 import { EDITOR_EMAIL, EDITOR_NAME } from '../lib/staff-accounts';
 import { slugify } from '../lib/utils';
+import path from 'path';
+import sharp from 'sharp';
+import { uploadMediaBuffer } from '../lib/media-storage';
+import { registerArticleMedia } from '../lib/media-registry-core';
 
 /** Preserve npm/cross-env targets — .env.production.local can contain empty placeholders. */
 const cliProvider = process.env.PRISMA_SCHEMA_PROVIDER?.trim() || '';
@@ -71,8 +81,12 @@ if (!process.env.DATABASE_URL?.trim()) {
 }
 
 const WP_BASE = 'https://esbpowerline.com/wp-json/wp/v2';
-const POST_COUNT = 20;
+const limitVal = process.env.LIMIT ? parseInt(process.env.LIMIT, 10) : undefined;
+const dryRun = process.env.DRY_RUN === 'true';
 
+if (dryRun) {
+  console.log('⚠️ RUNNING IN DRY-RUN MODE — NO WRITES TO DATABASE OR STORAGE UPLOADS.');
+}
 
 /** WordPress category slug → app category name */
 const WP_CATEGORY_MAP: Record<string, (typeof CATEGORIES)[number]> = {
@@ -97,7 +111,7 @@ const WP_CATEGORY_MAP: Record<string, (typeof CATEGORIES)[number]> = {
   projects: 'Power Generation',
   news: 'Power Generation',
   uncategorized: 'Power Generation',
-  // Bengali "Electricity & Energy" slug (URL-encoded and decoded)
+  // Bengali "Electricity & Energy" slugs (URL-encoded and decoded)
   '%e0%a6%ac%e0%a6%bf%e0%a6%a6%e0%a7%8d%e0%a6%af%e0%a7%81%e0%a7%8e-%e0%a6%93-%e0%a6%9c%e0%a7%8d%e0%a6%ac%e0%a6%be%e0%a6%b2%e0%a6%be%e0%a6%a8%e0%a6%bf':
     'Consumers & Tariffs',
   'বিদ্যুৎ-ও-জ্বালানি': 'Consumers & Tariffs',
@@ -130,6 +144,7 @@ type WpPost = {
   content: { rendered: string };
   categories: number[];
   featured_media: number;
+  author: number;
 };
 
 type WpCategory = { id: number; slug: string; name: string };
@@ -207,10 +222,40 @@ async function fetchJson<T>(url: string): Promise<T> {
   return res.json() as Promise<T>;
 }
 
-async function fetchWpPosts(): Promise<WpPost[]> {
-  return fetchJson<WpPost[]>(
-    `${WP_BASE}/posts?per_page=${POST_COUNT}&orderby=date&order=desc&_embed=0`,
-  );
+async function fetchAllWpPosts(limit?: number): Promise<WpPost[]> {
+  let page = 1;
+  const allPosts: WpPost[] = [];
+  console.log('📰 Fetching posts page-by-page from WordPress API...');
+  
+  while (true) {
+    const perPage = limit && limit < 100 ? limit : 100;
+    const url = `${WP_BASE}/posts?per_page=${perPage}&page=${page}&orderby=date&order=desc&_embed=0`;
+    try {
+      const res = await fetch(url, { headers: { Accept: 'application/json' } });
+      if (!res.ok) {
+        if (res.status === 400) {
+          // Out of pages
+          break;
+        }
+        throw new Error(`HTTP ${res.status} for ${url}`);
+      }
+      const posts = await res.json() as WpPost[];
+      if (!Array.isArray(posts) || posts.length === 0) break;
+      allPosts.push(...posts);
+      console.log(`  ✓ Fetched page ${page} (${posts.length} posts, total: ${allPosts.length})`);
+      if (limit && allPosts.length >= limit) {
+        allPosts.splice(limit);
+        break;
+      }
+      page++;
+      // Wait to respect rate-limits
+      await new Promise(resolve => setTimeout(resolve, 150));
+    } catch (err: any) {
+      console.warn(`  ⚠️ Stopped fetching at page ${page} due to:`, err.message);
+      break;
+    }
+  }
+  return allPosts;
 }
 
 async function fetchWpCategories(): Promise<Map<number, WpCategory>> {
@@ -246,6 +291,51 @@ function resolveAppCategory(
 
   candidates.sort((a, b) => b.priority - a.priority);
   return candidates[0].app;
+}
+
+function getEnergyScore(title: string, content: string): number {
+  const t = title.toLowerCase();
+  const c = content.toLowerCase();
+
+  const enKeywords = [
+    'power', 'electricity', 'energy', 'grid', 'gas', 'lng', 'utility', 'utilities',
+    'transmission', 'distribution', 'renewable', 'renewables', 'nuclear', 'solar', 'wind', 'coal',
+    'fuel', 'fuels', 'fossil', 'tariff', 'subsidies', 'petrobangla', 'bpdb', 'pgcb', 'berc',
+    'bapex', 'generation', 'petroleum', 'oil', 'biomass', 'hydro', 'reactor', 'tariff',
+    'megawatt', 'mw', 'powerplant', 'powerline', 'energy-storage', 'power-generation'
+  ];
+
+  const bnKeywords = [
+    'বিদ্যুৎ', 'জ্বালানি', 'গ্রিড', 'গ্যাস', 'এলএনজি', 'কয়লা', 'তেল', 'পেট্রোবাংলা',
+    'বিপিডিবি', 'সোলার', 'পারমাণবিক', 'নবায়নযোগ্য', 'ট্যারিফ', 'দাম বৃদ্ধি', 'রিয়্যাক্টর',
+    'বিদ্যুৎকেন্দ্র', 'পাওয়ারলাইন', 'মেগাওয়াট'
+  ];
+
+  let score = 0;
+
+  // Title check
+  for (const kw of enKeywords) {
+    if (t.includes(kw)) score += 5;
+  }
+  for (const kw of bnKeywords) {
+    if (t.includes(kw)) score += 5;
+  }
+
+  // Content check
+  for (const kw of enKeywords) {
+    const matches = c.match(new RegExp(escapeRegExp(kw), 'gi'));
+    if (matches) score += matches.length;
+  }
+  for (const kw of bnKeywords) {
+    const matches = c.match(new RegExp(escapeRegExp(kw), 'gi'));
+    if (matches) score += matches.length;
+  }
+
+  return score;
+}
+
+function escapeRegExp(str: string) {
+  return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
 async function ensureCategories(prisma: PrismaClient) {
@@ -334,130 +424,286 @@ function isBreakingNews(title: string): boolean {
   );
 }
 
+const authorCache = new Map<number, string>();
+
+async function getOrCreateAuthor(prisma: PrismaClient, wpAuthorId: number, dryRun: boolean, defaultEditorId: string): Promise<string> {
+  if (authorCache.has(wpAuthorId)) {
+    return authorCache.get(wpAuthorId)!;
+  }
+
+  try {
+    const wpUser = await fetchJson<any>(`${WP_BASE}/users/${wpAuthorId}`);
+    let name = wpUser.name || 'Unknown Author';
+    const slug = wpUser.slug || `author-${wpAuthorId}`;
+    if (
+      name.toLowerCase() === 'esb news desk' ||
+      slug === 'esb-news-desk' ||
+      name === 'ইএসবি নিউজ ডেস্ক' ||
+      name === 'ইএসব' ||
+      slug === 'admin'
+    ) {
+      name = 'ESB NEWS DESK';
+    }
+    const email = `${slug}@esbpowerline.com`;
+    const avatar = wpUser.avatar_urls?.['96'] || wpUser.avatar_urls?.['48'] || null;
+    const bio = wpUser.description || 'Contributor — ESB PowerLine';
+
+    if (dryRun) {
+      console.log(`  [DryRun] Would ensure author profile: ${name} (${email})`);
+      return `dry-run-author-${wpAuthorId}`;
+    }
+
+    let user = await prisma.user.findUnique({ where: { email } });
+    if (!user) {
+      const bcrypt = await import('bcryptjs');
+      const passwordHash = await bcrypt.hash(`editor-fallback-${slug}`, 10);
+      user = await prisma.user.create({
+        data: {
+          name,
+          email,
+          avatar,
+          bio,
+          passwordHash,
+          role: 'EDITOR',
+          status: 'ACTIVE',
+        },
+      });
+      console.log(`  ✓ Created new EDITOR profile: ${name} (${email})`);
+    } else {
+      user = await prisma.user.update({
+        where: { id: user.id },
+        data: {
+          name,
+          avatar: avatar || user.avatar,
+          bio: bio || user.bio,
+          role: 'EDITOR',
+          status: 'ACTIVE',
+        },
+      });
+    }
+
+    authorCache.set(wpAuthorId, user.id);
+    return user.id;
+  } catch (err: any) {
+    console.warn(`  ⚠️ Failed to fetch author ${wpAuthorId} from WP API: ${err.message}. Using default editor.`);
+    return defaultEditorId;
+  }
+}
+
+async function downloadAndProcessImage(url: string, fallbackTitle: string, dryRun: boolean): Promise<string | null> {
+  if (!url?.trim()) return null;
+  const targetUrl = url.trim();
+
+  if (dryRun) {
+    console.log(`  [DryRun] Would convert WebP and upload: ${targetUrl}`);
+    return targetUrl;
+  }
+
+  try {
+    const res = await fetch(targetUrl);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const arrayBuffer = await res.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
+
+    // Convert image buffer to WebP via sharp
+    const webpBuffer = await sharp(buffer)
+      .webp({ quality: 80 })
+      .toBuffer();
+
+    let fileName = path.basename(new URL(targetUrl).pathname);
+    if (!fileName || fileName === '/' || !fileName.includes('.')) {
+      fileName = `${slugify(fallbackTitle)}.jpg`;
+    }
+    const webpFileName = fileName.replace(/\.[^/.]+$/, "") + ".webp";
+
+    const uploadResult = await uploadMediaBuffer({
+      buffer: webpBuffer,
+      fileName: webpFileName,
+      mimeType: 'image/webp',
+      folder: 'library',
+    });
+
+    return uploadResult.url;
+  } catch (err: any) {
+    console.warn(`  ⚠️ Image processing failed for ${targetUrl}:`, err.message);
+    return null;
+  }
+}
+
+async function processContentImages(content: string, fallbackTitle: string, dryRun: boolean): Promise<string> {
+  const imgRegex = /<img[^>]+src=["']([^"']+)["']/gi;
+  let matches;
+  const imageUrls: string[] = [];
+  while ((matches = imgRegex.exec(content)) !== null) {
+    const src = matches[1]?.trim();
+    if (src && !imageUrls.includes(src)) {
+      imageUrls.push(src);
+    }
+  }
+
+  let updatedContent = content;
+  for (const src of imageUrls) {
+    if (src.includes('uploads/') || src.includes('supabase.co')) continue;
+    const newUrl = await downloadAndProcessImage(src, fallbackTitle, dryRun);
+    if (newUrl) {
+      updatedContent = updatedContent.split(src).join(newUrl);
+    }
+  }
+  return updatedContent;
+}
+
 async function importArticles(
   prisma: PrismaClient,
   posts: WpPost[],
   wpCatById: Map<number, WpCategory>,
   categoryIdByName: Record<string, string>,
-  authorId: string,
+  defaultEditorId: string,
 ) {
   let imported = 0;
+  let skipped = 0;
 
   for (const [index, post] of posts.entries()) {
     const title = stripTags(post.title.rendered);
     const slug = normalizeSlug(post.slug);
     const excerpt = stripTags(post.excerpt.rendered).slice(0, 500) || null;
     const rawContent = post.content.rendered;
-    const content = sanitizeContent(rawContent);
+    const contentTextOnly = stripTags(rawContent);
+
+    // 1. Scoring & power-only filtering
+    const score = getEnergyScore(title, contentTextOnly);
+    if (score < 5) {
+      console.log(`  🛑 Skipped off-topic post [Score: ${score}]: "${title.slice(0, 60)}…"`);
+      skipped += 1;
+      continue;
+    }
+
+    // 2. Multilingual locale classification
+    const isBengali = /[\u0980-\u09FF]/.test(title) || /[\u0980-\u09FF]/.test(contentTextOnly);
+    const locale = isBengali ? 'bn' : 'en';
+
+    console.log(`  ⚙️ Processing [locale: ${locale}, score: ${score}]: "${title.slice(0, 60)}…"`);
+
+    // 3. Resolve category
     const categoryName = resolveAppCategory(post.categories, wpCatById);
     const categoryId = categoryIdByName[categoryName];
+
+    // 4. Retrieve or create Author profile from API
+    const finalAuthorId = await getOrCreateAuthor(prisma, post.author, dryRun, defaultEditorId);
+
+    // 5. Image pipeline (Featured / Cover Image)
     let imageUrl = await fetchFeaturedImage(post.featured_media);
     if (isDemoImage(imageUrl)) {
       imageUrl = extractContentImage(rawContent);
     }
+    if (imageUrl && !isDemoImage(imageUrl)) {
+      const newFeaturedUrl = await downloadAndProcessImage(imageUrl, title, dryRun);
+      if (newFeaturedUrl) {
+        imageUrl = newFeaturedUrl;
+      }
+    }
+
+    // 6. Image pipeline (Inline body images)
+    const processedContent = await processContentImages(sanitizeContent(rawContent), title, dryRun);
+
     const publishedAt = new Date(post.date);
     const importedAt = new Date();
-    const readTime = estimateReadTime(content);
+    const readTime = estimateReadTime(processedContent);
 
     const isFeatured = index < 3;
     const isBreaking = isBreakingNews(title) && index < 5;
 
-    await prisma.article.upsert({
-      where: { slug },
-      create: {
-        title,
-        slug,
-        excerpt,
-        content,
-        authorId,
-        publishedAt,
-        status: 'PUBLISHED',
-        category: categoryName,
-        categoryId,
-        imageUrl,
-        readTime,
-        isFeatured,
-        isBreaking,
-        views: 0,
-        likes: 0,
-        createdAt: importedAt,
-        updatedAt: importedAt,
-      },
-      update: {
-        title,
-        excerpt,
-        content,
-        authorId,
-        publishedAt,
-        status: 'PUBLISHED',
-        category: categoryName,
-        categoryId,
-        imageUrl,
-        readTime,
-        isFeatured,
-        isBreaking,
-        updatedAt: importedAt,
-      },
-    });
+    if (dryRun) {
+      console.log(`  [DryRun] Would upsert article: "${title}" (locale: ${locale}, category: ${categoryName}, author: ${finalAuthorId})`);
+      imported += 1;
+      continue;
+    }
 
-    const { registerArticleMedia } = await import('../lib/media-registry-core');
-    await registerArticleMedia(prisma, {
-      imageUrl,
-      content,
-      uploadedById: authorId,
-      title,
+    // 7. Transaction safety: execute atomic upsert + initial revision + media registration
+    await prisma.$transaction(async (tx) => {
+      const article = await tx.article.upsert({
+        where: { slug },
+        create: {
+          title,
+          slug,
+          excerpt,
+          content: processedContent,
+          authorId: finalAuthorId,
+          publishedAt,
+          status: 'PUBLISHED',
+          category: categoryName,
+          categoryId,
+          imageUrl,
+          readTime,
+          isFeatured,
+          isBreaking,
+          locale,
+          views: 0,
+          likes: 0,
+          createdAt: importedAt,
+          updatedAt: importedAt,
+        },
+        update: {
+          title,
+          excerpt,
+          content: processedContent,
+          authorId: finalAuthorId,
+          publishedAt,
+          status: 'PUBLISHED',
+          category: categoryName,
+          categoryId,
+          imageUrl,
+          readTime,
+          isFeatured,
+          isBreaking,
+          locale,
+          updatedAt: importedAt,
+        },
+      });
+
+      // Transaction: Create initial revision if none exist
+      const existingRevCount = await tx.revision.count({
+        where: { articleId: article.id },
+      });
+      if (existingRevCount === 0) {
+        await tx.revision.create({
+          data: {
+            articleId: article.id,
+            content: processedContent,
+            userId: finalAuthorId,
+            note: "Initial news crawl import from esbpowerline.com",
+            createdAt: publishedAt,
+          },
+        });
+      }
+
+      // Transaction: Register cover and inline media inside CMS content library
+      await registerArticleMedia(tx as any, {
+        imageUrl,
+        content: processedContent,
+        uploadedById: finalAuthorId,
+        title,
+      });
     });
 
     imported += 1;
-    console.log(`  ✓ [${imported}/${posts.length}] ${title.slice(0, 72)}… → ${categoryName}`);
+    console.log(`  ✓ [${imported}/${posts.length}] Saved article successfully`);
   }
 
-  // Reassign any stray demo-authored rows and strip placeholder images.
-  const reassigned = await prisma.article.updateMany({
-    where: { NOT: { authorId } },
-    data: { authorId },
-  });
-  if (reassigned.count > 0) {
-    console.log(`✓ Reassigned ${reassigned.count} article(s) to ${EDITOR_NAME}`);
-  }
-
-  const withDemoImages = await prisma.article.findMany({
-    where: {
-      OR: [
-        { imageUrl: { startsWith: '/images/' } },
-        { imageUrl: { contains: 'download (' } },
-        { imageUrl: null },
-      ],
-    },
-    select: { id: true, slug: true, content: true, imageUrl: true },
-  });
-
-  for (const row of withDemoImages) {
-    const fixed = extractContentImage(row.content);
-    if (fixed && !isDemoImage(fixed)) {
-      await prisma.article.update({ where: { id: row.id }, data: { imageUrl: fixed } });
-      console.log(`  ✓ Fixed image for ${row.slug}`);
+  if (!dryRun) {
+    // Post-import sync operations
+    const { syncAuthorArticleCounts } = await import('../lib/author-stats-core');
+    await syncAuthorArticleCounts(prisma, defaultEditorId);
+    for (const cachedUserId of authorCache.values()) {
+      await syncAuthorArticleCounts(prisma, cachedUserId);
     }
   }
 
-  const { syncAuthorArticleCounts } = await import('../lib/author-stats-core');
-  await syncAuthorArticleCounts(prisma, authorId);
-  await prisma.user.update({
-    where: { id: authorId },
-    data: { name: EDITOR_NAME },
-  });
+  console.log(`\nImport statistics:`);
+  console.log(`- Total Posts Checked: ${posts.length}`);
+  console.log(`- Ingested Articles: ${imported}`);
+  console.log(`- Skipped Off-Topic: ${skipped}`);
 
-  const { REMOVED_DEMO_AUTHOR_EMAILS } = await import('../lib/staff-accounts');
-  const stale = await prisma.user.findMany({
-    where: { email: { in: [...REMOVED_DEMO_AUTHOR_EMAILS] }, id: { not: authorId } },
-    select: { id: true, email: true },
-  });
-  for (const user of stale) {
-    await prisma.user.delete({ where: { id: user.id } });
-    console.log(`✓ Removed stale account ${user.email}`);
-  }
-
-  return imported;
+  return { imported, skipped };
 }
 
 async function main() {
@@ -469,29 +715,45 @@ async function main() {
   const { createScriptPrismaClient } = await import('../prisma/client');
   const prisma = createScriptPrismaClient();
 
-  console.log('📰 Importing latest news from esbpowerline.com…\n');
+  console.log('📰 Upgrading and running news import pipeline from esbpowerline.com…\n');
 
   try {
-    const [posts, wpCatById] = await Promise.all([fetchWpPosts(), fetchWpCategories()]);
-    console.log(`✓ Fetched ${posts.length} posts and ${wpCatById.size} WP categories`);
+    const [posts, wpCatById] = await Promise.all([
+      fetchAllWpPosts(limitVal),
+      fetchWpCategories()
+    ]);
+    console.log(`✓ Fetched ${posts.length} total posts and ${wpCatById.size} WP categories`);
 
-    const categoryIdByName = await ensureCategories(prisma);
-    console.log('✓ Categories ready');
+    let categoryIdByName: Record<string, string> = {};
+    let authorId = 'dry-run-author-id';
 
-    const authorId = await ensureEditor(prisma);
-    await purgeDemoArticles(prisma);
+    if (!dryRun) {
+      categoryIdByName = await ensureCategories(prisma);
+      console.log('✓ Categories ready');
+      authorId = await ensureEditor(prisma);
+      await purgeDemoArticles(prisma);
+      console.log('✓ Demo articles purged (clean baseline established)');
+    }
 
-    const imported = await importArticles(prisma, posts, wpCatById, categoryIdByName, authorId);
+    const { imported, skipped } = await importArticles(
+      prisma,
+      posts,
+      wpCatById,
+      categoryIdByName,
+      authorId
+    );
 
-    await prisma.auditLog.create({
-      data: {
-        type: 'import',
-        message: `Imported ${imported} articles from esbpowerline.com WordPress (editor: ${EDITOR_NAME})`,
-        timestamp: new Date(),
-      },
-    });
+    if (!dryRun) {
+      await prisma.auditLog.create({
+        data: {
+          type: 'import',
+          message: `Imported ${imported} articles (skipped ${skipped} off-topic) from esbpowerline.com.`,
+          timestamp: new Date(),
+        },
+      });
+    }
 
-    console.log(`\n✅ Done — ${imported} live articles published as ${EDITOR_NAME}.`);
+    console.log(`\n✅ Pipeline finished. Ingested ${imported} live articles successfully.`);
   } finally {
     await prisma.$disconnect();
   }
