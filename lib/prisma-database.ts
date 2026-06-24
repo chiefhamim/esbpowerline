@@ -1,4 +1,10 @@
 import path from 'path';
+import dotenv from 'dotenv';
+
+try {
+  dotenv.config({ path: path.resolve(process.cwd(), '.env.local'), override: true });
+  dotenv.config({ path: path.resolve(process.cwd(), '.env'), override: true });
+} catch (e) {}
 
 export function resolveDatabaseUrl() {
   const raw = process.env.DATABASE_URL?.trim();

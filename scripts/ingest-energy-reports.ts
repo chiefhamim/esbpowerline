@@ -17,8 +17,20 @@ if (runProd) {
 
 import { createScriptPrismaClient } from '../prisma/client';
 
-// Initialize Prisma
-const prisma = createScriptPrismaClient();
+// Initialize Prisma lazily using a Proxy to avoid module-load evaluation side-effects
+const prisma = new Proxy({} as any, {
+  get(target, prop, receiver) {
+    if (!(globalThis as any).__scriptPrisma) {
+      (globalThis as any).__scriptPrisma = createScriptPrismaClient();
+    }
+    const client = (globalThis as any).__scriptPrisma;
+    const value = Reflect.get(client, prop, receiver);
+    if (typeof value === 'function') {
+      return value.bind(client);
+    }
+    return value;
+  }
+});
 
 // Bypass SSL certificate errors for government servers
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';

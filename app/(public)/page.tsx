@@ -79,7 +79,7 @@ export default async function Home() {
               tickerItems={settings.ticker as TickerItem[] | undefined}
               inBand
             />
-            <HomeTrendingSection trending={trending} layout="hero-rail" />
+            <HomeSnapshotPanel snapshotStats={settings.snapshot} snapshotLabel={snapshotLabel} layout="hero-rail" />
           </div>
         </div>
 
@@ -99,8 +99,7 @@ export default async function Home() {
             </div>
 
             <aside className="home-editorial__rail" aria-label="Sidebar">
-              <HomeSnapshotPanel snapshotStats={settings.snapshot} snapshotLabel={snapshotLabel} />
-              <HomeTrendingSection trending={trending} layout="rail" />
+              <HomeTrendingSection trending={trending} layout="hero-rail" />
             </aside>
           </div>
 

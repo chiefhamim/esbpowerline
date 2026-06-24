@@ -74,6 +74,7 @@ function TrendingHeroRailWave({ trending }: { trending: PublicArticleCard[] }) {
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isHovering = hovered !== null;
   const displayIndex = hovered ?? active;
+  const [failedImages, setFailedImages] = useState<Record<string, boolean>>({});
 
   const clearTimer = useCallback(() => {
     if (timerRef.current) clearTimeout(timerRef.current);
@@ -161,86 +162,110 @@ function TrendingHeroRailWave({ trending }: { trending: PublicArticleCard[] }) {
 
   return (
     <section
-      className="home-trending-hero-rail featured-hero-card hero-dot-pattern relative overflow-hidden rounded-2xl border border-border/40"
+      className="home-trending-hero-rail flex flex-col h-full p-4 md:p-4.5 lg:p-5 rounded-2xl border border-border/40 bg-card shadow-sm lg:min-h-[var(--home-hero-band-card-h)] lg:h-[var(--home-hero-band-card-h)] lg:max-h-[var(--home-hero-band-card-h)] overflow-hidden relative"
       aria-labelledby="home-trending-title"
     >
-      {/* Premium Ambient Background */}
-      <div className="absolute inset-0 -z-10 overflow-hidden pointer-events-none" aria-hidden="true">
-        <div className="absolute -top-[10%] -right-[10%] w-[16rem] h-[16rem] rounded-full bg-amber-500/6 blur-[55px] animate-pulse duration-[6000ms]" />
-        <div className="absolute -bottom-[10%] -left-[10%] w-[16rem] h-[16rem] rounded-full bg-primary/5 blur-[55px] animate-pulse duration-[8000ms]" />
-      </div>
-      <div className="home-trending-hero-rail__body">
-        <div className="home-trending-band__meta">
+
+      <div className="flex flex-col h-full justify-between relative z-10">
+        <div className="flex-shrink-0 pb-3 border-b border-border/10 dark:border-border/20">
           <TrendingHeroRailHeader />
         </div>
 
-        <div className="home-trending-wave__stage">
-          <Link
-            key={`${article.slug}-${displayIndex}`}
-            href={`/articles/${article.slug}`}
-            className={`home-trending-wave__featured group${
-              isHovering ? ' home-trending-wave__featured--instant' : ''
-            }`}
-          >
-            <div className="home-trending-wave__kicker">
-              <div className="home-trending-wave__badge">
-                <Flame className="h-3 w-3" aria-hidden />
-                #{String(displayIndex + 1).padStart(2, '0')}
+        <div className="flex-grow flex flex-col justify-center min-h-0 my-3">
+          <div className="home-trending-wave__stage">
+            <Link
+              key={`${article.slug}-${displayIndex}`}
+              href={`/articles/${article.slug}`}
+              className={`home-trending-wave__featured group${
+                isHovering ? ' home-trending-wave__featured--instant' : ''
+              }`}
+            >
+              {/* Kicker Row */}
+              <div className="home-trending-wave__kicker">
+                <div className="home-trending-wave__badge">
+                  <Flame className="h-3 w-3" aria-hidden />
+                  #{String(displayIndex + 1).padStart(2, '0')}
+                </div>
+                <CategoryLabel
+                  name={article.category}
+                  className="home-trending-wave__category section-category-label text-muted-foreground truncate"
+                />
               </div>
-              <CategoryLabel
-                name={article.category}
-                className="home-trending-wave__category section-category-label text-muted-foreground truncate"
-              />
-            </div>
-            <div className="home-trending-wave__image">
-              <div className="home-trending-wave__image-zoom absolute inset-0">
-                {hasArticleImage(article.imageUrl) ? (
-                  <Image
-                    src={article.imageUrl}
-                    alt=""
-                    fill
-                    style={heroImageStyle(article.heroMeta || undefined)}
-                    sizes="(max-width: 768px) 100vw, 280px"
-                  />
-                ) : (
-                  <NoImage className="h-full w-full" label={article.category} />
-                )}
+
+              {/* Article Image */}
+              <div className="home-trending-wave__image">
+                <div className="home-trending-wave__image-zoom absolute inset-0">
+                  {hasArticleImage(article.imageUrl) && !failedImages[article.imageUrl] ? (
+                    <Image
+                      src={article.imageUrl}
+                      alt=""
+                      fill
+                      style={heroImageStyle(article.heroMeta || undefined)}
+                      sizes="(max-width: 768px) 100vw, 280px"
+                      className="absolute inset-0 h-full w-full object-cover"
+                      onError={() => {
+                        setFailedImages((prev) => ({ ...prev, [article.imageUrl]: true }));
+                      }}
+                    />
+                  ) : (
+                    <NoImage className="h-full w-full" label={article.category} />
+                  )}
+                </div>
               </div>
-            </div>
-            <h3 className="home-trending-wave__title group-hover:text-primary transition-colors">
-              {article.title}
-            </h3>
-            <p className="home-trending-wave__excerpt">{article.excerpt ?? '\u00A0'}</p>
-            <p className="home-trending-wave__meta">
-              {timeAgo} · {article.views.toLocaleString()} {t('common.views')} · {article.readTime}{' '}
-              {t('common.min')}
-            </p>
-          </Link>
+
+              {/* Title, Excerpt, Meta */}
+              <h3 className="home-trending-wave__title group-hover:text-primary transition-colors">
+                {article.title}
+              </h3>
+              <p
+                className="home-trending-wave__excerpt"
+                style={{
+                  WebkitLineClamp: 3,
+                  display: '-webkit-box',
+                  WebkitBoxOrient: 'vertical',
+                  minHeight: 'calc(var(--text-ui-sm) * 1.35 * 3)',
+                  maxHeight: 'calc(var(--text-ui-sm) * 1.35 * 3)',
+                  overflow: 'hidden',
+                }}
+              >
+                {article.excerpt ?? '\u00A0'}
+              </p>
+              <p className="home-trending-wave__meta flex items-center gap-1">
+                <span>{timeAgo}</span>
+                <span className="opacity-40" aria-hidden>·</span>
+                <span>{article.views.toLocaleString()} {t('common.views')}</span>
+                <span className="opacity-40" aria-hidden>·</span>
+                <span>{article.readTime} {t('common.min')}</span>
+              </p>
+            </Link>
+          </div>
         </div>
 
-        <div
-          className="home-trending-wave__queue"
-          role="tablist"
-          aria-label={t('home.trendingWeek')}
-          onMouseLeave={handleQueueLeave}
-        >
-          {trending.map((item, index) => (
-            <button
-              key={item.slug}
-              type="button"
-              role="tab"
-              aria-selected={index === displayIndex}
-              className={`home-trending-wave__queue-item${
-                index === displayIndex ? ' home-trending-wave__queue-item--active' : ''
-              }`}
-              onMouseEnter={() => handleQueueEnter(index)}
-              onFocus={() => handleQueueEnter(index)}
-              onClick={() => selectStory(index)}
-            >
-              <span className="home-trending-wave__queue-rank">{String(index + 1).padStart(2, '0')}</span>
-              <span className="home-trending-wave__queue-title">{item.title}</span>
-            </button>
-          ))}
+        <div className="flex-shrink-0 pt-3 border-t border-border/10 dark:border-border/20">
+          <div
+            className="home-trending-wave__queue"
+            role="tablist"
+            aria-label={t('home.trendingWeek')}
+            onMouseLeave={handleQueueLeave}
+          >
+            {trending.map((item, index) => (
+              <button
+                key={item.slug}
+                type="button"
+                role="tab"
+                aria-selected={index === displayIndex}
+                className={`home-trending-wave__queue-item${
+                  index === displayIndex ? ' home-trending-wave__queue-item--active' : ''
+                }`}
+                onMouseEnter={() => handleQueueEnter(index)}
+                onFocus={() => handleQueueEnter(index)}
+                onClick={() => selectStory(index)}
+              >
+                <span className="home-trending-wave__queue-rank">{String(index + 1).padStart(2, '0')}</span>
+                <span className="home-trending-wave__queue-title">{item.title}</span>
+              </button>
+            ))}
+          </div>
         </div>
       </div>
     </section>
@@ -342,22 +367,22 @@ function TrendingHeroRailHeader() {
   const { t } = useLocale();
 
   return (
-    <div className="home-trending-hero-rail__title-row flex items-center justify-between gap-2 min-w-0 w-full">
-      <div className="home-trending-hero-rail__title-wrap flex items-center gap-1 min-w-0 flex-1">
-        <TrendingUp className="h-3 w-3 text-primary shrink-0" aria-hidden />
+    <div className="flex items-center justify-between gap-2 min-w-0 w-full">
+      <div className="flex items-center gap-1.5 min-w-0 flex-1">
+        <TrendingUp className="h-5 w-5 text-primary shrink-0" aria-hidden />
         <h2
           id="home-trending-title"
-          className="m-0 p-0 text-[13px] font-display font-bold tracking-tight truncate min-w-0 leading-none"
+          className="m-0 p-0 py-0.5 text-[17px] md:text-[19px] font-display font-black tracking-tight text-foreground truncate min-w-0 leading-tight"
         >
           {t('home.trendingWeek')}
         </h2>
       </div>
       <Link
         href="/articles"
-        className="section-inline-link text-primary inline-flex items-center gap-0.5 hover:underline shrink-0 leading-none p-0 m-0"
+        className="section-inline-link text-primary inline-flex items-center gap-0.5 hover:underline shrink-0 leading-none p-0 m-0 text-xs md:text-sm font-semibold"
       >
         {t('home.trendingViewAll')}
-        <ArrowRight className="h-2.5 w-2.5 shrink-0" aria-hidden />
+        <ArrowRight className="h-3 w-3 shrink-0" aria-hidden />
       </Link>
     </div>
   );
@@ -417,19 +442,16 @@ export function HomeTrendingSection({
     if (trending.length === 0) {
       return (
         <section
-          className="home-trending-hero-rail featured-hero-card hero-dot-pattern relative overflow-hidden rounded-2xl border border-border/40"
+          className="home-trending-hero-rail flex flex-col h-full p-4 md:p-4.5 lg:p-5 rounded-2xl border border-border/40 bg-card shadow-sm lg:min-h-[var(--home-hero-band-card-h)] lg:h-[var(--home-hero-band-card-h)] lg:max-h-[var(--home-hero-band-card-h)] overflow-hidden relative"
           aria-labelledby="home-trending-title"
         >
-          {/* Premium Ambient Background */}
-          <div className="absolute inset-0 -z-10 overflow-hidden pointer-events-none" aria-hidden="true">
-            <div className="absolute -top-[10%] -right-[10%] w-[16rem] h-[16rem] rounded-full bg-amber-500/6 blur-[55px] animate-pulse duration-[6000ms]" />
-            <div className="absolute -bottom-[10%] -left-[10%] w-[16rem] h-[16rem] rounded-full bg-primary/5 blur-[55px] animate-pulse duration-[8000ms]" />
-          </div>
-          <div className="home-trending-hero-rail__body">
-            <div className="home-trending-band__meta">
+          <div className="flex flex-col h-full justify-between relative z-10">
+            <div className="flex-shrink-0 pb-3 border-b border-border/10 dark:border-border/20">
               <TrendingHeroRailHeader />
             </div>
-            <p className="px-1 py-4 text-sm text-muted-foreground">{t('home.noTrending')}</p>
+            <div className="flex-grow min-h-0 flex flex-col justify-center my-3">
+              <p className="text-center text-sm text-muted-foreground">{t('home.noTrending')}</p>
+            </div>
           </div>
         </section>
       );

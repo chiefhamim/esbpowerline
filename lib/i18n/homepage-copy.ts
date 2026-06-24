@@ -19,6 +19,13 @@ const ENERGY_STAT_LABELS_BN: Record<string, string> = {
   'Peak Today': 'আজকের পিক',
   'India Grid Import': 'ভারত থেকে আমদানি',
   'Solar Installed': 'সোলার স্থাপিত',
+  'Daily Generation': 'দৈনিক উৎপাদন',
+  'Load Shedding': 'লোড শেডিং',
+  'Coal Generation': 'কয়লা বিদ্যুৎ',
+  'Grid Frequency': 'গ্রিড ফ্রিকোয়েন্সি',
+  'Fuel Cost': 'জ্বালানি খরচ',
+  'Liquid Fuel Gen': 'তরল জ্বালানি বিদ্যুৎ',
+  'Hydro Power': 'হাইড্রো বিদ্যুৎ',
 };
 
 const PROFESSIONALS_CTA_BN = {

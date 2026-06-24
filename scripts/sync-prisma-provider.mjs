@@ -4,6 +4,13 @@
  */
 import { readFileSync, writeFileSync } from 'fs';
 import path from 'path';
+import dotenv from 'dotenv';
+
+// Load env files in standard precedence order
+dotenv.config({ path: path.resolve(process.cwd(), '.env.local') });
+dotenv.config({ path: path.resolve(process.cwd(), '.env.production.local') });
+dotenv.config({ path: path.resolve(process.cwd(), '.env.development.local') });
+dotenv.config({ path: path.resolve(process.cwd(), '.env') });
 
 const provider = (process.env.PRISMA_SCHEMA_PROVIDER ?? 'sqlite').trim();
 if (provider !== 'sqlite' && provider !== 'postgresql') {
