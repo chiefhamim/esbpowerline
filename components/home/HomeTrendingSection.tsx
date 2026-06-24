@@ -164,6 +164,11 @@ function TrendingHeroRailWave({ trending }: { trending: PublicArticleCard[] }) {
       className="home-trending-hero-rail featured-hero-card hero-dot-pattern relative overflow-hidden rounded-2xl border border-border/40"
       aria-labelledby="home-trending-title"
     >
+      {/* Premium Ambient Background */}
+      <div className="absolute inset-0 -z-10 overflow-hidden pointer-events-none" aria-hidden="true">
+        <div className="absolute -top-[10%] -right-[10%] w-[16rem] h-[16rem] rounded-full bg-amber-500/6 blur-[55px] animate-pulse duration-[6000ms]" />
+        <div className="absolute -bottom-[10%] -left-[10%] w-[16rem] h-[16rem] rounded-full bg-primary/5 blur-[55px] animate-pulse duration-[8000ms]" />
+      </div>
       <div className="home-trending-hero-rail__body">
         <div className="home-trending-band__meta">
           <TrendingHeroRailHeader />
@@ -415,6 +420,11 @@ export function HomeTrendingSection({
           className="home-trending-hero-rail featured-hero-card hero-dot-pattern relative overflow-hidden rounded-2xl border border-border/40"
           aria-labelledby="home-trending-title"
         >
+          {/* Premium Ambient Background */}
+          <div className="absolute inset-0 -z-10 overflow-hidden pointer-events-none" aria-hidden="true">
+            <div className="absolute -top-[10%] -right-[10%] w-[16rem] h-[16rem] rounded-full bg-amber-500/6 blur-[55px] animate-pulse duration-[6000ms]" />
+            <div className="absolute -bottom-[10%] -left-[10%] w-[16rem] h-[16rem] rounded-full bg-primary/5 blur-[55px] animate-pulse duration-[8000ms]" />
+          </div>
           <div className="home-trending-hero-rail__body">
             <div className="home-trending-band__meta">
               <TrendingHeroRailHeader />
@@ -451,8 +461,13 @@ export function HomeTrendingSection({
       <div className="grid lg:grid-cols-12 gap-3 md:gap-4">
         <Link
           href={`/articles/${lead.slug}`}
-          className="lg:col-span-5 group flex gap-3 md:gap-4 rounded-2xl border border-border bg-card p-3 md:p-4 hover:border-primary/30 transition-all"
+          className="lg:col-span-5 group flex gap-3 md:gap-4 rounded-2xl border border-border bg-card p-3 md:p-4 hover:border-primary/30 transition-all relative overflow-hidden"
         >
+          {/* Ambient Glow */}
+          <div className="absolute inset-0 -z-10 overflow-hidden pointer-events-none opacity-60 group-hover:opacity-100 transition-opacity duration-500" aria-hidden="true">
+            <div className="absolute -top-[20%] -right-[20%] w-[12rem] h-[12rem] rounded-full bg-amber-500/5 blur-[40px]" />
+            <div className="absolute -bottom-[20%] -left-[20%] w-[12rem] h-[12rem] rounded-full bg-primary/4 blur-[40px]" />
+          </div>
           <div className="relative w-24 sm:w-28 md:w-32 shrink-0 aspect-[4/3] rounded-lg overflow-hidden bg-muted">
             {hasArticleImage(lead.imageUrl) ? (
               <Image
@@ -484,7 +499,12 @@ export function HomeTrendingSection({
         </Link>
 
         {rest.length > 0 ? (
-          <div className="lg:col-span-7 flex flex-col justify-center rounded-2xl border border-border bg-card px-3 md:px-4 py-2 md:py-3 divide-y divide-border/50">
+          <div className="lg:col-span-7 flex flex-col justify-center rounded-2xl border border-border bg-card px-3 md:px-4 py-2 md:py-3 divide-y divide-border/50 relative overflow-hidden">
+            {/* Ambient Glow */}
+            <div className="absolute inset-0 -z-10 overflow-hidden pointer-events-none opacity-40" aria-hidden="true">
+              <div className="absolute -top-[30%] -left-[10%] w-[18rem] h-[18rem] rounded-full bg-primary/3 blur-[50px]" />
+              <div className="absolute -bottom-[30%] -right-[10%] w-[18rem] h-[18rem] rounded-full bg-amber-500/3 blur-[50px]" />
+            </div>
             {rest.map((article, index) => (
               <TrendingListItem key={article.slug} article={article} rank={index + 2} />
             ))}

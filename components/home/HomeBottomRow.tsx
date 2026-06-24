@@ -36,7 +36,12 @@ export function HomeBottomRow({
   const isStack = layout === 'stack';
 
   const magazineCard = (
-    <div className="card home-bottom-row__card group bg-card">
+    <div className="card home-bottom-row__card group bg-card relative overflow-hidden">
+      {/* Premium Ambient Background */}
+      <div className="absolute inset-0 -z-10 overflow-hidden pointer-events-none opacity-70 group-hover:opacity-100 transition-opacity duration-500" aria-hidden="true">
+        <div className="absolute -top-[20%] -right-[20%] w-[14rem] h-[14rem] rounded-full bg-emerald-500/6 blur-[45px] animate-pulse duration-[7000ms]" />
+        <div className="absolute -bottom-[20%] -left-[20%] w-[14rem] h-[14rem] rounded-full bg-primary/5 blur-[45px] animate-pulse duration-[9000ms]" />
+      </div>
       <div>
         <div className="flex items-center gap-2 text-emerald-500 dark:text-emerald-400 mb-2.5">
           <BookOpen className="h-4 w-4" />
@@ -72,7 +77,12 @@ export function HomeBottomRow({
   );
 
   const memberCard = (
-    <div className="card home-bottom-row__card bg-card">
+    <div className="card home-bottom-row__card bg-card relative overflow-hidden group">
+      {/* Premium Ambient Background */}
+      <div className="absolute inset-0 -z-10 overflow-hidden pointer-events-none opacity-70 group-hover:opacity-100 transition-opacity duration-500" aria-hidden="true">
+        <div className="absolute -top-[20%] -right-[20%] w-[14rem] h-[14rem] rounded-full bg-primary/6 blur-[45px] animate-pulse duration-[8000ms]" />
+        <div className="absolute -bottom-[20%] -left-[20%] w-[14rem] h-[14rem] rounded-full bg-amber-500/5 blur-[45px] animate-pulse duration-[10000ms]" />
+      </div>
       <div>
         <div className="section-kicker flex items-center gap-1.5 text-muted-foreground mb-2.5">
           <Briefcase className="h-4 w-4 text-primary" />

@@ -3,7 +3,7 @@ import path from 'path';
 export function resolveDatabaseUrl() {
   const raw = process.env.DATABASE_URL?.trim();
   if (!raw) {
-    if (process.env.NODE_ENV === 'production') {
+    if (process.env.NODE_ENV === 'production' && process.env.VERCEL === '1' && process.env.VERCEL_URL) {
       throw new Error(
         'DATABASE_URL is not set. Add your Supabase transaction pooler URL to production environment variables.',
       );

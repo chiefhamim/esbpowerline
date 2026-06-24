@@ -38,8 +38,13 @@ export default async function MagazinePage() {
   ];
 
   return (
-    <div className="min-h-screen">
-      <div className="container container--shell py-10 md:py-12">
+    <div className="min-h-screen relative overflow-hidden">
+      {/* Premium Full-Page Ambient Glow */}
+      <div className="absolute inset-0 -z-10 overflow-hidden pointer-events-none" aria-hidden="true">
+        <div className="absolute top-[10%] left-[5%] w-[40rem] h-[40rem] rounded-full bg-emerald-500/5 blur-[130px] animate-pulse duration-[10000ms]" />
+        <div className="absolute bottom-[20%] right-[5%] w-[35rem] h-[35rem] rounded-full bg-primary/4 blur-[120px] animate-pulse duration-[12000ms]" />
+      </div>
+      <div className="container container--shell py-10 md:py-12 relative z-10">
         <div className="flex flex-col lg:flex-row gap-10 xl:gap-14">
           <div className="lg:w-2/5">
             <div className="sticky top-8">
@@ -93,7 +98,12 @@ export default async function MagazinePage() {
 
           <div className="grid sm:grid-cols-2 xl:grid-cols-4 gap-4 md:gap-5">
             {features.map((f, idx) => (
-              <div key={idx} className="card p-6 group hover:border-primary/50 transition-all duration-200">
+              <div key={idx} className="card p-6 group hover:border-primary/50 transition-all duration-200 relative overflow-hidden">
+                {/* Subtle card glow */}
+                <div className="absolute inset-0 -z-10 overflow-hidden pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-300" aria-hidden="true">
+                  <div className="absolute -top-[30%] -right-[30%] w-[10rem] h-[10rem] rounded-full bg-emerald-500/6 blur-[30px]" />
+                  <div className="absolute -bottom-[30%] -left-[30%] w-[10rem] h-[10rem] rounded-full bg-primary/4 blur-[30px]" />
+                </div>
                 <div className="uppercase text-accent text-xs tracking-widest font-semibold mb-1.5">FEATURE</div>
                 <h4 className="font-semibold text-lg leading-tight mb-2 group-hover:text-primary transition-colors">{f.title}</h4>
                 <p className="text-sm text-muted-foreground">{f.excerpt}</p>

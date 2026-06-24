@@ -40,13 +40,13 @@ const ICON_COLOR_CLASS: Record<string, string> = {
 
 const initial: Stat[] = [
   { label: 'Generation Capacity', value: 28420, unit: 'MW', icon: 'Zap' },
-  { label: 'Current Demand', value: 15230, unit: 'MW', icon: 'Activity' },
-  { label: 'Renewable Share', value: 4.8, unit: '%', isDecimal: true, icon: 'Leaf' },
+  { label: 'Current Demand', value: 16154, unit: 'MW', icon: 'Activity' }, // Evening Peak Generation (16,154.41 MW)
+  { label: 'Renewable Share', value: 7.2, unit: '%', isDecimal: true, icon: 'Leaf' }, // SREDA renewable capacity share (~7.2%)
   { label: 'System Loss', value: 7.6, unit: '%', isDecimal: true, icon: 'Gauge' },
-  { label: 'Gas Supply', value: 1380, unit: 'MMcfd', icon: 'Flame' },
-  { label: 'Peak Today', value: 16850, unit: 'MW', icon: 'TrendingUp' },
-  { label: 'India Grid Import', value: 1160, unit: 'MW', icon: 'Cable' },
-  { label: 'Solar Installed', value: 1020, unit: 'MW', icon: 'Sun' },
+  { label: 'Gas Supply', value: 907, unit: 'MMcfd', icon: 'Flame' }, // Gas supplied to power grid (907.35 MMCFD)
+  { label: 'Peak Today', value: 16854, unit: 'MW', icon: 'TrendingUp' }, // Evening Peak Demand (16,854.11 MW)
+  { label: 'India Grid Import', value: 2584, unit: 'MW', icon: 'Cable' }, // Peak import flow (2,583.55 MW)
+  { label: 'Solar Installed', value: 1512, unit: 'MW', icon: 'Sun' }, // SREDA installed solar (1,511.70 MW)
 ];
 
 function mergeSnapshotStats(incoming?: Stat[]): Stat[] {
@@ -84,16 +84,13 @@ export function EnergyDashboard({
     if (!simulateLive) return;
 
     const interval = setInterval(() => {
-      setStats(prev => prev.map((s, idx) => {
-        const mwSwing = idx === 0 || idx === 1 || idx === 5 || idx === 6;
-        const range = mwSwing ? (idx === 6 ? 90 : 160) : idx === 4 ? 35 : idx === 7 ? 12 : 0.2;
-        const variation = (Math.random() - 0.5) * range;
-        const isDecimal = idx === 2 || idx === 3;
-        const floor = isDecimal ? 0.5 : 100;
-        const next = Math.max(floor, s.value + variation);
+      setStats(prev => prev.map((s) => {
+        if (s.label !== 'Current Demand') return s;
+        const variation = (Math.random() - 0.5) * 160;
+        const next = Math.max(100, s.value + variation);
         return {
           ...s,
-          value: isDecimal ? parseFloat(next.toFixed(1)) : Math.round(next),
+          value: Math.round(next),
         };
       }));
     }, 24000);

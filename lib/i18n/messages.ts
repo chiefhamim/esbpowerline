@@ -108,6 +108,8 @@ export type MessageKey =
   | 'ticker.dseLive'
   | 'ticker.live'
   | 'ticker.indicative'
+  | 'ticker.commodities'
+  | 'ticker.dse'
   | 'sort.label'
   | 'sort.latest'
   | 'sort.mostViewed'
@@ -282,6 +284,8 @@ const EN: Record<MessageKey, string> = {
   'ticker.dseLive': 'DSE Live',
   'ticker.live': 'Live',
   'ticker.indicative': 'Indicative',
+  'ticker.commodities': 'Commodities',
+  'ticker.dse': 'DSE',
   'sort.label': 'Sort',
   'sort.latest': 'Latest First',
   'sort.mostViewed': 'Most Viewed',
@@ -462,6 +466,8 @@ const BN: Record<MessageKey, string> = {
   'ticker.dseLive': 'ডিএসই লাইভ',
   'ticker.live': 'লাইভ',
   'ticker.indicative': 'আনুমানিক',
+  'ticker.commodities': 'পণ্যসমূহ',
+  'ticker.dse': 'ডিএসই',
   'sort.label': 'সাজান',
   'sort.latest': 'নতুন আগে',
   'sort.mostViewed': 'সর্বাধিক পঠিত',

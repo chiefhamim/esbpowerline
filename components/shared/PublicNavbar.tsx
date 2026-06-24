@@ -9,7 +9,7 @@ import { usePathname } from 'next/navigation';
 import { PublicHrefProvider, usePublicHref } from '@/lib/public-href-client';
 import type { PublicCategory } from '@/lib/category-types';
 import { CATEGORIES } from '@/lib/constants';
-import { slugify } from '@/lib/utils';
+import { slugify, cn } from '@/lib/utils';
 import { localizeCategoryFields } from '@/lib/i18n/categories';
 import {
   categoryColorVars,
@@ -190,7 +190,7 @@ export function PublicNavbar({
                       pathname === '/articles' ? ' public-nav-bar__hub-link--active' : ''
                     }`}
                   >
-                    <Newspaper className="icon-sm" aria-hidden />
+                    <Newspaper className="h-3.5 w-3.5 shrink-0 opacity-90" aria-hidden />
                     <span className="hidden lg:inline">{t('nav.latest')}</span>
                   </PublicNavLink>
 
@@ -200,7 +200,7 @@ export function PublicNavbar({
                       pathname.includes('/power-grid') ? ' public-nav-bar__hub-link--active' : ''
                     }`}
                   >
-                    <BarChart3 className="icon-sm" aria-hidden />
+                    <BarChart3 className="h-3.5 w-3.5 shrink-0 opacity-90" aria-hidden />
                     <span className="hidden lg:inline">{t('nav.gridExplorer')}</span>
                   </PublicNavLink>
 
@@ -210,7 +210,7 @@ export function PublicNavbar({
                       pathname === '/magazine' ? ' public-nav-bar__hub-link--active' : ''
                     }`}
                   >
-                    <BookOpen className="icon-sm" aria-hidden />
+                    <BookOpen className="h-3.5 w-3.5 shrink-0 opacity-90" aria-hidden />
                     <span className="hidden lg:inline">{t('nav.magazine')}</span>
                   </PublicNavLink>
                 </div>
@@ -272,8 +272,8 @@ export function PublicNavbar({
                         icon={c.icon}
                         iconImageUrl={c.iconImageUrl}
                         name={c.name}
-                        size={12}
-                        className={`relative z-[1] h-3 w-3 shrink-0 transition-transform duration-200 group-hover:scale-110 ${
+                        size={10}
+                        className={`relative z-[1] h-2.5 w-2.5 shrink-0 transition-transform duration-200 group-hover:scale-110 ${
                           colors.useCustom ? 'category-nav--custom' : colors.text
                         }`}
                         style={colors.useCustom ? categoryTextStyle(c.color) : undefined}
@@ -325,8 +325,8 @@ export function PublicNavbar({
                           icon={c.icon} 
                           iconImageUrl={c.iconImageUrl} 
                           name={c.name} 
-                          size={12}
-                          className={`transition-transform duration-200 group-hover:scale-110 shrink-0 h-3 w-3 ${
+                        size={10}
+                        className={`transition-transform duration-200 group-hover:scale-110 shrink-0 h-2.5 w-2.5 ${
                             colors.useCustom ? 'category-nav--custom' : colors.text
                           }`}
                           style={colors.useCustom ? categoryTextStyle(c.color) : undefined}
