@@ -82,9 +82,36 @@ export type MediaLibraryItem = {
   createdAt: Date;
   usageCount: number;
   usedInTitles: string[];
-  usedInArticles: { id: string; title: string; slug: string; imageCredit?: string | null; seo?: any }[];
+  usedInArticles: {
+    baseSlug: string;
+    title: string;
+    titleEn?: string;
+    titleBn?: string;
+    idEn?: string;
+    idBn?: string;
+    slugEn?: string;
+    slugBn?: string;
+    imageCredit?: string | null;
+    seo?: any;
+  }[];
   canDelete: boolean;
 };
+
+function getNormalizedBase(url: string): string {
+  let filename = url.split('/').pop()?.split('?')[0] || url;
+  const tsMatch = filename.match(/^\d+-(.+)$/);
+  if (tsMatch) {
+    filename = tsMatch[1];
+  }
+  filename = filename.toLowerCase();
+  const dotIndex = filename.lastIndexOf('.');
+  let name = dotIndex > -1 ? filename.slice(0, dotIndex) : filename;
+  const ext = dotIndex > -1 ? filename.slice(dotIndex) : '';
+  name = name.replace(/-\d+x\d+$/, '');
+  name = name.replace(/-scaled$/, '');
+  name = name.replace(/-\d+$/, '');
+  return name + ext;
+}
 
 export async function getMediaLibrary(): Promise<MediaLibraryItem[]> {
   const user = await requireAuth();
@@ -97,7 +124,7 @@ export async function getMediaLibrary(): Promise<MediaLibraryItem[]> {
         status: { not: 'TRASH' },
         editorTrash: false,
       },
-      select: { id: true, slug: true, imageUrl: true, title: true, imageCredit: true, seo: true },
+      select: { id: true, slug: true, imageUrl: true, title: true, imageCredit: true, seo: true, locale: true },
     }),
     prisma.user.findMany({
       select: { id: true, name: true },
@@ -111,28 +138,62 @@ export async function getMediaLibrary(): Promise<MediaLibraryItem[]> {
     if (u.name) userMap.set(u.id, u.name);
   }
 
-  const usageMap = new Map<string, { count: number; titles: string[]; articles: { id: string; title: string; slug: string; imageCredit?: string | null; seo?: any }[] }>();
+  interface StoryUsage {
+    baseSlug: string;
+    title: string;
+    titleEn?: string;
+    titleBn?: string;
+    idEn?: string;
+    idBn?: string;
+    slugEn?: string;
+    slugBn?: string;
+    imageCredit?: string | null;
+    seo?: any;
+  }
+
+  const usageMap = new Map<string, Map<string, StoryUsage>>();
   for (const article of articles) {
     if (!article.imageUrl) continue;
-    const entry = usageMap.get(article.imageUrl) ?? { count: 0, titles: [], articles: [] };
-    entry.count += 1;
-    entry.titles.push(article.title);
-    entry.articles.push({
-      id: article.id,
-      title: article.title,
-      slug: article.slug,
-      imageCredit: article.imageCredit,
-      seo: article.seo,
-    });
-    usageMap.set(article.imageUrl, entry);
+    const imgKey = getNormalizedBase(article.imageUrl);
+    const baseSlug = article.slug.endsWith('-bn') ? article.slug.slice(0, -3) : article.slug;
+    
+    let imgEntry = usageMap.get(imgKey);
+    if (!imgEntry) {
+      imgEntry = new Map<string, StoryUsage>();
+      usageMap.set(imgKey, imgEntry);
+    }
+    
+    let story = imgEntry.get(baseSlug);
+    if (!story) {
+      story = {
+        baseSlug,
+        title: article.title,
+        imageCredit: article.imageCredit,
+        seo: article.seo,
+      };
+    }
+    
+    if (article.locale === 'bn' || article.slug.endsWith('-bn')) {
+      story.titleBn = article.title;
+      story.idBn = article.id;
+      story.slugBn = article.slug;
+    } else {
+      story.titleEn = article.title;
+      story.idEn = article.id;
+      story.slugEn = article.slug;
+      story.title = article.title;
+    }
+    imgEntry.set(baseSlug, story);
   }
 
   const canDeleteAny = can(user.role, 'media.delete_any');
   const canDeleteOwn = can(user.role, 'media.delete_own');
 
-  return items.map((m) => {
-    const usage = usageMap.get(m.url);
-    const usageCount = usage?.count ?? 0;
+  const mapped = items.map((m) => {
+    const origKey = getNormalizedBase(m.url);
+    const storiesMap = usageMap.get(origKey);
+    const storiesList = storiesMap ? Array.from(storiesMap.values()) : [];
+    const usageCount = storiesList.length;
     const ownsFile = m.uploadedById === user.id;
     const canDelete = usageCount === 0 && (canDeleteAny || (canDeleteOwn && ownsFile));
 
@@ -149,11 +210,23 @@ export async function getMediaLibrary(): Promise<MediaLibraryItem[]> {
       uploadedByName: m.uploadedById ? (userMap.get(m.uploadedById) ?? 'Unknown') : 'System',
       createdAt: m.createdAt,
       usageCount,
-      usedInTitles: usage?.titles ?? [],
-      usedInArticles: usage?.articles ?? [],
+      usedInTitles: storiesList.map(s => s.titleEn || s.title || ''),
+      usedInArticles: storiesList,
       canDelete,
     };
   });
+
+  const uniqueItems: typeof mapped = [];
+  const seenOriginalKeys = new Set<string>();
+  for (const item of mapped) {
+    const origKey = getNormalizedBase(item.url);
+    if (!seenOriginalKeys.has(origKey)) {
+      seenOriginalKeys.add(origKey);
+      uniqueItems.push(item);
+    }
+  }
+
+  return uniqueItems;
 }
 
 export async function createMedia(data: {

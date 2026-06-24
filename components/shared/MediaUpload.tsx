@@ -265,10 +265,17 @@ function ReplaceMediaModal({
               <div className="border border-border/40 rounded-xl bg-sky-500/5 p-3">
                 <span className="text-[11px] font-semibold text-sky-400 uppercase tracking-wider block mb-1">Referenced in</span>
                 <ul className="space-y-1.5">
-                  {item.usedInArticles.map((art) => (
-                    <li key={art.id} className="text-xs font-medium flex items-center justify-between gap-2">
-                      <span className="truncate text-foreground/80">{art.title}</span>
-                      <Link href={`/cms/articles/${art.id}/edit`} className="text-sky-400 hover:underline shrink-0 text-[10px]">Edit story</Link>
+                  {item.usedInArticles.map((story: any) => (
+                    <li key={story.baseSlug} className="text-xs font-medium flex flex-wrap items-center justify-between gap-2">
+                      <span className="truncate text-foreground/80 flex-1 min-w-0">{story.titleEn || story.titleBn || story.title}</span>
+                      <div className="flex gap-1.5 shrink-0">
+                        {story.idEn && (
+                          <Link href={`/cms/articles/${story.idEn}/edit`} className="text-sky-400 hover:underline shrink-0 text-[10px]">Edit EN</Link>
+                        )}
+                        {story.idBn && (
+                          <Link href={`/cms/articles/${story.idBn}/edit`} className="text-purple-400 hover:underline shrink-0 text-[10px]">Edit BN</Link>
+                        )}
+                      </div>
                     </li>
                   ))}
                 </ul>
@@ -685,18 +692,188 @@ function ImageLightbox({
   );
 }
 
+function UsedInArticlesModal({
+  item,
+  open,
+  onClose,
+}: {
+  item: MediaLibraryItem | null;
+  open: boolean;
+  onClose: () => void;
+}) {
+  const [mounted, setMounted] = useState(false);
+  const [theme, setTheme] = useState<SiteTheme>('midnight');
+
+  useEffect(() => {
+    setMounted(true);
+    setTheme(getSavedSiteTheme());
+    const observer = new MutationObserver(() => {
+      setTheme(getSavedSiteTheme());
+    });
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['class', 'data-site-theme'],
+    });
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
+    if (!open) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [open, onClose]);
+
+  if (!open || !item || !mounted) return null;
+
+  const isWhiteTheme = theme === 'white';
+
+  return createPortal(
+    <div
+      className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm transition-all duration-300"
+      onClick={onClose}
+      role="dialog"
+      aria-modal="true"
+    >
+      <div
+        className={cn(
+          "w-full max-w-lg rounded-3xl p-6 shadow-2xl relative border animate-in fade-in zoom-in-95 duration-200",
+          isWhiteTheme 
+            ? "bg-slate-100 text-slate-900 border-slate-200" 
+            : "bg-neutral-900 text-foreground border-neutral-800"
+        )}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <button
+          type="button"
+          onClick={onClose}
+          className={cn(
+            "absolute top-4 right-4 p-2 rounded-full transition-all duration-200 hover:bg-muted/10 cursor-pointer",
+            isWhiteTheme ? "text-slate-500 hover:text-slate-900" : "text-muted-foreground hover:text-foreground"
+          )}
+          aria-label="Close modal"
+        >
+          <X className="h-4 w-4" />
+        </button>
+
+        <div className="flex items-center gap-3 mb-4 border-b border-border/40 pb-3">
+          <Newspaper className="h-5 w-5 text-primary shrink-0" />
+          <div className="min-w-0">
+            <h3 className="font-display font-bold text-base tracking-tight text-foreground">
+              Article Usage Details
+            </h3>
+            <p className="text-xs text-muted-foreground mt-0.5 truncate max-w-[280px]" title={item.name}>
+              {item.name}
+            </p>
+          </div>
+        </div>
+
+        <div className="space-y-3">
+          <p className="text-xs text-muted-foreground">
+            This asset is linked to the following {item.usedInArticles.length} story usage{item.usedInArticles.length === 1 ? '' : 's'}:
+          </p>
+
+          <ul className="space-y-2.5 max-h-60 overflow-y-auto pr-1">
+            {item.usedInArticles.map((story: any) => {
+              const displayTitle = story.titleEn || story.titleBn || story.title;
+              return (
+                <li
+                  key={story.baseSlug}
+                  className={cn(
+                    "flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs p-3 rounded-xl border transition-all",
+                    isWhiteTheme 
+                      ? "bg-slate-50 border-slate-200 hover:bg-slate-100" 
+                      : "bg-neutral-950 border-neutral-800 hover:bg-neutral-900/50"
+                  )}
+                >
+                  <div className="min-w-0 flex-1">
+                    <span className="font-semibold text-foreground block truncate leading-snug" title={displayTitle}>
+                      {displayTitle}
+                    </span>
+                    {story.imageCredit && (
+                      <span className="text-[10px] text-muted-foreground mt-0.5 block">
+                        Credit: {story.imageCredit}
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    {/* EN translation */}
+                    {story.idEn && (
+                      <div className="flex items-center gap-1 bg-sky-500/5 border border-sky-500/10 rounded-lg p-0.5">
+                        <span className="text-[9px] font-bold text-sky-500 px-1">EN</span>
+                        <Link
+                          href={`/cms/articles/${story.idEn}/edit`}
+                          className="h-6 px-1.5 rounded-md flex items-center justify-center font-bold text-[10px] bg-sky-500 text-white hover:bg-sky-600 transition-colors"
+                        >
+                          Edit
+                        </Link>
+                        <a
+                          href={publicArticleUrl(story.slugEn)}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="h-6 w-6 rounded-md flex items-center justify-center border border-border/40 hover:bg-muted/10 transition-colors"
+                          title="View English live"
+                        >
+                          <ExternalLink className="h-3 w-3" />
+                        </a>
+                      </div>
+                    )}
+
+                    {/* BN translation */}
+                    {story.idBn && (
+                      <div className="flex items-center gap-1 bg-purple-500/5 border border-purple-500/10 rounded-lg p-0.5">
+                        <span className="text-[9px] font-bold text-purple-500 px-1">BN</span>
+                        <Link
+                          href={`/cms/articles/${story.idBn}/edit`}
+                          className="h-6 px-1.5 rounded-md flex items-center justify-center font-bold text-[10px] bg-purple-500 text-white hover:bg-purple-600 transition-colors"
+                        >
+                          Edit
+                        </Link>
+                        <a
+                          href={publicArticleUrl(story.slugBn)}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="h-6 w-6 rounded-md flex items-center justify-center border border-border/40 hover:bg-muted/10 transition-colors"
+                          title="View Bengali live"
+                        >
+                          <ExternalLink className="h-3 w-3" />
+                        </a>
+                      </div>
+                    )}
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+
+        <div className="mt-5 pt-3 border-t border-border/40 flex justify-end">
+          <Button type="button" size="sm" onClick={onClose} className="h-8">
+            Close
+          </Button>
+        </div>
+      </div>
+    </div>,
+    document.body
+  );
+}
+
 function MediaCard({
   item,
   onDelete,
   onUpdated,
   pending,
   onPreviewImage,
+  onShowUsage,
 }: {
   item: MediaLibraryItem;
   onDelete: (id: string) => void;
   onUpdated: () => void;
   pending: boolean;
   onPreviewImage: (url: string, name: string, dims: string | null, size: number | null) => void;
+  onShowUsage?: (item: MediaLibraryItem) => void;
 }) {
   const [dims, setDims] = useState<string | null>(null);
   const [editing, setEditing] = useState(false);
@@ -779,34 +956,20 @@ function MediaCard({
 
         {item.usedInArticles.length > 0 && (
           <div className="media-library-card__usage">
-            <span className="media-library-card__usage-label">
-              <Newspaper className="h-3 w-3" />
-              Used in {item.usageCount} stor{item.usageCount === 1 ? 'y' : 'ies'}
-            </span>
-            <ul className="media-library-card__article-links">
-              {item.usedInArticles.slice(0, 3).map((article) => (
-                <li key={article.id}>
-                  <Link href={`/cms/articles/${article.id}/edit`} className="media-library-card__article-link">
-                    {article.title}
-                  </Link>
-                  <ModernTooltip label="View live article" variant="editor" alwaysShow>
-                    <a
-                      href={publicArticleUrl(article.slug)}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="media-library-card__article-public"
-                    >
-                      <ExternalLink className="h-3 w-3" />
-                    </a>
-                  </ModernTooltip>
-                </li>
-              ))}
-              {item.usedInArticles.length > 3 && (
-                <li className="media-library-card__article-more">
-                  +{item.usedInArticles.length - 3} more
-                </li>
+            <button
+              type="button"
+              onClick={() => onShowUsage?.(item)}
+              className={cn(
+                "media-library-card__usage-label flex items-center gap-1.5 text-xs hover:underline font-semibold border px-2.5 py-1.5 rounded-lg w-full justify-center transition-all cursor-pointer",
+                item.usageCount <= 1 ? "text-primary bg-primary/5 border-primary/20 hover:bg-primary/10" :
+                item.usageCount === 2 ? "text-purple-500 bg-purple-500/5 border-purple-500/20 hover:bg-purple-500/10" :
+                item.usageCount === 3 ? "text-amber-600 dark:text-amber-400 bg-amber-500/5 border-amber-500/20 hover:bg-amber-500/10" :
+                "text-rose-500 bg-rose-500/5 border-rose-500/20 hover:bg-rose-500/10"
               )}
-            </ul>
+            >
+              <Newspaper className="h-3.5 w-3.5" />
+              Used in {item.usageCount} stor{item.usageCount === 1 ? 'y' : 'ies'}
+            </button>
           </div>
         )}
 
@@ -927,6 +1090,7 @@ export function MediaUpload({ items }: { items: MediaLibraryItem[] }) {
     dims: string | null;
     size: number | null;
   } | null>(null);
+  const [usageModalItem, setUsageModalItem] = useState<MediaLibraryItem | null>(null);
 
   async function handleUpload() {
     const input = document.createElement('input');
@@ -1179,6 +1343,7 @@ export function MediaUpload({ items }: { items: MediaLibraryItem[] }) {
               onUpdated={() => router.refresh()}
               pending={pending}
               onPreviewImage={(url, name, dims, size) => setLightboxItem({ url, name, dims, size })}
+              onShowUsage={(item) => setUsageModalItem(item)}
             />
           ))}
         </div>
@@ -1192,6 +1357,13 @@ export function MediaUpload({ items }: { items: MediaLibraryItem[] }) {
       <ImageLightbox
         item={lightboxItem}
         onClose={() => setLightboxItem(null)}
+      />
+
+      {/* Used In Articles List Popup */}
+      <UsedInArticlesModal
+        item={usageModalItem}
+        open={usageModalItem !== null}
+        onClose={() => setUsageModalItem(null)}
       />
     </div>
   );

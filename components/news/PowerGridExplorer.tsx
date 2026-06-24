@@ -355,7 +355,8 @@ export function PowerGridExplorer({ initialMix, initialLines, initialProjects }:
   const avgCostPerKwh = totalCostBdt / (totalGenMkwhr * 1000000);
 
   return (
-    <div className="grid-explorer relative">
+    <>
+      <div className="grid-explorer relative print:hidden">
       {/* Dynamic Animated Ambient Background */}
       <div className="absolute inset-0 -z-10 overflow-hidden pointer-events-none rounded-3xl" aria-hidden="true">
         {/* Glow Blobs */}
@@ -676,79 +677,94 @@ export function PowerGridExplorer({ initialMix, initialLines, initialProjects }:
               })}
             </div>
 
-            <div className="grid-explorer-donut-wrap">
-              {chartsReady ? (
-                <ResponsiveContainer width="100%" height="100%" minHeight={220}>
-                  <PieChart>
-                    <Pie
-                      data={generationData.filter(d => d.gen > 0)}
-                      dataKey="gen"
-                      nameKey="name"
-                      cx="50%"
-                      cy="50%"
-                      innerRadius="54%"
-                      outerRadius="82%"
-                      paddingAngle={2}
-                      cornerRadius={4}
-                      stroke="hsl(var(--card))"
-                      strokeWidth={2}
-                      onMouseEnter={(_, i) => setHoveredIndex(i)}
-                      onMouseLeave={() => setHoveredIndex(null)}
-                    >
-                      {generationData.filter(d => d.gen > 0).map((entry, idx) => {
-                        const dimmed = hoveredIndex !== null && hoveredIndex !== idx;
-                        return (
-                          <Cell
-                            key={idx}
-                            fill={entry.color}
-                            fillOpacity={dimmed ? 0.3 : 1}
-                            style={{ transition: 'fill-opacity 200ms ease' }}
-                          />
-                        );
-                      })}
-                    </Pie>
-                    <Tooltip
-                      content={({ active, payload }) => {
-                        if (!active || !payload?.length) return null;
-                        const row = payload[0].payload;
-                        const pct = ((row.gen / totalGenMkwhr) * 100).toFixed(2);
-                        return (
-                          <div className="p-4 md:p-5 text-card-foreground border border-border/80 rounded-2xl shadow-2xl text-xs md:text-sm leading-relaxed w-72 md:w-80 max-w-[calc(100vw-2rem)] select-none bg-card">
-                            <div className="font-bold text-foreground border-b border-border/40 pb-1.5 mb-2 flex items-center justify-between gap-2">
-                              <span>{row.name} Share</span>
-                              <span className="text-[9px] md:text-[10px] uppercase font-bold text-primary tracking-wider">Operational Mix</span>
+            <div className="grid-explorer-donut-wrap">              {chartsReady ? (
+                <PieChart width={200} height={200} margin={{ top: 0, right: 0, bottom: 0, left: 0 }}>
+                  <Pie
+                    data={generationData.filter(d => d.gen > 0)}
+                    dataKey="gen"
+                    nameKey="name"
+                    cx={100}
+                    cy={100}
+                    innerRadius={55}
+                    outerRadius={82}
+                    paddingAngle={2}
+                    cornerRadius={4}
+                    stroke="hsl(var(--card))"
+                    strokeWidth={2}
+                    onMouseEnter={(_, i) => setHoveredIndex(i)}
+                    onMouseLeave={() => setHoveredIndex(null)}
+                  >
+                    {generationData.filter(d => d.gen > 0).map((entry, idx) => {
+                      const dimmed = hoveredIndex !== null && hoveredIndex !== idx;
+                      return (
+                        <Cell
+                          key={idx}
+                          fill={entry.color}
+                          fillOpacity={dimmed ? 0.3 : 1}
+                          style={{ transition: 'fill-opacity 200ms ease' }}
+                        />
+                      );
+                    })}
+                  </Pie>
+                  <Tooltip
+                    content={({ active, payload }) => {
+                      if (!active || !payload?.length) return null;
+                      const row = payload[0].payload;
+                      const pct = ((row.gen / totalGenMkwhr) * 100).toFixed(2);
+                      return (
+                        <div className="p-4 md:p-5 text-card-foreground border border-border/80 rounded-2xl shadow-2xl text-xs md:text-sm leading-relaxed w-72 md:w-80 max-w-[calc(100vw-2rem)] select-none bg-card">
+                          <div className="font-bold text-foreground border-b border-border/40 pb-1.5 mb-2 flex items-center justify-between gap-2">
+                            <span>{row.name} Share</span>
+                            <span className="text-[9px] md:text-[10px] uppercase font-bold text-primary tracking-wider">Operational Mix</span>
+                          </div>
+                          <div className="space-y-2 text-[11px] md:text-xs">
+                            <div className="flex justify-between">
+                              <span className="text-muted-foreground">Energy Output:</span>
+                              <span className="font-bold text-foreground">{row.gen.toFixed(2)} MKWh</span>
                             </div>
-                            <div className="space-y-2 text-[11px] md:text-xs">
-                              <div className="flex justify-between">
-                                <span className="text-muted-foreground">Energy Output:</span>
-                                <span className="font-bold text-foreground">{row.gen.toFixed(2)} MKWh</span>
-                              </div>
-                              <div className="flex justify-between">
-                                <span className="text-muted-foreground">System Share:</span>
-                                <span className="font-bold text-foreground">{pct}%</span>
-                              </div>
-                            </div>
-                            <div className="mt-2 pt-2 border-t border-border/30 text-[9px] md:text-[10px] text-muted-foreground leading-normal italic font-medium">
-                              Calculation: Gen Share = (Fuel Gen / Total Gen) * 100
-                            </div>
-                            <div className="mt-2 pt-1.5 border-t border-border/20 text-[8px] md:text-[9px] text-muted-foreground flex flex-col gap-0.5">
-                              <div><strong>Source:</strong> <a href="https://www.pgcb.gov.bd/" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">PGCB Daily Operations Report</a></div>
-                              <div><strong>Audited by:</strong> PGCB Network Operation Division</div>
+                            <div className="flex justify-between">
+                              <span className="text-muted-foreground">System Share:</span>
+                              <span className="font-bold text-foreground">{pct}%</span>
                             </div>
                           </div>
-                        );
-                      }}
-                      wrapperStyle={{ outline: 'none', zIndex: 20 }}
-                    />
-                  </PieChart>
-                </ResponsiveContainer>
+                          <div className="mt-2 pt-2 border-t border-border/30 text-[9px] md:text-[10px] text-muted-foreground leading-normal italic font-medium">
+                            Calculation: Gen Share = (Fuel Gen / Total Gen) * 100
+                          </div>
+                          <div className="mt-2 pt-1.5 border-t border-border/20 text-[8px] md:text-[9px] text-muted-foreground flex flex-col gap-0.5">
+                            <div><strong>Source:</strong> <a href="https://www.pgcb.gov.bd/" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">PGCB Daily Operations Report</a></div>
+                            <div><strong>Audited by:</strong> PGCB Network Operation Division</div>
+                          </div>
+                        </div>
+                      );
+                    }}
+                    wrapperStyle={{ outline: 'none', zIndex: 20 }}
+                  />
+                  <g className="pointer-events-none select-none">
+                    <text
+                      x={100}
+                      y={92}
+                      textAnchor="middle"
+                      dominantBaseline="central"
+                      className="fill-foreground font-sans font-bold"
+                      style={{ fontSize: '24px', letterSpacing: '-0.02em' }}
+                    >
+                      {totalGenMkwhr.toFixed(0)}
+                    </text>
+                    <text
+                      x={100}
+                      y={114}
+                      textAnchor="middle"
+                      dominantBaseline="central"
+                      className="fill-muted-foreground font-sans font-semibold uppercase"
+                      style={{ fontSize: '10px', letterSpacing: '0.1em' }}
+                    >
+                      MKWh Gen
+                    </text>
+                  </g>
+                </PieChart>
               ) : (
                 <div className="grid-explorer-skeleton" />
               )}
-              <div className="grid-explorer-donut-center">
-                <span className="grid-explorer-donut-total">{totalGenMkwhr.toFixed(0)}</span>
-                <span className="grid-explorer-donut-label">MKWh Gen</span>
-              </div>
             </div>
 
             {/* Custom Legend */}
@@ -1452,6 +1468,105 @@ export function PowerGridExplorer({ initialMix, initialLines, initialProjects }:
                 <span>Source: <a href="https://www.pgcb.gov.bd/" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline font-semibold">PGCB Daily Outage Log</a></span>
                 <span>Audited by: PGCB Network Protection &amp; NLDC Control Room</span>
                 <span className="font-medium">Reporting Period: 24-Hour Logs (Date: 22 Jun 2026)</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Transmission & Projects Grid */}
+          <div className="grid md:grid-cols-2 gap-6">
+            {/* Key Transmission Lines */}
+            <div className="grid-explorer-chart-card card">
+              <div className="grid-explorer-chart-card__head grid-explorer-chart-card__head--border">
+                <Cable className="h-5 w-5 text-primary shrink-0" />
+                <div>
+                  <h3 className="grid-explorer-chart-card__title">Transmission Grid Assets</h3>
+                  <p className="grid-explorer-chart-card__sub">Major transmission line parameters and load status</p>
+                </div>
+              </div>
+              <div className="grid-explorer-table-wrap">
+                <table className="grid-explorer-table">
+                  <thead>
+                    <tr>
+                      <th>Line Asset</th>
+                      <th>Owner</th>
+                      <th className="text-right">Capacity</th>
+                      <th className="text-right">Load Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {(initialLines && initialLines.length > 0 ? initialLines : [
+                      { name: '400 kV Patuakhali–Gopalganj', status: 'Commissioned', capacity: '1800 MW', owner: 'PGCB', load: 74 },
+                      { name: '400 kV Rooppur–Baghabari', status: 'Under Construction', capacity: '2400 MW', owner: 'PGCB', load: 0 },
+                      { name: '230 kV Barisal–Khulna', status: 'Commissioned', capacity: '650 MW', owner: 'PGCB', load: 82 },
+                      { name: '400 kV Bheramara HVDC (India)', status: 'Operational', capacity: '1000 MW', owner: 'PGCB/POWERGRID', load: 90 },
+                    ]).map((line: any, idx: number) => (
+                      <tr key={idx}>
+                        <td className="font-semibold">
+                          <div className="flex flex-col">
+                            <span>{line.name}</span>
+                            <span className="text-[10px] text-muted-foreground font-normal">{line.status}</span>
+                          </div>
+                        </td>
+                        <td>{line.owner}</td>
+                        <td className="text-right tabular-nums font-medium">{line.capacity}</td>
+                        <td className="text-right tabular-nums">
+                          {line.load > 0 ? (
+                            <span className="font-bold text-primary">{line.load}% load</span>
+                          ) : (
+                            <span className="text-muted-foreground text-xs">Idle / Offline</span>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {/* Key Power Projects */}
+            <div className="grid-explorer-chart-card card">
+              <div className="grid-explorer-chart-card__head grid-explorer-chart-card__head--border">
+                <Zap className="h-5 w-5 text-yellow-500 shrink-0" />
+                <div>
+                  <h3 className="grid-explorer-chart-card__title">Upcoming Generation Projects</h3>
+                  <p className="grid-explorer-chart-card__sub">Major power stations and capacity additions under tracking</p>
+                </div>
+              </div>
+              <div className="grid-explorer-table-wrap">
+                <table className="grid-explorer-table">
+                  <thead>
+                    <tr>
+                      <th>Project Name</th>
+                      <th>Status</th>
+                      <th className="text-right">Capacity (MW)</th>
+                      <th className="text-right">Expected Date</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {(initialProjects && initialProjects.length > 0 ? initialProjects : [
+                      { name: 'SREDA 1800 MW Solar+Wind', status: 'Tender', mw: '1800', date: 'Q3 2026' },
+                      { name: 'Matarbari Phase-2 Coal', status: 'Construction', mw: '1200', date: '2027' },
+                      { name: 'Payra 1320 MW Expansion', status: 'Planned', mw: '1320', date: '2028' },
+                      { name: 'BREB 500k SHS + Mini-grid', status: 'Ongoing', mw: '—', date: '2026-27' },
+                    ]).map((proj: any, idx: number) => (
+                      <tr key={idx}>
+                        <td className="font-semibold">{proj.name}</td>
+                        <td>
+                          <span className={cn(
+                            "px-2 py-0.5 rounded-full text-[10px] font-bold",
+                            proj.status === 'Construction' || proj.status === 'Ongoing' ? "bg-emerald-500/10 text-emerald-500 border border-emerald-500/20" :
+                            proj.status === 'Tender' ? "bg-amber-500/10 text-amber-500 border border-amber-500/20" :
+                            "bg-sky-500/10 text-sky-500 border border-sky-500/20"
+                          )}>
+                            {proj.status}
+                          </span>
+                        </td>
+                        <td className="text-right tabular-nums font-medium">{proj.mw}</td>
+                        <td className="text-right tabular-nums text-muted-foreground font-medium">{proj.date}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
             </div>
           </div>
@@ -2695,5 +2810,322 @@ export function PowerGridExplorer({ initialMix, initialLines, initialProjects }:
         <span>All data scraped from verified official daily publications.</span>
       </div>
     </div>
+
+    {/* Print-Only Curated Report Document */}
+    <div className="hidden print:block print-report space-y-10">
+      {/* Report Header */}
+      <div className="border-b-2 border-primary pb-4 mb-8">
+        <div className="flex justify-between items-start">
+          <div>
+            <div className="text-[10px] uppercase tracking-widest text-primary font-bold">Bangladesh Energy Sector Briefing</div>
+            <h1 className="text-3xl font-bold tracking-tight text-foreground mt-1">National Power Grid Audit Report</h1>
+            <p className="text-xs text-muted-foreground mt-1">Comprehensive grid performance analytics, fuel audits, and asset directories.</p>
+          </div>
+          <div className="text-right text-xs">
+            <div className="font-bold text-foreground">ESB PowerLine Intelligence</div>
+            <div className="text-muted-foreground mt-0.5 font-semibold text-primary">Classification: Member Executive Briefing</div>
+            <div className="text-muted-foreground">Generated: {systemStats.date}</div>
+          </div>
+        </div>
+      </div>
+
+      {/* KPI Summary Grid */}
+      <div className="grid grid-cols-4 gap-4 mb-6">
+        <div className="border border-border/60 p-3 rounded-lg bg-muted/5">
+          <span className="text-[9px] uppercase tracking-wider text-muted-foreground font-bold">Evening Peak Demand</span>
+          <div className="text-lg font-bold text-foreground mt-1">{formatNumber(Math.round(systemStats.eveningPeakDemand))} MW</div>
+        </div>
+        <div className="border border-border/60 p-3 rounded-lg bg-muted/5">
+          <span className="text-[9px] uppercase tracking-wider text-muted-foreground font-bold">Evening Peak Gen</span>
+          <div className="text-lg font-bold text-foreground mt-1">{formatNumber(Math.round(systemStats.eveningPeakGen))} MW</div>
+        </div>
+        <div className="border border-border/60 p-3 rounded-lg bg-muted/5">
+          <span className="text-[9px] uppercase tracking-wider text-muted-foreground font-bold">Renewable Output</span>
+          <div className="text-lg font-bold text-foreground mt-1">{systemStats.totalEnergyGen.toFixed(1)} MKWh</div>
+        </div>
+        <div className="border border-border/60 p-3 rounded-lg bg-muted/5">
+          <span className="text-[9px] uppercase tracking-wider text-muted-foreground font-bold">Avg. Generation Cost</span>
+          <div className="text-lg font-bold text-foreground mt-1">{systemStats.avgProductionCost.toFixed(3)} Tk/KWh</div>
+        </div>
+      </div>
+
+      {/* Section 1: Daily Generation Mix & Fuel Audits */}
+      <div className="space-y-4 page-break-inside-avoid">
+        <h2 className="text-lg font-bold border-b border-border pb-1.5 flex items-center gap-1.5 text-primary">
+          <Zap className="h-4 w-4" /> 1. Daily Generation Mix & Fuel Audits
+        </h2>
+        <table className="print-report-table w-full text-xs">
+          <thead>
+            <tr className="border-b border-border bg-muted/10">
+              <th className="text-left py-1.5 px-2 font-bold">Fuel Type</th>
+              <th className="text-right py-1.5 px-2 font-bold">Output (MKWh)</th>
+              <th className="text-right py-1.5 px-2 font-bold">Daily Cost (BDT)</th>
+              <th className="text-right py-1.5 px-2 font-bold">Unit Cost (Tk/KWh)</th>
+              <th className="text-right py-1.5 px-2 font-bold">System Share</th>
+            </tr>
+          </thead>
+          <tbody>
+            {generationData.map((item) => (
+              <tr key={item.name} className="border-b border-border/40">
+                <td className="py-1.5 px-2 font-medium">{item.name}</td>
+                <td className="text-right py-1.5 px-2 tabular-nums">{item.gen.toFixed(2)}</td>
+                <td className="text-right py-1.5 px-2 tabular-nums">{item.cost > 0 ? formatNumber(item.cost) : '—'}</td>
+                <td className="text-right py-1.5 px-2 tabular-nums">{item.unitCost > 0 ? `${item.unitCost.toFixed(2)} Tk` : '—'}</td>
+                <td className="text-right py-1.5 px-2 tabular-nums">{((item.gen / totalGenMkwhr) * 100).toFixed(1)}%</td>
+              </tr>
+            ))}
+            <tr className="font-bold bg-muted/5 border-t border-border">
+              <td className="py-1.5 px-2">Total System</td>
+              <td className="text-right py-1.5 px-2 tabular-nums">{totalGenMkwhr.toFixed(2)}</td>
+              <td className="text-right py-1.5 px-2 tabular-nums">{formatNumber(totalCostBdt)}</td>
+              <td className="text-right py-1.5 px-2 tabular-nums">{(totalCostBdt / (totalGenMkwhr * 1000000)).toFixed(3)} Tk</td>
+              <td className="text-right py-1.5 px-2">100%</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      {/* Section 2: Gas Distribution & LNG Supply */}
+      <div className="space-y-4 page-break-inside-avoid">
+        <h2 className="text-lg font-bold border-b border-border pb-1.5 flex items-center gap-1.5 text-primary">
+          <Droplet className="h-4 w-4" /> 2. Gas Distribution & LNG Supply
+        </h2>
+        <div className="grid grid-cols-2 gap-6">
+          <div>
+            <h3 className="text-xs font-bold text-muted-foreground uppercase mb-2">Daily Production by Operator</h3>
+            <table className="print-report-table w-full text-[10px]">
+              <thead>
+                <tr className="border-b border-border bg-muted/10">
+                  <th className="text-left py-1.5 px-2">Operator / Field</th>
+                  <th className="text-right py-1.5 px-2">Gas (MMCFD)</th>
+                  <th className="text-right py-1.5 px-2">Share</th>
+                </tr>
+              </thead>
+              <tbody>
+                {gasProductionData.map((gp, idx) => (
+                  <tr key={idx} className="border-b border-border/40">
+                    <td className="py-1 px-2 font-medium">{gp.company}</td>
+                    <td className="text-right py-1 px-2 tabular-nums">{gp.gas.toFixed(1)}</td>
+                    <td className="text-right py-1 px-2 tabular-nums">{gp.share}%</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          <div>
+            <h3 className="text-xs font-bold text-muted-foreground uppercase mb-2">Power and Industry Distribution</h3>
+            <table className="print-report-table w-full text-[10px]">
+              <thead>
+                <tr className="border-b border-border bg-muted/10">
+                  <th className="text-left py-1.5 px-2">Distributor</th>
+                  <th className="text-right py-1.5 px-2">Power (MMCFD)</th>
+                  <th className="text-right py-1.5 px-2">Industry / Other</th>
+                  <th className="text-right py-1.5 px-2">Total</th>
+                </tr>
+              </thead>
+              <tbody>
+                {gasDistributionData.map((gd, idx) => (
+                  <tr key={idx} className="border-b border-border/40">
+                    <td className="py-1 px-2 font-medium">{gd.company}</td>
+                    <td className="text-right py-1 px-2 tabular-nums">{gd.power.toFixed(1)}</td>
+                    <td className="text-right py-1 px-2 tabular-nums">{gd.others.toFixed(1)}</td>
+                    <td className="text-right py-1 px-2 tabular-nums font-semibold">{gd.total.toFixed(1)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      {/* Section 3: Regional Grid Performance & Outages */}
+      <div className="space-y-4 page-break-inside-avoid">
+        <h2 className="text-lg font-bold border-b border-border pb-1.5 flex items-center gap-1.5 text-primary">
+          <Cable className="h-4 w-4" /> 3. Regional Grid Performance & Outage Logs
+        </h2>
+        <div className="grid grid-cols-5 gap-6">
+          <div className="col-span-3">
+            <h3 className="text-xs font-bold text-muted-foreground uppercase mb-2">Zone-wise Demand & Load-Shedding</h3>
+            <table className="print-report-table w-full text-[10px]">
+              <thead>
+                <tr className="border-b border-border bg-muted/10">
+                  <th className="text-left py-1.5 px-2">Grid Zone</th>
+                  <th className="text-right py-1.5 px-2">Demand (MW)</th>
+                  <th className="text-right py-1.5 px-2">Load-Shedding (MW)</th>
+                  <th className="text-right py-1.5 px-2">Shedding Share</th>
+                </tr>
+              </thead>
+              <tbody>
+                {regionalDemandData.map((rd, idx) => (
+                  <tr key={idx} className="border-b border-border/40">
+                    <td className="py-1 px-2 font-medium">{rd.zone}</td>
+                    <td className="text-right py-1 px-2 tabular-nums">{formatNumber(rd.demand)}</td>
+                    <td className="text-right py-1 px-2 tabular-nums text-destructive font-semibold">{rd.loadShed > 0 ? `${rd.loadShed} MW` : '0 MW'}</td>
+                    <td className="text-right py-1 px-2 tabular-nums">{rd.pct}%</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          <div className="col-span-2">
+            <h3 className="text-xs font-bold text-muted-foreground uppercase mb-2">NLDC Outage Log (Yesterday)</h3>
+            <div className="space-y-2 text-[9px]">
+              {dailyOutages.slice(0, 6).map((o, idx) => (
+                <div key={idx} className="p-2 border border-border/40 rounded bg-muted/5 space-y-0.5">
+                  <div className="flex justify-between font-bold text-foreground">
+                    <span className="truncate pr-1">{o.plant}</span>
+                    <span className="font-mono text-muted-foreground font-normal shrink-0">{o.time}</span>
+                  </div>
+                  <div className="text-muted-foreground truncate">{o.reason}</div>
+                  <div className="text-destructive font-semibold">{o.load}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Section 4: Infrastructure Assets & Planning Tracker */}
+      <div className="space-y-4 page-break-inside-avoid">
+        <h2 className="text-lg font-bold border-b border-border pb-1.5 flex items-center gap-1.5 text-primary">
+          <Database className="h-4 w-4" /> 4. Infrastructure Assets & Planning Tracker
+        </h2>
+        <div className="grid grid-cols-2 gap-6">
+          <div>
+            <h3 className="text-xs font-bold text-muted-foreground uppercase mb-2">Transmission Grid Assets</h3>
+            <table className="print-report-table w-full text-[10px]">
+              <thead>
+                <tr className="border-b border-border bg-muted/10">
+                  <th className="text-left py-1.5 px-2">Line Asset</th>
+                  <th className="text-left py-1.5 px-2">Owner</th>
+                  <th className="text-right py-1.5 px-2">Capacity</th>
+                  <th className="text-right py-1.5 px-2">Load</th>
+                </tr>
+              </thead>
+              <tbody>
+                {(initialLines && initialLines.length > 0 ? initialLines : [
+                  { name: '400 kV Patuakhali–Gopalganj', status: 'Commissioned', capacity: '1800 MW', owner: 'PGCB', load: 74 },
+                  { name: '400 kV Rooppur–Baghabari', status: 'Under Construction', capacity: '2400 MW', owner: 'PGCB', load: 0 },
+                  { name: '230 kV Barisal–Khulna', status: 'Commissioned', capacity: '650 MW', owner: 'PGCB', load: 82 },
+                  { name: '400 kV Bheramara HVDC (India)', status: 'Operational', capacity: '1000 MW', owner: 'PGCB/POWERGRID', load: 90 },
+                ]).map((line: any, idx: number) => (
+                  <tr key={idx} className="border-b border-border/40">
+                    <td className="py-1 px-2 font-medium">
+                      <div className="flex flex-col">
+                        <span>{line.name}</span>
+                        <span className="text-[8px] text-muted-foreground font-normal">{line.status}</span>
+                      </div>
+                    </td>
+                    <td className="py-1 px-2">{line.owner}</td>
+                    <td className="text-right py-1 px-2 tabular-nums">{line.capacity}</td>
+                    <td className="text-right py-1 px-2 tabular-nums font-semibold">{line.load > 0 ? `${line.load}%` : 'Offline'}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          <div>
+            <h3 className="text-xs font-bold text-muted-foreground uppercase mb-2">Upcoming Generation Projects</h3>
+            <table className="print-report-table w-full text-[10px]">
+              <thead>
+                <tr className="border-b border-border bg-muted/10">
+                  <th className="text-left py-1.5 px-2">Project Name</th>
+                  <th className="text-left py-1.5 px-2">Status</th>
+                  <th className="text-right py-1.5 px-2">Capacity</th>
+                  <th className="text-right py-1.5 px-2">Expected Date</th>
+                </tr>
+              </thead>
+              <tbody>
+                {(initialProjects && initialProjects.length > 0 ? initialProjects : [
+                  { name: 'SREDA 1800 MW Solar+Wind', status: 'Tender', mw: '1800', date: 'Q3 2026' },
+                  { name: 'Matarbari Phase-2 Coal', status: 'Construction', mw: '1200', date: '2027' },
+                  { name: 'Payra 1320 MW Expansion', status: 'Planned', mw: '1320', date: '2028' },
+                  { name: 'BREB 500k SHS + Mini-grid', status: 'Ongoing', mw: '—', date: '2026-27' },
+                ]).map((proj: any, idx: number) => (
+                  <tr key={idx} className="border-b border-border/40">
+                    <td className="py-1 px-2 font-medium">{proj.name}</td>
+                    <td className="py-1 px-2">
+                      <span className="font-semibold">{proj.status}</span>
+                    </td>
+                    <td className="text-right py-1 px-2 tabular-nums">{proj.mw} MW</td>
+                    <td className="text-right py-1 px-2 text-muted-foreground">{proj.date}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      {/* Section 5: Macro Trends & BPDB Financial History */}
+      <div className="space-y-4 page-break-inside-avoid">
+        <h2 className="text-lg font-bold border-b border-border pb-1.5 flex items-center gap-1.5 text-primary">
+          <TrendingUp className="h-4 w-4" /> 5. Macro Trends & BPDB Financial History
+        </h2>
+        <div className="grid grid-cols-2 gap-6">
+          <div>
+            <h3 className="text-xs font-bold text-muted-foreground uppercase mb-2">BPDB Audited Financial Statements</h3>
+            <table className="print-report-table w-full text-[10px]">
+              <thead>
+                <tr className="border-b border-border bg-muted/10">
+                  <th className="text-left py-1.5 px-2">Fiscal Year</th>
+                  <th className="text-right py-1.5 px-2">Revenue (Cr Tk)</th>
+                  <th className="text-right py-1.5 px-2">Cost (Cr Tk)</th>
+                  <th className="text-right py-1.5 px-2">Subsidy (Cr Tk)</th>
+                  <th className="text-right py-1.5 px-2">Profit/Loss</th>
+                </tr>
+              </thead>
+              <tbody>
+                {bpdbAuditedFinancials.slice(-6).map((f, idx) => (
+                  <tr key={idx} className="border-b border-border/40">
+                    <td className="py-1 px-2 font-medium">{f.year}</td>
+                    <td className="text-right py-1 px-2 tabular-nums">{formatNumber(f.revenue)}</td>
+                    <td className="text-right py-1 px-2 tabular-nums">{formatNumber(f.cost)}</td>
+                    <td className="text-right py-1 px-2 tabular-nums text-emerald-500">{formatNumber(f.subsidy)}</td>
+                    <td className="text-right py-1 px-2 tabular-nums font-semibold text-destructive">{f.loss} Cr</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          <div>
+            <h3 className="text-xs font-bold text-muted-foreground uppercase mb-2">Exchange, Inflation & Fuel Drivers</h3>
+            <table className="print-report-table w-full text-[10px]">
+              <thead>
+                <tr className="border-b border-border bg-muted/10">
+                  <th className="text-left py-1.5 px-2">Year</th>
+                  <th className="text-right py-1.5 px-2">USD/BDT</th>
+                  <th className="text-right py-1.5 px-2">Inflation</th>
+                  <th className="text-right py-1.5 px-2">Spot LNG ($)</th>
+                  <th className="text-right py-1.5 px-2">Retail Diesel</th>
+                </tr>
+              </thead>
+              <tbody>
+                {macroEconomicData.slice(-6).map((m, idx) => (
+                  <tr key={idx} className="border-b border-border/40">
+                    <td className="py-1 px-2 font-medium">{m.year}</td>
+                    <td className="text-right py-1 px-2 tabular-nums">{m.exchangeRate.toFixed(2)}</td>
+                    <td className="text-right py-1 px-2 tabular-nums">{m.inflation.toFixed(2)}%</td>
+                    <td className="text-right py-1 px-2 tabular-nums">{m.spotLng > 0 ? `$${m.spotLng.toFixed(1)}` : '—'}</td>
+                    <td className="text-right py-1 px-2 tabular-nums">{m.retailDiesel.toFixed(2)} Tk</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+      
+      {/* Report Footer */}
+      <div className="border-t border-border/40 pt-4 text-[9px] text-muted-foreground flex justify-between">
+        <span>Report Document ID: ESB-AUDIT-2026-Q2</span>
+        <span>© 2026 ESB PowerLine Services. All rights reserved. Generated on secure member access session.</span>
+      </div>
+    </div>
+  </>
   );
 }

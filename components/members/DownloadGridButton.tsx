@@ -6,7 +6,7 @@ import { Download } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 
-export function DownloadGridButton({ className = '' }: { className?: string }) {
+export function DownloadGridButton({ className = '', onDownloadSuccess }: { className?: string; onDownloadSuccess?: () => void }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
 
@@ -25,6 +25,12 @@ export function DownloadGridButton({ className = '' }: { className?: string }) {
         anchor.click();
         URL.revokeObjectURL(url);
         toast.success('Grid snapshot downloaded');
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent('esb-download-sync'));
+        }
+        if (onDownloadSuccess) {
+          onDownloadSuccess();
+        }
         router.refresh();
       } catch {
         toast.error('Could not download data package');
@@ -37,9 +43,9 @@ export function DownloadGridButton({ className = '' }: { className?: string }) {
       type="button"
       onClick={handleDownload}
       disabled={pending}
-      className={cn('btn btn-primary inline-flex items-center gap-2 text-sm', className)}
+      className={cn('btn btn-primary flex items-center justify-center gap-1.5 text-xs w-full py-2', className)}
     >
-      <Download className="h-4 w-4" />
+      <Download className="h-3.5 w-3.5" />
       {pending ? 'Preparing…' : 'Download Grid (CSV)'}
     </button>
   );

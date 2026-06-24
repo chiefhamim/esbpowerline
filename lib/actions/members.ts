@@ -333,3 +333,34 @@ export async function getArticleComments(articleId: string) {
     take: 20,
   });
 }
+
+export async function getRecentDownloadsAction(): Promise<MemberDownloadRow[]> {
+  const memberSession = await getMemberSession();
+  if (!memberSession) return [];
+  return prisma.memberDownload.findMany({
+    where: { userId: memberSession.user.id },
+    orderBy: { createdAt: 'desc' },
+    take: 5,
+    select: { id: true, label: true, fileUrl: true, createdAt: true },
+  });
+}
+
+export async function triggerGridRefresh() {
+  const memberSession = await getMemberSession();
+  const session = await auth();
+  const signedIn = !!memberSession || !!session;
+  
+  if (!signedIn) {
+    throw new Error('You must be signed in to refresh grid data.');
+  }
+
+  try {
+    const { runIngestionPipeline } = await import('@/scripts/ingest-energy-reports');
+    await runIngestionPipeline();
+    revalidatePath('/data-reports/power-grid');
+    return { success: true };
+  } catch (error: any) {
+    console.error('Failed to refresh grid data:', error);
+    return { success: false, error: error.message || String(error) };
+  }
+}

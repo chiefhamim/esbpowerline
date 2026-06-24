@@ -1,8 +1,9 @@
-import { RefreshCw } from 'lucide-react';
 import { getGridSettingsMap } from '@/lib/homepage-content';
 import { normalizeGridSettings } from '@/lib/grid-data';
 import { PowerGridExportControls } from '@/components/members/PowerGridExportControls';
 import { PowerGridExplorerClient } from '@/components/news/PowerGridExplorerClient';
+import { RefreshGridDataButton } from '@/components/members/RefreshGridDataButton';
+import { MemberToolsPanel } from '@/components/members/MemberToolsPanel';
 
 export const revalidate = 60;
 
@@ -23,12 +24,10 @@ export default async function PowerGridExplorerPage() {
           <h1 className="h1 font-display font-bold text-3xl md:text-4xl tracking-tight">Power Grid Explorer</h1>
           <p className="text-muted-foreground mt-2 max-w-lg leading-relaxed text-sm">Planning and indicative data for Bangladesh’s electricity system — generation, transmission, demand &amp; projects. Configure values in admin settings.</p>
         </div>
-        <div className="md:col-span-1 w-full">
-          <button className="btn btn-secondary flex items-center justify-center gap-1.5 text-xs w-full py-2 hover:bg-secondary transition-colors">
-            <RefreshCw className="h-3.5 w-3.5" /> Refresh Data
-          </button>
+        <div className="md:col-span-1 w-full no-print">
+          <RefreshGridDataButton />
         </div>
-        <div className="md:col-span-1 w-full flex flex-col items-center">
+        <div className="md:col-span-1 w-full flex flex-col items-center no-print">
           <PowerGridExportControls />
         </div>
       </div>
@@ -38,6 +37,8 @@ export default async function PowerGridExplorerPage() {
         initialLines={grid.gridLines}
         initialProjects={grid.gridProjects}
       />
+
+      <MemberToolsPanel />
 
       <div className="mt-10 pt-6 border-t border-border/60 text-[11px] text-muted-foreground flex flex-wrap gap-x-5 gap-y-1.5 leading-relaxed">
         Sources: BPDB, PGCB, SREDA, BERC, Petrobangla. Figures are indicative and editor-managed unless noted. Member downloads are logged for reference.

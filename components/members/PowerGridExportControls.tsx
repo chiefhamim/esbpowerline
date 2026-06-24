@@ -4,6 +4,7 @@ import { useSession } from '@/utils/supabase/auth-context';
 import Link from 'next/link';
 import { DownloadGridButton } from '@/components/members/DownloadGridButton';
 import { cn } from '@/lib/utils';
+import { Download } from 'lucide-react';
 
 export function PowerGridExportControls({ className = '' }: { className?: string }) {
   const { status } = useSession();
@@ -11,30 +12,27 @@ export function PowerGridExportControls({ className = '' }: { className?: string
 
   if (status === 'loading') {
     return (
-      <div className="h-8 w-full bg-muted/20 animate-pulse rounded" />
+      <div className="h-9 w-full bg-muted/20 animate-pulse rounded-2xl" />
+    );
+  }
+
+  if (signedIn) {
+    return (
+      <DownloadGridButton className={cn('w-full justify-center py-2 text-xs', className)} />
     );
   }
 
   return (
-    <div className={cn('w-full flex flex-col items-center gap-1.5', className)}>
-      {signedIn ? (
-        <DownloadGridButton className="w-full justify-center py-2 text-xs" />
-      ) : (
-        <Link
-          href="/members/login?callbackUrl=/data-reports/power-grid"
-          className="btn btn-secondary text-xs px-3.5 py-2 w-full justify-center text-center"
-        >
-          Member login to export
-        </Link>
+    <Link
+      href="/members/login?callbackUrl=/data-reports/power-grid"
+      className={cn(
+        'btn btn-secondary flex items-center justify-center gap-1.5 text-xs w-full py-2 text-center transition-colors hover:bg-secondary',
+        className
       )}
-      {signedIn ? (
-        <Link
-          href="/members/downloads"
-          className="text-primary hover:underline text-xs px-2 font-semibold transition-colors text-center"
-        >
-          My downloads →
-        </Link>
-      ) : null}
-    </div>
+      title="Member access required to download CSV data snapshots"
+    >
+      <Download className="h-3.5 w-3.5" />
+      Login to download (CSV)
+    </Link>
   );
 }
