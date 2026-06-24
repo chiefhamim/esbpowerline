@@ -2,7 +2,6 @@ import dotenv from 'dotenv';
 import path from 'path';
 import fs from 'fs/promises';
 import { createClient } from '@supabase/supabase-js';
-import mime from 'mime-types';
 import { createScriptPrismaClient } from '../prisma/client';
 import type { PrismaClient } from '@prisma/client';
 
@@ -35,6 +34,18 @@ const prisma: PrismaClient = createScriptPrismaClient();
 const supabase = createClient(url, serviceRoleKey, {
   auth: { autoRefreshToken: false, persistSession: false },
 });
+
+function getMimeType(filePath: string): string {
+  const ext = path.extname(filePath).toLowerCase();
+  switch (ext) {
+    case '.webp': return 'image/webp';
+    case '.png': return 'image/png';
+    case '.jpg':
+    case '.jpeg': return 'image/jpeg';
+    case '.pdf': return 'application/pdf';
+    default: return 'image/webp';
+  }
+}
 
 async function main() {
   const localDir = path.join(process.cwd(), 'public', 'uploads');
@@ -78,7 +89,7 @@ async function main() {
 
     const filePath = path.join(localDir, file);
     const fileBuffer = await fs.readFile(filePath);
-    const mimeType = mime.lookup(filePath) || 'image/webp';
+    const mimeType = getMimeType(filePath);
     const storagePath = `library/${file}`;
 
     console.log(`📤 Uploading: ${file} (${mimeType})...`);
