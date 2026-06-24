@@ -1,11 +1,13 @@
 'use client';
 
 import { useTransition } from 'react';
+import { useRouter } from 'next/navigation';
 import { Download } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 
 export function DownloadGridButton({ className = '' }: { className?: string }) {
+  const router = useRouter();
   const [pending, startTransition] = useTransition();
 
   function handleDownload() {
@@ -23,6 +25,7 @@ export function DownloadGridButton({ className = '' }: { className?: string }) {
         anchor.click();
         URL.revokeObjectURL(url);
         toast.success('Grid snapshot downloaded');
+        router.refresh();
       } catch {
         toast.error('Could not download data package');
       }
