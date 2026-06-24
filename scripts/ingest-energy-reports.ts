@@ -1,6 +1,21 @@
-import { createScriptPrismaClient } from '../prisma/client';
+import dotenv from 'dotenv';
 import * as fs from 'fs';
 import * as path from 'path';
+
+// Load variables from .env.local
+dotenv.config({ path: path.resolve(process.cwd(), '.env.local') });
+
+// Check if we want to run against production database using target flag
+const runProd = process.argv.includes('--production');
+if (runProd) {
+  // Use production URL
+  const prodUrl = process.env.POSTGRES_URL_NON_POOLING?.trim() || process.env.POSTGRES_URL?.trim();
+  if (prodUrl) {
+    process.env.DATABASE_URL = prodUrl;
+  }
+}
+
+import { createScriptPrismaClient } from '../prisma/client';
 
 // Initialize Prisma
 const prisma = createScriptPrismaClient();
