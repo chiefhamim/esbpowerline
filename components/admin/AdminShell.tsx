@@ -10,7 +10,7 @@ import { SiteThemeToggle } from '@/components/shared/SiteThemeToggle';
 import { ModernTooltip } from '@/components/shared/ModernTooltip';
 import { PlatformControlLazy, StaffSignOutDialogLazy } from '@/components/staff/StaffShellLazy';
 import { Button } from '@/components/ui/button';
-import { ROLES, type Role } from '@/lib/constants';
+import { ROLES, type Role, USER_ROLE_LABELS } from '@/lib/constants';
 import { canAccessAdminRoute } from '@/lib/admin-nav';
 import { AdminChangeQueueProvider, useAdminChangeQueue } from '@/components/admin/AdminChangeQueueProvider';
 import { AdminPreferencesProvider } from '@/components/admin/AdminPreferencesProvider';
@@ -140,6 +140,10 @@ function AdminShellInner({ children }: { children: React.ReactNode }) {
   }, [pathname]);
 
   const role = session?.user?.role as Role | undefined;
+  const roleLabel = role ? (USER_ROLE_LABELS[role] || 'User') : 'User';
+  const article = /^[aeiou]/i.test(roleLabel) ? 'an' : 'a';
+  const tooltipLabel = `Visit homepage as ${article} ${roleLabel}`;
+
   const visibleNavGroups = useMemo(
     () =>
       NAV_GROUPS.map((group) => ({
@@ -279,7 +283,7 @@ function AdminShellInner({ children }: { children: React.ReactNode }) {
 
           <div className="admin-header-toolbar cms-header-toolbar flex items-center gap-1 sm:gap-1.5 shrink-0">
             <PlatformControlLazy />
-            <ModernTooltip label="Visit homepage as an Admin" variant="chrome" alwaysShow={true}>
+            <ModernTooltip label={tooltipLabel} variant="chrome" alwaysShow={true}>
               <Link
                 href={publicSiteUrl}
                 target="_blank"

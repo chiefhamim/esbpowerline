@@ -18,7 +18,7 @@ import {
 import { UserProfileSettings } from '@/components/staff/UserProfileSettings';
 import { EditorPreferencesProvider } from '@/components/cms/EditorPreferencesProvider';
 import { Button } from '@/components/ui/button';
-import { ROLES, type Role } from '@/lib/constants';
+import { ROLES, type Role, USER_ROLE_LABELS } from '@/lib/constants';
 import { canAccessCmsRoute, canAccessAdminPanel, isEditorLead } from '@/lib/cms-nav';
 import type { LucideIcon } from 'lucide-react';
 import {
@@ -166,6 +166,10 @@ export function CmsShell({ children }: { children: React.ReactNode }) {
   }, [mobileOpen]);
 
   const role = session?.user?.role as Role | undefined;
+  const roleLabel = role ? (USER_ROLE_LABELS[role] || 'User') : 'User';
+  const article = /^[aeiou]/i.test(roleLabel) ? 'an' : 'a';
+  const tooltipLabel = `Visit homepage as ${article} ${roleLabel}`;
+
   const showAdminPanel = canAccessAdminPanel(role);
   const editorLead = isEditorLead(role);
   const isWriteWorkspace = pathname === '/cms/articles/new'
@@ -313,7 +317,7 @@ export function CmsShell({ children }: { children: React.ReactNode }) {
             {isWriteWorkspace ? <CmsWriteHeaderActionsLazy /> : null}
             <EditorSettingsMenuLazy variant="header" />
             <EditorialPlatformControlLazy />
-            <ModernTooltip label="Visit homepage as an Admin" variant="chrome" alwaysShow={true}>
+            <ModernTooltip label={tooltipLabel} variant="chrome" alwaysShow={true}>
               <Link
                 href={publicSiteUrl}
                 target="_blank"
