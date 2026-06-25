@@ -1,10 +1,12 @@
 'use client';
 
-import { useEffect, useId, useState } from 'react';
+import { useEffect, useId, useState, useRef, RefObject } from 'react';
 import Link from 'next/link';
 import {
-  Zap, Activity, Cable, TrendingUp, FileText, BarChart3, MapPin, DollarSign, Database, Droplet, Globe, Sun
+  Zap, Activity, Cable, TrendingUp, FileText, BarChart3, MapPin, DollarSign, Database, Droplet, Globe, Sun,
+  Search, ChevronLeft, ChevronRight, ChevronDown, Check, Info, Map, Network, CheckSquare
 } from 'lucide-react';
+import { substationsData } from '@/lib/substations-data';
 import {
   ResponsiveContainer, PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis,
   Tooltip, Line, CartesianGrid, Area, ComposedChart, Legend
@@ -16,6 +18,10 @@ import {
   GridStatusBadge,
   mixColor,
 } from '@/components/news/PowerGridChartUI';
+import { powerGridArchive } from '@/lib/power-grid-archive';
+import { ongoingProjectsData } from '@/lib/ongoing-projects-data';
+import { upcomingProjectsData } from '@/lib/upcoming-projects-data';
+import { completedProjectsData } from '@/lib/completed-projects-data';
 
 // --- DATA STRUCTURES (REAL HISTORICAL SCRAPED DATA 22-23 JUNE 2026) ---
 
@@ -281,6 +287,151 @@ function TakaIcon({ className }: { className?: string }) {
   );
 }
 
+interface CustomDropdownProps {
+  value: string;
+  onChange: (val: string) => void;
+  options: { label: string; value: string }[];
+  placeholder: string;
+  isOpen: boolean;
+  setIsOpen: (open: boolean) => void;
+  dropdownRef: RefObject<HTMLDivElement | null>;
+}
+
+function CustomDropdown({
+  value,
+  onChange,
+  options,
+  placeholder,
+  isOpen,
+  setIsOpen,
+  dropdownRef
+}: CustomDropdownProps) {
+  const selectedOption = options.find((opt) => opt.value === value) || { label: placeholder, value };
+  return (
+    <div className="relative w-full text-left" ref={dropdownRef}>
+      <button
+        type="button"
+        onClick={() => setIsOpen(!isOpen)}
+        className="w-full flex items-center justify-between gap-2 px-3.5 py-2 text-xs md:text-sm bg-muted/20 border border-border/40 rounded-xl text-foreground hover:bg-muted/30 hover:border-primary/30 focus:outline-none focus:border-primary/50 transition-all duration-150 font-medium shadow-sm"
+      >
+        <span className="truncate">{selectedOption.label}</span>
+        <ChevronDown className={cn("h-4 w-4 text-muted-foreground shrink-0 transition-transform duration-150", isOpen && "rotate-180")} />
+      </button>
+
+      {isOpen && (
+        <div className="absolute left-0 mt-2 w-full max-h-60 overflow-y-auto rounded-2xl border border-border bg-card/95 backdrop-blur-xl shadow-2xl p-1.5 z-[100] animate-in fade-in slide-in-from-top-1 duration-150 scrollbar-thin">
+          {options.map((opt) => {
+            const active = opt.value === value;
+            return (
+              <button
+                key={opt.value}
+                type="button"
+                onClick={() => {
+                  onChange(opt.value);
+                  setIsOpen(false);
+                }}
+                className={cn(
+                  "w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs md:text-sm font-semibold transition-all select-none text-left",
+                  active
+                    ? "bg-primary/10 text-primary font-bold"
+                    : "text-muted-foreground hover:text-foreground hover:bg-muted/40"
+                )}
+              >
+                <span className="truncate">{opt.label}</span>
+                {active && <Check className="h-3.5 w-3.5 shrink-0" />}
+              </button>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function getUpcomingProjectStatusInfo(statusStr: string) {
+  const lowercase = statusStr.toLowerCase();
+  if (lowercase.includes('approved')) {
+    return {
+      label: 'PDPP Approved',
+      bgColor: 'bg-emerald-500/10',
+      textColor: 'text-emerald-500 border-emerald-500/20',
+      icon: Check
+    };
+  } else if (lowercase.includes('sent') || lowercase.includes('recast')) {
+    return {
+      label: 'PDPP Submitted',
+      bgColor: 'bg-blue-500/10',
+      textColor: 'text-blue-400 border-blue-500/20',
+      icon: FileText
+    };
+  } else if (lowercase.includes('feasibility')) {
+    return {
+      label: 'Feasibility Study',
+      bgColor: 'bg-cyan-500/10',
+      textColor: 'text-cyan-400 border-cyan-500/20',
+      icon: Activity
+    };
+  } else {
+    return {
+      label: 'Pipeline',
+      bgColor: 'bg-purple-500/10',
+      textColor: 'text-purple-400 border-purple-500/20',
+      icon: TrendingUp
+    };
+  }
+}
+
+function renderProjectCost(costStr: string | undefined | null) {
+  if (!costStr || costStr.trim() === '' || costStr.toLowerCase().includes('n/a') || costStr === '-') {
+    return <div className="font-bold text-foreground">N/A</div>;
+  }
+
+  const isLakh = costStr.toLowerCase().includes('lakh');
+  if (isLakh) {
+    // Extract the number part, handling commas and decimal points
+    const cleanStr = costStr.replace(/,/g, '');
+    const match = cleanStr.match(/\b[0-9.]+\b/);
+    if (match) {
+      const numVal = parseFloat(match[0]);
+      if (!isNaN(numVal)) {
+        const croreVal = numVal / 100;
+        
+        let formattedCrore = '';
+        if (croreVal >= 1000) {
+          const kCroreVal = croreVal / 1000;
+          formattedCrore = kCroreVal.toLocaleString('en-US', {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+          }) + 'K';
+        } else {
+          formattedCrore = croreVal.toLocaleString('en-US', {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+          });
+        }
+        
+        // Find if BDT or Tk is in the original string, default to BDT
+        let currencySuffix = 'BDT';
+        if (costStr.toLowerCase().includes('tk')) {
+          currencySuffix = 'Tk';
+        }
+
+        return (
+          <div className="space-y-0.5">
+            <div className="font-bold text-foreground text-sm">{costStr}</div>
+            <div className="text-[10px] text-muted-foreground font-semibold">
+              (~{formattedCrore} Crore {currencySuffix})
+            </div>
+          </div>
+        );
+      }
+    }
+  }
+
+  // Default: Return the raw string exactly as it is in the data file
+  return <div className="font-bold text-foreground">{costStr}</div>;
+}
+
 interface PowerGridExplorerProps {
   initialMix?: any;
   initialLines?: any;
@@ -289,14 +440,163 @@ interface PowerGridExplorerProps {
 
 export function PowerGridExplorer({ initialMix, initialLines, initialProjects }: PowerGridExplorerProps = {}) {
   const chartTheme = useChartTheme();
-  const [activeTab, setActiveTab] = useState<'overview' | 'gen' | 'gas' | 'imports' | 'renewables' | 'regional' | 'macro'>('overview');
+  
+  // Date Selection States
+  const availableDates = Object.keys(powerGridArchive);
+  const [selectedDate, setSelectedDate] = useState<string>(availableDates[availableDates.length - 1]);
+  const [isDateDropdownOpen, setIsDateDropdownOpen] = useState(false);
+  const dateDropdownRef = useRef<HTMLDivElement>(null);
+
+  const activeData = powerGridArchive[selectedDate] || powerGridArchive[availableDates[availableDates.length - 1]];
+  const {
+    systemStats,
+    generationData,
+    gasProductionData,
+    gasDistributionData,
+    borderImportsData,
+    regionalDemandData,
+    dailyOutages,
+    hourlyLoadData
+  } = activeData;
+
+  // Ongoing & Upcoming Projects states & filters
+  const [projectType, setProjectType] = useState<'ongoing' | 'upcoming'>('ongoing');
+  const [projectSearch, setProjectSearch] = useState('');
+  const [projectPartnerFilter, setProjectPartnerFilter] = useState('all');
+  const [isPartnerDropdownOpen, setIsPartnerDropdownOpen] = useState(false);
+  const partnerDropdownRef = useRef<HTMLDivElement>(null);
+  const [projectPage, setProjectPage] = useState(1);
+  const projectsPerPage = 3;
+
+  // Reset page when projectType changes
+  useEffect(() => {
+    setProjectPage(1);
+  }, [projectType]);
+
+  // Combined Projects filtering logic
+  const filteredProjects = (projectType === 'ongoing' ? ongoingProjectsData : upcomingProjectsData).filter((proj) => {
+    const matchesSearch = proj.name.toLowerCase().includes(projectSearch.toLowerCase()) ||
+                          proj.objectives.some(o => o.toLowerCase().includes(projectSearch.toLowerCase())) ||
+                          proj.scope.some(s => s.toLowerCase().includes(projectSearch.toLowerCase())) ||
+                          ('director' in proj ? proj.director.toLowerCase().includes(projectSearch.toLowerCase()) : false);
+    const matchesPartner = projectPartnerFilter === 'all' ||
+                           (projectPartnerFilter === 'N/A' && proj.partner === 'N/A') ||
+                           (projectPartnerFilter !== 'N/A' && proj.partner.toLowerCase().includes(projectPartnerFilter.toLowerCase()));
+    return matchesSearch && matchesPartner;
+  });
+
+  const paginatedProjects = filteredProjects.slice(
+    (projectPage - 1) * projectsPerPage,
+    projectPage * projectsPerPage
+  );
+
+  const totalProjectPages = Math.ceil(filteredProjects.length / projectsPerPage);
+
+  // Completed Projects states & filters
+  const [completedSearch, setCompletedSearch] = useState('');
+  const [completedPartnerFilter, setCompletedPartnerFilter] = useState('all');
+  const [isCompletedPartnerDropdownOpen, setIsCompletedPartnerDropdownOpen] = useState(false);
+  const completedPartnerDropdownRef = useRef<HTMLDivElement>(null);
+  const [completedPage, setCompletedPage] = useState(1);
+  const completedPerPage = 3;
+
+  // Combined Completed Projects filtering logic
+  const filteredCompletedProjects = completedProjectsData.filter((proj) => {
+    const matchesSearch = proj.name.toLowerCase().includes(completedSearch.toLowerCase()) ||
+                          proj.objectives.some(o => o.toLowerCase().includes(completedSearch.toLowerCase())) ||
+                          proj.scope.some(s => s.toLowerCase().includes(completedSearch.toLowerCase()));
+    const matchesPartner = completedPartnerFilter === 'all' ||
+                           (completedPartnerFilter === 'N/A' && proj.partner === 'N/A') ||
+                           (completedPartnerFilter !== 'N/A' && proj.partner.toLowerCase().includes(completedPartnerFilter.toLowerCase()));
+    return matchesSearch && matchesPartner;
+  });
+
+  const paginatedCompletedProjects = filteredCompletedProjects.slice(
+    (completedPage - 1) * completedPerPage,
+    completedPage * completedPerPage
+  );
+
+  const totalCompletedProjectPages = Math.ceil(filteredCompletedProjects.length / completedPerPage);
+
+  const [activeTab, setActiveTab] = useState<'overview' | 'gen' | 'gas' | 'imports' | 'renewables' | 'transmission' | 'regional' | 'macro'>('overview');
   const [macroSubTab, setMacroSubTab] = useState<'overview' | 'pricing' | 'global' | 'reports' | 'reserves' | 'insights'>('overview');
   const [reportsCompany, setReportsCompany] = useState<'bpdb' | 'petrobangla'>('bpdb');
   const [chartsReady, setChartsReady] = useState(false);
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
 
+  // Substation & Transmission Tab States
+  const [transSubTab, setTransSubTab] = useState<'transmission' | 'lines' | 'substations' | 'projects' | 'completed_projects' | 'grid_net' | 'geo_map' | 'opgw_map' | 'opgw_lease'>('transmission');
+  const [isTransDropdownOpen, setIsTransDropdownOpen] = useState(false);
+  const transDropdownRef = useRef<HTMLDivElement>(null);
+
+  const [isVoltageDropdownOpen, setIsVoltageDropdownOpen] = useState(false);
+  const [isZoneDropdownOpen, setIsZoneDropdownOpen] = useState(false);
+  const [isOwnerDropdownOpen, setIsOwnerDropdownOpen] = useState(false);
+
+  const voltageDropdownRef = useRef<HTMLDivElement>(null);
+  const zoneDropdownRef = useRef<HTMLDivElement>(null);
+  const ownerDropdownRef = useRef<HTMLDivElement>(null);
+
+  const [subSearch, setSubSearch] = useState('');
+  const [subVoltageFilter, setSubVoltageFilter] = useState<string>('all');
+  const [subZoneFilter, setSubZoneFilter] = useState<string>('all');
+  const [subOwnerFilter, setSubOwnerFilter] = useState<string>('all');
+  const [subPage, setSubPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState<number>(50);
+  const zones = ['Dhaka', 'Khulna', 'Barishal', 'Cumilla', 'Sylhet', 'Rajshahi', 'Chattogram', 'Rangpur', 'Mymensingh'];
+  const owners = ['POWER GRID', 'APSCL', 'BIFPCL', 'RNPP', 'Bulk', 'BPDB', 'DESCO', 'DPDC', 'MoST', 'DMTCL'];
+
+  const voltageOptions = [
+    { label: 'All Voltage Classes', value: 'all' },
+    { label: '400 kV', value: '400kV' },
+    { label: '230 kV', value: '230kV' },
+    { label: '132 kV', value: '132kV' },
+    { label: '230/33 kV', value: '230/33kV' },
+    { label: '132/33 kV', value: '132/33kV' },
+  ];
+
+  const zoneOptions = [
+    { label: 'All Operation Zones', value: 'all' },
+    ...zones.map((z) => ({ label: z, value: z })),
+  ];
+
+  const ownerOptions = [
+    { label: 'All Owners', value: 'all' },
+    ...owners.map((o) => ({ label: o, value: o })),
+  ];
+
   useEffect(() => {
     setChartsReady(true);
+  }, []);
+
+  // Click outside listener for all custom dropdowns
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as Node;
+      if (transDropdownRef.current && !transDropdownRef.current.contains(target)) {
+        setIsTransDropdownOpen(false);
+      }
+      if (voltageDropdownRef.current && !voltageDropdownRef.current.contains(target)) {
+        setIsVoltageDropdownOpen(false);
+      }
+      if (zoneDropdownRef.current && !zoneDropdownRef.current.contains(target)) {
+        setIsZoneDropdownOpen(false);
+      }
+      if (ownerDropdownRef.current && !ownerDropdownRef.current.contains(target)) {
+        setIsOwnerDropdownOpen(false);
+      }
+      if (dateDropdownRef.current && !dateDropdownRef.current.contains(target)) {
+        setIsDateDropdownOpen(false);
+      }
+      if (partnerDropdownRef.current && !partnerDropdownRef.current.contains(target)) {
+        setIsPartnerDropdownOpen(false);
+      }
+      if (completedPartnerDropdownRef.current && !completedPartnerDropdownRef.current.contains(target)) {
+        setIsCompletedPartnerDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
   const tabGlowColors: Record<typeof activeTab, { blob1: string; blob2: string; blob3: string }> = {
@@ -325,6 +625,11 @@ export function PowerGridExplorer({ initialMix, initialLines, initialProjects }:
       blob2: 'bg-amber-500/4',
       blob3: 'bg-orange-400/3',
     },
+    transmission: {
+      blob1: 'bg-blue-500/6',
+      blob2: 'bg-sky-600/4',
+      blob3: 'bg-indigo-500/3',
+    },
     regional: {
       blob1: 'bg-slate-500/6',
       blob2: 'bg-zinc-500/4',
@@ -345,14 +650,48 @@ export function PowerGridExplorer({ initialMix, initialLines, initialProjects }:
     { id: 'gas', label: 'Gas & LNG Supply', icon: Droplet },
     { id: 'imports', label: 'C/B Imports', icon: Globe },
     { id: 'renewables', label: 'Renewables (SREDA)', icon: Sun },
+    { id: 'transmission', label: 'Technical Information', icon: Activity },
     { id: 'regional', label: 'Regional Grid', icon: Cable },
     { id: 'macro', label: 'Macro Trends', icon: TrendingUp },
   ] as const;
+
+  // Substation Filtering Logic
+  const filteredSubstations = substationsData.filter((sub) => {
+    const matchesSearch = sub.name.toLowerCase().includes(subSearch.toLowerCase()) || 
+                          sub.circle.toLowerCase().includes(subSearch.toLowerCase());
+    const matchesVoltage = subVoltageFilter === 'all' || sub.voltage === subVoltageFilter;
+    const matchesZone = subZoneFilter === 'all' || sub.zone === subZoneFilter;
+    const matchesOwner = subOwnerFilter === 'all' || sub.owner === subOwnerFilter;
+    return matchesSearch && matchesVoltage && matchesZone && matchesOwner;
+  });
+
+  const totalSubCapacityMva = filteredSubstations.reduce((sum, sub) => {
+    const val = parseFloat(sub.capacity.replace(/,/g, ''));
+    if (sub.capacity.includes('MW') || isNaN(val)) return sum;
+    return sum + val;
+  }, 0);
+
+  const paginatedSubstations = filteredSubstations.slice(
+    (subPage - 1) * itemsPerPage,
+    subPage * itemsPerPage
+  );
+
+  const totalSubPages = Math.ceil(filteredSubstations.length / itemsPerPage);
+
+  // Reset page to 1 when filters change
+  useEffect(() => {
+    setSubPage(1);
+  }, [subSearch, subVoltageFilter, subZoneFilter, subOwnerFilter]);
 
   // Overview calculations
   const totalGenMkwhr = generationData.reduce((sum, item) => sum + item.gen, 0);
   const totalCostBdt = generationData.reduce((sum, item) => sum + item.cost, 0);
   const avgCostPerKwh = totalCostBdt / (totalGenMkwhr * 1000000);
+
+  // Regional calculations
+  const totalRegionalDemand = regionalDemandData.reduce((sum, rd) => sum + rd.demand, 0);
+  const totalRegionalLoadShed = regionalDemandData.reduce((sum, rd) => sum + rd.loadShed, 0);
+  const avgRegionalPct = totalRegionalDemand > 0 ? ((totalRegionalLoadShed / totalRegionalDemand) * 100).toFixed(1) : '0.0';
 
   return (
     <>
@@ -402,6 +741,61 @@ export function PowerGridExplorer({ initialMix, initialLines, initialProjects }:
           box-shadow: 0 12px 30px -10px hsl(var(--primary) / 0.08), var(--shadow-lg) !important;
         }
       `}</style>
+
+      {/* Date Selector Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6 relative z-50">
+        <div>
+          <h2 className="text-xl font-bold tracking-tight text-foreground flex items-center gap-2">
+            <Activity className="h-5 w-5 text-primary animate-pulse" />
+            Grid Status Overview
+          </h2>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            Active reporting date: <span className="font-semibold text-primary">{systemStats.date}</span>
+          </p>
+        </div>
+        <div className="w-full sm:w-56" ref={dateDropdownRef}>
+          <div className="relative text-left">
+            <button
+              type="button"
+              onClick={() => setIsDateDropdownOpen(!isDateDropdownOpen)}
+              className="w-full flex items-center justify-between gap-2 px-3.5 py-2 text-xs md:text-sm bg-muted/20 border border-border/40 rounded-xl text-foreground hover:bg-muted/30 hover:border-primary/30 focus:outline-none focus:border-primary/50 transition-all duration-150 font-medium shadow-sm"
+            >
+              <span className="truncate flex items-center gap-1.5 font-bold">
+                <FileText className="h-3.5 w-3.5 text-primary" />
+                Date: {selectedDate}
+              </span>
+              <ChevronDown className={cn("h-4 w-4 text-muted-foreground shrink-0 transition-transform duration-150", isDateDropdownOpen && "rotate-180")} />
+            </button>
+
+            {isDateDropdownOpen && (
+              <div className="absolute right-0 mt-2 w-full max-h-60 overflow-y-auto rounded-2xl border border-border bg-card/95 backdrop-blur-xl shadow-2xl p-1.5 z-[100] animate-in fade-in slide-in-from-top-1 duration-150 scrollbar-thin">
+                {availableDates.map((date) => {
+                  const active = date === selectedDate;
+                  return (
+                    <button
+                      key={date}
+                      type="button"
+                      onClick={() => {
+                        setSelectedDate(date);
+                        setIsDateDropdownOpen(false);
+                      }}
+                      className={cn(
+                        "w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs md:text-sm font-semibold transition-all select-none text-left",
+                        active
+                          ? "bg-primary/10 text-primary font-bold"
+                          : "text-muted-foreground hover:text-foreground hover:bg-muted/40"
+                      )}
+                    >
+                      <span>{date} {date === availableDates[availableDates.length - 1] ? '(Latest)' : '(Archived)'}</span>
+                      {active && <Check className="h-3.5 w-3.5 shrink-0" />}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
 
       {/* KPI Strip */}
       <div className="grid-explorer-kpi-strip relative z-30">
@@ -660,7 +1054,7 @@ export function PowerGridExplorer({ initialMix, initialLines, initialProjects }:
                 <h3 className="grid-explorer-chart-card__title">Daily Generation Mix Snapshot</h3>
                 <p className="grid-explorer-chart-card__sub">Energy share by fuel type (Total: {totalGenMkwhr.toFixed(1)} MKWh)</p>
               </div>
-              <GridLiveBadge label="Report: 22 Jun 2026" />
+              <GridLiveBadge label={`Report: ${systemStats.date}`} />
             </div>
 
             <div className="grid-explorer-mix-stack" aria-hidden>
@@ -792,7 +1186,7 @@ export function PowerGridExplorer({ initialMix, initialLines, initialProjects }:
             <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1.5 mt-4 pt-3 border-t border-border/40 text-[10px] text-muted-foreground/80">
               <span>Source: <a href="https://www.pgcb.gov.bd/" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline font-semibold">PGCB Daily Progress Report</a></span>
               <span>Audited by: PGCB Network Operations Division</span>
-              <span className="font-medium">Reporting Date: 22 Jun 2026</span>
+              <span className="font-medium">Reporting Date: {systemStats.date}</span>
             </div>
           </div>
 
@@ -884,7 +1278,7 @@ export function PowerGridExplorer({ initialMix, initialLines, initialProjects }:
             <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1.5 mt-4 pt-3 border-t border-border/40 text-[10px] text-muted-foreground/80">
               <span>Source: <a href="https://bpdb.gov.bd/" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline font-semibold">BPDB Daily Reports</a> &amp; <a href="https://bpc.gov.bd/" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline font-semibold">BPC Fuel Gazettes</a></span>
               <span>Audited by: BPDB Audits / CAG Audit Team</span>
-              <span className="font-medium">Reporting Date: 22 Jun 2026</span>
+              <span className="font-medium">Reporting Date: {systemStats.date}</span>
             </div>
           </div>
         </div>
@@ -977,7 +1371,7 @@ export function PowerGridExplorer({ initialMix, initialLines, initialProjects }:
           <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1.5 mt-4 pt-3 border-t border-border/40 text-[10px] text-muted-foreground/80">
             <span>Source: <a href="https://www.pgcb.gov.bd/" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline font-semibold">PGCB NLDC Operations Sheet</a></span>
             <span>Audited by: National Load Despatch Centre (NLDC) System Operators</span>
-            <span className="font-medium">Reporting Period: 24-Hour SCADA Log (Date: 22 Jun 2026)</span>
+            <span className="font-medium">Reporting Period: 24-Hour SCADA Log (Date: {systemStats.date})</span>
           </div>
         </div>
       </div>
@@ -1040,7 +1434,7 @@ export function PowerGridExplorer({ initialMix, initialLines, initialProjects }:
             <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1.5 mt-4 pt-3 border-t border-border/40 text-[10px] text-muted-foreground/80 px-4 pb-4">
               <span>Source: <a href="https://bpdb.gov.bd/" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline font-semibold">BPDB Daily Reports</a> &amp; <a href="https://www.pgcb.gov.bd/" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline font-semibold">PGCB Logs</a></span>
               <span>Audited by: BPDB Finance &amp; Commercial Operations / CAG Audit Team</span>
-              <span className="font-medium">Reporting Date: 22 Jun 2026</span>
+              <span className="font-medium">Reporting Date: {systemStats.date}</span>
             </div>
           </div>
 
@@ -1087,7 +1481,7 @@ export function PowerGridExplorer({ initialMix, initialLines, initialProjects }:
           <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1.5 mt-2 text-[10px] text-muted-foreground/75 px-1">
             <span>Source: <a href="https://www.pgcb.gov.bd/" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline font-medium">PGCB Operations</a> &amp; <a href="https://www.petrobangla.org.bd/" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline font-medium">Petrobangla Production Division</a></span>
             <span>Audited by: NLDC Operators &amp; Petrobangla Billing</span>
-            <span>Reporting Period: System Summary (Date: 22 Jun 2026)</span>
+            <span>Reporting Period: System Summary (Date: {systemStats.date})</span>
           </div>
         </div>
       )}
@@ -1186,6 +1580,35 @@ export function PowerGridExplorer({ initialMix, initialLines, initialProjects }:
               </table>
             </div>
 
+            {/* Technical Glossary Footnote */}
+            <div className="mt-6 p-4 rounded-2xl bg-muted/5 border border-border/30 space-y-2.5">
+              <div className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
+                <Info className="h-3.5 w-3.5 text-sky-500" /> Gas Sector Acronyms &amp; Units Footnote
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4 text-[10px] text-muted-foreground leading-relaxed">
+                <div>
+                  <strong className="text-foreground block font-bold mb-0.5">MMCFD</strong>
+                  Million Standard Cubic Feet per Day. Standard unit of gas volume flow rate.
+                </div>
+                <div>
+                  <strong className="text-foreground block font-bold mb-0.5">LNG (Liquefied Natural Gas)</strong>
+                  Natural gas cooled to liquid state (-162°C) for shipping, then regasified back into the grid.
+                </div>
+                <div>
+                  <strong className="text-foreground block font-bold mb-0.5">BGFCL / SGFL / BAPEX</strong>
+                  National gas production state companies (Bangladesh Gas Fields, Sylhet Gas Fields, and BAPEX exploration).
+                </div>
+                <div>
+                  <strong className="text-foreground block font-bold mb-0.5">TGTDCL / BGDCL / KGDCL</strong>
+                  Gas distribution companies (Titas Gas, Bakhrabad Gas, and Karnaphuli Gas Distribution).
+                </div>
+                <div>
+                  <strong className="text-foreground block font-bold mb-0.5">RPGCL</strong>
+                  Rupantarita Prakritik Gas Company Limited, responsible for gas imports and LNG terminal operations.
+                </div>
+              </div>
+            </div>
+
             {/* Card Metadata Footer */}
             <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1.5 mt-4 pt-3 border-t border-border/40 text-[10px] text-muted-foreground/80 px-4 pb-4">
               <span>Source: <a href="https://www.petrobangla.org.bd/" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline font-semibold">Petrobangla Distribution Reports</a></span>
@@ -1255,7 +1678,7 @@ export function PowerGridExplorer({ initialMix, initialLines, initialProjects }:
             <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1.5 mt-4 pt-3 border-t border-border/40 text-[10px] text-muted-foreground/80 px-4 pb-4">
               <span>Source: <a href="https://www.pgcb.gov.bd/" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline font-semibold">PGCB System Operations Division</a></span>
               <span>Audited by: HVDC Bheramara &amp; Cumilla Substations</span>
-              <span className="font-medium">Reporting Period: Daily Interconnector Flow (Date: 22 Jun 2026)</span>
+              <span className="font-medium">Reporting Period: Daily Interconnector Flow (Date: {systemStats.date})</span>
             </div>
           </div>
         </div>
@@ -1372,6 +1795,1958 @@ export function PowerGridExplorer({ initialMix, initialLines, initialProjects }:
         </div>
       )}
 
+      {activeTab === 'transmission' && (
+        <div className="grid-explorer-panel space-y-6">
+          <div className="grid lg:grid-cols-12 gap-8 items-start">
+            {/* Mobile/Tablet Sub-tab Navigation */}
+            <div className="lg:hidden w-full relative z-40 bg-card border border-border/60 p-3 rounded-2xl shadow-sm">
+              <label className="block text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-1.5 px-1">
+                Select Section
+              </label>
+              <div className="relative">
+                <select
+                  value={
+                    transSubTab === 'projects'
+                      ? (projectType === 'ongoing' ? 'projects_ongoing' : 'projects_upcoming')
+                      : transSubTab
+                  }
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    if (val === 'projects_ongoing') {
+                      setTransSubTab('projects');
+                      setProjectType('ongoing');
+                    } else if (val === 'projects_upcoming') {
+                      setTransSubTab('projects');
+                      setProjectType('upcoming');
+                    } else {
+                      setTransSubTab(val as any);
+                    }
+                  }}
+                  className="w-full appearance-none px-4 py-3 pr-10 text-xs font-semibold rounded-xl border border-border/40 bg-muted/20 text-foreground shadow-sm focus:outline-none focus:ring-2 focus:ring-primary/20 cursor-pointer"
+                >
+                  {[
+                    {
+                      group: "Grid Infrastructure",
+                      items: [
+                        { id: 'transmission', label: 'Power Transmission' },
+                        { id: 'lines', label: 'Transmission Line Information' },
+                        { id: 'substations', label: 'Substation Information' }
+                      ]
+                    },
+                    {
+                      group: "Grid Projects",
+                      items: [
+                        { id: 'projects_ongoing', label: 'Ongoing Projects' },
+                        { id: 'projects_upcoming', label: 'Upcoming Projects' },
+                        { id: 'completed_projects', label: 'Completed Projects' }
+                      ]
+                    },
+                    {
+                      group: "Maps & Diagrams",
+                      items: [
+                        { id: 'grid_net', label: 'National Grid Network Diagram' },
+                        { id: 'geo_map', label: 'Geographical Grid Map' }
+                      ]
+                    },
+                    {
+                      group: "Optical Fiber (OPGW)",
+                      items: [
+                        { id: 'opgw_map', label: 'OPGW Fiber Network Map' },
+                        { id: 'opgw_lease', label: 'Optical Fiber Leasing' }
+                      ]
+                    }
+                  ].map((g) => (
+                    <optgroup key={g.group} label={g.group}>
+                      {g.items.map((t) => (
+                        <option key={t.id} value={t.id}>
+                          {t.label}
+                        </option>
+                      ))}
+                    </optgroup>
+                  ))}
+                </select>
+                <div className="absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none text-muted-foreground">
+                  <ChevronDown className="h-4 w-4" />
+                </div>
+              </div>
+            </div>
+
+            {/* Desktop Left Sidebar Navigation */}
+            <div className="hidden lg:block lg:col-span-3 space-y-4 lg:sticky lg:top-24 bg-card border border-border/60 p-4 rounded-2xl shadow-sm">
+              <div className="pb-3 border-b border-border/40">
+                <h3 className="text-xs font-bold text-foreground uppercase tracking-wider">
+                  Technical Information
+                </h3>
+                <p className="text-[10px] text-muted-foreground mt-0.5">
+                  Power Grid Infrastructure &amp; Projects
+                </p>
+              </div>
+
+              {[
+                {
+                  group: "Grid Infrastructure",
+                  colorClass: "text-sky-500",
+                  items: [
+                    { id: 'transmission', label: 'Power Transmission', icon: Activity, activeClass: "bg-sky-500/10 text-sky-600 dark:text-sky-400 border-sky-500/20 shadow-sm font-semibold", hoverClass: "hover:bg-sky-500/5 hover:text-sky-600 dark:hover:text-sky-400" },
+                    { id: 'lines', label: 'Transmission Line Information', icon: Cable, activeClass: "bg-sky-500/10 text-sky-600 dark:text-sky-400 border-sky-500/20 shadow-sm font-semibold", hoverClass: "hover:bg-sky-500/5 hover:text-sky-600 dark:hover:text-sky-400" },
+                    { id: 'substations', label: 'Substation Information', icon: Database, activeClass: "bg-sky-500/10 text-sky-600 dark:text-sky-400 border-sky-500/20 shadow-sm font-semibold", hoverClass: "hover:bg-sky-500/5 hover:text-sky-600 dark:hover:text-sky-400" }
+                  ]
+                },
+                {
+                  group: "Grid Projects",
+                  colorClass: "text-muted-foreground",
+                  items: [
+                    { id: 'projects_ongoing', label: 'Ongoing Projects', icon: TrendingUp, activeClass: "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20 shadow-sm font-semibold", hoverClass: "hover:bg-amber-500/5 hover:text-amber-600 dark:hover:text-amber-400" },
+                    { id: 'projects_upcoming', label: 'Upcoming Projects', icon: Activity, activeClass: "bg-red-500/10 text-red-600 dark:text-red-400 border-red-500/20 shadow-sm font-semibold", hoverClass: "hover:bg-red-500/5 hover:text-red-600 dark:hover:text-red-400" },
+                    { id: 'completed_projects', label: 'Completed Projects', icon: CheckSquare, activeClass: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20 shadow-sm font-semibold", hoverClass: "hover:bg-emerald-500/5 hover:text-emerald-600 dark:hover:text-emerald-400" }
+                  ]
+                },
+                {
+                  group: "Maps & Diagrams",
+                  colorClass: "text-indigo-500",
+                  items: [
+                    { id: 'grid_net', label: 'National Grid Network Diagram', icon: Network, activeClass: "bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border-indigo-500/20 shadow-sm font-semibold", hoverClass: "hover:bg-indigo-500/5 hover:text-indigo-600 dark:hover:text-indigo-400" },
+                    { id: 'geo_map', label: 'Geographical Grid Map', icon: MapPin, activeClass: "bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border-indigo-500/20 shadow-sm font-semibold", hoverClass: "hover:bg-indigo-500/5 hover:text-indigo-600 dark:hover:text-indigo-400" }
+                  ]
+                },
+                {
+                  group: "Optical Fiber (OPGW)",
+                  colorClass: "text-purple-500",
+                  items: [
+                    { id: 'opgw_map', label: 'OPGW Fiber Network Map', icon: Map, activeClass: "bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/20 shadow-sm font-semibold", hoverClass: "hover:bg-purple-500/5 hover:text-purple-600 dark:hover:text-purple-400" },
+                    { id: 'opgw_lease', label: 'Optical Fiber Leasing', icon: DollarSign, activeClass: "bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/20 shadow-sm font-semibold", hoverClass: "hover:bg-purple-500/5 hover:text-purple-600 dark:hover:text-purple-400" }
+                  ]
+                }
+              ].map((g, idx) => (
+                <div key={g.group} className={cn("space-y-1.5", idx > 0 && "pt-3 border-t border-border/30")}>
+                  <h4 className={cn("text-[10px] font-bold uppercase tracking-widest px-2", g.colorClass)}>
+                    {g.group}
+                  </h4>
+                  <div className="space-y-0.5">
+                    {g.items.map((t) => {
+                      const SubIcon = t.icon;
+                      const active = t.id === 'projects_ongoing'
+                        ? (transSubTab === 'projects' && projectType === 'ongoing')
+                        : t.id === 'projects_upcoming'
+                        ? (transSubTab === 'projects' && projectType === 'upcoming')
+                        : transSubTab === t.id;
+                      return (
+                        <button
+                          key={t.id}
+                          type="button"
+                          onClick={() => {
+                            if (t.id === 'projects_ongoing') {
+                              setTransSubTab('projects');
+                              setProjectType('ongoing');
+                            } else if (t.id === 'projects_upcoming') {
+                              setTransSubTab('projects');
+                              setProjectType('upcoming');
+                            } else {
+                              setTransSubTab(t.id as any);
+                            }
+                          }}
+                          className={cn(
+                            "w-full flex items-center gap-2.5 px-3 py-2 text-xs rounded-xl transition-all duration-150 border text-left",
+                            active
+                              ? t.activeClass
+                              : cn("border-transparent text-muted-foreground", t.hoverClass)
+                          )}
+                        >
+                          <SubIcon className={cn("h-4 w-4 shrink-0 transition-colors", active ? "text-current" : "text-muted-foreground group-hover:text-current")} />
+                          <span>{t.label}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Right Content Area */}
+            <div className="lg:col-span-9 space-y-6">
+
+          {/* Sub-tab 1: Power Transmission */}
+          {transSubTab === 'transmission' && (
+            <div className="space-y-6 animate-in fade-in duration-200">
+              {/* Core Operating Function Card */}
+              <div className="grid-explorer-chart-card card p-6 bg-gradient-to-r from-primary/5 via-sky-500/5 to-transparent border-primary/25 relative overflow-hidden">
+                {/* Visual grid pattern background decoration */}
+                <div className="absolute inset-0 opacity-[0.03] pointer-events-none" style={{ backgroundImage: 'radial-gradient(circle at 1px 1px, currentColor 1px, transparent 0)', backgroundSize: '16px 16px' }} />
+                <div className="space-y-6 relative z-10">
+                  <div className="flex items-start gap-4">
+                    <div className="p-3 bg-primary/10 rounded-2xl text-primary border border-primary/20 shrink-0">
+                      <Activity className="h-6 w-6 animate-pulse" />
+                    </div>
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <h3 className="text-lg font-bold text-foreground">Power Transmission</h3>
+                        <span className="px-2.5 py-0.5 text-[10px] font-semibold bg-sky-500/10 text-sky-400 border border-sky-500/20 rounded-full">
+                          Core Grid Function
+                        </span>
+                      </div>
+                      <p className="text-sm md:text-base text-foreground font-medium leading-relaxed">
+                        The main operating function of Power Grid is wheeling of energy from BPDB power stations and Generation Companies to Distribution entities utilizing transmission network. Power Grid gets its energy wheeling charge from its clients(distribution entities) at the rate fixed by Bangladesh Electricity Regulatory Commission (BERC).
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Wheeling Workflow Visualization */}
+                  <div className="space-y-4 pt-5 border-t border-border/30">
+                    <h4 className="text-xs font-bold text-foreground uppercase tracking-wider">Energy Wheeling Value Chain</h4>
+                    <div className="relative grid grid-cols-1 md:grid-cols-3 gap-6 items-stretch">
+                      {/* Step 1 */}
+                      <div className="group p-5 rounded-2xl bg-muted/15 border border-border/30 hover:border-primary/20 hover:bg-muted/20 transition-all flex flex-col justify-between relative overflow-hidden">
+                        <div className="space-y-3">
+                          <div className="flex items-center justify-between">
+                            <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest bg-muted-foreground/10 px-2.5 py-0.5 rounded-full">Step 1: Generation</span>
+                            <Zap className="h-4 w-4 text-amber-500 animate-pulse" />
+                          </div>
+                          <h5 className="text-sm font-bold text-foreground">Power Generation Plants</h5>
+                          <p className="text-xs text-muted-foreground leading-relaxed">
+                            BPDB-owned power stations, independent power producers (IPPs), and generation companies produce electricity and feed it to step-up transformers.
+                          </p>
+                        </div>
+                        <div className="border-t border-border/20 pt-2 mt-4 text-[10px] text-muted-foreground font-medium">
+                          Source feeds: Gas, Coal, HFO, Solar &amp; Imports
+                        </div>
+                      </div>
+
+                      {/* Step 2 */}
+                      <div className="group p-5 rounded-2xl bg-primary/5 border border-primary/25 hover:border-primary/40 hover:bg-primary/10 transition-all flex flex-col justify-between relative overflow-hidden">
+                        <div className="space-y-3">
+                          <div className="flex items-center justify-between">
+                            <span className="text-[10px] font-bold text-primary uppercase tracking-widest bg-primary/10 px-2.5 py-0.5 rounded-full">Step 2: Transmission</span>
+                            <Cable className="h-4 w-4 text-primary" />
+                          </div>
+                          <h5 className="text-sm font-bold text-foreground">High-Voltage Wheeling Grid</h5>
+                          <p className="text-xs text-muted-foreground leading-relaxed">
+                            PGCB steps up voltages to <strong className="text-foreground">400kV, 230kV, or 132kV</strong> to transmit over long distances, reducing line loss. Regulated by BERC wheeling charges.
+                          </p>
+                        </div>
+                        <div className="border-t border-primary/20 pt-2 mt-4 text-[10px] text-primary font-semibold">
+                          Charge Rate: Fixed by BERC legally
+                        </div>
+                      </div>
+
+                      {/* Step 3 */}
+                      <div className="group p-5 rounded-2xl bg-muted/15 border border-border/30 hover:border-primary/20 hover:bg-muted/20 transition-all flex flex-col justify-between relative overflow-hidden">
+                        <div className="space-y-3">
+                          <div className="flex items-center justify-between">
+                            <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest bg-muted-foreground/10 px-2.5 py-0.5 rounded-full">Step 3: Distribution</span>
+                            <Globe className="h-4 w-4 text-emerald-500" />
+                          </div>
+                          <h5 className="text-sm font-bold text-foreground">Distribution Entities (Clients)</h5>
+                          <p className="text-xs text-muted-foreground leading-relaxed">
+                            Power is stepped down at 132/33kV and 230/33kV substations to be distributed by retail utilities to the final consumers.
+                          </p>
+                        </div>
+                        <div className="border-t border-border/20 pt-2 mt-4 text-[10px] text-muted-foreground font-medium">
+                          Clients: DPDC, DESCO, BREB/PBS, WZPDCO, NESCO
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Side-by-Side Asset History and Standing Comparison */}
+              <div className="grid lg:grid-cols-2 gap-6">
+                {/* Historical Takeover */}
+                <div className="grid-explorer-chart-card card p-6 bg-gradient-to-b from-card to-muted/5 border-border/40 flex flex-col justify-between">
+                  <div className="space-y-4">
+                    <div className="grid-explorer-chart-card__head">
+                      <div className="p-2.5 bg-amber-500/10 text-amber-500 rounded-xl border border-amber-500/20">
+                        <FileText className="h-5 w-5 shrink-0" />
+                      </div>
+                      <div>
+                        <h3 className="grid-explorer-chart-card__title">Asset Inheritance &amp; Phases</h3>
+                        <p className="grid-explorer-chart-card__sub">Historical assets taken over from BPDB and DESA in different phases</p>
+                      </div>
+                    </div>
+
+                    <div className="space-y-3 pt-2">
+                      <p className="text-xs text-muted-foreground leading-relaxed italic border-l-2 border-amber-500/50 pl-3">
+                        "The Power Grid took over about 2497 circuit km of 230 kV lines, 4236 circuit km 27.3 circuit km (Others) of 132 kV lines, 6 nos of 230/132 kV Substation and 63 nos of 132/33 kV substations from BPDB and DESA in different phases."
+                      </p>
+
+                      <div className="grid gap-2.5 mt-4 pt-2">
+                        <div className="flex items-center justify-between p-3 rounded-xl bg-muted/10 border border-border/30">
+                          <span className="text-xs font-semibold text-muted-foreground">Inherited 230 kV Transmission Lines</span>
+                          <span className="text-xs font-bold text-foreground bg-muted/20 px-2.5 py-1 rounded-lg border border-border/40">about 2497 circuit km</span>
+                        </div>
+                        <div className="flex items-center justify-between p-3 rounded-xl bg-muted/10 border border-border/30">
+                          <span className="text-xs font-semibold text-muted-foreground">Inherited 132 kV Transmission Lines</span>
+                          <div className="text-right">
+                            <span className="text-xs font-bold text-foreground bg-muted/20 px-2.5 py-1 rounded-lg border border-border/40">4236 circuit km</span>
+                            <span className="block text-[9px] text-muted-foreground mt-1">Plus 27.3 circuit km (Others)</span>
+                          </div>
+                        </div>
+                        <div className="flex items-center justify-between p-3 rounded-xl bg-muted/10 border border-border/30">
+                          <span className="text-xs font-semibold text-muted-foreground">Inherited 230/132 kV Substations</span>
+                          <span className="text-xs font-bold text-foreground bg-muted/20 px-2.5 py-1 rounded-lg border border-border/40">6 nos</span>
+                        </div>
+                        <div className="flex items-center justify-between p-3 rounded-xl bg-muted/10 border border-border/30">
+                          <span className="text-xs font-semibold text-muted-foreground">Inherited 132/33 kV Substations</span>
+                          <span className="text-xs font-bold text-foreground bg-muted/20 px-2.5 py-1 rounded-lg border border-border/40">63 nos</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Standing Assets up to April, 2026 */}
+                <div className="grid-explorer-chart-card card p-6 bg-gradient-to-b from-card to-muted/5 border-border/40 flex flex-col justify-between">
+                  <div className="space-y-4">
+                    <div className="grid-explorer-chart-card__head">
+                      <div className="p-2.5 bg-sky-500/10 text-sky-400 rounded-xl border border-sky-500/20">
+                        <TrendingUp className="h-5 w-5 shrink-0" />
+                      </div>
+                      <div>
+                        <h3 className="grid-explorer-chart-card__title">Current Grid Standing</h3>
+                        <p className="grid-explorer-chart-card__sub">Standing transmission lines and station infrastructure up to April, 2026</p>
+                      </div>
+                    </div>
+
+                    <div className="space-y-3 pt-2">
+                      <p className="text-xs text-muted-foreground leading-relaxed italic border-l-2 border-sky-500/50 pl-3">
+                        "Transmission lines of the company up to April, 2026 are stood at 3,155 ckt km 27.8 ckt km (Others) of 400 kV lines, 5,129 circuit km 27.3 circuit km (Others) of 230 kV lines, 9,287 circuit km and 369 circuit km (Others) of 132 kV lines and 1 nos of 400 kV Station, 11 nos of 400/230kV substation, 5 nos of 400/132kV substation, 36 nos of 230/132 kV substation, 2 nos of 230/33 KV substation and 150 nos of 132/33 kV substations."
+                      </p>
+
+                      <div className="grid grid-cols-2 gap-2 mt-4 pt-1">
+                        <div className="p-2.5 rounded-xl bg-muted/10 border border-border/30">
+                          <span className="text-[9px] uppercase font-bold text-muted-foreground tracking-wider block">400 kV Lines</span>
+                          <span className="text-xs font-bold text-foreground block mt-0.5">3,155 ckt km</span>
+                          <span className="text-[9px] text-muted-foreground">Others: 27.8 ckt km</span>
+                        </div>
+                        <div className="p-2.5 rounded-xl bg-muted/10 border border-border/30">
+                          <span className="text-[9px] uppercase font-bold text-muted-foreground tracking-wider block">230 kV Lines</span>
+                          <span className="text-xs font-bold text-foreground block mt-0.5">5,129 circuit km</span>
+                          <span className="text-[9px] text-muted-foreground">Others: 27.3 circuit km</span>
+                        </div>
+                        <div className="p-2.5 rounded-xl bg-muted/10 border border-border/30 col-span-2">
+                          <span className="text-[9px] uppercase font-bold text-muted-foreground tracking-wider block">132 kV Lines</span>
+                          <span className="text-xs font-bold text-foreground block mt-0.5">9,287 circuit km</span>
+                          <span className="text-[9px] text-muted-foreground">Others: 369 circuit km</span>
+                        </div>
+                        <div className="p-2.5 rounded-xl bg-muted/10 border border-border/30">
+                          <span className="text-[9px] uppercase font-bold text-muted-foreground tracking-wider block">Stations / S/S (400kV)</span>
+                          <span className="text-[10px] font-bold text-foreground block mt-0.5 leading-tight">1 nos 400 kV Station</span>
+                          <span className="text-[9px] text-muted-foreground">11 nos 400/230kV, 5 nos 400/132kV</span>
+                        </div>
+                        <div className="p-2.5 rounded-xl bg-muted/10 border border-border/30">
+                          <span className="text-[9px] uppercase font-bold text-muted-foreground tracking-wider block">Substations (230kV / 132kV)</span>
+                          <span className="text-[10px] font-bold text-foreground block mt-0.5 leading-tight">36 nos 230/132kV, 2 nos 230/33KV</span>
+                          <span className="text-[9px] text-muted-foreground">150 nos 132/33kV substations</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Takeover vs. Standing Comparative Table */}
+              <div className="grid-explorer-chart-card card p-6">
+                <div className="flex items-center gap-2 mb-4 border-b border-border/40 pb-3">
+                  <Database className="h-5 w-5 text-primary" />
+                  <h3 className="text-sm font-bold text-foreground uppercase tracking-wider">Asset Growth &amp; Development Comparison</h3>
+                </div>
+                <div className="grid-explorer-table-wrap">
+                  <table className="grid-explorer-table text-xs">
+                    <thead>
+                      <tr className="border-b border-border/60">
+                        <th className="py-2.5 text-left text-foreground font-bold">Infrastructure Class</th>
+                        <th className="py-2.5 text-left text-foreground font-bold">Inherited (Takeover from BPDB &amp; DESA)</th>
+                        <th className="py-2.5 text-left text-foreground font-bold">Standing (Up to April, 2026)</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-border/20">
+                      <tr className="hover:bg-muted/5 transition-colors">
+                        <td className="py-2 font-semibold text-foreground">400 kV Transmission Lines</td>
+                        <td className="py-2 text-muted-foreground">—</td>
+                        <td className="py-2 text-foreground font-medium">3,155 ckt km <span className="text-[10px] text-muted-foreground block">Plus 27.8 ckt km (Others)</span></td>
+                      </tr>
+                      <tr className="hover:bg-muted/5 transition-colors">
+                        <td className="py-2 font-semibold text-foreground">230 kV Transmission Lines</td>
+                        <td className="py-2 text-foreground font-medium">about 2497 circuit km</td>
+                        <td className="py-2 text-foreground font-medium">5,129 circuit km <span className="text-[10px] text-muted-foreground block">Plus 27.3 circuit km (Others)</span></td>
+                      </tr>
+                      <tr className="hover:bg-muted/5 transition-colors">
+                        <td className="py-2 font-semibold text-foreground">132 kV Transmission Lines</td>
+                        <td className="py-2 text-foreground font-medium">4236 circuit km <span className="text-[10px] text-muted-foreground block">Plus 27.3 circuit km (Others)</span></td>
+                        <td className="py-2 text-foreground font-medium">9,287 circuit km <span className="text-[10px] text-muted-foreground block">Plus 369 circuit km (Others)</span></td>
+                      </tr>
+                      <tr className="hover:bg-muted/5 transition-colors">
+                        <td className="py-2 font-semibold text-foreground">400 kV Stations / Substations</td>
+                        <td className="py-2 text-muted-foreground">—</td>
+                        <td className="py-2 text-foreground font-medium">
+                          <span className="block">1 nos of 400 kV Station</span>
+                          <span className="block text-[10px] text-muted-foreground">11 nos of 400/230kV substation</span>
+                          <span className="block text-[10px] text-muted-foreground">5 nos of 400/132kV substation</span>
+                        </td>
+                      </tr>
+                      <tr className="hover:bg-muted/5 transition-colors">
+                        <td className="py-2 font-semibold text-foreground">230 kV Substations</td>
+                        <td className="py-2 text-foreground font-medium">6 nos of 230/132 kV Substation</td>
+                        <td className="py-2 text-foreground font-medium">
+                          <span className="block">36 nos of 230/132 kV substation</span>
+                          <span className="block text-[10px] text-muted-foreground">2 nos of 230/33 KV substation</span>
+                        </td>
+                      </tr>
+                      <tr className="hover:bg-muted/5 transition-colors">
+                        <td className="py-2 font-semibold text-foreground">132/33 kV Substations</td>
+                        <td className="py-2 text-foreground font-medium">63 nos of 132/33 kV substations</td>
+                        <td className="py-2 text-foreground font-medium">150 nos of 132/33 kV substations</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              {/* Callout box for projects */}
+              <div className="p-4 bg-primary/5 border border-primary/20 rounded-2xl flex items-center gap-3">
+                <div className="p-2 bg-primary/10 rounded-xl text-primary border border-primary/20 shrink-0">
+                  <TrendingUp className="h-4 w-4" />
+                </div>
+                <p className="text-xs text-foreground font-semibold leading-normal">
+                  The company has taken infrastructure development projects for further development of its operation.
+                </p>
+              </div>
+
+              {/* Technical Glossary Footnote */}
+              <div className="mt-6 p-4 rounded-2xl bg-muted/5 border border-border/30 space-y-2.5">
+                <div className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
+                  <Info className="h-3.5 w-3.5 text-primary" /> Technical Units &amp; Acronyms Footnote
+                </div>
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4 text-[10px] text-muted-foreground leading-relaxed">
+                  <div>
+                    <strong className="text-foreground block font-bold mb-0.5">kV (Kilovolt)</strong>
+                    Unit of electrical voltage. 1 kV = 1,000 Volts. Transmission happens at high voltages to prevent heat losses.
+                  </div>
+                  <div>
+                    <strong className="text-foreground block font-bold mb-0.5">ckt km (Circuit Kilometers)</strong>
+                    Total transmission line conductor length. A 10 km double-circuit line equals 20 ckt km.
+                  </div>
+                  <div>
+                    <strong className="text-foreground block font-bold mb-0.5">MVA (Megavolt-Ampere)</strong>
+                    Apparent power capacity. Used to measure substation transformer ratings.
+                  </div>
+                  <div>
+                    <strong className="text-foreground block font-bold mb-0.5">Nos (Numbers)</strong>
+                    Standard shorthand meaning unit count / quantity of substations or equipment lines.
+                  </div>
+                  <div>
+                    <strong className="text-foreground block font-bold mb-0.5">BERC / BPDB</strong>
+                    Bangladesh Electricity Regulatory Commission / Bangladesh Power Development Board.
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Sub-tab 2: Transmission Line Information */}
+          {transSubTab === 'lines' && (
+            <div className="space-y-6 animate-in fade-in duration-200">
+              <div className="grid lg:grid-cols-12 gap-6">
+                {/* Column 1: Transmission Line stats */}
+                <div className="lg:col-span-5 space-y-6">
+                  {/* Transmission Line Info Card */}
+                  <div className="grid-explorer-chart-card card h-full flex flex-col justify-between">
+                    <div>
+                      <div className="grid-explorer-chart-card__head grid-explorer-chart-card__head--border">
+                        <Cable className="h-5 w-5 text-primary shrink-0" />
+                        <div>
+                          <h3 className="grid-explorer-chart-card__title">Transmission Line as on: April, 2026</h3>
+                          <p className="grid-explorer-chart-card__sub">Verbatim grid line network capacities</p>
+                        </div>
+                      </div>
+
+                      <div className="grid-explorer-table-wrap">
+                        <table className="grid-explorer-table text-xs">
+                          <thead>
+                            <tr className="border-b border-border/40">
+                              <th className="py-2 text-left">Voltage Class</th>
+                              <th className="py-2 text-right">Main Capacity</th>
+                              <th className="py-2 text-right">Others</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            <tr className="hover:bg-muted/5 transition-colors">
+                              <td className="py-2.5 font-semibold flex items-center gap-2">
+                                <span className="w-2 h-2 rounded-full bg-red-500" />
+                                400kV
+                              </td>
+                              <td className="py-2.5 text-right tabular-nums font-bold text-foreground">3,155 Circuit km</td>
+                              <td className="py-2.5 text-right tabular-nums text-muted-foreground">27.8 Circuit km (Others)</td>
+                            </tr>
+                            <tr className="hover:bg-muted/5 transition-colors">
+                              <td className="py-2.5 font-semibold flex items-center gap-2">
+                                <span className="w-2 h-2 rounded-full bg-amber-500" />
+                                230kV
+                              </td>
+                              <td className="py-2.5 text-right tabular-nums font-bold text-foreground">5,129.79 Circuit km</td>
+                              <td className="py-2.5 text-right tabular-nums text-muted-foreground">27.3 Circuit km (Others)</td>
+                            </tr>
+                            <tr className="hover:bg-muted/5 transition-colors">
+                              <td className="py-2.5 font-semibold flex items-center gap-2">
+                                <span className="w-2 h-2 rounded-full bg-blue-500" />
+                                132kV
+                              </td>
+                              <td className="py-2.5 text-right tabular-nums font-bold text-foreground">9,287 Circuit km</td>
+                              <td className="py-2.5 text-right tabular-nums text-muted-foreground">369 Circuit km (Others)</td>
+                            </tr>
+                            <tr className="border-t border-border/60 font-bold bg-muted/20">
+                              <td className="py-3 pl-3">Total Line</td>
+                              <td className="py-3 text-right tabular-nums text-primary pr-3" colSpan={2}>17955 Circuit km</td>
+                            </tr>
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Column 2: Last Five Years Achievement */}
+                <div className="lg:col-span-7 space-y-6">
+                  <div className="grid-explorer-chart-card card h-full flex flex-col justify-between">
+                    <div>
+                      <div className="grid-explorer-chart-card__head grid-explorer-chart-card__head--border">
+                        <TrendingUp className="h-5 w-5 text-emerald-500 shrink-0" />
+                        <div>
+                          <h3 className="grid-explorer-chart-card__title">Last Five years achievement</h3>
+                          <p className="grid-explorer-chart-card__sub">Major projects and capacities commissioned recently</p>
+                        </div>
+                      </div>
+
+                      <div className="grid-explorer-table-wrap">
+                        <table className="grid-explorer-table text-xs">
+                          <thead>
+                            <tr className="border-b border-border/40">
+                              <th className="py-2 text-left">Infrastructure Item</th>
+                              <th className="py-2 text-right">Verbatim Capacity / Length</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-border/10">
+                            <tr className="hover:bg-muted/5 transition-colors">
+                              <td className="py-2 font-semibold">400/230kV Substation</td>
+                              <td className="py-2 text-right tabular-nums text-foreground font-bold">9 Nos. 13,100 MVA</td>
+                            </tr>
+                            <tr className="hover:bg-muted/5 transition-colors">
+                              <td className="py-2 font-semibold">400/132 kV Substation</td>
+                              <td className="py-2 text-right tabular-nums text-foreground font-bold">4 Nos. 2,990 MVA</td>
+                            </tr>
+                            <tr className="hover:bg-muted/5 transition-colors">
+                              <td className="py-2 font-semibold">230/132kV Substation</td>
+                              <td className="py-2 text-right tabular-nums text-foreground font-bold">10 Nos: 7,550 MVA</td>
+                            </tr>
+                            <tr className="hover:bg-muted/5 transition-colors">
+                              <td className="py-2 font-semibold">230/33KV Substation</td>
+                              <td className="py-2 text-right tabular-nums text-foreground font-bold">1 Nos 280 MVA</td>
+                            </tr>
+                            <tr className="hover:bg-muted/5 transition-colors">
+                              <td className="py-2 font-semibold">132/33kV Substation</td>
+                              <td className="py-2 text-right tabular-nums text-foreground font-bold">38 Nos. 7,647 MVA</td>
+                            </tr>
+                            <tr className="hover:bg-muted/5 transition-colors">
+                              <td className="py-2 font-semibold text-emerald-500">400kV Transmission Line</td>
+                              <td className="py-2 text-right tabular-nums text-emerald-500 font-bold">2,124.77 Circuit km</td>
+                            </tr>
+                            <tr className="hover:bg-muted/5 transition-colors">
+                              <td className="py-2 font-semibold text-emerald-500">230kV Transmission Line</td>
+                              <td className="py-2 text-right tabular-nums text-emerald-500 font-bold">1,481.94 Circuit km</td>
+                            </tr>
+                            <tr className="hover:bg-muted/5 transition-colors">
+                              <td className="py-2 font-semibold text-emerald-500">132kV Transmission Line</td>
+                              <td className="py-2 text-right tabular-nums text-emerald-500 font-bold">1,249.874 Circuit km</td>
+                            </tr>
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Row 2: Substation Capacity details (Full width) */}
+                <div className="lg:col-span-12">
+                  <div className="grid-explorer-chart-card card p-6">
+                    <div className="grid-explorer-chart-card__head grid-explorer-chart-card__head--border pb-3 mb-4">
+                      <Database className="h-5 w-5 text-indigo-500 shrink-0" />
+                      <div>
+                        <h3 className="grid-explorer-chart-card__title">Substation as on: April, 2026</h3>
+                        <p className="grid-explorer-chart-card__sub">Comprehensive capacity aggregates across all operation nodes</p>
+                      </div>
+                    </div>
+
+                    <div className="grid-explorer-table-wrap">
+                      <table className="grid-explorer-table text-xs">
+                        <thead>
+                          <tr className="border-b border-border/40">
+                            <th className="py-2 text-left">Substation / Station Class</th>
+                            <th className="py-2 text-left">Count / Quantity</th>
+                            <th className="py-2 text-right">Main Capacity / Rating</th>
+                            <th className="py-2 text-right">Others (Quantity &amp; Capacity)</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-border/10">
+                          <tr className="hover:bg-muted/5 transition-colors">
+                            <td className="py-2.5 font-semibold text-foreground">400kV HVDC Station</td>
+                            <td className="py-2.5 text-foreground">1 Nos.</td>
+                            <td className="py-2.5 text-right font-medium text-foreground">2x500MW HVDC Back to Back station</td>
+                            <td className="py-2.5 text-right text-muted-foreground">—</td>
+                          </tr>
+                          <tr className="hover:bg-muted/5 transition-colors">
+                            <td className="py-2.5 font-semibold text-foreground">400/230kV Substation</td>
+                            <td className="py-2.5 text-foreground">11 Nos.</td>
+                            <td className="py-2.5 text-right font-bold text-foreground">15,180 MVA</td>
+                            <td className="py-2.5 text-right font-medium text-muted-foreground">3 Nos. 2730 MVA (Others)</td>
+                          </tr>
+                          <tr className="hover:bg-muted/5 transition-colors">
+                            <td className="py-2.5 font-semibold text-foreground">400/132 kV Substation</td>
+                            <td className="py-2.5 text-foreground">5 Nos.</td>
+                            <td className="py-2.5 text-right font-bold text-foreground">4,265 MVA</td>
+                            <td className="py-2.5 text-right text-muted-foreground">—</td>
+                          </tr>
+                          <tr className="hover:bg-muted/5 transition-colors">
+                            <td className="py-2.5 font-semibold text-foreground">230/132kV Substation</td>
+                            <td className="py-2.5 text-foreground">36 Nos.</td>
+                            <td className="py-2.5 text-right font-bold text-foreground">24,275 MVA</td>
+                            <td className="py-2.5 text-right font-medium text-muted-foreground">1 Nos. 250 MVA (Others)</td>
+                          </tr>
+                          <tr className="hover:bg-muted/5 transition-colors">
+                            <td className="py-2.5 font-semibold text-foreground">230/33KV Substation</td>
+                            <td className="py-2.5 text-foreground">2 Nos.</td>
+                            <td className="py-2.5 text-right font-bold text-foreground">560 MVA</td>
+                            <td className="py-2.5 text-right font-medium text-muted-foreground">4 Nos. 1,050 MVA (Others)</td>
+                          </tr>
+                          <tr className="hover:bg-muted/5 transition-colors">
+                            <td className="py-2.5 font-semibold text-foreground">132/33kV Substation</td>
+                            <td className="py-2.5 text-foreground">150 Nos.</td>
+                            <td className="py-2.5 text-right font-bold text-foreground">33,185 MVA</td>
+                            <td className="py-2.5 text-right font-medium text-muted-foreground">46 Nos. 7,660 MVA (Others)</td>
+                          </tr>
+                          
+                          {/* Summary Row 1: Overall Capacity */}
+                          <tr className="border-t border-border/50 bg-primary/5 font-semibold text-foreground">
+                            <td className="py-3 pl-3 text-primary font-bold">Overall Capacity</td>
+                            <td className="py-3 font-bold" colSpan={2}>259 Nos.</td>
+                            <td className="py-3 text-right font-bold text-primary pr-3">89,155 MVA</td>
+                          </tr>
+                          
+                          {/* Summary Row 2: Dispatch Capacity */}
+                          <tr className="bg-emerald-500/5 font-semibold text-foreground">
+                            <td className="py-3 pl-3 text-emerald-500 font-bold" colSpan={2}>Dispatch Capacity at 33kV level</td>
+                            <td className="py-3 text-right font-bold text-emerald-500 pr-3" colSpan={2}>
+                              36267.21 MW <span className="text-[10px] text-muted-foreground font-normal">(Including all organizations)</span>
+                            </td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Technical Glossary Footnote */}
+              <div className="mt-6 p-4 rounded-2xl bg-muted/5 border border-border/30 space-y-2.5">
+                <div className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
+                  <Info className="h-3.5 w-3.5 text-primary" /> Technical Units &amp; Acronyms Footnote
+                </div>
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4 text-[10px] text-muted-foreground leading-relaxed">
+                  <div>
+                    <strong className="text-foreground block font-bold mb-0.5">kV (Kilovolt)</strong>
+                    Unit of electrical voltage. 1 kV = 1,000 Volts.
+                  </div>
+                  <div>
+                    <strong className="text-foreground block font-bold mb-0.5">Circuit km (ckt km)</strong>
+                    Total length of active electrical circuits/conductors running across grid pylons.
+                  </div>
+                  <div>
+                    <strong className="text-foreground block font-bold mb-0.5">MVA / MW</strong>
+                    MVA (apparent power) rates substation capacity. MW (active power, 1M Watts) rates grid dispatch peak.
+                  </div>
+                  <div>
+                    <strong className="text-foreground block font-bold mb-0.5">HVDC Station</strong>
+                    High-Voltage Direct Current. Connects asynchronous networks or transmits large power blocks efficiently.
+                  </div>
+                  <div>
+                    <strong className="text-foreground block font-bold mb-0.5">Others Capacity</strong>
+                    Represents capacities managed under subsidiary operations or special grid-circle categories.
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Sub-tab 3: Substation Information */}
+          {transSubTab === 'substations' && (
+            <div className="space-y-6 animate-in fade-in duration-200">
+              {/* Header Card Grid */}
+              <div className="grid lg:grid-cols-3 gap-6">
+                {/* Left: Text Description */}
+                <div className="grid-explorer-chart-card card p-6 lg:col-span-2 bg-gradient-to-r from-indigo-500/5 via-primary/5 to-transparent border-indigo-500/20 flex flex-col justify-between">
+                  <div className="space-y-4">
+                    <div className="flex items-start gap-4">
+                      <div className="p-3 bg-indigo-500/10 rounded-2xl text-indigo-400 border border-indigo-500/20 shrink-0">
+                        <Database className="h-6 w-6" />
+                      </div>
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <h3 className="text-lg font-bold text-foreground">National Grid Substation Database</h3>
+                          <span className="px-2.5 py-0.5 text-[10px] font-semibold bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 rounded-full">
+                            Last Updated: Sunday, May 24, 2026 at 02:12 PM
+                          </span>
+                        </div>
+                        <p className="text-sm text-muted-foreground leading-relaxed">
+                          Comprehensive tracking of all 400kV, 230kV, 132kV, 230/33kV, and 132/33kV active substations operating within the Bangladesh electricity transmission grid network.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Right: Key Stats Quick View Card */}
+                <div className="grid-explorer-chart-card card p-6 lg:col-span-1 bg-muted/10 border-border/30 flex flex-col justify-between">
+                  <div>
+                    <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-3">Substation Database Summary</h4>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-1">
+                        <span className="text-[10px] text-muted-foreground uppercase font-semibold">Total Substations</span>
+                        <div className="text-sm font-bold text-foreground tabular-nums">{filteredSubstations.length} Stations</div>
+                      </div>
+                      <div className="space-y-1">
+                        <span className="text-[10px] text-muted-foreground uppercase font-semibold">Filtered Capacity</span>
+                        <div className="text-sm font-bold text-primary tabular-nums">{formatNumber(totalSubCapacityMva)} MVA</div>
+                      </div>
+                      <div className="space-y-1">
+                        <span className="text-[10px] text-muted-foreground uppercase font-semibold">Unique Zones</span>
+                        <div className="text-sm font-bold text-foreground tabular-nums">9 Zones</div>
+                      </div>
+                      <div className="space-y-1">
+                        <span className="text-[10px] text-muted-foreground uppercase font-semibold">Grid Circle Groups</span>
+                        <div className="text-sm font-bold text-emerald-500 tabular-nums">HVDC &amp; Circles</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Substation Rating Categories Breakdown Table */}
+              <div className="grid-explorer-chart-card card">
+                <div className="grid-explorer-chart-card__head grid-explorer-chart-card__head--border">
+                  <Database className="h-5 w-5 text-indigo-400 shrink-0" />
+                  <div>
+                    <h3 className="grid-explorer-chart-card__title">Substation Assets &amp; Capacity</h3>
+                    <p className="grid-explorer-chart-card__sub">Active substations and transformer ratings as of April 2026</p>
+                  </div>
+                </div>
+
+                <div className="grid-explorer-table-wrap">
+                  <table className="grid-explorer-table">
+                    <thead>
+                      <tr>
+                        <th>Rating / Type</th>
+                        <th className="text-right">Quantity</th>
+                        <th className="text-right">Capacity (MVA)</th>
+                        <th className="text-right">Others Capacity</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td className="font-semibold">400 kV HVDC Back-to-Back</td>
+                        <td className="text-right tabular-nums font-medium text-foreground">1 Station</td>
+                        <td className="text-right tabular-nums font-semibold text-foreground">2x500 MW</td>
+                        <td className="text-right text-muted-foreground">—</td>
+                      </tr>
+                      <tr>
+                        <td className="font-semibold">400/230 kV Substations</td>
+                        <td className="text-right tabular-nums font-medium text-foreground">11 Nos.</td>
+                        <td className="text-right tabular-nums font-semibold text-foreground">15,180 MVA</td>
+                        <td className="text-right tabular-nums text-muted-foreground">3 Nos. (2,730 MVA)</td>
+                      </tr>
+                      <tr>
+                        <td className="font-semibold">400/132 kV Substations</td>
+                        <td className="text-right tabular-nums font-medium text-foreground">5 Nos.</td>
+                        <td className="text-right tabular-nums font-semibold text-foreground">4,265 MVA</td>
+                        <td className="text-right text-muted-foreground">—</td>
+                      </tr>
+                      <tr>
+                        <td className="font-semibold">230/132 kV Substations</td>
+                        <td className="text-right tabular-nums font-medium text-foreground">36 Nos.</td>
+                        <td className="text-right tabular-nums font-semibold text-foreground">24,275 MVA</td>
+                        <td className="text-right tabular-nums text-muted-foreground">1 Nos. (250 MVA)</td>
+                      </tr>
+                      <tr>
+                        <td className="font-semibold">230/33 kV Substations</td>
+                        <td className="text-right tabular-nums font-medium text-foreground">2 Nos.</td>
+                        <td className="text-right tabular-nums font-semibold text-foreground">560 MVA</td>
+                        <td className="text-right tabular-nums text-muted-foreground">4 Nos. (1,050 MVA)</td>
+                      </tr>
+                      <tr>
+                        <td className="font-semibold">132/33 kV Substations</td>
+                        <td className="text-right tabular-nums font-medium text-foreground">150 Nos.</td>
+                        <td className="text-right tabular-nums font-semibold text-foreground">33,185 MVA</td>
+                        <td className="text-right tabular-nums text-muted-foreground">46 Nos. (7,660 MVA)</td>
+                      </tr>
+                      <tr className="border-t border-border/80 font-bold bg-muted/20">
+                        <td>Overall Substation Capacity</td>
+                        <td className="text-right tabular-nums text-primary">259 Stations</td>
+                        <td className="text-right tabular-nums text-primary" colSpan={2}>89,155 MVA</td>
+                      </tr>
+                      <tr className="font-bold bg-muted/10">
+                        <td>Dispatch Capacity (33kV level)</td>
+                        <td className="text-right tabular-nums text-emerald-500 font-extrabold" colSpan={3}>36,267.21 MW</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              {/* Substation Filters */}
+              <div className="p-4 bg-card border border-border/60 rounded-2xl grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 z-40 relative">
+                <div className="relative">
+                  <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+                  <input
+                    type="text"
+                    placeholder="Search substation name..."
+                    value={subSearch}
+                    onChange={(e) => setSubSearch(e.target.value)}
+                    className="w-full pl-9 pr-4 py-2 text-xs md:text-sm bg-muted/20 border border-border/40 rounded-xl text-foreground placeholder-muted-foreground focus:outline-none focus:border-primary/50 transition-colors"
+                  />
+                </div>
+
+                <CustomDropdown
+                  value={subVoltageFilter}
+                  onChange={setSubVoltageFilter}
+                  options={voltageOptions}
+                  placeholder="All Voltage Classes"
+                  isOpen={isVoltageDropdownOpen}
+                  setIsOpen={setIsVoltageDropdownOpen}
+                  dropdownRef={voltageDropdownRef}
+                />
+
+                <CustomDropdown
+                  value={subZoneFilter}
+                  onChange={setSubZoneFilter}
+                  options={zoneOptions}
+                  placeholder="All Operation Zones"
+                  isOpen={isZoneDropdownOpen}
+                  setIsOpen={setIsZoneDropdownOpen}
+                  dropdownRef={zoneDropdownRef}
+                />
+
+                <CustomDropdown
+                  value={subOwnerFilter}
+                  onChange={setSubOwnerFilter}
+                  options={ownerOptions}
+                  placeholder="All Owners"
+                  isOpen={isOwnerDropdownOpen}
+                  setIsOpen={setIsOwnerDropdownOpen}
+                  dropdownRef={ownerDropdownRef}
+                />
+              </div>
+
+              {/* Substations Table */}
+              <div className="grid-explorer-chart-card card">
+                <div className="grid-explorer-table-wrap">
+                  <table className="grid-explorer-table">
+                    <thead>
+                      <tr>
+                        <th>SN</th>
+                        <th>Substation Name</th>
+                        <th>Voltage Class</th>
+                        <th>Operation Zone</th>
+                        <th>Transformer Detail</th>
+                        <th className="text-right">Total Capacity</th>
+                        <th>Ownership</th>
+                        <th>Grid Circle</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {paginatedSubstations.length > 0 ? (
+                        paginatedSubstations.map((sub, idx) => (
+                          <tr key={idx} className="hover:bg-muted/5 transition-colors">
+                            <td className="font-semibold text-muted-foreground">{sub.sn}</td>
+                            <td className="font-semibold text-foreground">{sub.name}</td>
+                            <td>
+                              <span className={cn(
+                                "px-2 py-0.5 rounded-full text-[10px] font-bold",
+                                sub.voltage === '400kV' ? "bg-red-500/10 text-red-500 border border-red-500/20" :
+                                sub.voltage === '230kV' ? "bg-amber-500/10 text-amber-500 border border-amber-500/20" :
+                                sub.voltage === '132kV' ? "bg-blue-500/10 text-blue-500 border border-blue-500/20" :
+                                "bg-indigo-500/10 text-indigo-500 border border-indigo-500/20"
+                              )}>
+                                {sub.voltage}
+                              </span>
+                            </td>
+                            <td>{sub.zone}</td>
+                            <td className="font-mono text-xs">{sub.transformer}</td>
+                            <td className="text-right font-medium tabular-nums text-foreground">{sub.capacity}</td>
+                            <td>
+                              <span className={cn(
+                                "px-2 py-0.5 rounded-full text-[10px] font-semibold",
+                                sub.owner === 'POWER GRID' ? "bg-primary/10 text-primary" :
+                                sub.owner === 'Bulk' ? "bg-amber-500/10 text-amber-500" :
+                                "bg-muted text-muted-foreground"
+                              )}>
+                                {sub.owner}
+                              </span>
+                            </td>
+                            <td>{sub.circle}</td>
+                          </tr>
+                        ))
+                      ) : (
+                        <tr>
+                          <td colSpan={8} className="text-center py-8 text-muted-foreground">
+                            No substations match your filter criteria.
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* Pagination Controls */}
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-4 px-6 py-4 border-t border-border/40 mt-4">
+                  {/* Left: Items per page selector */}
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-muted-foreground">Show:</span>
+                    <div className="flex gap-1.5">
+                      {[25, 50, 100].map((size) => (
+                        <button
+                          key={size}
+                          type="button"
+                          onClick={() => {
+                            setItemsPerPage(size);
+                            setSubPage(1);
+                          }}
+                          className={cn(
+                            "px-2.5 py-1 text-xs font-semibold rounded-lg border transition-all duration-150",
+                            itemsPerPage === size
+                              ? "bg-primary/10 text-primary border-primary/20 shadow-sm"
+                              : "bg-muted/10 border-border/30 text-muted-foreground hover:text-foreground hover:bg-muted/30"
+                          )}
+                        >
+                          {size}
+                        </button>
+                      ))}
+                    </div>
+                    <span className="text-xs text-muted-foreground">per page</span>
+                  </div>
+
+                  {/* Middle: Page status text */}
+                  <span className="text-xs text-muted-foreground text-center">
+                    Page <strong className="text-foreground">{totalSubPages === 0 ? 0 : subPage}</strong> of <strong className="text-foreground">{totalSubPages}</strong> ({filteredSubstations.length} total stations)
+                  </span>
+
+                  {/* Right: Prev / Next Buttons */}
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      type="button"
+                      disabled={subPage === 1}
+                      onClick={() => setSubPage((p) => Math.max(p - 1, 1))}
+                      className="p-1.5 rounded-lg border border-border/40 hover:bg-muted/10 disabled:opacity-40 disabled:hover:bg-transparent transition-colors text-muted-foreground focus:outline-none"
+                    >
+                      <ChevronLeft className="h-4 w-4" />
+                    </button>
+                    <button
+                      type="button"
+                      disabled={subPage === totalSubPages || totalSubPages === 0}
+                      onClick={() => setSubPage((p) => Math.min(p + 1, totalSubPages))}
+                      className="p-1.5 rounded-lg border border-border/40 hover:bg-muted/10 disabled:opacity-40 disabled:hover:bg-transparent transition-colors text-muted-foreground focus:outline-none"
+                    >
+                      <ChevronRight className="h-4 w-4" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Technical Glossary Footnote */}
+              <div className="mt-6 p-4 rounded-2xl bg-muted/5 border border-border/30 space-y-2.5">
+                <div className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
+                  <Info className="h-3.5 w-3.5 text-primary" /> Technical Units &amp; Acronyms Footnote
+                </div>
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 text-[10px] text-muted-foreground leading-relaxed">
+                  <div>
+                    <strong className="text-foreground block font-bold mb-0.5">MVA (Megavolt-Ampere)</strong>
+                    Apparent power capacity rating of the step-down transformers operating inside the substation.
+                  </div>
+                  <div>
+                    <strong className="text-foreground block font-bold mb-0.5">kV (Kilovolt Class)</strong>
+                    Substation connection voltage (e.g. 132/33 kV steps down 132kV grid line to 33kV distribution feeder).
+                  </div>
+                  <div>
+                    <strong className="text-foreground block font-bold mb-0.5">Transformer Code</strong>
+                    System operators designate transformer units (e.g. T-1, TR-2) for maintenance tracking.
+                  </div>
+                  <div>
+                    <strong className="text-foreground block font-bold mb-0.5">Owner Groups</strong>
+                    Entities managing the station (e.g. POWER GRID / PGCB, APSCL, BPDB utilities).
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Sub-tab 4: Ongoing / Upcoming Projects */}
+          {transSubTab === 'projects' && (
+            <div className="space-y-6 animate-in fade-in duration-200">
+              {/* Header block */}
+              <div className="grid-explorer-chart-card card p-6 bg-gradient-to-r from-primary/5 via-sky-500/5 to-transparent border-primary/20 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div className="space-y-1">
+                  <h3 className="text-lg font-bold text-foreground">
+                    {projectType === 'ongoing' ? 'Ongoing Projects' : 'Upcoming Projects'}
+                  </h3>
+                  <p className="text-sm text-muted-foreground">
+                    {projectType === 'ongoing' 
+                      ? 'Detailed status tracking of PGCB high-voltage grid upgrades, river crossings, and transmission line projects.'
+                      : 'Planned high-voltage grid expansions, battery energy storage systems (BESS), and power transmission line projects in the pipeline.'}
+                  </p>
+                </div>
+                <span className="px-3 py-1 text-xs font-semibold bg-primary/10 text-primary border border-primary/20 rounded-full shrink-0 font-mono">
+                  {projectType === 'ongoing' ? ongoingProjectsData.length : upcomingProjectsData.length} Projects under tracking
+                </span>
+              </div>
+
+              {/* Project Type Toggle Pills */}
+              <div className="flex items-center gap-2 p-1 bg-muted/20 border border-border/30 rounded-2xl w-fit">
+                <button
+                  type="button"
+                  onClick={() => setProjectType('ongoing')}
+                  className={cn(
+                    "px-4 py-2 text-xs font-bold rounded-xl transition-all duration-150 flex items-center gap-2 select-none border border-transparent",
+                    projectType === 'ongoing'
+                      ? "bg-amber-500 text-white shadow-lg shadow-amber-500/10 border-amber-600/20"
+                      : "text-muted-foreground hover:text-foreground"
+                  )}
+                >
+                  <TrendingUp className="h-3.5 w-3.5" />
+                  Ongoing Projects ({ongoingProjectsData.length})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setProjectType('upcoming')}
+                  className={cn(
+                    "px-4 py-2 text-xs font-bold rounded-xl transition-all duration-150 flex items-center gap-2 select-none border border-transparent",
+                    projectType === 'upcoming'
+                      ? "bg-red-500 text-white shadow-lg shadow-red-500/10 border-red-600/20"
+                      : "text-muted-foreground hover:text-foreground"
+                  )}
+                >
+                  <Activity className="h-3.5 w-3.5" />
+                  Upcoming Projects ({upcomingProjectsData.length})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setTransSubTab('completed_projects');
+                  }}
+                  className="px-4 py-2 text-xs font-bold rounded-xl transition-all duration-150 flex items-center gap-2 select-none text-muted-foreground hover:text-foreground"
+                >
+                  <CheckSquare className="h-3.5 w-3.5" />
+                  Completed Projects ({completedProjectsData.length})
+                </button>
+              </div>
+
+              {/* Filters & Search */}
+              <div className="p-4 bg-card border border-border/60 rounded-2xl grid grid-cols-1 sm:grid-cols-2 gap-4 relative z-40">
+                <div className="relative">
+                  <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+                  <input
+                    type="text"
+                    placeholder="Search project name, objective, partner..."
+                    value={projectSearch}
+                    onChange={(e) => {
+                      setProjectSearch(e.target.value);
+                      setProjectPage(1);
+                    }}
+                    className="w-full pl-9 pr-4 py-2 text-xs md:text-sm bg-muted/20 border border-border/40 rounded-xl text-foreground placeholder-muted-foreground focus:outline-none focus:border-primary/50 transition-colors"
+                  />
+                </div>
+                <div className="relative" ref={partnerDropdownRef}>
+                  <button
+                    type="button"
+                    onClick={() => setIsPartnerDropdownOpen(!isPartnerDropdownOpen)}
+                    className="w-full flex items-center justify-between gap-2 px-3.5 py-2 text-xs md:text-sm bg-muted/20 border border-border/40 rounded-xl text-foreground hover:bg-muted/30 hover:border-primary/30 focus:outline-none focus:border-primary/50 transition-all duration-150 font-medium shadow-sm"
+                  >
+                    <span className="truncate">Partner: {projectPartnerFilter === 'all' ? 'All Development Partners' : projectPartnerFilter}</span>
+                    <ChevronDown className={cn("h-4 w-4 text-muted-foreground shrink-0 transition-transform duration-150", isPartnerDropdownOpen && "rotate-180")} />
+                  </button>
+                  {isPartnerDropdownOpen && (
+                    <div className="absolute left-0 mt-2 w-full max-h-60 overflow-y-auto rounded-2xl border border-border bg-card/95 backdrop-blur-xl shadow-2xl p-1.5 z-[100] animate-in fade-in slide-in-from-top-1 duration-150 scrollbar-thin">
+                      <button
+                        type="button"
+                        onClick={() => { setProjectPartnerFilter('all'); setIsPartnerDropdownOpen(false); setProjectPage(1); }}
+                        className={cn("w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs md:text-sm font-semibold select-none text-left", projectPartnerFilter === 'all' ? "bg-primary/10 text-primary font-bold" : "text-muted-foreground hover:text-foreground hover:bg-muted/40")}
+                      >
+                        <span>All Development Partners</span>
+                        {projectPartnerFilter === 'all' && <Check className="h-3.5 w-3.5" />}
+                      </button>
+                      {['EXIM Bank of India', 'World Bank', 'ADB', 'AIIB', 'JICA', 'EDCF', 'KfW', 'Exim Bank China (G to G)', 'Indian LoC', 'N/A'].map((p) => (
+                        <button
+                          key={p}
+                          type="button"
+                          onClick={() => { setProjectPartnerFilter(p); setIsPartnerDropdownOpen(false); setProjectPage(1); }}
+                          className={cn("w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs md:text-sm font-semibold select-none text-left", projectPartnerFilter === p ? "bg-primary/10 text-primary font-bold" : "text-muted-foreground hover:text-foreground hover:bg-muted/40")}
+                        >
+                          <span>{p}</span>
+                          {projectPartnerFilter === p && <Check className="h-3.5 w-3.5" />}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Projects Grid */}
+              <div className="grid grid-cols-1 gap-6">
+                {paginatedProjects.map((proj, idx) => {
+                  const isOngoing = 'status' in proj && typeof proj.status === 'object';
+                  
+                  if (isOngoing) {
+                    const oProj = proj as any;
+                    const physicalVal = parseFloat(oProj.status.physical.replace(/%/g, ''));
+                    const financialVal = parseFloat(oProj.status.financial.replace(/%/g, ''));
+                    
+                    return (
+                      <div key={idx} className="card p-6 flex flex-col justify-between space-y-6 relative overflow-hidden group border-border/40 hover:border-primary/30 transition-all duration-300 animate-in fade-in-50 duration-200">
+                        {/* Title & Status */}
+                        <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
+                          <div className="space-y-2">
+                            <h4 className="text-base font-bold text-foreground leading-snug group-hover:text-primary transition-colors">{oProj.name}</h4>
+                            <div className="flex flex-wrap gap-2 text-[10px]">
+                              <span className="px-2 py-0.5 font-semibold bg-muted text-muted-foreground border border-border/60 rounded-full">
+                                Partner: {oProj.partner}
+                              </span>
+                              <span className="px-2 py-0.5 font-semibold bg-primary/5 text-primary border border-primary/15 rounded-full">
+                                Duration: {oProj.duration}
+                              </span>
+                            </div>
+                          </div>
+                          
+                          {/* Progress Bars */}
+                          <div className="flex items-center gap-6 shrink-0 bg-muted/10 p-3.5 rounded-2xl border border-border/20">
+                            <div className="space-y-1">
+                              <div className="flex items-center justify-between gap-8 text-[10px] font-bold text-foreground">
+                                <span>Physical Progress</span>
+                                <span className="text-primary font-mono">{oProj.status.physical}</span>
+                              </div>
+                              <div className="w-32 h-2 rounded-full bg-muted overflow-hidden">
+                                <div className="h-full bg-primary rounded-full" style={{ width: `${physicalVal}%` }} />
+                              </div>
+                            </div>
+                            <div className="space-y-1">
+                              <div className="flex items-center justify-between gap-8 text-[10px] font-bold text-foreground">
+                                <span>Financial Progress</span>
+                                <span className="text-emerald-500 font-mono">{oProj.status.financial}</span>
+                              </div>
+                              <div className="w-32 h-2 rounded-full bg-muted overflow-hidden">
+                                <div className="h-full bg-emerald-500 rounded-full" style={{ width: `${financialVal}%` }} />
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Objectives & Scope */}
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 text-xs border-t border-border/40 pt-4">
+                          <div className="space-y-2">
+                            <h5 className="font-bold text-foreground uppercase tracking-wider text-[9px] text-primary">Objectives</h5>
+                            <ul className="list-disc pl-4 space-y-1.5 text-muted-foreground leading-relaxed">
+                              {oProj.objectives.map((obj: string, i: number) => (
+                                <li key={i}>{obj}</li>
+                              ))}
+                            </ul>
+                          </div>
+                          <div className="space-y-2">
+                            <h5 className="font-bold text-foreground uppercase tracking-wider text-[9px] text-primary">Scope of Work</h5>
+                            <ul className="list-disc pl-4 space-y-1.5 text-muted-foreground leading-relaxed">
+                              {oProj.scope.map((scp: string, i: number) => (
+                                <li key={i}>{scp}</li>
+                              ))}
+                            </ul>
+                          </div>
+                        </div>
+
+                        {/* Cost Grid */}
+                        <div className="p-4 bg-muted/10 border border-border/30 rounded-2xl grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs">
+                          <div className="space-y-0.5">
+                            <span className="text-[10px] text-muted-foreground font-semibold uppercase">Total Project Cost</span>
+                            {renderProjectCost(oProj.cost.total)}
+                          </div>
+                          <div className="space-y-0.5">
+                            <span className="text-[10px] text-muted-foreground font-semibold uppercase">GOB Contribution</span>
+                            {renderProjectCost(oProj.cost.gob)}
+                          </div>
+                          <div className="space-y-0.5">
+                            <span className="text-[10px] text-muted-foreground font-semibold uppercase">Project Aid (PA)</span>
+                            {renderProjectCost(oProj.cost.pa)}
+                          </div>
+                          <div className="space-y-0.5">
+                            <span className="text-[10px] text-muted-foreground font-semibold uppercase">PGCB Funding</span>
+                            {renderProjectCost(oProj.cost.pgcb)}
+                          </div>
+                        </div>
+
+                        {/* Footer: Contacts & Meta */}
+                        <div className="flex flex-wrap items-center justify-between gap-4 border-t border-border/40 pt-4 text-[10px] text-muted-foreground">
+                          <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
+                            <span><strong>Project Director:</strong> {oProj.director}</span>
+                            <span>•</span>
+                            <span>
+                              <strong>Office:</strong> {oProj.office}
+                            </span>
+                            <span>•</span>
+                            <span>
+                              <strong>Mobile:</strong> <a href={`tel:${oProj.mobile}`} className="text-primary hover:underline font-medium">{oProj.mobile}</a>
+                            </span>
+                            <span>•</span>
+                            <span>
+                              <strong>Email:</strong> <a href={`mailto:${oProj.email}`} className="text-primary hover:underline font-medium">{oProj.email}</a>
+                            </span>
+                          </div>
+                          <div className="flex flex-wrap items-center gap-x-3 text-[9px] uppercase tracking-wider font-semibold">
+                            <span>Source: {oProj.source}</span>
+                            <span>Updated: {oProj.lastUpdated}</span>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  } else {
+                    const uProj = proj as any;
+                    const statusInfo = getUpcomingProjectStatusInfo(uProj.status);
+                    const StatusIcon = statusInfo.icon;
+                    
+                    return (
+                      <div key={idx} className="card p-6 flex flex-col justify-between space-y-6 relative overflow-hidden group border-border/40 hover:border-primary/30 transition-all duration-300 animate-in fade-in-50 duration-200">
+                        {/* Title & Status */}
+                        <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
+                          <div className="space-y-2">
+                            <h4 className="text-base font-bold text-foreground leading-snug group-hover:text-primary transition-colors">{uProj.name}</h4>
+                            <div className="flex flex-wrap gap-2 text-[10px]">
+                              <span className="px-2 py-0.5 font-semibold bg-muted text-muted-foreground border border-border/60 rounded-full">
+                                Partner: {uProj.partner}
+                              </span>
+                              <span className="px-2 py-0.5 font-semibold bg-primary/5 text-primary border border-primary/15 rounded-full">
+                                Duration: {uProj.duration}
+                              </span>
+                            </div>
+                          </div>
+                          
+                          {/* Status Badge & Status Details */}
+                          <div className="flex items-center gap-3 shrink-0 bg-muted/10 p-3.5 rounded-2xl border border-border/20 max-w-xs md:max-w-md">
+                            <div className="space-y-1.5">
+                              <div className="flex items-center gap-1.5">
+                                <StatusIcon className="h-3.5 w-3.5 text-primary" />
+                                <span className={cn("px-2 py-0.5 text-[9px] font-bold rounded-full border uppercase tracking-wider", statusInfo.bgColor, statusInfo.textColor)}>
+                                  {statusInfo.label}
+                                </span>
+                              </div>
+                              <p className="text-[10px] text-muted-foreground leading-snug font-medium">
+                                {uProj.status}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Objectives & Scope */}
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 text-xs border-t border-border/40 pt-4">
+                          <div className="space-y-2">
+                            <h5 className="font-bold text-foreground uppercase tracking-wider text-[9px] text-primary">Objectives</h5>
+                            <ul className="list-disc pl-4 space-y-1.5 text-muted-foreground leading-relaxed">
+                              {uProj.objectives.map((obj: string, i: number) => (
+                                <li key={i}>{obj}</li>
+                              ))}
+                            </ul>
+                          </div>
+                          <div className="space-y-2">
+                            <h5 className="font-bold text-foreground uppercase tracking-wider text-[9px] text-primary">Scope of Work</h5>
+                            <ul className="list-disc pl-4 space-y-1.5 text-muted-foreground leading-relaxed">
+                              {uProj.scope.map((scp: string, i: number) => (
+                                <li key={i}>{scp}</li>
+                              ))}
+                            </ul>
+                          </div>
+                        </div>
+
+                        {/* Cost Grid */}
+                        <div className="p-4 bg-muted/10 border border-border/30 rounded-2xl grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
+                          <div className="space-y-0.5">
+                            <span className="text-[10px] text-muted-foreground font-semibold uppercase">Total Project Cost</span>
+                            {renderProjectCost(uProj.cost.total)}
+                          </div>
+                          <div className="space-y-0.5">
+                            <span className="text-[10px] text-muted-foreground font-semibold uppercase">Project Aid (PA)</span>
+                            {renderProjectCost(uProj.cost.pa)}
+                          </div>
+                          <div className="space-y-0.5">
+                            <span className="text-[10px] text-muted-foreground font-semibold uppercase">Development Partner</span>
+                            <div className="font-bold text-foreground">{uProj.partner}</div>
+                          </div>
+                        </div>
+
+                        {/* Footer: Contacts & Meta (Omitted Director details) */}
+                        <div className="flex flex-wrap items-center justify-between gap-4 border-t border-border/40 pt-4 text-[10px] text-muted-foreground">
+                          <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
+                            <span className="text-[9px] uppercase tracking-wider font-bold text-muted-foreground bg-muted/10 px-2 py-0.5 rounded-md border border-border/20">
+                              Upcoming Pipeline Project
+                            </span>
+                          </div>
+                          <div className="flex flex-wrap items-center gap-x-3 text-[9px] uppercase tracking-wider font-semibold">
+                            <span>Source: {uProj.source}</span>
+                            <span>Updated: {uProj.lastUpdated}</span>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  }
+                })}
+
+                {filteredProjects.length === 0 && (
+                  <div className="card p-12 text-center text-muted-foreground text-sm border-dashed border-border/60">
+                    No {projectType} projects found matching the filters or search query.
+                  </div>
+                )}
+              </div>
+
+              {/* Pagination */}
+              {totalProjectPages > 1 && (
+                <div className="flex items-center justify-between border-t border-border/40 pt-4">
+                  <p className="text-[11px] text-muted-foreground">
+                    Showing <span className="font-medium">{(projectPage - 1) * projectsPerPage + 1}</span> to{" "}
+                    <span className="font-medium">{Math.min(projectPage * projectsPerPage, filteredProjects.length)}</span> of{" "}
+                    <span className="font-medium">{filteredProjects.length}</span> {projectType} projects
+                  </p>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      disabled={projectPage === 1}
+                      onClick={() => setProjectPage(projectPage - 1)}
+                      className="p-1.5 border border-border/40 rounded-lg bg-card/65 text-muted-foreground hover:text-foreground hover:bg-muted/40 disabled:opacity-40 disabled:pointer-events-none transition-all"
+                    >
+                      <ChevronLeft className="h-4 w-4" />
+                    </button>
+                    <div className="text-xs font-semibold text-foreground">
+                      Page {projectPage} of {totalProjectPages}
+                    </div>
+                    <button
+                      type="button"
+                      disabled={projectPage === totalProjectPages}
+                      onClick={() => setProjectPage(projectPage + 1)}
+                      className="p-1.5 border border-border/40 rounded-lg bg-card/65 text-muted-foreground hover:text-foreground hover:bg-muted/40 disabled:opacity-40 disabled:pointer-events-none transition-all"
+                    >
+                      <ChevronRight className="h-4 w-4" />
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Sub-tab: Completed Projects */}
+          {transSubTab === 'completed_projects' && (
+            <div className="space-y-6 animate-in fade-in duration-200">
+              {/* Header block */}
+              <div className="grid-explorer-chart-card card p-6 bg-gradient-to-r from-primary/5 via-sky-500/5 to-transparent border-primary/20 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div className="space-y-1">
+                  <h3 className="text-lg font-bold text-foreground">
+                    Completed Projects
+                  </h3>
+                  <p className="text-sm text-muted-foreground">
+                    Comprehensive registry of successfully completed high-voltage transmission lines, substations, and grid network infrastructure projects.
+                  </p>
+                </div>
+                <span className="px-3 py-1 text-xs font-semibold bg-primary/10 text-primary border border-primary/20 rounded-full shrink-0 font-mono">
+                  {completedProjectsData.length} Completed Projects
+                </span>
+              </div>
+
+              {/* Project Type Toggle Pills */}
+              <div className="flex items-center gap-2 p-1 bg-muted/20 border border-border/30 rounded-2xl w-fit">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setTransSubTab('projects');
+                    setProjectType('ongoing');
+                  }}
+                  className="px-4 py-2 text-xs font-bold rounded-xl transition-all duration-150 flex items-center gap-2 select-none text-muted-foreground hover:text-foreground"
+                >
+                  <TrendingUp className="h-3.5 w-3.5" />
+                  Ongoing Projects ({ongoingProjectsData.length})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setTransSubTab('projects');
+                    setProjectType('upcoming');
+                  }}
+                  className="px-4 py-2 text-xs font-bold rounded-xl transition-all duration-150 flex items-center gap-2 select-none text-muted-foreground hover:text-foreground"
+                >
+                  <Activity className="h-3.5 w-3.5" />
+                  Upcoming Projects ({upcomingProjectsData.length})
+                </button>
+                <button
+                  type="button"
+                  className={cn(
+                    "px-4 py-2 text-xs font-bold rounded-xl transition-all duration-150 flex items-center gap-2 select-none border border-transparent bg-emerald-500 text-white shadow-lg shadow-emerald-500/10 border-emerald-600/20"
+                  )}
+                >
+                  <CheckSquare className="h-3.5 w-3.5" />
+                  Completed Projects ({completedProjectsData.length})
+                </button>
+              </div>
+
+              {/* Filters & Search */}
+              <div className="p-4 bg-card border border-border/60 rounded-2xl grid grid-cols-1 sm:grid-cols-2 gap-4 relative z-40">
+                <div className="relative">
+                  <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+                  <input
+                    type="text"
+                    placeholder="Search completed project name, objective, scope..."
+                    value={completedSearch}
+                    onChange={(e) => {
+                      setCompletedSearch(e.target.value);
+                      setCompletedPage(1);
+                    }}
+                    className="w-full pl-9 pr-4 py-2 text-xs md:text-sm bg-muted/20 border border-border/40 rounded-xl text-foreground placeholder-muted-foreground focus:outline-none focus:border-primary/50 transition-colors"
+                  />
+                </div>
+                <div className="relative" ref={completedPartnerDropdownRef}>
+                  <button
+                    type="button"
+                    onClick={() => setIsCompletedPartnerDropdownOpen(!isCompletedPartnerDropdownOpen)}
+                    className="w-full flex items-center justify-between gap-2 px-3.5 py-2 text-xs md:text-sm bg-muted/20 border border-border/40 rounded-xl text-foreground hover:bg-muted/30 hover:border-primary/30 focus:outline-none focus:border-primary/50 transition-all duration-150 font-medium shadow-sm"
+                  >
+                    <span className="truncate">Partner: {completedPartnerFilter === 'all' ? 'All Development Partners' : completedPartnerFilter}</span>
+                    <ChevronDown className={cn("h-4 w-4 text-muted-foreground shrink-0 transition-transform duration-150", isCompletedPartnerDropdownOpen && "rotate-180")} />
+                  </button>
+                  {isCompletedPartnerDropdownOpen && (
+                    <div className="absolute left-0 mt-2 w-full max-h-60 overflow-y-auto rounded-2xl border border-border bg-card/95 backdrop-blur-xl shadow-2xl p-1.5 z-[100] animate-in fade-in slide-in-from-top-1 duration-150 scrollbar-thin">
+                      <button
+                        type="button"
+                        onClick={() => { setCompletedPartnerFilter('all'); setIsCompletedPartnerDropdownOpen(false); setCompletedPage(1); }}
+                        className={cn("w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs md:text-sm font-semibold select-none text-left", completedPartnerFilter === 'all' ? "bg-primary/10 text-primary font-bold" : "text-muted-foreground hover:text-foreground hover:bg-muted/40")}
+                      >
+                        <span>All Development Partners</span>
+                        {completedPartnerFilter === 'all' && <Check className="h-3.5 w-3.5" />}
+                      </button>
+                      {['ADB', 'IDB', 'World Bank', 'JICA', 'EDCF', 'KfW', 'DANIDA', 'PGCB', 'N/A'].map((p) => (
+                        <button
+                          key={p}
+                          type="button"
+                          onClick={() => { setCompletedPartnerFilter(p); setIsCompletedPartnerDropdownOpen(false); setCompletedPage(1); }}
+                          className={cn("w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs md:text-sm font-semibold select-none text-left", completedPartnerFilter === p ? "bg-primary/10 text-primary font-bold" : "text-muted-foreground hover:text-foreground hover:bg-muted/40")}
+                        >
+                          <span>{p}</span>
+                          {completedPartnerFilter === p && <Check className="h-3.5 w-3.5" />}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Projects Grid */}
+              <div className="grid grid-cols-1 gap-6">
+                {paginatedCompletedProjects.map((proj, idx) => (
+                  <div key={idx} className="card p-6 flex flex-col justify-between space-y-6 relative overflow-hidden group border-border/40 hover:border-primary/30 transition-all duration-300 animate-in fade-in-50 duration-200">
+                    {/* Title & Status */}
+                    <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
+                      <div className="space-y-2">
+                        <h4 className="text-base font-bold text-foreground leading-snug group-hover:text-primary transition-colors">{proj.name}</h4>
+                        <div className="flex flex-wrap gap-2 text-[10px]">
+                          <span className="px-2 py-0.5 font-semibold bg-muted text-muted-foreground border border-border/60 rounded-full">
+                            Partner: {proj.partner}
+                          </span>
+                          <span className="px-2 py-0.5 font-semibold bg-primary/5 text-primary border border-primary/15 rounded-full">
+                            Duration: {proj.duration}
+                          </span>
+                        </div>
+                      </div>
+                      
+                      {/* Completed status badge */}
+                      <div className="flex items-center gap-3 shrink-0 bg-emerald-500/10 p-3 rounded-2xl border border-emerald-500/20">
+                        <div className="flex items-center gap-1.5">
+                          <Check className="h-3.5 w-3.5 text-emerald-500" />
+                          <span className="text-[10px] font-bold text-emerald-500 uppercase tracking-wider">
+                            Completed Project
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Objectives & Scope */}
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 text-xs border-t border-border/40 pt-4">
+                      <div className="space-y-2">
+                        <h5 className="font-bold text-foreground uppercase tracking-wider text-[9px] text-primary">Objectives</h5>
+                        {proj.objectives.length > 0 ? (
+                          <ul className="list-disc pl-4 space-y-1.5 text-muted-foreground leading-relaxed">
+                            {proj.objectives.map((obj, i) => (
+                              <li key={i}>{obj}</li>
+                            ))}
+                          </ul>
+                        ) : (
+                          <p className="text-muted-foreground italic">No objectives detailed.</p>
+                        )}
+                      </div>
+                      <div className="space-y-2">
+                        <h5 className="font-bold text-foreground uppercase tracking-wider text-[9px] text-primary">Scope of Work</h5>
+                        <ul className="list-disc pl-4 space-y-1.5 text-muted-foreground leading-relaxed">
+                          {proj.scope.map((scp, i) => (
+                            <li key={i}>{scp}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    </div>
+
+                    {/* Cost Grid */}
+                    <div className="p-4 bg-muted/10 border border-border/30 rounded-2xl grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs">
+                      <div className="space-y-0.5">
+                        <span className="text-[10px] text-muted-foreground font-semibold uppercase">Total Project Cost</span>
+                        {renderProjectCost(proj.cost.total)}
+                      </div>
+                      <div className="space-y-0.5">
+                        <span className="text-[10px] text-muted-foreground font-semibold uppercase">GOB Contribution</span>
+                        {renderProjectCost(proj.cost.gob)}
+                      </div>
+                      <div className="space-y-0.5">
+                        <span className="text-[10px] text-muted-foreground font-semibold uppercase">Project Aid (PA)</span>
+                        {renderProjectCost(proj.cost.pa)}
+                      </div>
+                      <div className="space-y-0.5">
+                        <span className="text-[10px] text-muted-foreground font-semibold uppercase">PGCB Funding</span>
+                        {renderProjectCost(proj.cost.pgcb)}
+                      </div>
+                    </div>
+
+                    {/* Footer: Contacts & Meta */}
+                    <div className="flex flex-wrap items-center justify-between gap-4 border-t border-border/40 pt-4 text-[10px] text-muted-foreground">
+                      <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
+                        <span className="text-[9px] uppercase tracking-wider font-bold text-muted-foreground bg-muted/10 px-2 py-0.5 rounded-md border border-border/20">
+                          Successfully Commissioned
+                        </span>
+                      </div>
+                      <div className="flex flex-wrap items-center gap-x-3 text-[9px] uppercase tracking-wider font-semibold">
+                        <span>Source: {proj.source}</span>
+                        <span>Updated: {proj.lastUpdated}</span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+
+                {filteredCompletedProjects.length === 0 && (
+                  <div className="card p-12 text-center text-muted-foreground text-sm border-dashed border-border/60">
+                    No completed projects found matching the filters or search query.
+                  </div>
+                )}
+              </div>
+
+              {/* Pagination */}
+              {totalCompletedProjectPages > 1 && (
+                <div className="flex items-center justify-between border-t border-border/40 pt-4">
+                  <p className="text-[11px] text-muted-foreground">
+                    Showing <span className="font-medium">{(completedPage - 1) * completedPerPage + 1}</span> to{" "}
+                    <span className="font-medium">{Math.min(completedPage * completedPerPage, filteredCompletedProjects.length)}</span> of{" "}
+                    <span className="font-medium">{filteredCompletedProjects.length}</span> completed projects
+                  </p>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      disabled={completedPage === 1}
+                      onClick={() => setCompletedPage(completedPage - 1)}
+                      className="p-1.5 border border-border/40 rounded-lg bg-card/65 text-muted-foreground hover:text-foreground hover:bg-muted/40 disabled:opacity-40 disabled:pointer-events-none transition-all"
+                    >
+                      <ChevronLeft className="h-4 w-4" />
+                    </button>
+                    <div className="text-xs font-semibold text-foreground">
+                      Page {completedPage} of {totalCompletedProjectPages}
+                    </div>
+                    <button
+                      type="button"
+                      disabled={completedPage === totalCompletedProjectPages}
+                      onClick={() => setCompletedPage(completedPage + 1)}
+                      className="p-1.5 border border-border/40 rounded-lg bg-card/65 text-muted-foreground hover:text-foreground hover:bg-muted/40 disabled:opacity-40 disabled:pointer-events-none transition-all"
+                    >
+                      <ChevronRight className="h-4 w-4" />
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Sub-tab 5: National Grid Network Diagram */}
+          {transSubTab === 'grid_net' && (
+            <div className="space-y-6 animate-in fade-in duration-200">
+              <div className="grid-explorer-chart-card card p-6 bg-gradient-to-r from-primary/5 via-sky-500/5 to-transparent border-primary/25 relative overflow-hidden">
+                <div className="space-y-4">
+                  <div className="flex items-start gap-4">
+                    <div className="p-3 bg-primary/10 rounded-2xl text-primary border border-primary/20 shrink-0">
+                      <Network className="h-6 w-6 animate-pulse" />
+                    </div>
+                    <div className="space-y-1 w-full">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                        <div>
+                          <h3 className="text-lg font-bold text-foreground">National Grid Network Diagram</h3>
+                          <p className="text-sm text-muted-foreground">Schematic mapping of grid interconnectivity across Bangladesh</p>
+                        </div>
+                        <a
+                          href="/pdf/national_grid_network.pdf"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="self-start sm:self-center px-4 py-2 text-xs font-semibold bg-primary/10 text-primary border border-primary/20 rounded-xl hover:bg-primary/20 transition-all flex items-center gap-1.5 shadow-sm"
+                        >
+                          <FileText className="h-3.5 w-3.5" />
+                          Open PDF in New Tab
+                        </a>
+                      </div>
+                    </div>
+                  </div>
+
+                  <p className="text-xs text-muted-foreground leading-relaxed pt-1">
+                    This official schematic diagram depicts the complete topology of the Bangladesh electricity transmission network, mapping the electrical connections between power generation stations, high-voltage transmission lines (400 kV, 230 kV, and 132 kV), and grid substations.
+                  </p>
+
+                  {/* Interactive Embed */}
+                  <div className="w-full rounded-2xl overflow-hidden border border-border/40 bg-card/50 shadow-2xl relative mt-2 flex flex-col">
+                    <iframe
+                      src="/pdf/national_grid_network.pdf#toolbar=1&navpanes=0&scrollbar=1"
+                      className="w-full h-[650px] border-none"
+                      title="National Grid Network Diagram"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Technical Glossary Footnote */}
+              <div className="mt-6 p-4 rounded-2xl bg-muted/5 border border-border/30 space-y-2.5">
+                <div className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
+                  <Info className="h-3.5 w-3.5 text-primary" /> Diagram Key &amp; Technical Footnote
+                </div>
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 text-[10px] text-muted-foreground leading-relaxed">
+                  <div>
+                    <strong className="text-foreground block font-bold mb-0.5">Line Voltages</strong>
+                    Red lines represent 400 kV circuits; blue/amber lines show 230 kV and 132 kV circuits respectively.
+                  </div>
+                  <div>
+                    <strong className="text-foreground block font-bold mb-0.5">Substation Nodes</strong>
+                    Circles represent grid substations. Solid lines entering/leaving circles represent active bus bar feeders.
+                  </div>
+                  <div>
+                    <strong className="text-foreground block font-bold mb-0.5">Asynchronous Interface</strong>
+                    High-Voltage Direct Current (HVDC) station links at borders are represented as block interface icons.
+                  </div>
+                  <div>
+                    <strong className="text-foreground block font-bold mb-0.5">Document Details</strong>
+                    Published officially by PGCB (Power Grid Company of Bangladesh) System Operations &amp; Planning Division.
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Sub-tab 5: Geographical Grid Map */}
+          {transSubTab === 'geo_map' && (
+            <div className="space-y-6 animate-in fade-in duration-200">
+              <div className="grid-explorer-chart-card card p-6 bg-gradient-to-r from-teal-500/5 via-primary/5 to-transparent border-teal-500/20 relative overflow-hidden">
+                <div className="space-y-4">
+                  <div className="flex items-start gap-4">
+                    <div className="p-3 bg-teal-500/10 rounded-2xl text-teal-400 border border-teal-500/20 shrink-0">
+                      <MapPin className="h-6 w-6 animate-pulse" />
+                    </div>
+                    <div className="space-y-1 w-full">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                        <div>
+                          <h3 className="text-lg font-bold text-foreground">Geographical Grid Map</h3>
+                          <p className="text-sm text-muted-foreground">Geographic layout and physical routing of national transmission lines</p>
+                        </div>
+                        <a
+                          href="/pdf/geo_map.pdf"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="self-start sm:self-center px-4 py-2 text-xs font-semibold bg-teal-500/10 text-teal-400 border border-teal-500/20 rounded-xl hover:bg-teal-500/20 transition-all flex items-center gap-1.5 shadow-sm"
+                        >
+                          <FileText className="h-3.5 w-3.5" />
+                          Open PDF in New Tab
+                        </a>
+                      </div>
+                    </div>
+                  </div>
+
+                  <p className="text-xs text-muted-foreground leading-relaxed pt-1">
+                    This geographical map projects all high-voltage pylon paths and transmission line routing across the physical terrain of Bangladesh. It details grid line runs crossing major rivers (such as Padma and Jamuna) and the locations of substations relative to regional load centers.
+                  </p>
+
+                  {/* Interactive Embed */}
+                  <div className="w-full rounded-2xl overflow-hidden border border-border/40 bg-card/50 shadow-2xl relative mt-2 flex flex-col">
+                    <iframe
+                      src="/pdf/geo_map.pdf#toolbar=1&navpanes=0&scrollbar=1"
+                      className="w-full h-[650px] border-none"
+                      title="Geographical Grid Map"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Technical Glossary Footnote */}
+              <div className="mt-6 p-4 rounded-2xl bg-muted/5 border border-border/30 space-y-2.5">
+                <div className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
+                  <Info className="h-3.5 w-3.5 text-teal-400" /> Mapping &amp; Geography Footnote
+                </div>
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 text-[10px] text-muted-foreground leading-relaxed">
+                  <div>
+                    <strong className="text-foreground block font-bold mb-0.5">Physical Routing</strong>
+                    Traces the geographical paths of pylons. Crucial for understanding regional grid vulnerability to natural hazards (e.g. floods, cyclones).
+                  </div>
+                  <div>
+                    <strong className="text-foreground block font-bold mb-0.5">River Crossings</strong>
+                    Includes details of special high-tension long-span river-crossing towers engineered across active delta rivers.
+                  </div>
+                  <div>
+                    <strong className="text-foreground block font-bold mb-0.5">Scale Projection</strong>
+                    Geospatial representations conform to official national grid system projections.
+                  </div>
+                  <div>
+                    <strong className="text-foreground block font-bold mb-0.5">Data Sources</strong>
+                    Sourced from PGCB Engineering and Survey Departments.
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Sub-tab 6: OPGW Fiber Network Map */}
+          {transSubTab === 'opgw_map' && (
+            <div className="space-y-6 animate-in fade-in duration-200">
+              <div className="grid-explorer-chart-card card p-6 bg-gradient-to-r from-purple-500/5 via-primary/5 to-transparent border-purple-500/20 relative overflow-hidden">
+                <div className="space-y-4">
+                  <div className="flex items-start gap-4">
+                    <div className="p-3 bg-purple-500/10 rounded-2xl text-purple-400 border border-purple-500/20 shrink-0">
+                      <Map className="h-6 w-6 animate-pulse" />
+                    </div>
+                    <div className="space-y-1 w-full">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                        <div>
+                          <h3 className="text-lg font-bold text-foreground">OPGW Fiber Network Map</h3>
+                          <p className="text-sm text-muted-foreground">National Optical Ground Wire (OPGW) telecommunication backbone network</p>
+                        </div>
+                        <a
+                          href="/pdf/opgw_map.pdf"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="self-start sm:self-center px-4 py-2 text-xs font-semibold bg-purple-500/10 text-purple-400 border border-purple-500/20 rounded-xl hover:bg-purple-500/20 transition-all flex items-center gap-1.5 shadow-sm"
+                        >
+                          <FileText className="h-3.5 w-3.5" />
+                          Open PDF in New Tab
+                        </a>
+                      </div>
+                    </div>
+                  </div>
+
+                  <p className="text-xs text-muted-foreground leading-relaxed pt-1">
+                    Optical Ground Wire (OPGW) is a dual-functioning cable. It acts as a conventional shield wire at the top of transmission towers to protect lines from lightning strikes, while containing optical fibers used for PGCB's protection signaling, SCADA telemetry, and commercial telecommunication leases.
+                  </p>
+
+                  {/* Interactive Embed */}
+                  <div className="w-full rounded-2xl overflow-hidden border border-border/40 bg-card/50 shadow-2xl relative mt-2 flex flex-col">
+                    <iframe
+                      src="/pdf/opgw_map.pdf#toolbar=1&navpanes=0&scrollbar=1"
+                      className="w-full h-[650px] border-none"
+                      title="OPGW Fiber Network Map"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Technical Glossary Footnote */}
+              <div className="mt-6 p-4 rounded-2xl bg-muted/5 border border-border/30 space-y-2.5">
+                <div className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
+                  <Info className="h-3.5 w-3.5 text-purple-400" /> OPGW &amp; Telecom Footnote
+                </div>
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 text-[10px] text-muted-foreground leading-relaxed">
+                  <div>
+                    <strong className="text-foreground block font-bold mb-0.5">OPGW (Optical Ground Wire)</strong>
+                    A ground/shield wire containing optical fiber cores. Installed on pylon tops for dual lightning shielding and high-speed data transmission.
+                  </div>
+                  <div>
+                    <strong className="text-foreground block font-bold mb-0.5">SCADA &amp; Telemetry</strong>
+                    Optic lines provide real-time connection from grid stations to the National Load Dispatch Center (NLDC) for remote data monitoring.
+                  </div>
+                  <div>
+                    <strong className="text-foreground block font-bold mb-0.5">Commercial Leasing</strong>
+                    PGCB leases spare fiber capacity (dark fiber cores) to telecom operators, ISP companies, and state agencies.
+                  </div>
+                  <div>
+                    <strong className="text-foreground block font-bold mb-0.5">Planning Source</strong>
+                    Published officially by PGCB Telecommunications Division.
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Sub-tab 7: Optical Fiber Leasing */}
+          {transSubTab === 'opgw_lease' && (
+            <div className="space-y-6 animate-in fade-in duration-200">
+              {/* Introduction Card */}
+              <div className="grid-explorer-chart-card card p-6 bg-gradient-to-r from-emerald-500/5 via-primary/5 to-transparent border-emerald-500/25 relative overflow-hidden">
+                <div className="absolute inset-0 opacity-[0.03] pointer-events-none" style={{ backgroundImage: 'radial-gradient(circle at 1px 1px, currentColor 1px, transparent 0)', backgroundSize: '16px 16px' }} />
+                <div className="space-y-4 relative z-10">
+                  <div className="flex items-start gap-4">
+                    <div className="p-3 bg-emerald-500/10 rounded-2xl text-emerald-500 border border-emerald-500/20 shrink-0">
+                      <DollarSign className="h-6 w-6" />
+                    </div>
+                    <div className="space-y-2">
+                      <h3 className="text-lg font-bold text-foreground">Optical Fiber Leasing</h3>
+                      <p className="text-sm text-muted-foreground leading-relaxed">
+                        Power Grid Bangladesh PLC (Power Grid) is responsible to transmit high voltage power across the whole country. Previously Power Grid used earth wire/ground wire to protect the transmission line from thundering. Before 2008, Power Grid used analog PLC (Power Line Carriers) based technology for telecommunication, SCADA (Supervisory Control and Data Acquisition) and power transmission system protection. After 2008, Power Grid adopted new optical fiber based communication technology replacing the prevalent ground wire by modern OPGW (Optical Ground Wire) with modern digital communication system for reliable and faster telecommunication, SCADA and system protection.
+                      </p>
+                    </div>
+                  </div>
+                  
+                  <p className="text-xs text-muted-foreground leading-relaxed border-l-2 border-emerald-500/40 pl-3">
+                    Till December 2025, Power Grid has installed around 9400 km of OPGW across the country along with its high voltage transmission lines. Besides Power Grid's own needs, the unused optical fibers are being leased out to local telecommunication operator according to approved lease rate and standard contract document with a view to developing national telecommunication infrastructure.
+                  </p>
+                </div>
+              </div>
+
+              {/* Key Metrics Grid */}
+              <div className="grid lg:grid-cols-12 gap-6">
+                {/* Stats Summary Column */}
+                <div className="lg:col-span-8 space-y-6">
+                  {/* Licensing & Networks */}
+                  <div className="grid-explorer-chart-card card p-6">
+                    <div className="grid-explorer-chart-card__head mb-4 border-b border-border/40 pb-3">
+                      <Network className="h-5 w-5 text-primary shrink-0" />
+                      <div>
+                        <h4 className="font-bold text-foreground">Licensing &amp; Leasing Agreements</h4>
+                        <p className="text-xs text-muted-foreground">National regulatory and partner allocations</p>
+                      </div>
+                    </div>
+                    <ul className="space-y-3.5 text-xs text-muted-foreground">
+                      <li className="flex items-start gap-2.5">
+                        <span className="w-1.5 h-1.5 rounded-full bg-primary mt-1.5 shrink-0" />
+                        <span>
+                          <strong>NTTN Licensing:</strong> Power Grid has obtained NOFTTN (Nationwide Optical Fiber Telecommunication Transmission Network) license in 2005 which was later transformed into NTTN (Nationwide Telecommunication Transmission Network) license in 2014.
+                        </span>
+                      </li>
+                      <li className="flex items-start gap-2.5">
+                        <span className="w-1.5 h-1.5 rounded-full bg-primary mt-1.5 shrink-0" />
+                        <span>
+                          <strong>Partner Organizations:</strong> Total 10 (ten) organizations including other NTTN license holders and Mobile network operators are using Power Grid's OPGW-based optical fiber under leasing agreement.
+                        </span>
+                      </li>
+                      <li className="flex items-start gap-2.5">
+                        <span className="w-1.5 h-1.5 rounded-full bg-primary mt-1.5 shrink-0" />
+                        <span>
+                          <strong>Capacity Leased:</strong> Total 22,611.66 KM (22,611.66 x 2=45,223.33 Core-km) of optical fiber core has been leased till December 2025.
+                        </span>
+                      </li>
+                    </ul>
+                  </div>
+
+                  {/* Backbone & Internet Capacity */}
+                  <div className="grid-explorer-chart-card card p-6">
+                    <div className="grid-explorer-chart-card__head mb-4 border-b border-border/40 pb-3">
+                      <Globe className="h-5 w-5 text-emerald-500 shrink-0" />
+                      <div>
+                        <h4 className="font-bold text-foreground">Transmission Network &amp; Backbone Capacity</h4>
+                        <p className="text-xs text-muted-foreground">Dhaka – Kuakata – Benapole route deployment stats</p>
+                      </div>
+                    </div>
+                    <div className="space-y-4 text-xs text-muted-foreground">
+                      <p>
+                        With the aim of delivering internet services to the people of the country through Power Grid's robust and highly available fiber network, Power Grid has established a data transmission network with <strong>9.6 / 13.2 Tbps</strong> backbone capacity (operational capacity: 800 Gbps) along the Dhaka–Kuakata–Benapole route.
+                      </p>
+                      <div className="p-3 bg-muted/10 border border-border/30 rounded-xl flex items-center justify-between">
+                        <span>Leased Data Capacity (Dec 2025)</span>
+                        <span className="font-bold text-foreground">200 Gbps <span className="text-[10px] text-muted-foreground font-normal">(To International Internet Gateway (IIG) operators)</span></span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Commercial Pricing Column */}
+                <div className="lg:col-span-4 space-y-6">
+                  {/* Pricing Card */}
+                  <div className="grid-explorer-chart-card card p-6 bg-gradient-to-b from-card to-emerald-500/5 border-emerald-500/20 flex flex-col justify-between min-h-[15rem]">
+                    <div>
+                      <div className="flex items-center gap-2 mb-4">
+                        <div className="p-2 bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 rounded-xl">
+                          <DollarSign className="h-4 w-4" />
+                        </div>
+                        <h4 className="font-bold text-foreground uppercase tracking-wider text-xs">Dark Fiber Lease Rate</h4>
+                      </div>
+                      <div className="space-y-2">
+                        <span className="text-[10px] uppercase font-bold text-muted-foreground block tracking-wider">Effective: 01.01.2026</span>
+                        <div className="text-2xl font-black text-foreground tabular-nums flex items-baseline gap-1">
+                          Tk. 5.40
+                          <span className="text-xs font-normal text-muted-foreground">/ Core / Meter / Month</span>
+                        </div>
+                        <p className="text-[10px] text-muted-foreground leading-normal mt-1">
+                          Monthly Recurring Charge (MRC) including Tax &amp; excluding VAT.
+                        </p>
+                      </div>
+                    </div>
+                    <div className="border-t border-border/40 pt-3 mt-4 text-[10px] text-emerald-500 font-semibold flex justify-between items-center">
+                      <span>Annual Increment</span>
+                      <span className="bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-md text-emerald-500">Tk. 0.20 / Year</span>
+                    </div>
+                  </div>
+
+                  {/* Contacts details Card */}
+                  <div className="grid-explorer-chart-card card p-6 space-y-4">
+                    <h4 className="font-bold text-foreground text-xs uppercase tracking-wider">OFCL Contact Details</h4>
+                    <div className="space-y-3.5 text-xs text-muted-foreground leading-relaxed">
+                      <div>
+                        <strong className="text-foreground block font-bold">Superintending Engineer</strong>
+                        Optical Fiber Commercial Leasing (OFCL)
+                      </div>
+                      <div>
+                        <strong className="text-foreground block font-bold">Office Address:</strong>
+                        Level-10, Grid Bhaban, Avenue-3, Jahurul Islam City, Aftabnagar, Badda, Dhaka-1212.
+                      </div>
+                      <div className="border-t border-border/20 pt-2.5">
+                        <strong className="text-foreground block font-bold">Email Query:</strong>
+                        <a href="mailto:se.ofcl@pgcb.gov.bd" className="text-primary hover:underline font-semibold">se.ofcl@pgcb.gov.bd</a>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Technical Glossary Footnote */}
+              <div className="mt-6 p-4 rounded-2xl bg-muted/5 border border-border/30 space-y-2.5">
+                <div className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
+                  <Info className="h-3.5 w-3.5 text-primary" /> Technical Units &amp; Acronyms Footnote
+                </div>
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4 text-[10px] text-muted-foreground leading-relaxed">
+                  <div>
+                    <strong className="text-foreground block font-bold mb-0.5">Core-km</strong>
+                    Total fiber length times core count. A 10 km grid running 2 cores equals 20 Core-km.
+                  </div>
+                  <div>
+                    <strong className="text-foreground block font-bold mb-0.5">Tbps / Gbps</strong>
+                    Terabits per Second / Gigabits per Second. Standard measures of network data transmission bandwidth.
+                  </div>
+                  <div>
+                    <strong className="text-foreground block font-bold mb-0.5">NTTN / NTTN License</strong>
+                    Nationwide Telecommunication Transmission Network. Licensing framework permitting fiber infrastructure leasing in Bangladesh.
+                  </div>
+                  <div>
+                    <strong className="text-foreground block font-bold mb-0.5">Dark Optical Fiber</strong>
+                    Unused optical fiber core with no active transmitter light, leased out for direct partner configuration.
+                  </div>
+                  <div>
+                    <strong className="text-foreground block font-bold mb-0.5">SCADA / PLC</strong>
+                    Supervisory Control and Data Acquisition / Power Line Carrier communications.
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+            </div>
+          </div>
+        </div>
+      )}
+
       {activeTab === 'regional' && (
         <div className="grid-explorer-panel space-y-6">
           <div className="grid lg:grid-cols-3 gap-6">
@@ -1422,9 +3797,9 @@ export function PowerGridExplorer({ initialMix, initialLines, initialProjects }:
                     ))}
                     <tr className="border-t border-border/80 font-bold bg-muted/20">
                       <td>Entire Grid Total</td>
-                      <td className="text-right tabular-nums text-primary">16,041</td>
-                      <td className="text-right tabular-nums text-destructive">496</td>
-                      <td className="text-right tabular-nums text-primary">3.1% avg</td>
+                      <td className="text-right tabular-nums text-primary">{formatNumber(totalRegionalDemand)}</td>
+                      <td className="text-right tabular-nums text-destructive">{formatNumber(totalRegionalLoadShed)}</td>
+                      <td className="text-right tabular-nums text-primary">{avgRegionalPct}% avg</td>
                     </tr>
                   </tbody>
                 </table>
@@ -1434,7 +3809,7 @@ export function PowerGridExplorer({ initialMix, initialLines, initialProjects }:
               <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1.5 mt-4 pt-3 border-t border-border/40 text-[10px] text-muted-foreground/80 px-4 pb-4">
                 <span>Source: <a href="https://www.pgcb.gov.bd/" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline font-semibold">PGCB System Operations Log</a></span>
                 <span>Audited by: National Load Despatch Centre (NLDC) Operators</span>
-                <span className="font-medium">Reporting Period: Evening Peak Load (Date: 22 Jun 2026)</span>
+                <span className="font-medium">Reporting Period: Evening Peak Load (Date: {systemStats.date})</span>
               </div>
             </div>
 
@@ -1467,7 +3842,7 @@ export function PowerGridExplorer({ initialMix, initialLines, initialProjects }:
               <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1.5 mt-4 pt-3 border-t border-border/40 text-[10px] text-muted-foreground/80 px-4 pb-4">
                 <span>Source: <a href="https://www.pgcb.gov.bd/" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline font-semibold">PGCB Daily Outage Log</a></span>
                 <span>Audited by: PGCB Network Protection &amp; NLDC Control Room</span>
-                <span className="font-medium">Reporting Period: 24-Hour Logs (Date: 22 Jun 2026)</span>
+                <span className="font-medium">Reporting Period: 24-Hour Logs (Date: {systemStats.date})</span>
               </div>
             </div>
           </div>
@@ -1538,17 +3913,18 @@ export function PowerGridExplorer({ initialMix, initialLines, initialProjects }:
                     <tr>
                       <th>Project Name</th>
                       <th>Status</th>
-                      <th className="text-right">Capacity (MW)</th>
+                      <th className="text-right">Capacity / Cost</th>
                       <th className="text-right">Expected Date</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {(initialProjects && initialProjects.length > 0 ? initialProjects : [
-                      { name: 'SREDA 1800 MW Solar+Wind', status: 'Tender', mw: '1800', date: 'Q3 2026' },
-                      { name: 'Matarbari Phase-2 Coal', status: 'Construction', mw: '1200', date: '2027' },
-                      { name: 'Payra 1320 MW Expansion', status: 'Planned', mw: '1320', date: '2028' },
-                      { name: 'BREB 500k SHS + Mini-grid', status: 'Ongoing', mw: '—', date: '2026-27' },
-                    ]).map((proj: any, idx: number) => (
+                    {(initialProjects && initialProjects.length > 0 ? initialProjects : ongoingProjectsData.map(p => ({
+                      name: p.name,
+                      status: p.status.physical.includes('%') ? `Phys: ${p.status.physical.trim()}` : p.status.physical,
+                      mw: p.cost.total.split(" ")[0] + " Lakh",
+                      date: p.duration.split(" to ")[1] || p.duration
+                    })))
+                    .map((proj: any, idx: number) => (
                       <tr key={idx}>
                         <td className="font-semibold">{proj.name}</td>
                         <td>
@@ -3034,17 +5410,18 @@ export function PowerGridExplorer({ initialMix, initialLines, initialProjects }:
                 <tr className="border-b border-border bg-muted/10">
                   <th className="text-left py-1.5 px-2">Project Name</th>
                   <th className="text-left py-1.5 px-2">Status</th>
-                  <th className="text-right py-1.5 px-2">Capacity</th>
+                  <th className="text-right py-1.5 px-2">Capacity / Cost</th>
                   <th className="text-right py-1.5 px-2">Expected Date</th>
                 </tr>
               </thead>
               <tbody>
-                {(initialProjects && initialProjects.length > 0 ? initialProjects : [
-                  { name: 'SREDA 1800 MW Solar+Wind', status: 'Tender', mw: '1800', date: 'Q3 2026' },
-                  { name: 'Matarbari Phase-2 Coal', status: 'Construction', mw: '1200', date: '2027' },
-                  { name: 'Payra 1320 MW Expansion', status: 'Planned', mw: '1320', date: '2028' },
-                  { name: 'BREB 500k SHS + Mini-grid', status: 'Ongoing', mw: '—', date: '2026-27' },
-                ]).map((proj: any, idx: number) => (
+                {(initialProjects && initialProjects.length > 0 ? initialProjects : ongoingProjectsData.map(p => ({
+                  name: p.name,
+                  status: p.status.physical.includes('%') ? `Phys: ${p.status.physical.trim()}` : p.status.physical,
+                  mw: p.cost.total.split(" ")[0] + " Lakh",
+                  date: p.duration.split(" to ")[1] || p.duration
+                })))
+                .map((proj: any, idx: number) => (
                   <tr key={idx} className="border-b border-border/40">
                     <td className="py-1 px-2 font-medium">{proj.name}</td>
                     <td className="py-1 px-2">
