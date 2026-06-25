@@ -8,7 +8,6 @@ import { Toaster } from 'sonner';
 import { Providers } from './providers';
 import { SITE_THEME_CRITICAL_CSS, SITE_THEME_INIT_SCRIPT } from '@/lib/site-theme';
 import { SITE_LOCALE_INIT_SCRIPT } from '@/lib/locale';
-import Script from 'next/script';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-sans', display: 'swap' });
 const spaceGrotesk = Space_Grotesk({ subsets: ['latin'], variable: '--font-display', display: 'swap' });
@@ -52,8 +51,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       </head>
       <body suppressHydrationWarning className={bodyClass}>
         {/* Theme + locale hydration — must run before React tree */}
-        <Script id="theme-init" strategy="beforeInteractive" dangerouslySetInnerHTML={{ __html: SITE_THEME_INIT_SCRIPT }} />
-        <Script id="locale-init" strategy="beforeInteractive" dangerouslySetInnerHTML={{ __html: SITE_LOCALE_INIT_SCRIPT }} />
+        <script id="theme-init" dangerouslySetInnerHTML={{ __html: SITE_THEME_INIT_SCRIPT }} />
+        <script id="locale-init" dangerouslySetInnerHTML={{ __html: SITE_LOCALE_INIT_SCRIPT }} />
 
         <Providers>
           {children}
