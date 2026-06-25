@@ -8,6 +8,7 @@ import { Toaster } from 'sonner';
 import { Providers } from './providers';
 import { SITE_THEME_CRITICAL_CSS, SITE_THEME_INIT_SCRIPT } from '@/lib/site-theme';
 import { SITE_LOCALE_INIT_SCRIPT } from '@/lib/locale';
+import Script from 'next/script';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -62,8 +63,16 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     >
       <head>
         <style dangerouslySetInnerHTML={{ __html: SITE_THEME_CRITICAL_CSS }} suppressHydrationWarning />
-        <script dangerouslySetInnerHTML={{ __html: SITE_THEME_INIT_SCRIPT }} suppressHydrationWarning />
-        <script dangerouslySetInnerHTML={{ __html: SITE_LOCALE_INIT_SCRIPT }} suppressHydrationWarning />
+        <Script
+          id="theme-init"
+          strategy="beforeInteractive"
+          dangerouslySetInnerHTML={{ __html: SITE_THEME_INIT_SCRIPT }}
+        />
+        <Script
+          id="locale-init"
+          strategy="beforeInteractive"
+          dangerouslySetInnerHTML={{ __html: SITE_LOCALE_INIT_SCRIPT }}
+        />
       </head>
       <body
         suppressHydrationWarning
