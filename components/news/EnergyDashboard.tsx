@@ -218,7 +218,7 @@ export function EnergyDashboard({
     <div
       className={
         compact
-          ? `grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-2 xl:grid-cols-3 gap-2 sm:gap-2.5 lg:gap-2 xl:gap-2.5 w-full min-w-0 ${fillHeight ? 'h-full' : ''}`
+          ? `grid grid-cols-2 gap-x-4 gap-y-2.5 w-full min-w-0 ${fillHeight ? 'h-full' : ''}`
           : 'grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3'
       }
     >
@@ -227,18 +227,14 @@ export function EnergyDashboard({
         return (
           <div
             key={i}
-            className={`group relative overflow-hidden flex transition-all duration-250 ${
+            className={`group relative overflow-hidden flex transition-all duration-200 ${
               compact
-                ? `flex-col justify-between text-left rounded-xl border border-border/30 bg-card hover:bg-muted/5 dark:hover:bg-white/[0.01] hover:border-primary/20 hover:shadow-sm min-w-0 ${
-                    fillHeight
-                      ? 'px-2 py-1.5 lg:px-2 lg:py-1 xl:px-2.5 xl:py-1.5 2xl:px-3 2xl:py-2 h-full'
-                      : 'px-2.5 py-2'
-                  }`
+                ? `flex-row items-center justify-start text-left min-w-0 ${fillHeight ? 'h-full' : 'py-1.5'}`
                 : 'stat flex-col items-center justify-center text-center px-3 pt-6 pb-5'
             }`}
           >
             {/* Live SCADA Radar Ping */}
-            <span className="absolute top-1.5 right-1.5 flex h-1.5 w-1.5 z-20">
+            <span className="absolute top-0.5 right-0.5 flex h-1.5 w-1.5 z-20">
               <ModernTooltip
                 label={simulateLive ? t('energy.simulated') : t('energy.indicative')}
                 alwaysShow
@@ -259,18 +255,18 @@ export function EnergyDashboard({
             </span>
 
             {compact ? (
-              <div className="flex flex-col w-full min-w-0 h-full justify-between">
-                <div className="flex items-center gap-1.5 min-w-0">
-                  <Icon className={`h-3.5 w-3.5 sm:h-4 sm:w-4 lg:h-3.5 lg:w-3.5 xl:h-4 xl:w-4 2xl:h-4.5 2xl:w-4.5 shrink-0 transition-transform duration-200 group-hover:scale-110 ${s.iconClass ?? 'text-primary'}`} />
-                  <div className="font-semibold uppercase tracking-wider text-muted-foreground/75 group-hover:text-foreground transition-colors duration-150 select-none text-[8.5px] xs:text-[9px] sm:text-[9.5px] lg:text-[8px] xl:text-[9px] 2xl:text-[9.5px] leading-none whitespace-nowrap overflow-hidden text-ellipsis">
+              <div className="flex items-start gap-2.5 w-full min-w-0">
+                <Icon className={`h-4 w-4 sm:h-4.5 sm:w-4.5 lg:h-3.5 lg:w-3.5 xl:h-4 xl:w-4 2xl:h-4.5 2xl:w-4.5 shrink-0 mt-0.5 transition-transform duration-200 group-hover:scale-110 ${s.iconClass ?? 'text-primary'}`} />
+                <div className="flex flex-col min-w-0 flex-grow justify-center">
+                  <div className="font-semibold uppercase tracking-wider text-muted-foreground/75 group-hover:text-foreground transition-colors duration-150 select-none text-[8.5px] xs:text-[9px] sm:text-[9.5px] lg:text-[8px] xl:text-[8.5px] 2xl:text-[9px] leading-tight whitespace-nowrap overflow-hidden text-ellipsis">
                     {localizeEnergyStatLabel(s.label, locale)}
                   </div>
-                </div>
-                <div className="font-bold tabular-nums text-foreground/95 group-hover:text-primary transition-colors duration-150 leading-none text-[11.5px] xs:text-xs sm:text-[13px] lg:text-[11.5px] xl:text-xs 2xl:text-[14.5px] mt-1 lg:mt-0.5 xl:mt-1 whitespace-nowrap">
-                  {s.isDecimal ? s.value.toFixed(1) : formatNumber(Math.round(s.value))}
-                  <span className="font-bold text-muted-foreground/50 uppercase tracking-wider pl-0.5 text-[8.5px] xs:text-[9px] sm:text-[9.5px] lg:text-[8.5px] xl:text-[9px] 2xl:text-[9.5px] inline-block scale-90 origin-left">
-                    {s.unit}
-                  </span>
+                  <div className="font-bold tabular-nums text-foreground/90 group-hover:text-primary transition-colors duration-150 leading-none text-[11.5px] xs:text-xs sm:text-[13px] lg:text-[11px] xl:text-[12px] 2xl:text-[13px] mt-1 whitespace-nowrap">
+                    {s.isDecimal ? s.value.toFixed(1) : formatNumber(Math.round(s.value))}
+                    <span className="font-bold text-muted-foreground/50 uppercase tracking-wider pl-0.5 text-[8.5px] xs:text-[9px] lg:text-[8px] xl:text-[8.5px] 2xl:text-[9px] inline-block scale-90 origin-left">
+                      {s.unit}
+                    </span>
+                  </div>
                 </div>
               </div>
             ) : (
