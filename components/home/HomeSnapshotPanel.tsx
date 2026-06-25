@@ -51,7 +51,7 @@ export function HomeSnapshotPanel({
             <div className="flex items-center justify-between gap-2 w-full">
               <div className="flex items-center gap-1.5 min-w-0">
                 <BarChart3 className="h-5 w-5 text-primary shrink-0 animate-pulse" style={{ animationDuration: '3s' }} aria-hidden />
-                <h2 id="home-snapshot-title" className="m-0 p-0 py-0.5 text-[17px] md:text-[19px] font-display font-black tracking-tight text-foreground truncate leading-tight">
+                <h2 id="home-snapshot-title" className="m-0 p-0 py-0.5 text-base md:text-lg font-display font-bold tracking-tight text-foreground truncate leading-tight">
                   {t('home.systemSnapshot')}
                 </h2>
               </div>
@@ -96,7 +96,7 @@ export function HomeSnapshotPanel({
       <div className="home-editorial__section-head flex items-center justify-between pb-3 border-b border-border/10 dark:border-border/20 shrink-0 relative z-10">
         <div className="flex items-center gap-2.5 min-w-0">
           <BarChart3 className="h-7 w-7 text-primary shrink-0" aria-hidden />
-          <h2 id="home-snapshot-title" className="py-0.5 text-2xl md:text-3xl font-display font-black tracking-tight text-foreground truncate leading-tight">
+          <h2 id="home-snapshot-title" className="py-0.5 text-xl md:text-2xl font-display font-bold tracking-tight text-foreground truncate leading-tight">
             {t('home.systemSnapshot')}
           </h2>
         </div>

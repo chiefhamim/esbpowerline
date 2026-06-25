@@ -372,7 +372,7 @@ function TrendingHeroRailHeader() {
         <TrendingUp className="h-5 w-5 text-primary shrink-0" aria-hidden />
         <h2
           id="home-trending-title"
-          className="m-0 p-0 py-0.5 text-[17px] md:text-[19px] font-display font-black tracking-tight text-foreground truncate min-w-0 leading-tight"
+          className="m-0 p-0 py-0.5 text-base md:text-lg font-display font-bold tracking-tight text-foreground truncate min-w-0 leading-tight"
         >
           {t('home.trendingWeek')}
         </h2>

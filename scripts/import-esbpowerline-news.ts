@@ -61,14 +61,18 @@ if (schemaProvider === 'sqlite') {
 } else {
   if (!process.env.DATABASE_URL?.trim()) {
     process.env.DATABASE_URL = toPostgresqlUrl(
-      process.env.POSTGRES_PRISMA_URL ||
+      readEnvValue('.env.production.local', 'DATABASE_URL') ||
+        readEnvValue('.env.production.local', 'POSTGRES_PRISMA_URL') ||
+        process.env.POSTGRES_PRISMA_URL ||
         readEnvValue('.env.local', 'POSTGRES_PRISMA_URL') ||
         readEnvValue('.env', 'POSTGRES_PRISMA_URL'),
     );
   }
   if (!process.env.DIRECT_URL?.trim()) {
     process.env.DIRECT_URL = toPostgresqlUrl(
-      process.env.POSTGRES_URL_NON_POOLING ||
+      readEnvValue('.env.production.local', 'DIRECT_URL') ||
+        readEnvValue('.env.production.local', 'POSTGRES_URL_NON_POOLING') ||
+        process.env.POSTGRES_URL_NON_POOLING ||
         readEnvValue('.env.local', 'POSTGRES_URL_NON_POOLING') ||
         readEnvValue('.env', 'POSTGRES_URL_NON_POOLING'),
     );

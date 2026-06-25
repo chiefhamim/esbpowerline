@@ -44,7 +44,9 @@ if (schemaProvider === 'sqlite') {
       : 'file:./dev.db';
 } else if (!toPostgresqlUrl(process.env.DATABASE_URL)) {
   process.env.DATABASE_URL = toPostgresqlUrl(
-    process.env.POSTGRES_PRISMA_URL ||
+    readEnvValue('.env.production.local', 'DATABASE_URL') ||
+      readEnvValue('.env.production.local', 'POSTGRES_PRISMA_URL') ||
+      process.env.POSTGRES_PRISMA_URL ||
       readEnvValue('.env.local', 'POSTGRES_PRISMA_URL') ||
       readEnvValue('.env', 'POSTGRES_PRISMA_URL'),
   );

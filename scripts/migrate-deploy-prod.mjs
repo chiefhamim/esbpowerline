@@ -21,7 +21,18 @@ function readEnvValue(file, key) {
 function getNonEmptyEnv(key) {
   const val = process.env[key]?.trim();
   if (val) return val;
-  return readEnvValue('.env.local', key) || readEnvValue('.env', key);
+  
+  const fromFile =
+    readEnvValue('.env.production.local', key) ||
+    readEnvValue('.env.local', key) ||
+    readEnvValue('.env', key);
+
+  if (fromFile && process.env.PRISMA_SCHEMA_PROVIDER === 'postgresql') {
+    if (key === 'DATABASE_URL' && fromFile.startsWith('file:')) {
+      return '';
+    }
+  }
+  return fromFile;
 }
 
 const directUrl = getNonEmptyEnv('DIRECT_URL') || getNonEmptyEnv('POSTGRES_URL_NON_POOLING');
