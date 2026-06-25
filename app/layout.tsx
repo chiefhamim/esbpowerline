@@ -61,7 +61,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       suppressHydrationWarning
     >
       <head>
-        <style dangerouslySetInnerHTML={{ __html: SITE_THEME_CRITICAL_CSS }} />
+        <style dangerouslySetInnerHTML={{ __html: SITE_THEME_CRITICAL_CSS }} suppressHydrationWarning />
         <script dangerouslySetInnerHTML={{ __html: SITE_THEME_INIT_SCRIPT }} suppressHydrationWarning />
         <script dangerouslySetInnerHTML={{ __html: SITE_LOCALE_INIT_SCRIPT }} suppressHydrationWarning />
       </head>
