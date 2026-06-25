@@ -809,7 +809,7 @@ export function PowerGridExplorer({ initialMix, initialLines, initialProjects }:
             <div className="grid-explorer-chart-area grid-explorer-chart-area--lg mt-4">
               {chartsReady ? (
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={generationData.filter(d => d.cost > 0)} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                  <BarChart data={generationData.filter(d => d.cost > 0)} margin={{ top: 10, right: 10, left: 10, bottom: 0 }}>
                     <CartesianGrid strokeDasharray="3 6" stroke={chartTheme.gridStroke} opacity={0.3} vertical={false} />
                     <XAxis
                       dataKey="name"
@@ -902,7 +902,7 @@ export function PowerGridExplorer({ initialMix, initialLines, initialProjects }:
           <div className="grid-explorer-chart-area grid-explorer-chart-area--lg mt-4 !h-[24rem]">
             {chartsReady ? (
               <ResponsiveContainer width="100%" height="100%">
-                <ComposedChart data={hourlyLoadData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                <ComposedChart data={hourlyLoadData} margin={{ top: 10, right: 10, left: 10, bottom: 0 }}>
                   <defs>
                     <linearGradient id="loadShed-grad" x1="0" y1="0" x2="0" y2="1">
                       <stop offset="5%" stopColor="hsl(var(--destructive))" stopOpacity={0.25} />
@@ -1623,7 +1623,7 @@ export function PowerGridExplorer({ initialMix, initialLines, initialProjects }:
                   <div className="grid-explorer-chart-area grid-explorer-chart-area--lg mt-4">
                     {chartsReady ? (
                       <ResponsiveContainer width="100%" height="100%">
-                        <ComposedChart data={macroTariffData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                        <ComposedChart data={macroTariffData} margin={{ top: 10, right: 10, left: 10, bottom: 0 }}>
                           <CartesianGrid strokeDasharray="3 6" stroke={chartTheme.gridStroke} opacity={0.3} vertical={false} />
                           <XAxis dataKey="year" tick={{ fontSize: 11, fill: chartTheme.axisTick }} axisLine={false} tickLine={false} />
                           <YAxis tick={{ fontSize: 11, fill: chartTheme.axisTick }} axisLine={false} tickLine={false} tickFormatter={(v) => `${v} Tk`} />
@@ -1693,7 +1693,7 @@ export function PowerGridExplorer({ initialMix, initialLines, initialProjects }:
                   <div className="grid-explorer-chart-area grid-explorer-chart-area--lg mt-4">
                     {chartsReady ? (
                       <ResponsiveContainer width="100%" height="100%">
-                        <ComposedChart data={macroGasData} margin={{ top: 10, right: 10, left: -15, bottom: 0 }}>
+                        <ComposedChart data={macroGasData} margin={{ top: 10, right: 10, left: 10, bottom: 0 }}>
                           <defs>
                             <linearGradient id="domestic-grad" x1="0" y1="0" x2="0" y2="1">
                               <stop offset="5%" stopColor="#0ea5e9" stopOpacity={0.4} />
@@ -1831,7 +1831,7 @@ export function PowerGridExplorer({ initialMix, initialLines, initialProjects }:
                   <div className="grid-explorer-chart-area grid-explorer-chart-area--lg mt-4">
                     {chartsReady ? (
                       <ResponsiveContainer width="100%" height="100%">
-                        <ComposedChart data={macroEconomicData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                        <ComposedChart data={macroEconomicData} margin={{ top: 10, right: 10, left: 10, bottom: 0 }}>
                           <CartesianGrid strokeDasharray="3 6" stroke={chartTheme.gridStroke} opacity={0.3} vertical={false} />
                           <XAxis dataKey="year" tick={{ fontSize: 11, fill: chartTheme.axisTick }} axisLine={false} tickLine={false} />
                           <YAxis yAxisId="left" tick={{ fontSize: 11, fill: chartTheme.axisTick }} axisLine={false} tickLine={false} tickFormatter={(v) => `${v} Tk`} />
@@ -1898,7 +1898,7 @@ export function PowerGridExplorer({ initialMix, initialLines, initialProjects }:
                   <div className="grid-explorer-chart-area grid-explorer-chart-area--lg mt-4">
                     {chartsReady ? (
                       <ResponsiveContainer width="100%" height="100%">
-                        <ComposedChart data={macroEconomicData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                        <ComposedChart data={macroEconomicData} margin={{ top: 10, right: 10, left: 10, bottom: 0 }}>
                           <CartesianGrid strokeDasharray="3 6" stroke={chartTheme.gridStroke} opacity={0.3} vertical={false} />
                           <XAxis dataKey="year" tick={{ fontSize: 11, fill: chartTheme.axisTick }} axisLine={false} tickLine={false} />
                           <YAxis yAxisId="left" tick={{ fontSize: 11, fill: chartTheme.axisTick }} axisLine={false} tickLine={false} tickFormatter={(v) => `$${v}`} />
@@ -2049,7 +2049,7 @@ export function PowerGridExplorer({ initialMix, initialLines, initialProjects }:
                     <div className="grid-explorer-chart-area grid-explorer-chart-area--lg mt-4 !h-[22rem]">
                       {chartsReady ? (
                         <ResponsiveContainer width="100%" height="100%">
-                          <ComposedChart data={bpdbAuditedFinancials} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
+                          <ComposedChart data={bpdbAuditedFinancials} margin={{ top: 10, right: 10, left: 10, bottom: 0 }}>
                             <CartesianGrid strokeDasharray="3 6" stroke={chartTheme.gridStroke} opacity={0.3} vertical={false} />
                             <XAxis dataKey="year" tick={{ fontSize: 10, fill: chartTheme.axisTick }} axisLine={false} tickLine={false} />
                             <YAxis tick={{ fontSize: 10, fill: chartTheme.axisTick }} axisLine={false} tickLine={false} tickFormatter={(v) => `${(v/1000).toFixed(0)}k`} />
@@ -2161,7 +2161,7 @@ export function PowerGridExplorer({ initialMix, initialLines, initialProjects }:
                     <div className="grid-explorer-chart-area grid-explorer-chart-area--lg mt-4 !h-[22rem]">
                       {chartsReady ? (
                         <ResponsiveContainer width="100%" height="100%">
-                          <ComposedChart data={petrobanglaAuditedFinancials} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
+                          <ComposedChart data={petrobanglaAuditedFinancials} margin={{ top: 10, right: 10, left: 10, bottom: 0 }}>
                             <CartesianGrid strokeDasharray="3 6" stroke={chartTheme.gridStroke} opacity={0.3} vertical={false} />
                             <XAxis dataKey="year" tick={{ fontSize: 10, fill: chartTheme.axisTick }} axisLine={false} tickLine={false} />
                             <YAxis tick={{ fontSize: 10, fill: chartTheme.axisTick }} axisLine={false} tickLine={false} tickFormatter={(v) => `${(v/1000).toFixed(0)}k`} />
@@ -2286,7 +2286,7 @@ export function PowerGridExplorer({ initialMix, initialLines, initialProjects }:
                   <div className="grid-explorer-chart-area grid-explorer-chart-area--lg mt-4 !h-[22rem]">
                     {chartsReady ? (
                       <ResponsiveContainer width="100%" height="100%">
-                        <ComposedChart data={globalVsDomesticData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                        <ComposedChart data={globalVsDomesticData} margin={{ top: 10, right: 10, left: 10, bottom: 0 }}>
                           <CartesianGrid strokeDasharray="3 6" stroke={chartTheme.gridStroke} opacity={0.3} vertical={false} />
                           <XAxis dataKey="year" tick={{ fontSize: 10, fill: chartTheme.axisTick }} axisLine={false} tickLine={false} />
                           <YAxis yAxisId="left" tick={{ fontSize: 10, fill: chartTheme.axisTick }} axisLine={false} tickLine={false} tickFormatter={(v) => `$${v}`} label={{ value: 'Brent Crude ($/bbl)', angle: -90, position: 'insideLeft', offset: 10, style: { fontSize: '9px', fill: chartTheme.axisTick } }} />
@@ -2371,7 +2371,7 @@ export function PowerGridExplorer({ initialMix, initialLines, initialProjects }:
                   <div className="grid-explorer-chart-area grid-explorer-chart-area--lg mt-4 !h-[22rem]">
                     {chartsReady ? (
                       <ResponsiveContainer width="100%" height="100%">
-                        <ComposedChart data={globalVsDomesticData.filter(x => parseInt(x.year) >= 2010)} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                        <ComposedChart data={globalVsDomesticData.filter(x => parseInt(x.year) >= 2010)} margin={{ top: 10, right: 10, left: 10, bottom: 0 }}>
                           <CartesianGrid strokeDasharray="3 6" stroke={chartTheme.gridStroke} opacity={0.3} vertical={false} />
                           <XAxis dataKey="year" tick={{ fontSize: 10, fill: chartTheme.axisTick }} axisLine={false} tickLine={false} />
                           <YAxis yAxisId="left" tick={{ fontSize: 10, fill: chartTheme.axisTick }} axisLine={false} tickLine={false} tickFormatter={(v) => `$${v}`} label={{ value: 'Global LNG ($/MMBtu)', angle: -90, position: 'insideLeft', offset: 10, style: { fontSize: '9px', fill: chartTheme.axisTick } }} />
@@ -2457,7 +2457,7 @@ export function PowerGridExplorer({ initialMix, initialLines, initialProjects }:
                 <div className="grid-explorer-chart-area grid-explorer-chart-area--lg mt-4 !h-[22rem]">
                   {chartsReady ? (
                     <ResponsiveContainer width="100%" height="100%">
-                      <ComposedChart data={globalVsDomesticData.filter(x => parseInt(x.year) >= 2015)} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                      <ComposedChart data={globalVsDomesticData.filter(x => parseInt(x.year) >= 2015)} margin={{ top: 10, right: 10, left: 10, bottom: 0 }}>
                         <CartesianGrid strokeDasharray="3 6" stroke={chartTheme.gridStroke} opacity={0.3} vertical={false} />
                         <XAxis dataKey="year" tick={{ fontSize: 10, fill: chartTheme.axisTick }} axisLine={false} tickLine={false} />
                         <YAxis tick={{ fontSize: 10, fill: chartTheme.axisTick }} axisLine={false} tickLine={false} tickFormatter={(v) => `${v} Tk`} />
@@ -2556,7 +2556,7 @@ export function PowerGridExplorer({ initialMix, initialLines, initialProjects }:
                   <div className="grid-explorer-chart-area grid-explorer-chart-area--lg mt-4 !h-[22rem]">
                     {chartsReady ? (
                       <ResponsiveContainer width="100%" height="100%">
-                        <ComposedChart data={reservesDepletionData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                        <ComposedChart data={reservesDepletionData} margin={{ top: 10, right: 10, left: 10, bottom: 0 }}>
                           <CartesianGrid strokeDasharray="3 6" stroke={chartTheme.gridStroke} opacity={0.3} vertical={false} />
                           <XAxis dataKey="year" tick={{ fontSize: 10, fill: chartTheme.axisTick }} axisLine={false} tickLine={false} />
                           <YAxis tick={{ fontSize: 10, fill: chartTheme.axisTick }} axisLine={false} tickLine={false} tickFormatter={(v) => `${v} Tcf`} />

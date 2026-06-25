@@ -12,6 +12,12 @@ A premium, modern news portal covering Bangladesh's energy and power sector. Bui
 - **Micro-animations** and hover effects for engaging interactions
 - **CSS Grid** based layouts with flexible components
 
+### 🕒 Humanized Formats & Localization
+- **Relative Timestamps** (e.g., `"Just now"`, `"15 min ago"`, `"2h ago"`) for quick contextual recency across article lists and feeds
+- **Enhanced Hover Tooltips** (e.g., `"Thursday at 11:20 AM (2 hours ago)"`) showing full weekday details, exact time, and relative duration on hover
+- **Subcontinental Numbering** (e.g., `15,000` or `13,40,606` using `en-IN` format) for localized energy generation stats and page views
+- **Flexible clock formatting** (supporting both 12-hour and 24-hour options)
+
 ### 📰 News Portal
 - **22 realistic articles** covering 10 energy sector categories
 - **Hero section** with featured articles and image overlays

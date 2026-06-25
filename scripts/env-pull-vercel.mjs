@@ -6,13 +6,13 @@ import { spawnSync } from 'child_process';
 import { existsSync } from 'fs';
 
 const outFile = '.env.production.local';
-const vercelBin = process.platform === 'win32' ? 'npx.cmd' : 'npx';
+const vercelBin = 'node';
 
 console.log(`Pulling Vercel production env → ${outFile} (values not shown)...`);
 
 const result = spawnSync(
   vercelBin,
-  ['vercel', 'env', 'pull', outFile, '--environment=production', '--yes'],
+  ['node_modules/vercel/dist/index.js', 'env', 'pull', outFile, '--environment=production', '--yes'],
   { stdio: 'inherit', shell: process.platform === 'win32' },
 );
 
