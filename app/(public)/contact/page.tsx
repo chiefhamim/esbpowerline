@@ -105,10 +105,10 @@ export default function ContactPage() {
                         news@esbpowerline.com
                       </a>
                       <a
-                        href="mailto:esb.bd08@gmail.com"
+                        href="mailto:esbplbd@gmail.com"
                         className="block text-sm text-muted-foreground hover:text-primary transition-colors"
                       >
-                        esb.bd08@gmail.com
+                        esbplbd@gmail.com
                       </a>
                     </div>
                   </div>

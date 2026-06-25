@@ -251,10 +251,9 @@ export default async function ArticlePage({ params }: { params: Promise<{ slug: 
         </div>
       </div>
 
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-      />
+      <script type="application/ld+json" suppressHydrationWarning>
+        {JSON.stringify(jsonLd)}
+      </script>
     </div>
   );
 }

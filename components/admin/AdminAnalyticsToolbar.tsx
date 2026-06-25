@@ -93,7 +93,7 @@ export function AdminAnalyticsToolbar({
                 onClick={() => navigate({ month: null })}
                 aria-label="Return to rolling range"
               >
-                <X className="h-3 w-3" />
+                <X className="icon-sm" />
                 <span>Rolling</span>
               </button>
             )}

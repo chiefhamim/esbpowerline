@@ -7,6 +7,9 @@ const distDir = surface === 'all' ? '.next' : `.next-${surface}`;
 const nextConfig: NextConfig = {
   allowedDevOrigins: ['127.0.0.1', 'localhost'],
   distDir,
+  compress: true,
+  poweredByHeader: false,
+
   env: {
     NEXT_PUBLIC_APP_SURFACE: surface,
   },
@@ -24,31 +27,41 @@ const nextConfig: NextConfig = {
       '@supabase/ssr',
     ],
   },
+
   typescript: {
     ignoreBuildErrors: false,
   },
-  // Enable for future image domains if needed for external article images
+
   images: {
-    unoptimized: true,
-    remotePatterns: [
-      {
-        protocol: 'https',
-        hostname: '**',
-      },
-    ],
+    // Allow images from any HTTPS host; CDN-hosted images are served optimized
+    remotePatterns: [{ protocol: 'https', hostname: '**' }],
+    formats: ['image/avif', 'image/webp'],
+    deviceSizes: [360, 480, 640, 750, 828, 1080, 1200, 1920],
+    imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
   },
+
   async headers() {
     return [
       {
         source: '/(.*)',
         headers: [
           { key: 'X-Content-Type-Options', value: 'nosniff' },
+          { key: 'X-Frame-Options', value: 'SAMEORIGIN' },
+          { key: 'X-XSS-Protection', value: '1; mode=block' },
           { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
-          {
-            key: 'Permissions-Policy',
-            value: 'camera=(), microphone=(), geolocation=()',
-          },
+          { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=()' },
+          { key: 'Strict-Transport-Security', value: 'max-age=63072000; includeSubDomains; preload' },
         ],
+      },
+      {
+        // Long-lived cache for immutable static assets
+        source: '/_next/static/(.*)',
+        headers: [{ key: 'Cache-Control', value: 'public, max-age=31536000, immutable' }],
+      },
+      {
+        // Short cache for public images (can be purged by CDN)
+        source: '/images/(.*)',
+        headers: [{ key: 'Cache-Control', value: 'public, max-age=86400, stale-while-revalidate=604800' }],
       },
     ];
   },

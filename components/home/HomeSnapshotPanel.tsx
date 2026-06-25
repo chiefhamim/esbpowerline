@@ -59,7 +59,7 @@ export function HomeSnapshotPanel({
                   {locale === 'bn' ? 'আপডেট: ' : 'UPDATED: '}{headerDate}
                 </span>
                 <span className="inline-flex items-center gap-1 rounded border border-rose-500/20 bg-rose-500/10 px-1.5 py-0.5 text-[9px] md:text-[9.5px] font-display font-extrabold uppercase tracking-widest text-rose-600 dark:text-rose-400 select-none transition-colors duration-300 shadow-[0_1px_2px_rgba(244,63,94,0.03)] leading-none mt-1.5">
-                  <span className="relative flex h-1 w-1 mr-0.5 shrink-0">
+                  <span className="relative flex h-1 w-1 mx-0.5 shrink-0">
                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75" />
                     <span className="relative inline-flex rounded-full h-1 w-1 bg-rose-500" />
                   </span>

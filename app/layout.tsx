@@ -10,36 +10,18 @@ import { SITE_THEME_CRITICAL_CSS, SITE_THEME_INIT_SCRIPT } from '@/lib/site-them
 import { SITE_LOCALE_INIT_SCRIPT } from '@/lib/locale';
 import Script from 'next/script';
 
-const inter = Inter({
-  subsets: ['latin'],
-  variable: '--font-sans',
-  display: 'swap',
-});
-
-const spaceGrotesk = Space_Grotesk({
-  subsets: ['latin'],
-  variable: '--font-display',
-  display: 'swap',
-});
-
-const jetbrainsMono = JetBrains_Mono({
-  subsets: ['latin'],
-  variable: '--font-mono',
-  display: 'swap',
-});
-
-const notoSansBengali = Noto_Sans_Bengali({
-  subsets: ['bengali'],
-  variable: '--font-bengali',
-  display: 'swap',
-});
+const inter = Inter({ subsets: ['latin'], variable: '--font-sans', display: 'swap' });
+const spaceGrotesk = Space_Grotesk({ subsets: ['latin'], variable: '--font-display', display: 'swap' });
+const jetbrainsMono = JetBrains_Mono({ subsets: ['latin'], variable: '--font-mono', display: 'swap' });
+const notoSansBengali = Noto_Sans_Bengali({ subsets: ['bengali'], variable: '--font-bengali', display: 'swap' });
 
 export const metadata: Metadata = {
   title: {
     default: 'ESB PowerLine — Bangladesh Energy & Power News',
     template: '%s | ESB PowerLine',
   },
-  description: "Bangladesh's premier source for power sector news, renewable energy, policy, projects & tenders, grid explorer, and the monthly magazine.",
+  description:
+    "Bangladesh's premier source for power sector news, renewable energy, policy, projects & tenders, grid explorer, and the monthly magazine.",
   icons: { icon: '/images/fav-icon.png' },
   openGraph: {
     siteName: 'ESB PowerLine',
@@ -47,11 +29,14 @@ export const metadata: Metadata = {
   },
 };
 
-/**
- * Static root shell — theme/locale personalization is applied client-side
- * via beforeInteractive scripts + SiteThemeProvider / LocaleProvider.
- * Do not read cookies() here; it would force the entire tree dynamic.
- */
+const bodyClass = [
+  inter.variable,
+  spaceGrotesk.variable,
+  jetbrainsMono.variable,
+  notoSansBengali.variable,
+  'min-h-screen bg-background text-foreground antialiased font-sans',
+].join(' ');
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html
@@ -62,22 +47,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       suppressHydrationWarning
     >
       <head>
+        {/* Critical theme CSS injected before paint to avoid flash */}
         <style dangerouslySetInnerHTML={{ __html: SITE_THEME_CRITICAL_CSS }} suppressHydrationWarning />
       </head>
-      <body
-        suppressHydrationWarning
-        className={`${inter.variable} ${spaceGrotesk.variable} ${jetbrainsMono.variable} ${notoSansBengali.variable} min-h-screen bg-background text-foreground antialiased font-sans`}
-      >
-        <Script
-          id="theme-init"
-          strategy="beforeInteractive"
-          dangerouslySetInnerHTML={{ __html: SITE_THEME_INIT_SCRIPT }}
-        />
-        <Script
-          id="locale-init"
-          strategy="beforeInteractive"
-          dangerouslySetInnerHTML={{ __html: SITE_LOCALE_INIT_SCRIPT }}
-        />
+      <body suppressHydrationWarning className={bodyClass}>
+        {/* Theme + locale hydration — must run before React tree */}
+        <Script id="theme-init" strategy="beforeInteractive" dangerouslySetInnerHTML={{ __html: SITE_THEME_INIT_SCRIPT }} />
+        <Script id="locale-init" strategy="beforeInteractive" dangerouslySetInnerHTML={{ __html: SITE_LOCALE_INIT_SCRIPT }} />
 
         <Providers>
           {children}

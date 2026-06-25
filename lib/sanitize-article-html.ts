@@ -32,25 +32,28 @@ const ARTICLE_SANITIZE_OPTIONS: sanitizeHtml.IOptions = {
     span: ['class', 'style'],
     div: ['class', 'style'],
     p: ['class', 'style'],
-    h1: ['class', 'style'],
-    h2: ['class', 'style'],
-    h3: ['class', 'style'],
+    h1: ['class'],
+    h2: ['class'],
+    h3: ['class'],
   },
   allowedStyles: {
+    // Only allow safe, presentation-only CSS properties — no url(), expressions, or JS
     '*': {
-      'font-size': [/.*/],
-      'font-family': [/.*/],
-      'color': [/.*/],
-      'background-color': [/.*/],
-      'text-align': [/.*/],
+      'font-size': [/^\d+(\.\d+)?(px|em|rem|%)$/],
+      'font-family': [/^[a-zA-Z0-9 ,'"_-]+$/],
+      color: [/^(#[0-9a-fA-F]{3,8}|rgb\(\d{1,3},\s*\d{1,3},\s*\d{1,3}\)|[a-zA-Z]+)$/],
+      'background-color': [/^(#[0-9a-fA-F]{3,8}|rgb\(\d{1,3},\s*\d{1,3},\s*\d{1,3}\)|[a-zA-Z]+)$/],
+      'text-align': [/^(left|right|center|justify)$/],
     },
   },
+  // Block data: and javascript: URIs in all attributes
   allowedSchemes: ['http', 'https', 'mailto'],
   allowedSchemesByTag: {
-    img: ['http', 'https'],
+    img: ['http', 'https'], // no data: URIs in images
   },
   transformTags: {
-    a: sanitizeHtml.simpleTransform('a', { rel: 'noopener noreferrer' }),
+    // Force external links to open safely
+    a: sanitizeHtml.simpleTransform('a', { rel: 'noopener noreferrer' }, true),
   },
   disallowedTagsMode: 'discard',
 };

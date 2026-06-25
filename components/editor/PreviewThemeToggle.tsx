@@ -39,7 +39,7 @@ export function PreviewThemeToggle({
               className={cn('cms-preview-theme-toggle__btn', active && 'cms-preview-theme-toggle__btn--active')}
               aria-pressed={active}
             >
-              <Icon className="h-3.5 w-3.5" />
+              <Icon className="h-3 w-3" />
               <span>{t.label}</span>
             </button>
           </ModernTooltip>

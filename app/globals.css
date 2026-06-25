@@ -1960,15 +1960,23 @@ html.locale-bn .article-card h3 {
 
 @media (max-width: 767px) {
   .site-banner__image {
-    min-height: 48px;
-    height: 48px;
+    height: auto;
+    min-height: unset;
+    aspect-ratio: 3728 / 343;
+    width: 100%;
+    object-fit: cover;
+    object-position: center center;
   }
 }
 
 @media (min-width: 768px) and (max-width: 1023px) {
   .site-banner__image {
-    min-height: 64px;
-    height: 64px;
+    height: auto;
+    min-height: unset;
+    aspect-ratio: 3728 / 343;
+    width: 100%;
+    object-fit: cover;
+    object-position: center center;
   }
 }
 
@@ -2170,14 +2178,14 @@ html.locale-bn .article-card h3 {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 0.5rem;
+  gap: 0.35rem;
   height: var(--nav-paired-pill-h);
-  padding: 0 1.15rem;
+  padding: 0 1.05rem;
   border-radius: 9999px;
   font-family: var(--font-sans), sans-serif;
-  font-size: 0.72rem;
+  font-size: 0.75rem;
   font-weight: 700;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.04em;
   text-transform: uppercase;
   line-height: 1;
   white-space: nowrap;
@@ -3014,7 +3022,10 @@ html.locale-bn .public-nav-bar__account-pill .account-avatar--compact .account-a
 }
 
 .public-nav-bar__hub-link .icon-sm {
-  opacity: 0.92;
+  opacity: 1;
+  /* Scale icon to 1rem (16px) for 1.33× ratio against 12px text — matches Vercel / Linear / Stripe nav standards */
+  width: 1rem;
+  height: 1rem;
 }
 
 .public-nav-bar__account-pill .account-avatar--compact .account-avatar__status {
@@ -6653,14 +6664,14 @@ html.theme-white {
 
 
   .admin-action-pill {
-    gap: 0.625rem;
-    padding: 0.625rem 0.75rem;
-    border-radius: 1rem;
+    gap: 0.4rem;
+    padding: 0.45rem 0.6rem;
+    border-radius: 0.5rem;
   }
 
   .admin-action-icon {
-    width: 1.875rem;
-    height: 1.875rem;
+    width: 1rem;
+    height: 1rem;
   }
 
   .admin-article-manager {
@@ -6718,7 +6729,7 @@ html.theme-white {
 
   .admin-analytics-quick-grid {
     grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: var(--shell-gap);
+    gap: 0.5rem;
   }
 
   .cms-article-editor__workspace {
@@ -15059,16 +15070,32 @@ html.theme-white .cms-datetime-grid-cell {
 .cms-preview-chip {
   display: inline-flex;
   align-items: center;
-  gap: 0.3rem;
+  justify-content: center;
+  gap: 0.35rem;
   border: 1px solid hsl(var(--border) / 0.55);
   border-radius: 9999px;
-  padding: 0.25rem 0.6rem;
-  font-size: 10px;
+  height: 1.625rem; /* exact consistent height */
+  padding: 0 0.6rem;
+  font-size: 11px;
   font-weight: 600;
+  line-height: 1;
   color: hsl(var(--muted-foreground));
   transition: border-color 150ms, background 150ms, color 150ms;
 }
-.cms-preview-chip--icon { padding: 0.35rem 0.5rem; }
+.cms-preview-chip svg {
+  flex-shrink: 0;
+  width: 0.75rem;
+  height: 0.75rem;
+}
+.cms-preview-chip-text {
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+}
+.cms-preview-chip--icon {
+  padding: 0;
+  width: 1.625rem; /* exact square match for device button views */
+}
 .cms-preview-chip--active {
   border-color: hsl(var(--primary) / 0.45);
   background: hsl(var(--primary) / 0.1);
@@ -15319,36 +15346,65 @@ html.theme-white .cms-datetime-grid-cell {
 
 .cms-preview-theme-toggle {
   display: inline-flex;
-  gap: 0.25rem;
+  gap: 0.125rem;
   padding: 0.125rem;
   border-radius: 9999px;
-  border: 1px solid hsl(var(--border) / 0.5);
-  background: hsl(var(--muted) / 0.2);
+  border: 1px solid hsl(var(--border) / 0.55);
+  background: hsl(var(--muted) / 0.35);
+  height: 1.625rem; /* match preview chip height */
+  align-items: center;
 }
+.cms-preview-theme-toggle .modern-tooltip-wrap,
+.cms-preview-modal__toolbar-group .modern-tooltip-wrap,
+.cms-editor-panel__head--tabs .modern-tooltip-wrap {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+}
+
 
 .cms-preview-theme-toggle__btn {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 0.25rem;
-  padding: 0.25rem 0.5rem;
-  border-radius: 9999px;
-  font-size: 10px;
+  height: 1.375rem; /* float perfectly within the 1.625rem container */
+  width: 5.25rem; /* perfectly symmetrical sizing for all options */
+  font-size: 11px;
   font-weight: 600;
+  line-height: 1;
   color: hsl(var(--muted-foreground));
-  transition: background 120ms ease, color 120ms ease;
+  transition: background 120ms ease, color 120ms ease, box-shadow 120ms ease;
+  border-radius: 9999px;
+}
+
+@media (max-width: 767px) {
+  .cms-preview-theme-toggle__btn {
+    width: 1.375rem; /* make it a perfect circle on mobile when text is hidden */
+    padding: 0 !important;
+  }
+}
+
+.cms-preview-theme-toggle__btn svg {
+  flex-shrink: 0;
+  width: 0.75rem;
+  height: 0.75rem;
 }
 
 .cms-preview-theme-toggle__btn span {
   display: none;
+  line-height: 1;
 }
 
 @media (min-width: 768px) {
-  .cms-preview-theme-toggle__btn span { display: inline; }
+  .cms-preview-theme-toggle__btn span { display: inline-flex; align-items: center; }
 }
 
 .cms-preview-theme-toggle__btn--active {
-  background: hsl(var(--primary) / 0.14);
-  color: hsl(var(--primary));
+  background: hsl(var(--primary) / 0.14) !important;
+  color: hsl(var(--primary)) !important;
+  box-shadow: 0 1px 3px hsl(var(--primary) / 0.12), 0 1px 2px hsl(var(--primary) / 0.08);
 }
 
 .cms-preview-close {
@@ -16394,7 +16450,7 @@ html.theme-white .cms-datetime-grid-cell {
     display: none !important;
   }
 
-  /* Sizing for the center navigation items (Latest, Grid, Magazine) */
+  /* Mobile: hub links collapse to icon-only circles (768px+ block overrides to pills) */
   .public-nav-bar .public-nav-bar__hub-link {
     flex: 0 0 auto !important;
     display: flex !important;
@@ -16650,7 +16706,7 @@ html.theme-white .cms-datetime-grid-cell {
   }
   .public-nav-bar .locale-toggle__label { pointer-events: none !important; }
 
-  /* Hide center link texts inside the center navigation hub links */
+  /* Hide hub link labels on mobile — tablet (768px+) block overrides this to inline */
   .public-nav-bar .public-nav-bar__hub-link span {
     display: none !important;
   }
@@ -16941,10 +16997,9 @@ html.theme-white .cms-datetime-grid-cell {
     font-weight: 700 !important;
   }
 
-  /* Uniform circular sizing for all interactive elements in the capsules */
+  /* Uniform circular sizing for all interactive elements EXCEPT hub-links (they show labels) */
   .public-nav-bar__home,
   .public-nav-bar__menu-btn,
-  .public-nav-bar__hub-link,
   .public-nav-bar__search-pill,
   .public-nav-bar .public-nav-bar__account-pill,
   .public-nav-bar .locale-toggle-wrapper,
@@ -16964,6 +17019,30 @@ html.theme-white .cms-datetime-grid-cell {
     align-items: center !important;
     justify-content: center !important;
     box-sizing: border-box !important;
+  }
+
+  /* Hub links (Latest, GE, Mag) — pill shape with label on tablet, not icon-only circles */
+  .public-nav-bar .public-nav-bar__hub-link {
+    width: auto !important;
+    min-width: unset !important;
+    max-width: unset !important;
+    height: var(--nav-paired-pill-h) !important;
+    min-height: var(--nav-paired-pill-h) !important;
+    max-height: var(--nav-paired-pill-h) !important;
+    padding: 0 0.65rem !important;
+    gap: 0.28rem !important;
+    border-radius: 9999px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    box-sizing: border-box !important;
+  }
+
+  /* Keep hub icons at 1rem on tablet — prevents the 22px token overwhelming the 0.68rem label */
+  .public-nav-bar .public-nav-bar__hub-link .icon-sm {
+    width: 1rem !important;
+    height: 1rem !important;
+    flex-shrink: 0 !important;
   }
 }
 
@@ -18143,17 +18222,7 @@ iframe::-webkit-scrollbar-track {
   gap: 0 !important;
 }
 
-/* Hide theme toggle text spans in Focus Preview Mode */
-.cms-article-editor__workspace--preview-active .cms-editor-panel__head--tabs .cms-preview-theme-toggle__btn span {
-  display: none !important;
-}
 
-.cms-article-editor__workspace--preview-active .cms-editor-panel__head--tabs .cms-preview-theme-toggle__btn {
-  padding: 0.25rem !important;
-  justify-content: center;
-  width: 1.75rem;
-  height: 1.75rem;
-}
 
 /* Premium light mode contrast system for preview panels & device viewports */
 .theme-white .cms-preview-viewport {
@@ -18333,3 +18402,142 @@ iframe::-webkit-scrollbar-track {
   opacity: 1;
   transform: translateX(-50%) translateY(0) scale(1);
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   GLOBAL RESPONSIVE AUTO-SIZING SYSTEM
+   Fluid typography, touch-friendly sizing, and reactive layouts
+   for all mobile (<768px) and tablet (768–1023px) screens.
+   Uses clamp() so every element scales smoothly without jumps.
+═══════════════════════════════════════════════════════════════ */
+
+/* ── Fluid base font size ───────────────────────────────────── */
+@media (max-width: 767px) {
+  :root {
+    --fluid-base: clamp(0.875rem, 2.5vw + 0.5rem, 1rem);
+  }
+
+  /* Containers: full-bleed on mobile with safe padding */
+  .container,
+  .container--shell {
+    padding-inline: clamp(0.75rem, 4vw, 1.25rem) !important;
+    max-width: 100% !important;
+  }
+
+  /* Buttons: taller touch targets (min 44px), fluid font */
+  .btn {
+    font-size: clamp(0.75rem, 2vw + 0.5rem, 0.875rem) !important;
+    padding: 0.625rem clamp(0.75rem, 3vw, 1.25rem) !important;
+    min-height: 44px !important;
+    border-radius: 0.875rem !important;
+  }
+
+  /* Grid auto-fit: 1 column on narrow screens */
+  .grid.sm\:grid-cols-2,
+  .grid.md\:grid-cols-2,
+  .grid.md\:grid-cols-3 {
+    grid-template-columns: 1fr !important;
+  }
+  .grid.grid-cols-2 {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+
+  /* Cards: tighter padding on mobile */
+  .card,
+  [class*="rounded-2xl"][class*="border"],
+  [class*="rounded-3xl"][class*="border"] {
+    padding: clamp(0.875rem, 3vw, 1.25rem) !important;
+  }
+
+  /* Article / prose body: comfortable reading size on phones */
+  .article-body {
+    font-size: clamp(1rem, 3vw + 0.5rem, 1.125rem) !important;
+    line-height: 1.7 !important;
+  }
+  .article-body h1,
+  .article-body h2,
+  .article-body h3 {
+    font-size: clamp(1.125rem, 4vw + 0.5rem, 1.5rem) !important;
+    line-height: 1.25 !important;
+  }
+
+  /* Tables: horizontal scroll instead of overflow */
+  .article-body table,
+  table {
+    display: block;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    white-space: nowrap;
+  }
+
+  /* Stat/KPI cards: smaller numbers on mobile */
+  .stat-value {
+    font-size: clamp(1.5rem, 6vw + 0.5rem, 2rem) !important;
+  }
+
+  /* Images: always contain within parent */
+  img {
+    max-width: 100%;
+    height: auto;
+  }
+
+  /* Section headers: stack on mobile */
+  .section-header {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 0.5rem !important;
+  }
+  .section-header h2 {
+    font-size: clamp(1.1rem, 3.5vw + 0.5rem, 1.375rem) !important;
+  }
+
+  /* Power Grid page: button row wraps cleanly */
+  #power-grid-page-container .flex.flex-row.items-center.gap-2 {
+    flex-wrap: nowrap !important;
+    width: 100% !important;
+  }
+  #power-grid-page-container .flex.flex-row.items-center.gap-2 > div {
+    flex: 1 1 0 !important;
+    min-width: 0 !important;
+  }
+}
+
+/* ── Tablet (768–1023px) ──────────────────────────────────────── */
+@media (min-width: 768px) and (max-width: 1023px) {
+  /* Containers: generous breathing room on tablet */
+  .container,
+  .container--shell {
+    padding-inline: clamp(1.25rem, 3vw, 2rem) !important;
+  }
+
+  /* Buttons: slightly larger on tablet */
+  .btn {
+    font-size: clamp(0.8rem, 1.5vw + 0.4rem, 0.9375rem) !important;
+    min-height: 40px !important;
+  }
+
+  /* 2-col grids on tablet where they were 3-col on desktop */
+  .grid.md\:grid-cols-3,
+  .grid.lg\:grid-cols-3 {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+  .grid.lg\:grid-cols-4 {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+
+  /* Article body: comfortable reading on iPad */
+  .article-body {
+    font-size: clamp(1.0625rem, 2vw + 0.5rem, 1.25rem) !important;
+    line-height: 1.75 !important;
+  }
+
+  /* Stat/KPI cards: medium numbers */
+  .stat-value {
+    font-size: clamp(1.75rem, 4vw + 0.5rem, 2.5rem) !important;
+  }
+
+  /* Section headers: maintain row but shrink font */
+  .section-header h2 {
+    font-size: clamp(1.25rem, 2.5vw + 0.5rem, 1.5rem) !important;
+  }
+}
+

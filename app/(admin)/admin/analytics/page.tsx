@@ -89,7 +89,7 @@ export default async function AdminAnalyticsPage({ searchParams }: PageProps) {
         {primaryKpis.map((kpi) => (
           <div key={kpi.label} className="admin-analytics-kpi-primary-cell">
             <div className="admin-analytics-kpi-primary-top">
-              <kpi.icon className="h-3 w-3 opacity-50" strokeWidth={2} />
+              <kpi.icon className="icon-sm opacity-50" strokeWidth={2} />
               <span className="admin-analytics-kpi-primary-label">{kpi.label}</span>
             </div>
             <span className="admin-analytics-kpi-primary-value">{kpi.value}</span>

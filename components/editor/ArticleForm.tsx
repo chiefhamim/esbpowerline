@@ -674,7 +674,7 @@ export function ArticleForm({
                             )}
                             aria-label={label}
                           >
-                            <Icon className="h-3.5 w-3.5" />
+                            <Icon className="icon-sm" />
                           </button>
                         </ModernTooltip>
                       );
@@ -698,7 +698,7 @@ export function ArticleForm({
                           )}
                           aria-label={label}
                         >
-                          <Icon className="h-3.5 w-3.5" />
+                          <Icon className="h-3 w-3" />
                         </button>
                       </ModernTooltip>
                     ))}

@@ -188,7 +188,7 @@ export default async function AboutPage() {
             {/* Grid Layout: Core Operational Team */}
             <div className="grid sm:grid-cols-2 gap-6 md:gap-8">
               
-              {/* Obaidul Haque — Assistant Manager & Accounting */}
+              {/* Obaidul Haque — Admin & Accounting */}
               <div className="relative group overflow-hidden rounded-2xl border border-border/40 bg-card/15 p-5 hover:border-amber-500/40 transition-all duration-300 shadow-md hover:shadow-amber-500/5">
                 <div className="absolute top-0 right-0 h-24 w-24 bg-amber-500/5 rounded-bl-full -mr-6 -mt-6 blur-xl group-hover:bg-amber-500/10 transition-colors duration-300" />
                 <div className="flex items-start gap-4 relative z-10">
@@ -201,7 +201,7 @@ export default async function AboutPage() {
                         Obaidul Haque
                       </h4>
                       <p className="text-[10px] font-bold text-amber-500 uppercase tracking-wider mt-0.5 font-sans">
-                        Assistant Manager & Accounting
+                        Admin & Accounting
                       </p>
                     </div>
                     <p className="text-xs text-muted-foreground leading-relaxed font-light">
@@ -211,7 +211,7 @@ export default async function AboutPage() {
                 </div>
               </div>
 
-              {/* Riazul Islam — Chief Information Security Officer (CISO) */}
+              {/* Md Riazul Islam — Head of IT */}
               <div className="relative group overflow-hidden rounded-2xl border border-border/40 bg-card/15 p-5 hover:border-emerald-500/40 transition-all duration-300 shadow-md hover:shadow-emerald-500/5">
                 <div className="absolute top-0 right-0 h-24 w-24 bg-emerald-500/5 rounded-bl-full -mr-6 -mt-6 blur-xl group-hover:bg-emerald-500/10 transition-colors duration-300" />
                 <div className="flex items-start gap-4 relative z-10">
@@ -221,10 +221,10 @@ export default async function AboutPage() {
                   <div className="space-y-1.5 flex-1 min-w-0">
                     <div>
                       <h4 className="font-display font-bold text-base text-foreground group-hover:text-emerald-400 transition-colors truncate">
-                        Riazul Islam
+                        Md Riazul Islam
                       </h4>
                       <p className="text-[10px] font-bold text-emerald-500 uppercase tracking-wider mt-0.5 font-sans">
-                        CISO (Hosting & Infrastructure)
+                        Head of IT
                       </p>
                     </div>
                     <p className="text-xs text-muted-foreground leading-relaxed font-light">
@@ -234,7 +234,7 @@ export default async function AboutPage() {
                 </div>
               </div>
 
-              {/* Faisal Al Mahmud — Designer */}
+              {/* Faisal Al Mahmud — Graphics & Motion Designer */}
               <div className="relative group overflow-hidden rounded-2xl border border-border/40 bg-card/15 p-5 hover:border-violet-500/40 transition-all duration-300 shadow-md hover:shadow-violet-500/5">
                 <div className="absolute top-0 right-0 h-24 w-24 bg-violet-500/5 rounded-bl-full -mr-6 -mt-6 blur-xl group-hover:bg-violet-500/10 transition-colors duration-300" />
                 <div className="flex items-start gap-4 relative z-10">
@@ -247,7 +247,7 @@ export default async function AboutPage() {
                         Faisal Al Mahmud
                       </h4>
                       <p className="text-[10px] font-bold text-violet-500 uppercase tracking-wider mt-0.5 font-sans">
-                        Designer
+                        Graphics &amp; Motion Designer
                       </p>
                     </div>
                     <p className="text-xs text-muted-foreground leading-relaxed font-light">
@@ -257,7 +257,7 @@ export default async function AboutPage() {
                 </div>
               </div>
 
-              {/* Mehedi Hasan Hamim — Sub-Editor */}
+              {/* Mehedi Hasan Hamim — Sub-Editor & IT Dev */}
               <div className="relative group overflow-hidden rounded-2xl border border-border/40 bg-card/15 p-5 hover:border-blue-500/40 transition-all duration-300 shadow-md hover:shadow-blue-500/5">
                 <div className="absolute top-0 right-0 h-24 w-24 bg-blue-500/5 rounded-bl-full -mr-6 -mt-6 blur-xl group-hover:bg-blue-500/10 transition-colors duration-300" />
                 <div className="flex items-start gap-4 relative z-10">
@@ -270,7 +270,7 @@ export default async function AboutPage() {
                         Mehedi Hasan Hamim
                       </h4>
                       <p className="text-[10px] font-bold text-blue-500 uppercase tracking-wider mt-0.5 font-sans">
-                        Sub-Editor
+                        Sub-Editor &amp; IT Dev
                       </p>
                     </div>
                     <p className="text-xs text-muted-foreground leading-relaxed font-light">

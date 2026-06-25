@@ -1013,7 +1013,7 @@ export function ArticlePreviewPanel({
                     )}
                     aria-label={id}
                   >
-                    <Icon className="h-3.5 w-3.5" />
+                    <Icon className="h-3 w-3" />
                   </button>
                 </ModernTooltip>
               ))}
