@@ -229,7 +229,7 @@ export function EnergyDashboard({
             key={i}
             className={`group relative overflow-hidden flex transition-all duration-200 ${
               compact
-                ? `flex-row items-center justify-start text-left min-w-0 ${fillHeight ? 'h-full' : 'py-1.5'}`
+                ? `flex-row items-center justify-start text-left px-2.5 py-1.5 sm:py-2 lg:py-1 xl:py-1.5 rounded-xl border border-border/25 dark:border-white/[0.04] bg-card/20 dark:bg-white/[0.01] hover:border-primary/20 hover:bg-muted/5 dark:hover:bg-white/[0.02] min-w-0 ${fillHeight ? 'h-full' : ''}`
                 : 'stat flex-col items-center justify-center text-center px-3 pt-6 pb-5'
             }`}
           >
