@@ -25,15 +25,13 @@ import { uploadMediaBuffer } from '../lib/media-storage';
 import { registerArticleMedia } from '../lib/media-registry-core';
 
 /** Preserve npm/cross-env targets — .env.production.local can contain empty placeholders. */
-const cliProvider = process.env.PRISMA_SCHEMA_PROVIDER?.trim() || '';
 const cliDatabaseUrl = process.env.DATABASE_URL?.trim() || '';
 
 config({ path: '.env' });
 if (existsSync('.env.local')) config({ path: '.env.local', override: true });
-if (existsSync('.env.production.local') && cliProvider !== 'sqlite') {
+if (existsSync('.env.production.local')) {
   config({ path: '.env.production.local', override: true });
 }
-if (cliProvider) process.env.PRISMA_SCHEMA_PROVIDER = cliProvider;
 if (cliDatabaseUrl) process.env.DATABASE_URL = cliDatabaseUrl;
 
 function toPostgresqlUrl(raw: string | undefined): string {
@@ -51,36 +49,31 @@ function readEnvValue(file: string, key: string): string {
   }
 }
 
-const schemaProvider = process.env.PRISMA_SCHEMA_PROVIDER?.trim() || 'postgresql';
-process.env.PRISMA_SCHEMA_PROVIDER = schemaProvider;
-
-if (schemaProvider === 'sqlite') {
-  const sqliteUrl = process.env.DATABASE_URL?.trim();
-  process.env.DATABASE_URL =
-    sqliteUrl && sqliteUrl.startsWith('file:') ? sqliteUrl : 'file:./dev.db';
-} else {
-  if (!process.env.DATABASE_URL?.trim()) {
-    process.env.DATABASE_URL = toPostgresqlUrl(
-      readEnvValue('.env.production.local', 'DATABASE_URL') ||
-        readEnvValue('.env.production.local', 'POSTGRES_PRISMA_URL') ||
-        process.env.POSTGRES_PRISMA_URL ||
-        readEnvValue('.env.local', 'POSTGRES_PRISMA_URL') ||
-        readEnvValue('.env', 'POSTGRES_PRISMA_URL'),
-    );
-  }
-  if (!process.env.DIRECT_URL?.trim()) {
-    process.env.DIRECT_URL = toPostgresqlUrl(
-      readEnvValue('.env.production.local', 'DIRECT_URL') ||
-        readEnvValue('.env.production.local', 'POSTGRES_URL_NON_POOLING') ||
-        process.env.POSTGRES_URL_NON_POOLING ||
-        readEnvValue('.env.local', 'POSTGRES_URL_NON_POOLING') ||
-        readEnvValue('.env', 'POSTGRES_URL_NON_POOLING'),
-    );
-  }
+if (!process.env.DATABASE_URL?.trim()) {
+  process.env.DATABASE_URL = toPostgresqlUrl(
+    readEnvValue('.env.production.local', 'DATABASE_URL') ||
+      readEnvValue('.env.production.local', 'POSTGRES_PRISMA_URL') ||
+      process.env.POSTGRES_PRISMA_URL ||
+      readEnvValue('.env.local', 'DATABASE_URL') ||
+      readEnvValue('.env.local', 'POSTGRES_PRISMA_URL') ||
+      readEnvValue('.env', 'DATABASE_URL') ||
+      readEnvValue('.env', 'POSTGRES_PRISMA_URL'),
+  );
+}
+if (!process.env.DIRECT_URL?.trim()) {
+  process.env.DIRECT_URL = toPostgresqlUrl(
+    readEnvValue('.env.production.local', 'DIRECT_URL') ||
+      readEnvValue('.env.production.local', 'POSTGRES_URL_NON_POOLING') ||
+      process.env.POSTGRES_URL_NON_POOLING ||
+      readEnvValue('.env.local', 'DIRECT_URL') ||
+      readEnvValue('.env.local', 'POSTGRES_URL_NON_POOLING') ||
+      readEnvValue('.env', 'DIRECT_URL') ||
+      readEnvValue('.env', 'POSTGRES_URL_NON_POOLING'),
+  );
 }
 
 if (!process.env.DATABASE_URL?.trim()) {
-  console.error('❌ DATABASE_URL is not set. Add POSTGRES_PRISMA_URL to .env.local or DATABASE_URL to .env.production.local');
+  console.error('❌ DATABASE_URL is not set. Please configure your PostgreSQL connection string in .env or .env.local.');
   process.exit(1);
 }
 

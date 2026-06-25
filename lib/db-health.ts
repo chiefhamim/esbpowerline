@@ -1,12 +1,12 @@
 import 'server-only';
 
-import { isPostgresUrl, isSqliteUrl, resolveDatabaseUrl, resolvePrismaSchemaProvider } from '@/lib/prisma-database';
+import { isPostgresUrl, resolveDatabaseUrl } from '@/lib/prisma-database';
 import prisma from '@/lib/prisma';
 
 export type DbHealthResult = {
   ok: boolean;
-  provider: 'sqlite' | 'postgresql';
-  databaseUrl: 'set' | 'missing' | 'dev-fallback';
+  provider: 'postgresql';
+  databaseUrl: 'set' | 'missing';
   connection: 'ok' | 'error';
   tables?: {
     articles: number;
@@ -18,22 +18,21 @@ export type DbHealthResult = {
 
 export async function checkDbHealth(): Promise<DbHealthResult> {
   const raw = process.env.DATABASE_URL?.trim();
-  let databaseUrl: 'set' | 'missing' | 'dev-fallback' = 'set';
+  let databaseUrl: 'set' | 'missing' = 'set';
   if (!raw) {
-    databaseUrl = process.env.NODE_ENV === 'production' ? 'missing' : 'dev-fallback';
+    databaseUrl = 'missing';
   }
 
-  let provider: 'sqlite' | 'postgresql' = 'sqlite';
+  const provider = 'postgresql';
   try {
     const url = resolveDatabaseUrl();
-    provider = resolvePrismaSchemaProvider(url);
-    if (!isSqliteUrl(url) && !isPostgresUrl(url)) {
+    if (!isPostgresUrl(url)) {
       return {
         ok: false,
         provider,
         databaseUrl,
         connection: 'error',
-        error: 'Unsupported DATABASE_URL scheme',
+        error: 'Unsupported DATABASE_URL scheme, must be postgresql:// or postgres://',
       };
     }
   } catch (error) {

@@ -122,10 +122,6 @@ async function main() {
     process.exit(1);
   }
 
-  if (process.env.PRISMA_SCHEMA_PROVIDER === 'sqlite') {
-    console.warn('⚠ PRISMA_SCHEMA_PROVIDER=sqlite — production seed is intended for postgresql.');
-  }
-
   console.log('🌱 Production bootstrap seed (idempotent)...');
 
   const categoriesCreated = await seedCategories();

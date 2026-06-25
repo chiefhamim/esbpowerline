@@ -4,13 +4,11 @@
 import { config } from 'dotenv';
 import { existsSync } from 'fs';
 
-const cliProvider = process.env.PRISMA_SCHEMA_PROVIDER?.trim() || '';
 config({ path: '.env' });
 if (existsSync('.env.local')) config({ path: '.env.local', override: true });
-if (existsSync('.env.production.local') && cliProvider !== 'sqlite') {
+if (existsSync('.env.production.local')) {
   config({ path: '.env.production.local', override: true });
 }
-if (cliProvider) process.env.PRISMA_SCHEMA_PROVIDER = cliProvider;
 
 function toPostgresqlUrl(raw: string | undefined): string {
   const value = raw?.trim();
@@ -18,8 +16,7 @@ function toPostgresqlUrl(raw: string | undefined): string {
   return value.replace(/^postgres:\/\//, 'postgresql://');
 }
 
-const schemaProvider = process.env.PRISMA_SCHEMA_PROVIDER?.trim() || 'postgresql';
-if (schemaProvider === 'postgresql' && !toPostgresqlUrl(process.env.DATABASE_URL)) {
+if (!toPostgresqlUrl(process.env.DATABASE_URL)) {
   process.env.DATABASE_URL = toPostgresqlUrl(
     process.env.POSTGRES_PRISMA_URL || process.env.DATABASE_URL,
   );

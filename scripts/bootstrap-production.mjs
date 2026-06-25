@@ -39,7 +39,6 @@ function run(label, script) {
     stdio: 'inherit',
     env: {
       ...process.env,
-      PRISMA_SCHEMA_PROVIDER: 'postgresql',
       ALLOW_PRODUCTION_SEED: 'true',
     },
     shell: process.platform === 'win32',
@@ -50,7 +49,7 @@ function run(label, script) {
 }
 
 console.log('🚀 Production bootstrap — migrations, idempotent seed, Supabase staff');
-run('Deploy migrations', 'db:deploy:prod');
+run('Deploy migrations', 'db:deploy');
 run('Seed production baseline (categories, settings, master admin)', 'db:seed:prod');
 run('Seed Supabase staff (admin + editor)', 'supabase:seed-staff');
 console.log('\n✅ Bootstrap complete.');

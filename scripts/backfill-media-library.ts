@@ -8,15 +8,13 @@
 import { config, parse } from 'dotenv';
 import { existsSync, readFileSync } from 'fs';
 
-const cliProvider = process.env.PRISMA_SCHEMA_PROVIDER?.trim() || '';
 const cliDatabaseUrl = process.env.DATABASE_URL?.trim() || '';
 
 config({ path: '.env' });
 if (existsSync('.env.local')) config({ path: '.env.local', override: true });
-if (existsSync('.env.production.local') && cliProvider !== 'sqlite') {
+if (existsSync('.env.production.local')) {
   config({ path: '.env.production.local', override: true });
 }
-if (cliProvider) process.env.PRISMA_SCHEMA_PROVIDER = cliProvider;
 if (cliDatabaseUrl) process.env.DATABASE_URL = cliDatabaseUrl;
 
 function toPostgresqlUrl(raw: string | undefined): string {
@@ -34,20 +32,14 @@ function readEnvValue(file: string, key: string): string {
   }
 }
 
-const schemaProvider = process.env.PRISMA_SCHEMA_PROVIDER?.trim() || 'postgresql';
-process.env.PRISMA_SCHEMA_PROVIDER = schemaProvider;
-
-if (schemaProvider === 'sqlite') {
-  process.env.DATABASE_URL =
-    process.env.DATABASE_URL?.trim()?.startsWith('file:')
-      ? process.env.DATABASE_URL.trim()
-      : 'file:./dev.db';
-} else if (!toPostgresqlUrl(process.env.DATABASE_URL)) {
+if (!toPostgresqlUrl(process.env.DATABASE_URL)) {
   process.env.DATABASE_URL = toPostgresqlUrl(
     readEnvValue('.env.production.local', 'DATABASE_URL') ||
       readEnvValue('.env.production.local', 'POSTGRES_PRISMA_URL') ||
       process.env.POSTGRES_PRISMA_URL ||
+      readEnvValue('.env.local', 'DATABASE_URL') ||
       readEnvValue('.env.local', 'POSTGRES_PRISMA_URL') ||
+      readEnvValue('.env', 'DATABASE_URL') ||
       readEnvValue('.env', 'POSTGRES_PRISMA_URL'),
   );
 }

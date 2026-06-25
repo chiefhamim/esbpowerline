@@ -8,22 +8,12 @@ import type { PrismaClient } from '@prisma/client';
 // Load variables from .env.local
 dotenv.config({ path: path.resolve(process.cwd(), '.env.local') });
 
-// Check if we want to run against production database using target flag
-const runProd = process.argv.includes('--production');
-if (runProd) {
-  // Use production URL
-  const prodUrl = process.env.POSTGRES_URL_NON_POOLING?.trim() || process.env.POSTGRES_URL?.trim();
-  if (prodUrl) {
-    process.env.DATABASE_URL = prodUrl;
-  }
-}
-
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim();
 const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY?.trim();
-const databaseUrl = process.env.DATABASE_URL?.trim() || (process.env.DATABASE_URL = `file:${path.join(process.cwd(), 'dev.db')}`);
+const databaseUrl = process.env.DATABASE_URL?.trim();
 
 if (!url || !serviceRoleKey || !databaseUrl) {
-  console.error('❌ Missing environment variables! Please check your .env.local file.');
+  console.error('❌ Missing environment variables! Please check your .env or .env.local file.');
   console.error({ url: !!url, serviceRoleKey: !!serviceRoleKey, databaseUrl: !!databaseUrl });
   process.exit(1);
 }
