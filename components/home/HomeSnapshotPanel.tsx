@@ -42,11 +42,11 @@ export function HomeSnapshotPanel({
   if (isHeroRail) {
     return (
       <section
-        className="home-snapshot-hero-shell flex flex-col h-full p-4 md:p-4.5 lg:p-5 rounded-2xl border border-border/40 bg-card/60 dark:bg-card/40 backdrop-blur-sm lg:min-h-[var(--home-hero-band-card-h)] lg:h-[var(--home-hero-band-card-h)] lg:max-h-[var(--home-hero-band-card-h)] overflow-hidden relative"
+        className="home-snapshot-hero-shell flex flex-col h-full bg-transparent lg:min-h-[var(--home-hero-band-card-h)] lg:h-[var(--home-hero-band-card-h)] lg:max-h-[var(--home-hero-band-card-h)] overflow-hidden relative"
         aria-labelledby="home-snapshot-title"
       >
         <div className="flex flex-col h-full justify-between relative z-10">
-          <div className="flex-shrink-0 pb-3 border-b border-border/10 dark:border-border/20">
+          <div className="flex-shrink-0 pb-3 border-b border-border/10 dark:border-border/20 mb-2">
             <div className="flex items-center justify-between gap-2 w-full">
               <div className="flex items-center gap-1.5 min-w-0">
                 <BarChart3 className="h-5 w-5 text-primary shrink-0 animate-pulse" style={{ animationDuration: '3s' }} aria-hidden />
@@ -68,11 +68,11 @@ export function HomeSnapshotPanel({
               </div>
             </div>
           </div>
-          <div className="flex-grow min-h-0 flex flex-col justify-center my-3">
+          <div className="flex-grow min-h-0 flex flex-col justify-center">
             <EnergyDashboard initialStats={snapshotStats as never} compact fillHeight />
           </div>
           {sourcesText && (
-            <div className="flex-shrink-0 pt-3 border-t border-border/10 dark:border-border/20">
+            <div className="flex-shrink-0 pt-3 border-t border-border/10 dark:border-border/20 mt-2">
               <div className="flex flex-col items-end w-full gap-0.5 text-[9px] xs:text-[10px] md:text-[11px] text-muted-foreground font-mono font-medium italic opacity-75 text-right">
                 <div className="flex items-center justify-end gap-1 w-full whitespace-nowrap">
                   <span className="font-semibold text-foreground/50 tracking-wider not-italic">{locale === 'bn' ? 'তথ্য সূত্র:' : 'DATA:'}</span>
@@ -88,7 +88,7 @@ export function HomeSnapshotPanel({
 
   return (
     <section
-      className="home-rail-panel home-block home-editorial__snapshot relative overflow-hidden rounded-2xl border border-border/40 bg-card/60 dark:bg-card/40 backdrop-blur-sm p-4 md:p-5 flex flex-col gap-3"
+      className="home-rail-panel home-block home-editorial__snapshot relative overflow-hidden bg-transparent flex flex-col gap-3"
       aria-labelledby="home-snapshot-title"
     >
       <div className="home-editorial__section-head flex items-center justify-between pb-3 border-b border-border/10 dark:border-border/20 shrink-0 relative z-10">
