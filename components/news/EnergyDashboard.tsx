@@ -247,7 +247,7 @@ export function EnergyDashboard({
 
               <Icon className={`h-4.5 w-4.5 shrink-0 transition-transform duration-200 group-hover:scale-105 ${s.iconClass ?? 'text-primary'}`} />
               <div className="min-w-0 flex-1 text-left">
-                <div className="text-[9px] lg:text-[10px] font-bold uppercase tracking-wider text-muted-foreground/80 group-hover:text-foreground transition-colors duration-150 truncate">
+                <div className="text-[7.5px] xs:text-[8px] sm:text-[9px] lg:text-[9.5px] font-bold uppercase tracking-tight text-muted-foreground/80 group-hover:text-foreground transition-colors duration-150 whitespace-nowrap">
                   {localizeEnergyStatLabel(s.label, locale)}
                 </div>
                 <div className="text-xs lg:text-sm font-bold tabular-nums text-foreground/90 group-hover:text-primary transition-colors duration-150 leading-none mt-0.5">
