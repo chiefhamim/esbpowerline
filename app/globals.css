@@ -18163,9 +18163,36 @@ iframe::-webkit-scrollbar-track {
   }
   .page-break-inside-avoid {
     page-break-inside: avoid !important;
-    break-inside: avoid !important;
   }
 }
+
+/* 3D Flipbook Animations & Transform helpers */
+.perspective-1500 {
+  perspective: 1500px;
+}
+.transform-style-preserve-3d {
+  transform-style: preserve-3d;
+}
+.backface-hidden {
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+.rotate-y-0 {
+  transform: rotateY(0deg);
+}
+.rotate-y-180 {
+  transform: rotateY(-180deg);
+}
+.origin-left {
+  transform-origin: left center;
+}
+.origin-right {
+  transform-origin: right center;
+}
+.ease-in-out-cubic {
+  transition-timing-function: cubic-bezier(0.645, 0.045, 0.355, 1);
+}
+
 
 
 

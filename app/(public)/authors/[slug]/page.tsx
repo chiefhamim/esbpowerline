@@ -6,6 +6,7 @@ import prisma from '@/lib/prisma';
 import { slugify } from '@/lib/utils';
 import { ArticleCard } from '@/components/news/ArticleCard';
 import { getPublishedArticlesForPublic } from '@/lib/category-content';
+import { normalizeArticleImageUrl } from '@/lib/article-image';
 
 export const revalidate = 60;
 
@@ -96,7 +97,7 @@ export default async function AuthorPage({ params }: { params: Promise<{ slug: s
         date: (a.publishedAt ?? a.createdAt).toISOString(),
         readTime: a.readTime,
         views: a.views,
-        imageUrl: a.imageUrl ?? '',
+        imageUrl: normalizeArticleImageUrl(a.imageUrl) ?? '',
         heroMeta: (a.seo as any)?.heroImage,
         isFeatured: a.isFeatured,
         isBreaking: a.isBreaking,

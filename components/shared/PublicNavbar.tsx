@@ -90,7 +90,7 @@ export function PublicNavbar({
   }, [categories, locale]);
 
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [bannerSrc, setBannerSrc] = useState('/images/banner.png');
+  const [bannerSrc, setBannerSrc] = useState('/images/banner_final.jpg');
   const pathname = usePathname();
 
   useEffect(() => {
@@ -132,8 +132,8 @@ export function PublicNavbar({
                 sizes="(max-width: 1760px) 100vw, 1760px"
                 priority
                 onError={() => {
-                  if (bannerSrc !== '/images/banner.jpg') {
-                    setBannerSrc('/images/banner.jpg');
+                  if (bannerSrc !== '/images/logo.jpg') {
+                    setBannerSrc('/images/logo.jpg');
                   }
                 }}
               />

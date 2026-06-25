@@ -42,12 +42,11 @@ export function HomeSnapshotPanel({
   if (isHeroRail) {
     return (
       <section
-        className="home-snapshot-hero-shell flex flex-col h-full p-4 md:p-4.5 lg:p-5 rounded-2xl border border-border/40 bg-card shadow-sm lg:min-h-[var(--home-hero-band-card-h)] lg:h-[var(--home-hero-band-card-h)] lg:max-h-[var(--home-hero-band-card-h)] overflow-hidden relative"
+        className="home-snapshot-hero-shell flex flex-col h-full bg-transparent lg:min-h-[var(--home-hero-band-card-h)] lg:h-[var(--home-hero-band-card-h)] lg:max-h-[var(--home-hero-band-card-h)] overflow-hidden relative"
         aria-labelledby="home-snapshot-title"
       >
-
         <div className="flex flex-col h-full justify-between relative z-10">
-          <div className="flex-shrink-0 pb-3 border-b border-border/10 dark:border-border/20">
+          <div className="flex-shrink-0 pb-3 border-b border-border/10 dark:border-border/20 mb-2">
             <div className="flex items-center justify-between gap-2 w-full">
               <div className="flex items-center gap-1.5 min-w-0">
                 <BarChart3 className="h-5 w-5 text-primary shrink-0 animate-pulse" style={{ animationDuration: '3s' }} aria-hidden />
@@ -56,10 +55,10 @@ export function HomeSnapshotPanel({
                 </h2>
               </div>
               <div className="flex flex-col items-end gap-1 shrink-0">
-                <span className="text-[8px] md:text-[9px] font-mono font-bold uppercase tracking-wider text-muted-foreground/60 dark:text-muted-foreground/50 select-none leading-none">
+                <span className="text-[9px] md:text-[10px] font-mono font-bold uppercase tracking-wider text-muted-foreground/60 dark:text-muted-foreground/50 select-none leading-none">
                   {locale === 'bn' ? 'আপডেট: ' : 'UPDATED: '}{headerDate}
                 </span>
-                <span className="inline-flex items-center gap-1 rounded border border-rose-500/20 bg-rose-500/10 px-1.5 py-0.5 text-[8px] md:text-[8.5px] font-display font-extrabold uppercase tracking-widest text-rose-600 dark:text-rose-400 select-none transition-colors duration-300 shadow-[0_1px_2px_rgba(244,63,94,0.03)] leading-none">
+                <span className="inline-flex items-center gap-1 rounded border border-rose-500/20 bg-rose-500/10 px-1.5 py-0.5 text-[9px] md:text-[9.5px] font-display font-extrabold uppercase tracking-widest text-rose-600 dark:text-rose-400 select-none transition-colors duration-300 shadow-[0_1px_2px_rgba(244,63,94,0.03)] leading-none mt-1.5">
                   <span className="relative flex h-1 w-1 mr-0.5 shrink-0">
                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75" />
                     <span className="relative inline-flex rounded-full h-1 w-1 bg-rose-500" />
@@ -69,12 +68,12 @@ export function HomeSnapshotPanel({
               </div>
             </div>
           </div>
-          <div className="flex-grow min-h-0 flex flex-col justify-center my-3">
+          <div className="flex-grow min-h-0 flex flex-col justify-center">
             <EnergyDashboard initialStats={snapshotStats as never} compact fillHeight />
           </div>
           {sourcesText && (
-            <div className="flex-shrink-0 pt-3 border-t border-border/10 dark:border-border/20">
-              <div className="flex flex-col items-end w-full gap-0.5 text-[8.5px] xs:text-[9px] md:text-[10px] text-muted-foreground font-mono font-medium italic opacity-75 text-right">
+            <div className="flex-shrink-0 pt-3 border-t border-border/10 dark:border-border/20 mt-2">
+              <div className="flex flex-col items-end w-full gap-0.5 text-[9px] xs:text-[10px] md:text-[11px] text-muted-foreground font-mono font-medium italic opacity-75 text-right">
                 <div className="flex items-center justify-end gap-1 w-full whitespace-nowrap">
                   <span className="font-semibold text-foreground/50 tracking-wider not-italic">{locale === 'bn' ? 'তথ্য সূত্র:' : 'DATA:'}</span>
                   <span>{sourcesText}</span>
@@ -89,10 +88,9 @@ export function HomeSnapshotPanel({
 
   return (
     <section
-      className="home-rail-panel home-block home-editorial__snapshot relative overflow-hidden rounded-2xl border border-border/40 bg-card p-4 md:p-5 flex flex-col gap-3"
+      className="home-rail-panel home-block home-editorial__snapshot relative overflow-hidden bg-transparent flex flex-col gap-3"
       aria-labelledby="home-snapshot-title"
     >
-
       <div className="home-editorial__section-head flex items-center justify-between pb-3 border-b border-border/10 dark:border-border/20 shrink-0 relative z-10">
         <div className="flex items-center gap-2.5 min-w-0">
           <BarChart3 className="h-7 w-7 text-primary shrink-0" aria-hidden />
@@ -104,10 +102,10 @@ export function HomeSnapshotPanel({
           <span className="text-[10px] md:text-xs font-mono font-bold uppercase tracking-wider text-muted-foreground/60 dark:text-muted-foreground/50 select-none leading-none">
             {locale === 'bn' ? 'আপডেট: ' : 'UPDATED: '}{headerDate}
           </span>
-          <span className="inline-flex items-center gap-1 rounded border border-rose-500/20 bg-rose-500/10 px-2 py-0.5 text-[9px] md:text-[10px] font-display font-extrabold uppercase tracking-widest text-rose-600 dark:text-rose-400 select-none transition-colors duration-300 shadow-[0_1px_2px_rgba(244,63,94,0.03)] leading-none">
-            <span className="relative flex h-1 w-1 mr-0.5 shrink-0">
+          <span className="inline-flex items-center gap-1 rounded border border-rose-500/20 bg-rose-500/10 px-2 py-0.5 text-[9.5px] md:text-[10px] font-display font-extrabold uppercase tracking-widest text-rose-600 dark:text-rose-400 select-none transition-colors duration-300 shadow-[0_1px_2px_rgba(244,63,94,0.03)] leading-none mt-1.5">
+            <span className="relative flex h-1.5 w-1.5 mr-0.5 shrink-0">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75" />
-              <span className="relative inline-flex rounded-full h-1 w-1 bg-rose-500" />
+              <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-rose-500" />
             </span>
             {liveWord}
           </span>

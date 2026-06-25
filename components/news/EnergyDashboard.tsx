@@ -214,65 +214,31 @@ export function EnergyDashboard({
     return () => clearInterval(interval);
   }, [simulateLive]);
 
-  if (compact) {
-    return (
-      <div className="grid grid-cols-2 gap-2 w-full min-w-0">
-        {stats.map((s, i) => {
-          const Icon = s.icon;
-          return (
-            <div
-              key={i}
-              className="group relative overflow-hidden flex items-center gap-2 px-2.5 py-1.5 lg:py-2.5 rounded-xl border border-border/40 hover:border-primary/30 bg-card/35 dark:bg-card/20 backdrop-blur-sm shadow-[0_1px_3px_rgba(0,0,0,0.01)] hover:bg-muted/15 dark:hover:bg-muted/10 transition-all duration-200 min-w-0"
-            >
-              {/* Live SCADA Radar Ping */}
-              <span className="absolute top-1.5 right-1.5 flex h-1 w-1">
-                <ModernTooltip
-                  label={simulateLive ? t('energy.simulated') : t('energy.indicative')}
-                  alwaysShow
-                  variant="chrome"
-                  side="top"
-                >
-                  <span className="relative flex h-1 w-1 cursor-help">
-                    {simulateLive && (s.label === 'Current Demand' || s.label === 'Fuel Cost' || s.label === 'Grid Frequency') ? (
-                      <>
-                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75" />
-                        <span className="relative inline-flex rounded-full h-1 w-1 bg-rose-500" />
-                      </>
-                    ) : (
-                      <span className="relative inline-flex rounded-full h-1 w-1 bg-muted-foreground/20 dark:bg-muted-foreground/10" />
-                    )}
-                  </span>
-                </ModernTooltip>
-              </span>
-
-              <Icon className={`h-4.5 w-4.5 shrink-0 transition-transform duration-200 group-hover:scale-105 ${s.iconClass ?? 'text-primary'}`} />
-              <div className="min-w-0 flex-1 text-left">
-                <div className="text-[7.5px] xs:text-[8px] sm:text-[9px] lg:text-[9.5px] font-bold uppercase tracking-tight text-muted-foreground/80 group-hover:text-foreground transition-colors duration-150 whitespace-nowrap">
-                  {localizeEnergyStatLabel(s.label, locale)}
-                </div>
-                <div className="text-xs lg:text-sm font-bold tabular-nums text-foreground/90 group-hover:text-primary transition-colors duration-150 leading-none mt-0.5">
-                  {s.isDecimal ? s.value.toFixed(1) : formatNumber(Math.round(s.value))}
-                  <span className="text-[8px] font-bold text-muted-foreground uppercase tracking-wider pl-0.5">{s.unit}</span>
-                </div>
-              </div>
-            </div>
-          );
-        })}
-      </div>
-    );
-  }
-
   return (
-    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+    <div
+      className={
+        compact
+          ? `grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-2 xl:grid-cols-3 gap-2 sm:gap-2.5 lg:gap-2 xl:gap-2.5 w-full min-w-0 ${fillHeight ? 'h-full' : ''}`
+          : 'grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3'
+      }
+    >
       {stats.map((s, i) => {
         const Icon = s.icon;
         return (
           <div
             key={i}
-            className="stat group relative overflow-hidden flex flex-col items-center text-center px-3 pt-6 pb-5"
+            className={`group relative overflow-hidden flex transition-all duration-250 ${
+              compact
+                ? `flex-col justify-between text-left rounded-xl border border-border/30 bg-card hover:bg-muted/5 dark:hover:bg-white/[0.01] hover:border-primary/20 hover:shadow-sm min-w-0 ${
+                    fillHeight
+                      ? 'px-2 py-1.5 lg:px-2 lg:py-1 xl:px-2.5 xl:py-1.5 2xl:px-3 2xl:py-2 h-full'
+                      : 'px-2.5 py-2'
+                  }`
+                : 'stat flex-col items-center justify-center text-center px-3 pt-6 pb-5'
+            }`}
           >
             {/* Live SCADA Radar Ping */}
-            <span className="absolute top-2.5 right-2.5 flex h-1.5 w-1.5">
+            <span className="absolute top-1.5 right-1.5 flex h-1.5 w-1.5 z-20">
               <ModernTooltip
                 label={simulateLive ? t('energy.simulated') : t('energy.indicative')}
                 alwaysShow
@@ -280,25 +246,47 @@ export function EnergyDashboard({
                 side="top"
               >
                 <span className="relative flex h-1.5 w-1.5 cursor-help">
-                  {simulateLive ? (
+                  {simulateLive && (s.label === 'Current Demand' || s.label === 'Fuel Cost' || s.label === 'Grid Frequency') ? (
                     <>
-                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-                      <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500" />
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75" />
+                      <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-rose-500" />
                     </>
                   ) : (
-                    <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-muted-foreground/40" />
+                    <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-muted-foreground/20 dark:bg-muted-foreground/10" />
                   )}
                 </span>
               </ModernTooltip>
             </span>
-            <Icon className={`h-6 w-6 mb-2 shrink-0 ${s.iconClass ?? 'text-primary'}`} />
-            <div className="text-xs md:text-sm font-medium tracking-wide text-muted-foreground mb-1">
-              {localizeEnergyStatLabel(s.label, locale)}
-            </div>
-            <div className="stat-value tabular-nums leading-none">
-              {s.isDecimal ? s.value.toFixed(1) : formatNumber(Math.round(s.value))}
-              <span className="ml-1 text-sm align-baseline font-normal text-muted-foreground">{s.unit}</span>
-            </div>
+
+            {compact ? (
+              <div className="flex flex-col w-full min-w-0 h-full justify-between">
+                <div className="flex items-center gap-1.5 min-w-0">
+                  <Icon className={`h-3.5 w-3.5 sm:h-4 sm:w-4 lg:h-3.5 lg:w-3.5 xl:h-4 xl:w-4 2xl:h-4.5 2xl:w-4.5 shrink-0 transition-transform duration-200 group-hover:scale-110 ${s.iconClass ?? 'text-primary'}`} />
+                  <div className="font-semibold uppercase tracking-wider text-muted-foreground/75 group-hover:text-foreground transition-colors duration-150 select-none text-[8.5px] xs:text-[9px] sm:text-[9.5px] lg:text-[8px] xl:text-[9px] 2xl:text-[9.5px] leading-none whitespace-nowrap overflow-hidden text-ellipsis">
+                    {localizeEnergyStatLabel(s.label, locale)}
+                  </div>
+                </div>
+                <div className="font-bold tabular-nums text-foreground/95 group-hover:text-primary transition-colors duration-150 leading-none text-[11.5px] xs:text-xs sm:text-[13px] lg:text-[11.5px] xl:text-xs 2xl:text-[14.5px] mt-1 lg:mt-0.5 xl:mt-1 whitespace-nowrap">
+                  {s.isDecimal ? s.value.toFixed(1) : formatNumber(Math.round(s.value))}
+                  <span className="font-bold text-muted-foreground/50 uppercase tracking-wider pl-0.5 text-[8.5px] xs:text-[9px] sm:text-[9.5px] lg:text-[8.5px] xl:text-[9px] 2xl:text-[9.5px] inline-block scale-90 origin-left">
+                    {s.unit}
+                  </span>
+                </div>
+              </div>
+            ) : (
+              <>
+                <Icon className={`shrink-0 transition-transform duration-200 group-hover:scale-105 h-6 w-6 mb-2 ${s.iconClass ?? 'text-primary'}`} />
+                <div className="font-bold uppercase tracking-wider text-muted-foreground/75 group-hover:text-foreground transition-colors duration-150 text-center select-none leading-none max-w-full px-1 text-xs md:text-sm mb-1">
+                  {localizeEnergyStatLabel(s.label, locale)}
+                </div>
+                <div className="font-bold tabular-nums text-foreground/90 group-hover:text-primary transition-colors duration-150 leading-none stat-value mt-1">
+                  {s.isDecimal ? s.value.toFixed(1) : formatNumber(Math.round(s.value))}
+                  <span className="font-bold text-muted-foreground/50 uppercase tracking-wider pl-0.5 ml-1 text-sm align-baseline font-normal text-muted-foreground">
+                    {s.unit}
+                  </span>
+                </div>
+              </>
+            )}
           </div>
         );
       })}

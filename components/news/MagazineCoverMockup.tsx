@@ -6,9 +6,17 @@ import { cn } from '@/lib/utils';
 
 interface MagazineCoverMockupProps {
   coverUrl: string;
+  title?: string;
+  subtitle?: string;
+  kicker?: string;
 }
 
-export function MagazineCoverMockup({ coverUrl }: { coverUrl: string }) {
+export function MagazineCoverMockup({ 
+  coverUrl,
+  title = "Renewables Surge",
+  subtitle = "& Tariff Reform",
+  kicker = "ESB PowerLine"
+}: MagazineCoverMockupProps) {
   const [aspect, setAspect] = useState<'portrait' | 'landscape'>('portrait');
 
   const handleImageLoad = (e: React.SyntheticEvent<HTMLImageElement>) => {
@@ -35,7 +43,7 @@ export function MagazineCoverMockup({ coverUrl }: { coverUrl: string }) {
           alt="Magazine cover" 
           onLoad={handleImageLoad}
           fill
-          className="absolute inset-0 w-full h-full object-contain opacity-95 block mx-auto" 
+          className="absolute inset-0 w-full h-full object-cover opacity-95 block mx-auto" 
           sizes="(max-width: 768px) 100vw, 380px"
         />
         {/* Skeuomorphic bound/spine shading for realistic bound feel */}
@@ -45,9 +53,9 @@ export function MagazineCoverMockup({ coverUrl }: { coverUrl: string }) {
         <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent pointer-events-none" />
         
         <div className="absolute bottom-6 left-6 right-6 text-left pointer-events-none select-none">
-          <div className="text-accent text-[10px] tracking-[2px] font-bold mb-1 uppercase">ESB PowerLine</div>
-          <div className="text-white text-2xl font-semibold tracking-[-0.01em] leading-tight">Renewables Surge</div>
-          <div className="text-foreground/90 text-sm tracking-tight">&amp; Tariff Reform</div>
+          {kicker && <div className="text-accent text-[10px] tracking-[2px] font-bold mb-1 uppercase">{kicker}</div>}
+          {title && <div className="text-white text-2xl font-semibold tracking-[-0.01em] leading-tight">{title}</div>}
+          {subtitle && <div className="text-foreground/90 text-sm tracking-tight">{subtitle}</div>}
         </div>
       </div>
     </div>

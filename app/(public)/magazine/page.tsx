@@ -1,10 +1,9 @@
 import Link from 'next/link';
 import { ArrowRight, Download, Calendar, Users } from 'lucide-react';
 import { getLatestMagazineIssue } from '@/lib/category-content';
-import { MagazineCoverMockup } from '@/components/news/MagazineCoverMockup';
 import { auth } from '@/lib/auth';
 import { getMagazineSavedState } from '@/lib/actions/members';
-import { SaveMagazineButton } from '@/components/members/SaveMagazineButton';
+import { MagazinePageClient } from '@/components/news/MagazinePageClient';
 
 export const revalidate = 60;
 
@@ -39,58 +38,36 @@ export default async function MagazinePage() {
 
   return (
     <div className="min-h-screen relative overflow-hidden">
-      {/* Premium Full-Page Ambient Glow */}
+      {/* Premium Full-Page Ambient Glow with subtle cover page energy colors */}
       <div className="absolute inset-0 -z-10 overflow-hidden pointer-events-none" aria-hidden="true">
-        <div className="absolute top-[10%] left-[5%] w-[40rem] h-[40rem] rounded-full bg-emerald-500/5 blur-[130px] animate-pulse duration-[10000ms]" />
-        <div className="absolute bottom-[20%] right-[5%] w-[35rem] h-[35rem] rounded-full bg-primary/4 blur-[120px] animate-pulse duration-[12000ms]" />
+        {/* Soft Solar Amber */}
+        <div className="absolute top-[5%] left-[10%] w-[35rem] h-[35rem] rounded-full bg-amber-500/[0.03] blur-[150px] animate-pulse duration-[8000ms]" />
+        {/* Soft Clean Energy Teal */}
+        <div className="absolute top-[25%] right-[10%] w-[45rem] h-[45rem] rounded-full bg-teal-500/[0.03] blur-[160px] animate-pulse duration-[12000ms]" />
+        {/* Soft Power Blue */}
+        <div className="absolute bottom-[20%] left-[5%] w-[40rem] h-[40rem] rounded-full bg-blue-500/[0.025] blur-[150px] animate-pulse duration-[10000ms]" />
+        {/* Soft National Grid Emerald */}
+        <div className="absolute bottom-[5%] right-[15%] w-[35rem] h-[35rem] rounded-full bg-emerald-500/[0.03] blur-[140px] animate-pulse duration-[9000ms]" />
       </div>
-      <div className="container container--shell py-10 md:py-12 relative z-10">
-        <div className="flex flex-col lg:flex-row gap-10 xl:gap-14">
-          <div className="lg:w-2/5">
-            <div className="sticky top-8">
-              <div className="uppercase text-xs tracking-[2px] text-accent font-medium mb-1.5 flex items-center gap-2">
-                <Calendar className="h-3.5 w-3.5" /> {issueLabel} ISSUE
-              </div>
-              <h1 className="h2 mb-3 text-balance">{magazine.title}</h1>
-              <p className="text-[15px] text-muted-foreground leading-relaxed">{magazine.summary}</p>
 
-              <div className="mt-6 flex flex-wrap gap-3">
-                {signedIn && magazine.pdfUrl ? (
-                  <a href={magazine.pdfUrl} target="_blank" rel="noopener noreferrer" className="btn btn-primary gap-2 px-5">
-                    <Download className="h-4 w-4" /> Download PDF
-                  </a>
-                ) : magazine.pdfUrl ? (
-                  <Link href="/members/login?callbackUrl=/magazine" className="btn btn-primary gap-2 px-5">
-                    <Download className="h-4 w-4" /> Member login to download
-                  </Link>
-                ) : (
-                  <button type="button" className="btn btn-primary gap-2 px-5" disabled>
-                    <Download className="h-4 w-4" /> PDF coming soon
-                  </button>
-                )}
-                {signedIn && issue ? (
-                  <SaveMagazineButton magazineId={issue.id} initialSaved={saved} />
-                ) : null}
-                <Link href="/articles" className="btn btn-secondary">Browse related articles</Link>
-                {signedIn ? (
-                  <Link href="/members/magazine" className="btn btn-secondary">Full archive</Link>
-                ) : null}
-              </div>
+      {/* Subtle grid pattern overlay for high-tech premium feel */}
+      <div className="absolute inset-0 -z-10 bg-[linear-gradient(to_right,#80808006_1px,transparent_1px),linear-gradient(to_bottom,#80808006_1px,transparent_1px)] bg-[size:24px_24px] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_40%,#000_70%,transparent_100%)] pointer-events-none" aria-hidden="true" />
+      
+      {/* Interactive client page wrapper */}
+      <MagazinePageClient
+        coverUrl={magazine.coverUrl}
+        title={magazine.title}
+        summary={magazine.summary}
+        issueLabel={issueLabel}
+        signedIn={signedIn}
+        pdfUrl={magazine.pdfUrl}
+        saved={saved}
+        issueId={magazine.id}
+        features={features}
+      />
 
-              <div className="mt-8 text-xs text-muted-foreground/80 flex items-center gap-4">
-                <div className="flex items-center gap-1.5"><Users className="h-3.5 w-3.5 text-primary" /> 18,400 readers</div>
-                <div>Vol. 04 • Issue 06</div>
-              </div>
-            </div>
-          </div>
-
-          <div className="lg:w-3/5 flex flex-col items-center">
-            <MagazineCoverMockup coverUrl={magazine.coverUrl} />
-            <div className="text-center mt-3 text-[10px] text-muted-foreground/70">Print • Digital • Archive access for members</div>
-          </div>
-        </div>
-
-        <div className="mt-14">
+      <div className="container container--shell pb-12 relative z-10">
+        <div className="mt-6">
           <div className="flex items-center justify-between mb-5">
             <h2 className="font-semibold text-xl">In this issue</h2>
             <Link href="/articles" className="text-xs text-primary hover:underline flex items-center gap-1">All power sector features <ArrowRight className="h-3.5 w-3.5" /></Link>

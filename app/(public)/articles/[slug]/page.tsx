@@ -18,7 +18,7 @@ import { SaveArticleButton } from '@/components/members/SaveArticleButton';
 import { ArticleCommentSection } from '@/components/members/ArticleCommentSection';
 import { ArticleAuthorSticky } from '@/components/shared/ArticleAuthorSticky';
 import { NoImage } from '@/components/shared/NoImage';
-import { hasArticleImage } from '@/lib/article-image';
+import { hasArticleImage, normalizeArticleImageUrl } from '@/lib/article-image';
 import { sanitizeArticleHtml } from '@/lib/sanitize-article-html';
 import prisma from '@/lib/prisma';
 
@@ -46,7 +46,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     openGraph: {
       title: article.title,
       description: article.excerpt,
-      images: [{ url: article.imageUrl }],
+      images: [{ url: normalizeArticleImageUrl(article.imageUrl) ?? '' }],
     },
   };
 }
@@ -74,7 +74,7 @@ export default async function ArticlePage({ params }: { params: Promise<{ slug: 
     '@type': 'NewsArticle',
     headline: article.title,
     description: article.excerpt,
-    image: article.imageUrl,
+    image: normalizeArticleImageUrl(article.imageUrl) ?? '',
     datePublished: article.date,
     author: {
       '@type': 'Person',
@@ -173,7 +173,7 @@ export default async function ArticlePage({ params }: { params: Promise<{ slug: 
           {hasArticleImage(article.imageUrl) ? (
             <>
               <Image
-                src={article.imageUrl}
+                src={normalizeArticleImageUrl(article.imageUrl)!}
                 alt={article.heroImage?.alt ?? article.title}
                 fill
                 priority

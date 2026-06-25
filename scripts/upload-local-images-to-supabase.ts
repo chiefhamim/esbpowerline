@@ -14,7 +14,6 @@ const databaseUrl = process.env.DATABASE_URL?.trim();
 
 if (!url || !serviceRoleKey || !databaseUrl) {
   console.error('❌ Missing environment variables! Please check your .env or .env.local file.');
-  console.error({ url: !!url, serviceRoleKey: !!serviceRoleKey, databaseUrl: !!databaseUrl });
   process.exit(1);
 }
 
@@ -33,7 +32,7 @@ function getMimeType(filePath: string): string {
     case '.jpg':
     case '.jpeg': return 'image/jpeg';
     case '.pdf': return 'application/pdf';
-    default: return 'image/webp';
+    default: return 'application/octet-stream';
   }
 }
 
@@ -67,58 +66,68 @@ async function main() {
   let uploadCount = 0;
   let updateCount = 0;
 
-  for (const file of files) {
-    const localUrl = `/uploads/${file}`;
-    const hasMediaMatch = mediaRecords.some(m => m.url === localUrl);
-    const hasArticleMatch = articleRecords.some(a => a.imageUrl === localUrl);
+  // Track uploaded files to avoid double uploading
+  const uploadedUrls = new Map<string, string>(); // local suffix -> supabaseUrl
 
-    if (!hasMediaMatch && !hasArticleMatch) {
-      // Not referenced in database, skip
+  for (const a of articleRecords) {
+    const dbUrl = a.imageUrl!;
+    if (dbUrl.startsWith('http')) {
+      // Already uploaded
+      continue;
+    }
+    const dbFilename = path.basename(dbUrl);
+    const dbSuffix = dbFilename.replace(/^\d+-/, '');
+
+    // Find the file on disk matching this suffix
+    const matchingFile = files.find(f => f.replace(/^\d+-/, '') === dbSuffix);
+    if (!matchingFile) {
+      console.log(`⚠️ No local file found for database image: ${dbUrl}`);
       continue;
     }
 
-    const filePath = path.join(localDir, file);
-    const fileBuffer = await fs.readFile(filePath);
-    const mimeType = getMimeType(filePath);
-    const storagePath = `library/${file}`;
+    let supabaseUrl = uploadedUrls.get(dbSuffix);
 
-    console.log(`📤 Uploading: ${file} (${mimeType})...`);
+    if (!supabaseUrl) {
+      const filePath = path.join(localDir, matchingFile);
+      const fileBuffer = await fs.readFile(filePath);
+      const mimeType = getMimeType(filePath);
+      const storagePath = `library/${matchingFile}`;
 
-    // Upload to Supabase Storage
-    const { error } = await supabase.storage.from(bucket).upload(storagePath, fileBuffer, {
-      contentType: mimeType,
-      upsert: true,
+      console.log(`📤 Uploading local: ${matchingFile} for database: ${dbUrl}`);
+
+      // Upload to Supabase Storage
+      const { error } = await supabase.storage.from(bucket).upload(storagePath, fileBuffer, {
+        contentType: mimeType,
+        upsert: true,
+      });
+
+      if (error) {
+        console.error(`  ❌ Failed to upload ${matchingFile}: ${error.message}`);
+        continue;
+      }
+
+      uploadCount++;
+      supabaseUrl = `${url}/storage/v1/object/public/${bucket}/${storagePath}`;
+      uploadedUrls.set(dbSuffix, supabaseUrl);
+    }
+
+    // Update Article record
+    await prisma.article.update({
+      where: { id: a.id },
+      data: { imageUrl: supabaseUrl }
     });
+    updateCount++;
+    console.log(`  📝 Updated Article ID: ${a.id} ➔ ${supabaseUrl}`);
 
-    if (error) {
-      console.error(`  ❌ Failed to upload ${file}: ${error.message}`);
-      continue;
-    }
-
-    uploadCount++;
-    const supabaseUrl = `${url}/storage/v1/object/public/${bucket}/${storagePath}`;
-    console.log(`  ✅ Uploaded! Public URL: ${supabaseUrl}`);
-
-    // Update Media table
-    const matchingMedia = mediaRecords.filter(m => m.url === localUrl);
+    // Update corresponding Media records matching the dbUrl
+    const matchingMedia = mediaRecords.filter(m => m.url === dbUrl);
     for (const m of matchingMedia) {
       await prisma.media.update({
         where: { id: m.id },
         data: { url: supabaseUrl }
       });
       updateCount++;
-      console.log(`  📝 Updated Media entry ID: ${m.id}`);
-    }
-
-    // Update Article table
-    const matchingArticles = articleRecords.filter(a => a.imageUrl === localUrl);
-    for (const a of matchingArticles) {
-      await prisma.article.update({
-        where: { id: a.id },
-        data: { imageUrl: supabaseUrl }
-      });
-      updateCount++;
-      console.log(`  📝 Updated Article entry ID: ${a.id}`);
+      console.log(`  📝 Updated Media ID: ${m.id} ➔ ${supabaseUrl}`);
     }
   }
 
