@@ -79,6 +79,7 @@ export type MediaLibraryItem = {
   caption: string | null;
   uploadedById: string | null;
   uploadedByName: string | null;
+  uploadedByRole: string | null;
   createdAt: Date;
   usageCount: number;
   usedInTitles: string[];
@@ -93,16 +94,15 @@ export type MediaLibraryItem = {
     slugBn?: string;
     imageCredit?: string | null;
     seo?: any;
+    isCover?: boolean;
+    isBody?: boolean;
   }[];
+  placementType: 'unused' | 'cover' | 'body' | 'both';
   canDelete: boolean;
 };
 
 function getNormalizedBase(url: string): string {
   let filename = url.split('/').pop()?.split('?')[0] || url;
-  const tsMatch = filename.match(/^\d+-(.+)$/);
-  if (tsMatch) {
-    filename = tsMatch[1];
-  }
   filename = filename.toLowerCase();
   const dotIndex = filename.lastIndexOf('.');
   let name = dotIndex > -1 ? filename.slice(0, dotIndex) : filename;
@@ -113,89 +113,140 @@ function getNormalizedBase(url: string): string {
   return name + ext;
 }
 
+interface StoryUsage {
+  baseSlug: string;
+  title: string;
+  titleEn?: string;
+  titleBn?: string;
+  idEn?: string;
+  idBn?: string;
+  slugEn?: string;
+  slugBn?: string;
+  imageCredit?: string | null;
+  seo?: any;
+  isCover?: boolean;
+  isBody?: boolean;
+}
+
+async function getMediaUsageMap(): Promise<Map<string, Map<string, StoryUsage>>> {
+  const articles = await prisma.article.findMany({
+    where: {
+      status: { not: 'TRASH' },
+      editorTrash: false,
+    },
+    select: { id: true, slug: true, imageUrl: true, content: true, contentBn: true, title: true, imageCredit: true, seo: true, locale: true },
+  });
+
+  const usageMap = new Map<string, Map<string, StoryUsage>>();
+  for (const article of articles) {
+    const coverUrls = new Set<string>();
+    if (article.imageUrl) {
+      coverUrls.add(article.imageUrl);
+    }
+    const bodyUrls = new Set<string>();
+    const content = article.content ?? '';
+    if (content.includes('<img')) {
+      const matches = content.matchAll(/<img[^>]+src=["']([^"']+)["']/gi);
+      for (const match of matches) {
+        const src = match[1]?.trim();
+        if (src) bodyUrls.add(src);
+      }
+    }
+    const contentBn = article.contentBn ?? '';
+    if (contentBn.includes('<img')) {
+      const matches = contentBn.matchAll(/<img[^>]+src=["']([^"']+)["']/gi);
+      for (const match of matches) {
+        const src = match[1]?.trim();
+        if (src) bodyUrls.add(src);
+      }
+    }
+
+    const allUrls = new Set([...coverUrls, ...bodyUrls]);
+    const baseSlug = article.slug.endsWith('-bn') ? article.slug.slice(0, -3) : article.slug;
+    
+    for (const url of allUrls) {
+      const isCover = coverUrls.has(url);
+      const isBody = bodyUrls.has(url);
+      
+      let imgEntry = usageMap.get(url);
+      if (!imgEntry) {
+        imgEntry = new Map<string, StoryUsage>();
+        usageMap.set(url, imgEntry);
+      }
+      
+      let story = imgEntry.get(baseSlug);
+      if (!story) {
+        story = {
+          baseSlug,
+          title: article.title,
+          imageCredit: article.imageCredit,
+          seo: article.seo,
+          isCover,
+          isBody,
+        };
+      } else {
+        if (isCover) story.isCover = true;
+        if (isBody) story.isBody = true;
+      }
+      
+      if (article.locale === 'bn' || article.slug.endsWith('-bn')) {
+        story.titleBn = article.title;
+        story.idBn = article.id;
+        story.slugBn = article.slug;
+      } else {
+        story.titleEn = article.title;
+        story.idEn = article.id;
+        story.slugEn = article.slug;
+        story.title = article.title;
+      }
+      imgEntry.set(baseSlug, story);
+    }
+  }
+
+  return usageMap;
+}
+
 export async function getMediaLibrary(): Promise<MediaLibraryItem[]> {
   const user = await requireAuth();
 
-  const [items, articles, users] = await Promise.all([
+  const [items, usageMap, users] = await Promise.all([
     prisma.media.findMany({ orderBy: { createdAt: 'desc' } }),
-    prisma.article.findMany({
-      where: {
-        imageUrl: { not: null },
-        status: { not: 'TRASH' },
-        editorTrash: false,
-      },
-      select: { id: true, slug: true, imageUrl: true, title: true, imageCredit: true, seo: true, locale: true },
-    }),
+    getMediaUsageMap(),
     prisma.user.findMany({
-      select: { id: true, name: true },
+      select: { id: true, name: true, role: true },
     }),
   ]);
 
   await backfillMissingMediaSizes(items);
 
-  const userMap = new Map<string, string>();
+  const userMap = new Map<string, { name: string; role: string }>();
   for (const u of users) {
-    if (u.name) userMap.set(u.id, u.name);
-  }
-
-  interface StoryUsage {
-    baseSlug: string;
-    title: string;
-    titleEn?: string;
-    titleBn?: string;
-    idEn?: string;
-    idBn?: string;
-    slugEn?: string;
-    slugBn?: string;
-    imageCredit?: string | null;
-    seo?: any;
-  }
-
-  const usageMap = new Map<string, Map<string, StoryUsage>>();
-  for (const article of articles) {
-    if (!article.imageUrl) continue;
-    const imgKey = getNormalizedBase(article.imageUrl);
-    const baseSlug = article.slug.endsWith('-bn') ? article.slug.slice(0, -3) : article.slug;
-    
-    let imgEntry = usageMap.get(imgKey);
-    if (!imgEntry) {
-      imgEntry = new Map<string, StoryUsage>();
-      usageMap.set(imgKey, imgEntry);
-    }
-    
-    let story = imgEntry.get(baseSlug);
-    if (!story) {
-      story = {
-        baseSlug,
-        title: article.title,
-        imageCredit: article.imageCredit,
-        seo: article.seo,
-      };
-    }
-    
-    if (article.locale === 'bn' || article.slug.endsWith('-bn')) {
-      story.titleBn = article.title;
-      story.idBn = article.id;
-      story.slugBn = article.slug;
-    } else {
-      story.titleEn = article.title;
-      story.idEn = article.id;
-      story.slugEn = article.slug;
-      story.title = article.title;
-    }
-    imgEntry.set(baseSlug, story);
+    if (u.name) userMap.set(u.id, { name: u.name, role: u.role });
   }
 
   const canDeleteAny = can(user.role, 'media.delete_any');
   const canDeleteOwn = can(user.role, 'media.delete_own');
 
   const mapped = items.map((m) => {
-    const origKey = getNormalizedBase(m.url);
-    const storiesMap = usageMap.get(origKey);
+    const storiesMap = usageMap.get(m.url);
     const storiesList = storiesMap ? Array.from(storiesMap.values()) : [];
     const usageCount = storiesList.length;
     const ownsFile = m.uploadedById === user.id;
     const canDelete = usageCount === 0 && (canDeleteAny || (canDeleteOwn && ownsFile));
+
+    let hasCover = false;
+    let hasBody = false;
+    for (const s of storiesList) {
+      if (s.isCover) hasCover = true;
+      if (s.isBody) hasBody = true;
+    }
+
+    let placementType: 'unused' | 'cover' | 'body' | 'both' = 'unused';
+    if (hasCover && hasBody) placementType = 'both';
+    else if (hasCover) placementType = 'cover';
+    else if (hasBody) placementType = 'body';
+
+    const uInfo = m.uploadedById ? userMap.get(m.uploadedById) : null;
 
     return {
       id: m.id,
@@ -207,26 +258,18 @@ export async function getMediaLibrary(): Promise<MediaLibraryItem[]> {
       altText: m.altText,
       caption: m.caption,
       uploadedById: m.uploadedById,
-      uploadedByName: m.uploadedById ? (userMap.get(m.uploadedById) ?? 'Unknown') : 'System',
+      uploadedByName: uInfo ? (uInfo.name ?? 'Unknown') : 'System',
+      uploadedByRole: uInfo ? (uInfo.role ?? null) : 'SYSTEM',
       createdAt: m.createdAt,
       usageCount,
       usedInTitles: storiesList.map(s => s.titleEn || s.title || ''),
       usedInArticles: storiesList,
+      placementType,
       canDelete,
     };
   });
 
-  const uniqueItems: typeof mapped = [];
-  const seenOriginalKeys = new Set<string>();
-  for (const item of mapped) {
-    const origKey = getNormalizedBase(item.url);
-    if (!seenOriginalKeys.has(origKey)) {
-      seenOriginalKeys.add(origKey);
-      uniqueItems.push(item);
-    }
-  }
-
-  return uniqueItems;
+  return mapped;
 }
 
 export async function createMedia(data: {
@@ -281,13 +324,10 @@ export async function deleteMedia(id: string) {
   const canDeleteOwn = media.uploadedById === user.id && can(user.role, 'media.delete_own');
   if (!canDeleteAny && !canDeleteOwn) throw new Error('You can only delete files you uploaded');
 
-  const usageCount = await prisma.article.count({
-    where: {
-      imageUrl: media.url,
-      status: { not: 'TRASH' },
-      editorTrash: false,
-    },
-  });
+  const usageMap = await getMediaUsageMap();
+  const origKey = getNormalizedBase(media.url);
+  const storiesMap = usageMap.get(origKey);
+  const usageCount = storiesMap ? storiesMap.size : 0;
 
   if (usageCount > 0) {
     throw new Error(`In use by ${usageCount} article${usageCount === 1 ? '' : 's'} — remove from stories first`);

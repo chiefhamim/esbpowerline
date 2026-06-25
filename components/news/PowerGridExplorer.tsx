@@ -448,6 +448,42 @@ export function PowerGridExplorer({ initialMix, initialLines, initialProjects }:
   const dateDropdownRef = useRef<HTMLDivElement>(null);
 
   const activeData = powerGridArchive[selectedDate] || powerGridArchive[availableDates[availableDates.length - 1]];
+  const [activeKpiTooltip, setActiveKpiTooltip] = useState<string | null>(null);
+  const kpiStripRef = useRef<HTMLDivElement>(null);
+  const kpiTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  const toggleKpiTooltip = (tooltip: string) => {
+    if (kpiTimeoutRef.current) {
+      clearTimeout(kpiTimeoutRef.current);
+      kpiTimeoutRef.current = null;
+    }
+
+    setActiveKpiTooltip((prev) => {
+      const next = prev === tooltip ? null : tooltip;
+      if (next) {
+        kpiTimeoutRef.current = setTimeout(() => {
+          setActiveKpiTooltip(null);
+          kpiTimeoutRef.current = null;
+        }, 2000); // Auto-close after 2 seconds
+      }
+      return next;
+    });
+  };
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (kpiStripRef.current && !kpiStripRef.current.contains(event.target as Node)) {
+        setActiveKpiTooltip(null);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      if (kpiTimeoutRef.current) {
+        clearTimeout(kpiTimeoutRef.current);
+      }
+    };
+  }, []);
   const {
     systemStats,
     generationData,
@@ -519,7 +555,75 @@ export function PowerGridExplorer({ initialMix, initialLines, initialProjects }:
   const totalCompletedProjectPages = Math.ceil(filteredCompletedProjects.length / completedPerPage);
 
   const [activeTab, setActiveTab] = useState<'overview' | 'gen' | 'gas' | 'imports' | 'renewables' | 'transmission' | 'regional' | 'macro'>('overview');
+  
+  const activeScrollIdRef = useRef<number | null>(null);
+
+  const triggerScrollToElement = (elementId: string) => {
+    const element = document.getElementById(elementId);
+    if (element) {
+      if (activeScrollIdRef.current !== null) {
+        cancelAnimationFrame(activeScrollIdRef.current);
+        activeScrollIdRef.current = null;
+      }
+
+      const navbar = document.querySelector('.public-nav-bar');
+      const navbarHeight = navbar ? navbar.getBoundingClientRect().height : 0;
+      const elementPosition = element.getBoundingClientRect().top + window.scrollY;
+      const targetY = elementPosition - navbarHeight - 24;
+      
+      const startY = window.scrollY;
+      const difference = targetY - startY;
+
+      // If already pixel-perfect target position, skip animation to avoid layout jitter
+      if (Math.abs(difference) < 2) {
+        return;
+      }
+      const duration = 950;
+      const startTime = performance.now();
+
+      const easeInOutCubic = (t: number) => {
+        return t < 0.5 ? 4 * t * t * t : (t - 1) * (2 * t - 2) * (2 * t - 2) + 1;
+      };
+
+      const step = (currentTime: number) => {
+        const elapsed = currentTime - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+        const ease = easeInOutCubic(progress);
+        
+        window.scrollTo(0, startY + difference * ease);
+
+        if (progress < 1) {
+          activeScrollIdRef.current = requestAnimationFrame(step);
+        } else {
+          activeScrollIdRef.current = null;
+        }
+      };
+
+      activeScrollIdRef.current = requestAnimationFrame(step);
+    }
+  };
+
+  const handleTabClick = (tabId: typeof activeTab) => {
+    setActiveTab(tabId);
+    const timer = setTimeout(() => {
+      triggerScrollToElement('grid-status-overview-header');
+    }, 50);
+  };
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('esb-grid-tab-change', { detail: { tab: activeTab } }));
+    }
+  }, [activeTab]);
+
   const [macroSubTab, setMacroSubTab] = useState<'overview' | 'pricing' | 'global' | 'reports' | 'reserves' | 'insights'>('overview');
+  
+  const handleSubTabClick = (subTabId: typeof macroSubTab) => {
+    setMacroSubTab(subTabId);
+    const timer = setTimeout(() => {
+      triggerScrollToElement('macro-subtabs-nav');
+    }, 200);
+  };
   const [reportsCompany, setReportsCompany] = useState<'bpdb' | 'petrobangla'>('bpdb');
   const [chartsReady, setChartsReady] = useState(false);
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
@@ -743,7 +847,7 @@ export function PowerGridExplorer({ initialMix, initialLines, initialProjects }:
       `}</style>
 
       {/* Date Selector Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6 relative z-50">
+      <div id="grid-status-overview-header" className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6 relative z-50">
         <div>
           <h2 className="text-xl font-bold tracking-tight text-foreground flex items-center gap-2">
             <Activity className="h-5 w-5 text-primary animate-pulse" />
@@ -798,8 +902,11 @@ export function PowerGridExplorer({ initialMix, initialLines, initialProjects }:
       </div>
 
       {/* KPI Strip */}
-      <div className="grid-explorer-kpi-strip relative z-30">
-        <div className="grid-explorer-kpi stat group !overflow-visible hover:z-[100]">
+      <div className="grid-explorer-kpi-strip relative z-30" ref={kpiStripRef}>
+        <div 
+          className="grid-explorer-kpi stat group !overflow-visible hover:z-[100] cursor-pointer select-none"
+          onClick={() => toggleKpiTooltip('gen')}
+        >
           <Zap className="grid-explorer-kpi__icon" />
           <div className="min-w-0">
             <div className="grid-explorer-kpi__label">Daily Generation</div>
@@ -807,9 +914,14 @@ export function PowerGridExplorer({ initialMix, initialLines, initialProjects }:
           </div>
           {/* Custom Tooltip */}
           <div 
-            className="absolute hidden group-hover:block text-card-foreground border border-border/80 p-4 md:p-5 rounded-2xl shadow-2xl z-[110] w-[17.5rem] md:w-80 left-0 md:left-1/2 md:-translate-x-1/2 top-[105%] transition-all duration-200 pointer-events-none animate-in fade-in slide-in-from-top-1 bg-card"
+            className={cn(
+              "absolute text-card-foreground border border-border/80 p-4 md:p-5 rounded-2xl shadow-2xl z-[110] w-[17.5rem] md:w-80 left-0 md:left-1/2 md:-translate-x-1/2 top-[calc(100%+12px)] pointer-events-none bg-card transition-all duration-200 ease-out opacity-0 scale-95 translate-y-2 group-hover:opacity-100 group-hover:scale-100 group-hover:translate-y-0 group-hover:pointer-events-auto",
+              activeKpiTooltip === 'gen' && "opacity-100 scale-100 translate-y-0 pointer-events-auto"
+            )}
             style={{ backgroundColor: 'hsl(var(--card))' }}
+            onClick={(e) => e.stopPropagation()}
           >
+            <div className="absolute -top-1.5 left-1/2 -translate-x-1/2 w-3 h-3 rotate-45 border-t border-l border-border/80 z-[-1]" style={{ backgroundColor: 'hsl(var(--card))' }} />
             <div className="font-bold text-xs uppercase tracking-wider text-primary border-b border-border/60 pb-1.5 mb-2 flex items-center gap-1.5">
               <Zap className="h-3.5 w-3.5" /> Generation Briefing
             </div>
@@ -841,7 +953,10 @@ export function PowerGridExplorer({ initialMix, initialLines, initialProjects }:
           </div>
         </div>
 
-        <div className="grid-explorer-kpi stat group !overflow-visible hover:z-[100]">
+        <div 
+          className="grid-explorer-kpi stat group !overflow-visible hover:z-[100] cursor-pointer select-none"
+          onClick={() => toggleKpiTooltip('demand')}
+        >
           <Activity className="grid-explorer-kpi__icon text-amber-500" />
           <div className="min-w-0">
             <div className="grid-explorer-kpi__label">Peak Demand</div>
@@ -849,9 +964,14 @@ export function PowerGridExplorer({ initialMix, initialLines, initialProjects }:
           </div>
           {/* Custom Tooltip */}
           <div 
-            className="absolute hidden group-hover:block text-card-foreground border border-border/80 p-4 md:p-5 rounded-2xl shadow-2xl z-[110] w-72 md:w-[19rem] right-0 md:left-1/2 md:-translate-x-1/2 top-[105%] transition-all duration-200 pointer-events-none animate-in fade-in slide-in-from-top-1 bg-card"
+            className={cn(
+              "absolute text-card-foreground border border-border/80 p-4 md:p-5 rounded-2xl shadow-2xl z-[110] w-72 md:w-[19rem] right-0 md:left-1/2 md:-translate-x-1/2 top-[calc(100%+12px)] pointer-events-none bg-card transition-all duration-200 ease-out opacity-0 scale-95 translate-y-2 group-hover:opacity-100 group-hover:scale-100 group-hover:translate-y-0 group-hover:pointer-events-auto",
+              activeKpiTooltip === 'demand' && "opacity-100 scale-100 translate-y-0 pointer-events-auto"
+            )}
             style={{ backgroundColor: 'hsl(var(--card))' }}
+            onClick={(e) => e.stopPropagation()}
           >
+            <div className="absolute -top-1.5 left-1/2 -translate-x-1/2 w-3 h-3 rotate-45 border-t border-l border-border/80 z-[-1]" style={{ backgroundColor: 'hsl(var(--card))' }} />
             <div className="font-bold text-xs uppercase tracking-wider text-amber-500 border-b border-border/60 pb-1.5 mb-2 flex items-center gap-1.5">
               <Activity className="h-3.5 w-3.5" /> Demand Briefing
             </div>
@@ -883,7 +1003,10 @@ export function PowerGridExplorer({ initialMix, initialLines, initialProjects }:
           </div>
         </div>
 
-        <div className="grid-explorer-kpi stat group !overflow-visible hover:z-[100]">
+        <div 
+          className="grid-explorer-kpi stat group !overflow-visible hover:z-[100] cursor-pointer select-none"
+          onClick={() => toggleKpiTooltip('gas')}
+        >
           <Droplet className="grid-explorer-kpi__icon text-sky-500" />
           <div className="min-w-0">
             <div className="grid-explorer-kpi__label">Gas Production</div>
@@ -891,9 +1014,14 @@ export function PowerGridExplorer({ initialMix, initialLines, initialProjects }:
           </div>
           {/* Custom Tooltip */}
           <div 
-            className="absolute hidden group-hover:block text-card-foreground border border-border/80 p-4 md:p-5 rounded-2xl shadow-2xl z-[110] w-[19.5rem] md:w-[22rem] left-0 md:left-1/2 md:-translate-x-1/2 top-[105%] transition-all duration-200 pointer-events-none animate-in fade-in slide-in-from-top-1 bg-card"
+            className={cn(
+              "absolute text-card-foreground border border-border/80 p-4 md:p-5 rounded-2xl shadow-2xl z-[110] w-[19.5rem] md:w-[22rem] left-0 md:left-1/2 md:-translate-x-1/2 top-[calc(100%+12px)] pointer-events-none bg-card transition-all duration-200 ease-out opacity-0 scale-95 translate-y-2 group-hover:opacity-100 group-hover:scale-100 group-hover:translate-y-0 group-hover:pointer-events-auto",
+              activeKpiTooltip === 'gas' && "opacity-100 scale-100 translate-y-0 pointer-events-auto"
+            )}
             style={{ backgroundColor: 'hsl(var(--card))' }}
+            onClick={(e) => e.stopPropagation()}
           >
+            <div className="absolute -top-1.5 left-1/2 -translate-x-1/2 w-3 h-3 rotate-45 border-t border-l border-border/80 z-[-1]" style={{ backgroundColor: 'hsl(var(--card))' }} />
             <div className="font-bold text-xs uppercase tracking-wider text-sky-500 border-b border-border/60 pb-1.5 mb-2 flex items-center gap-1.5">
               <Droplet className="h-3.5 w-3.5" /> Gas Supply Briefing
             </div>
@@ -929,7 +1057,10 @@ export function PowerGridExplorer({ initialMix, initialLines, initialProjects }:
           </div>
         </div>
 
-        <div className="grid-explorer-kpi stat group !overflow-visible hover:z-[100]">
+        <div 
+          className="grid-explorer-kpi stat group !overflow-visible hover:z-[100] cursor-pointer select-none"
+          onClick={() => toggleKpiTooltip('renew')}
+        >
           <Sun className="grid-explorer-kpi__icon text-yellow-500" />
           <div className="min-w-0">
             <div className="grid-explorer-kpi__label">Renewables Online</div>
@@ -937,9 +1068,14 @@ export function PowerGridExplorer({ initialMix, initialLines, initialProjects }:
           </div>
           {/* Custom Tooltip */}
           <div 
-            className="absolute hidden group-hover:block text-card-foreground border border-border/80 p-4 md:p-5 rounded-2xl shadow-2xl z-[110] w-[18rem] md:w-[20rem] right-0 md:left-1/2 md:-translate-x-1/2 top-[105%] transition-all duration-200 pointer-events-none animate-in fade-in slide-in-from-top-1 bg-card"
+            className={cn(
+              "absolute text-card-foreground border border-border/80 p-4 md:p-5 rounded-2xl shadow-2xl z-[110] w-[18rem] md:w-[20rem] right-0 md:left-1/2 md:-translate-x-1/2 top-[calc(100%+12px)] pointer-events-none bg-card transition-all duration-200 ease-out opacity-0 scale-95 translate-y-2 group-hover:opacity-100 group-hover:scale-100 group-hover:translate-y-0 group-hover:pointer-events-auto",
+              activeKpiTooltip === 'renew' && "opacity-100 scale-100 translate-y-0 pointer-events-auto"
+            )}
             style={{ backgroundColor: 'hsl(var(--card))' }}
+            onClick={(e) => e.stopPropagation()}
           >
+            <div className="absolute -top-1.5 left-1/2 -translate-x-1/2 w-3 h-3 rotate-45 border-t border-l border-border/80 z-[-1]" style={{ backgroundColor: 'hsl(var(--card))' }} />
             <div className="font-bold text-xs uppercase tracking-wider text-yellow-500 border-b border-border/60 pb-1.5 mb-2 flex items-center gap-1.5">
               <Sun className="h-3.5 w-3.5" /> Clean Energy Briefing
             </div>
@@ -975,7 +1111,10 @@ export function PowerGridExplorer({ initialMix, initialLines, initialProjects }:
           </div>
         </div>
 
-        <div className="grid-explorer-kpi stat group !overflow-visible hover:z-[100]">
+        <div 
+          className="grid-explorer-kpi stat group !overflow-visible hover:z-[100] cursor-pointer select-none"
+          onClick={() => toggleKpiTooltip('cost')}
+        >
           <TakaIcon className="grid-explorer-kpi__icon text-emerald-500" />
           <div className="min-w-0">
             <div className="grid-explorer-kpi__label">Est. Fuel Cost</div>
@@ -983,9 +1122,14 @@ export function PowerGridExplorer({ initialMix, initialLines, initialProjects }:
           </div>
           {/* Custom Tooltip */}
           <div 
-            className="absolute hidden group-hover:block text-card-foreground border border-border/80 p-4 md:p-5 rounded-2xl shadow-2xl z-[110] w-[18.5rem] md:w-[21rem] left-0 md:left-1/2 md:-translate-x-1/2 top-[105%] transition-all duration-200 pointer-events-none animate-in fade-in slide-in-from-top-1 bg-card"
+            className={cn(
+              "absolute text-card-foreground border border-border/80 p-4 md:p-5 rounded-2xl shadow-2xl z-[110] w-[18.5rem] md:w-[21rem] left-0 md:left-1/2 md:-translate-x-1/2 top-[calc(100%+12px)] pointer-events-none bg-card transition-all duration-200 ease-out opacity-0 scale-95 translate-y-2 group-hover:opacity-100 group-hover:scale-100 group-hover:translate-y-0 group-hover:pointer-events-auto",
+              activeKpiTooltip === 'cost' && "opacity-100 scale-100 translate-y-0 pointer-events-auto"
+            )}
             style={{ backgroundColor: 'hsl(var(--card))' }}
+            onClick={(e) => e.stopPropagation()}
           >
+            <div className="absolute -top-1.5 left-1/2 -translate-x-1/2 w-3 h-3 rotate-45 border-t border-l border-border/80 z-[-1]" style={{ backgroundColor: 'hsl(var(--card))' }} />
             <div className="font-bold text-xs uppercase tracking-wider text-emerald-500 border-b border-border/60 pb-1.5 mb-2 flex items-center gap-1.5">
               <TakaIcon className="h-3.5 w-3.5 shrink-0" /> Fuel &amp; Import Bills
             </div>
@@ -1033,7 +1177,7 @@ export function PowerGridExplorer({ initialMix, initialLines, initialProjects }:
               type="button"
               role="tab"
               aria-selected={active}
-              onClick={() => setActiveTab(t.id)}
+              onClick={() => handleTabClick(t.id)}
               className={cn('explorer-tab', active && 'active')}
             >
               <TabIcon className="h-4 w-4 shrink-0" />
@@ -3952,7 +4096,7 @@ export function PowerGridExplorer({ initialMix, initialLines, initialProjects }:
       {activeTab === 'macro' && (
         <div className="grid-explorer-panel space-y-6">
           {/* Sub-tab Navigation */}
-          <div className="flex flex-wrap gap-1.5 border-b border-border/40 pb-3">
+          <div id="macro-subtabs-nav" className="flex flex-wrap gap-1.5 border-b border-border/40 pb-3">
             {[
               { id: 'overview', label: 'Macro Overview', icon: BarChart3 },
               { id: 'pricing', label: 'Pricing & Drivers', icon: TrendingUp },
@@ -3967,7 +4111,7 @@ export function PowerGridExplorer({ initialMix, initialLines, initialProjects }:
                 <button
                   key={t.id}
                   type="button"
-                  onClick={() => setMacroSubTab(t.id as any)}
+                  onClick={() => handleSubTabClick(t.id as any)}
                   className={cn(
                     "flex items-center gap-1.5 px-4 py-2 text-xs font-semibold rounded-xl border transition-all duration-150",
                     active

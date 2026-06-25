@@ -4,7 +4,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 
 import { Search, Menu, X, Newspaper, BookOpen, BarChart3, Home } from 'lucide-react';
-import { useMemo, useState, useEffect, type CSSProperties, type ReactNode } from 'react';
+import { useMemo, useState, useEffect, useRef, type CSSProperties, type ReactNode } from 'react';
 import { usePathname } from 'next/navigation';
 import { PublicHrefProvider, usePublicHref } from '@/lib/public-href-client';
 import type { PublicCategory } from '@/lib/category-types';
@@ -92,6 +92,71 @@ export function PublicNavbar({
   const [mobileOpen, setMobileOpen] = useState(false);
   const [bannerSrc, setBannerSrc] = useState('/images/banner_final.jpg');
   const pathname = usePathname();
+  const prevPathname = useRef(pathname);
+  const activeScrollIdRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    const targetPaths = ['/data-reports/power-grid', '/articles', '/magazine', '/about', '/contact'];
+    const isTarget = targetPaths.some(p => pathname.startsWith(p));
+    
+    if (isTarget && prevPathname.current !== pathname) {
+      const timer = setTimeout(() => {
+        const banner = document.querySelector('.site-banner-shell');
+        if (banner) {
+          if (activeScrollIdRef.current !== null) {
+            cancelAnimationFrame(activeScrollIdRef.current);
+            activeScrollIdRef.current = null;
+          }
+
+          const bannerHeight = banner.getBoundingClientRect().height;
+          
+          const startY = window.scrollY;
+          const targetY = bannerHeight;
+          const difference = targetY - startY;
+          const duration = 950; // Premium 950ms natural transition duration
+          const startTime = performance.now();
+
+          const easeInOutCubic = (t: number) => {
+            return t < 0.5 ? 4 * t * t * t : (t - 1) * (2 * t - 2) * (2 * t - 2) + 1;
+          };
+
+          const step = (currentTime: number) => {
+            const elapsed = currentTime - startTime;
+            const progress = Math.min(elapsed / duration, 1);
+            const ease = easeInOutCubic(progress);
+            
+            window.scrollTo(0, startY + difference * ease);
+
+            if (progress < 1) {
+              activeScrollIdRef.current = requestAnimationFrame(step);
+            } else {
+              activeScrollIdRef.current = null;
+            }
+          };
+
+          activeScrollIdRef.current = requestAnimationFrame(step);
+        }
+      }, 150);
+
+      return () => {
+        clearTimeout(timer);
+        if (activeScrollIdRef.current !== null) {
+          cancelAnimationFrame(activeScrollIdRef.current);
+        }
+      };
+    } else if (!isTarget && prevPathname.current !== pathname) {
+      if (activeScrollIdRef.current !== null) {
+        cancelAnimationFrame(activeScrollIdRef.current);
+        activeScrollIdRef.current = null;
+      }
+      const timer = setTimeout(() => {
+        window.scrollTo(0, 0);
+      }, 50);
+
+      return () => clearTimeout(timer);
+    }
+    prevPathname.current = pathname;
+  }, [pathname]);
 
   useEffect(() => {
     setMobileOpen(false);
@@ -150,15 +215,19 @@ export function PublicNavbar({
               <div className="public-nav-bar__start">
                 <div className="public-nav-bar__pill-cluster public-nav-bar__start-cluster">
                   <div className="public-nav-bar__utilities">
-                    <PublicNavLink
+                    <a
                       href="/"
                       className={`public-nav-bar__pill-btn public-nav-bar__pill-btn--paired public-nav-bar__home${
                         pathname === '/' ? ' public-nav-bar__home--active' : ''
                       }`}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        window.location.href = '/';
+                      }}
                     >
                       <Home className="icon-sm" aria-hidden />
                       <span className="public-nav-bar__pill-label">{t('nav.home')}</span>
-                    </PublicNavLink>
+                    </a>
 
                     <span className="public-nav-bar__pill-divider hidden sm:block" aria-hidden />
 

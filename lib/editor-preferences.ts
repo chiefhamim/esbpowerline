@@ -19,7 +19,7 @@ export const DEFAULT_EDITOR_PREFERENCES: EditorPreferences = {
 };
 
 export function showEditorTooltips(mode: EditorGuidanceMode) {
-  return mode === 'noob';
+  return true;
 }
 
 export function showEditorGuidanceHints(mode: EditorGuidanceMode) {

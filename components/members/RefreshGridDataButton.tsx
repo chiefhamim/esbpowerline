@@ -49,8 +49,8 @@ export function RefreshGridDataButton() {
       type="button"
       onClick={handleRefresh}
       disabled={pending}
-      className="btn btn-secondary flex items-center justify-center gap-1.5 text-xs w-full py-2 hover:bg-secondary transition-colors"
-      title={signedIn ? 'Trigger database update from latest SCADA reports' : 'Subscriber sign-in required to refresh grid data'}
+      className="btn btn-secondary custom-tooltip-trigger flex items-center justify-center gap-1.5 text-xs w-full py-2 hover:bg-secondary transition-colors"
+      data-tooltip={signedIn ? 'Trigger database update from latest SCADA reports' : 'Subscriber sign-in required to refresh grid data'}
     >
       <RefreshCw className={`h-3.5 w-3.5 ${pending ? 'animate-spin text-primary' : ''}`} />
       {pending ? 'Refreshing…' : 'Refresh Data'}

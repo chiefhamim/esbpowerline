@@ -26,10 +26,10 @@ export function PowerGridExportControls({ className = '' }: { className?: string
     <Link
       href="/members/login?callbackUrl=/data-reports/power-grid"
       className={cn(
-        'btn btn-secondary flex items-center justify-center gap-1.5 text-xs w-full py-2 text-center transition-colors hover:bg-secondary',
+        'btn btn-secondary custom-tooltip-trigger flex items-center justify-center gap-1.5 text-xs w-full py-2 text-center transition-colors hover:bg-secondary',
         className
       )}
-      title="Member access required to download CSV data snapshots"
+      data-tooltip="Member access required to download CSV data snapshots"
     >
       <Download className="h-3.5 w-3.5" />
       Login to download (CSV)

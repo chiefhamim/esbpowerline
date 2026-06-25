@@ -18,6 +18,7 @@ import { optimizeImageToWebP } from '@/lib/image-optimizer';
 import { ModernTooltip } from '@/components/shared/ModernTooltip';
 import { heroImageStyle } from '@/lib/hero-image';
 import { getSavedSiteTheme, type SiteTheme } from '@/lib/site-theme';
+import { normalizeArticleImageUrl } from '@/lib/article-image';
 
 function formatBytes(bytes: number | null | undefined) {
   if (bytes === null || bytes === undefined) return '—';
@@ -212,7 +213,7 @@ function ReplaceMediaModal({
             <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider block">Real-time Image Preview (Edit & Confirm)</span>
             <div className="relative aspect-video w-full rounded-xl border border-border/60 bg-neutral-950 overflow-hidden shadow-inner flex items-center justify-center">
               <img
-                src={newUrl || item.url}
+                src={newUrl || normalizeArticleImageUrl(item.url) || item.url}
                 alt="Staged replacement preview"
                 style={heroImageStyle({
                   fitMode: fitMode as any,
@@ -506,7 +507,7 @@ function ImageLightbox({
   const handleCopyImage = async (e: React.MouseEvent) => {
     e.stopPropagation();
     try {
-      const proxyUrl = `/api/media-proxy?url=${encodeURIComponent(item.url)}`;
+      const proxyUrl = `/api/media-proxy?url=${encodeURIComponent(normalizeArticleImageUrl(item.url) ?? item.url)}`;
       
       // Fetch the image blob first
       const response = await fetch(proxyUrl);
@@ -558,7 +559,7 @@ function ImageLightbox({
   const handleDownload = async (e: React.MouseEvent) => {
     e.stopPropagation();
     try {
-      const proxyUrl = `/api/media-proxy?url=${encodeURIComponent(item.url)}`;
+      const proxyUrl = `/api/media-proxy?url=${encodeURIComponent(normalizeArticleImageUrl(item.url) ?? item.url)}`;
       const response = await fetch(proxyUrl);
       if (!response.ok) throw new Error('Failed to fetch image proxy');
       const blob = await response.blob();
@@ -573,7 +574,7 @@ function ImageLightbox({
       toast.success('Download started');
     } catch {
       // Fallback: open in new tab
-      window.open(item.url, '_blank');
+      window.open(normalizeArticleImageUrl(item.url) ?? item.url, '_blank');
     }
   };
 
@@ -612,7 +613,7 @@ function ImageLightbox({
           isWhiteTheme ? "border-slate-200 bg-slate-200/30" : "border-border/40 bg-muted/20"
         )}>
           <img
-            src={item.url}
+            src={normalizeArticleImageUrl(item.url) ?? item.url}
             alt={item.name}
             className="max-w-[90vw] max-h-[70vh] object-contain transition-all duration-300 transform scale-100 ease-out select-none"
             draggable={false}
@@ -702,19 +703,9 @@ function UsedInArticlesModal({
   onClose: () => void;
 }) {
   const [mounted, setMounted] = useState(false);
-  const [theme, setTheme] = useState<SiteTheme>('midnight');
 
   useEffect(() => {
     setMounted(true);
-    setTheme(getSavedSiteTheme());
-    const observer = new MutationObserver(() => {
-      setTheme(getSavedSiteTheme());
-    });
-    observer.observe(document.documentElement, {
-      attributes: true,
-      attributeFilter: ['class', 'data-site-theme'],
-    });
-    return () => observer.disconnect();
   }, []);
 
   useEffect(() => {
@@ -728,120 +719,124 @@ function UsedInArticlesModal({
 
   if (!open || !item || !mounted) return null;
 
-  const isWhiteTheme = theme === 'white';
-
   return createPortal(
     <div
-      className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm transition-all duration-300"
+      className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/70 backdrop-blur-[4px] transition-all duration-300"
       onClick={onClose}
       role="dialog"
       aria-modal="true"
     >
       <div
-        className={cn(
-          "w-full max-w-lg rounded-3xl p-6 shadow-2xl relative border animate-in fade-in zoom-in-95 duration-200",
-          isWhiteTheme 
-            ? "bg-slate-100 text-slate-900 border-slate-200" 
-            : "bg-neutral-900 text-foreground border-neutral-800"
-        )}
+        className="w-full max-w-lg rounded-[1.5rem] p-6 shadow-2xl relative border bg-card text-card-foreground border-border/50 animate-in fade-in zoom-in-95 duration-200"
         onClick={(e) => e.stopPropagation()}
       >
         <button
           type="button"
           onClick={onClose}
-          className={cn(
-            "absolute top-4 right-4 p-2 rounded-full transition-all duration-200 hover:bg-muted/10 cursor-pointer",
-            isWhiteTheme ? "text-slate-500 hover:text-slate-900" : "text-muted-foreground hover:text-foreground"
-          )}
+          className="absolute top-4 right-4 p-2 rounded-full transition-all duration-200 hover:bg-muted/10 text-muted-foreground hover:text-foreground cursor-pointer"
           aria-label="Close modal"
         >
           <X className="h-4 w-4" />
         </button>
 
-        <div className="flex items-center gap-3 mb-4 border-b border-border/40 pb-3">
+        <div className="flex items-center gap-3 mb-5 border-b border-border/40 pb-4">
           <Newspaper className="h-5 w-5 text-primary shrink-0" />
           <div className="min-w-0">
             <h3 className="font-display font-bold text-base tracking-tight text-foreground">
               Article Usage Details
             </h3>
-            <p className="text-xs text-muted-foreground mt-0.5 truncate max-w-[280px]" title={item.name}>
+            <p className="text-xs text-muted-foreground mt-0.5 truncate max-w-[340px]" title={item.name}>
               {item.name}
             </p>
           </div>
         </div>
 
-        <div className="space-y-3">
-          <p className="text-xs text-muted-foreground">
-            This asset is linked to the following {item.usedInArticles.length} story usage{item.usedInArticles.length === 1 ? '' : 's'}:
+        <div className="space-y-4">
+          <p className="text-xs text-muted-foreground/90 font-medium">
+            This asset is referenced in the following {item.usedInArticles.length} active {item.usedInArticles.length === 1 ? 'story' : 'stories'}:
           </p>
 
-          <ul className="space-y-2.5 max-h-60 overflow-y-auto pr-1">
+          <ul className="space-y-3 max-h-72 overflow-y-auto pr-1">
             {item.usedInArticles.map((story: any) => {
               const displayTitle = story.titleEn || story.titleBn || story.title;
               return (
                 <li
                   key={story.baseSlug}
-                  className={cn(
-                    "flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs p-3 rounded-xl border transition-all",
-                    isWhiteTheme 
-                      ? "bg-slate-50 border-slate-200 hover:bg-slate-100" 
-                      : "bg-neutral-950 border-neutral-800 hover:bg-neutral-900/50"
-                  )}
+                  className="flex flex-col gap-3 p-3.5 rounded-xl border border-border/20 bg-muted/10 hover:bg-muted/20 transition-all duration-200"
                 >
                   <div className="min-w-0 flex-1">
-                    <span className="font-semibold text-foreground block truncate leading-snug" title={displayTitle}>
-                      {displayTitle}
-                    </span>
+                    <ModernTooltip label={displayTitle} variant="editor" alwaysShow>
+                      <span className="font-semibold text-foreground text-sm block leading-snug tracking-tight">
+                        {displayTitle}
+                      </span>
+                    </ModernTooltip>
                     {story.imageCredit && (
-                      <span className="text-[10px] text-muted-foreground mt-0.5 block">
+                      <span className="text-[10px] text-muted-foreground mt-1 block">
                         Credit: {story.imageCredit}
                       </span>
                     )}
                   </div>
-                  <div className="flex items-center gap-2 shrink-0">
-                    {/* EN translation */}
-                    {story.idEn && (
-                      <div className="flex items-center gap-1 bg-sky-500/5 border border-sky-500/10 rounded-lg p-0.5">
-                        <span className="text-[9px] font-bold text-sky-500 px-1">EN</span>
-                        <Link
-                          href={`/cms/articles/${story.idEn}/edit`}
-                          className="h-6 px-1.5 rounded-md flex items-center justify-center font-bold text-[10px] bg-sky-500 text-white hover:bg-sky-600 transition-colors"
-                        >
-                          Edit
-                        </Link>
-                        <a
-                          href={publicArticleUrl(story.slugEn)}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="h-6 w-6 rounded-md flex items-center justify-center border border-border/40 hover:bg-muted/10 transition-colors"
-                          title="View English live"
-                        >
-                          <ExternalLink className="h-3 w-3" />
-                        </a>
-                      </div>
-                    )}
+                  <div className="flex flex-wrap items-center justify-between gap-3 pt-2.5 border-t border-border/10">
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-[9px] font-medium text-muted-foreground">Placement:</span>
+                      {story.isCover && (
+                        <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-blue-500/10 text-blue-500 border border-blue-500/20">Cover</span>
+                      )}
+                      {story.isBody && (
+                        <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-500 border border-amber-500/20">Body</span>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {/* EN translation */}
+                      {story.idEn && (
+                        <div className="flex items-center gap-1 bg-blue-500/5 border border-blue-500/10 rounded-lg p-0.5">
+                          <span className="text-[9px] font-bold text-blue-500 px-1.5">EN</span>
+                          <ModernTooltip label="Edit English translation" variant="editor" alwaysShow>
+                            <Link
+                              href={`/cms/articles/${story.idEn}/edit`}
+                              className="h-6 px-2 rounded-md flex items-center justify-center font-bold text-[9px] bg-blue-500 text-white hover:bg-blue-600 transition-colors"
+                            >
+                              Edit
+                            </Link>
+                          </ModernTooltip>
+                          <ModernTooltip label="View live" variant="editor" alwaysShow>
+                            <a
+                              href={publicArticleUrl(story.slugEn)}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="h-6 w-6 rounded-md flex items-center justify-center border border-border/40 hover:bg-muted/10 transition-colors"
+                            >
+                              <ExternalLink className="h-3 w-3" />
+                            </a>
+                          </ModernTooltip>
+                        </div>
+                      )}
 
-                    {/* BN translation */}
-                    {story.idBn && (
-                      <div className="flex items-center gap-1 bg-purple-500/5 border border-purple-500/10 rounded-lg p-0.5">
-                        <span className="text-[9px] font-bold text-purple-500 px-1">BN</span>
-                        <Link
-                          href={`/cms/articles/${story.idBn}/edit`}
-                          className="h-6 px-1.5 rounded-md flex items-center justify-center font-bold text-[10px] bg-purple-500 text-white hover:bg-purple-600 transition-colors"
-                        >
-                          Edit
-                        </Link>
-                        <a
-                          href={publicArticleUrl(story.slugBn)}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="h-6 w-6 rounded-md flex items-center justify-center border border-border/40 hover:bg-muted/10 transition-colors"
-                          title="View Bengali live"
-                        >
-                          <ExternalLink className="h-3 w-3" />
-                        </a>
-                      </div>
-                    )}
+                      {/* BN translation */}
+                      {story.idBn && (
+                        <div className="flex items-center gap-1 bg-purple-500/5 border border-purple-500/10 rounded-lg p-0.5">
+                          <span className="text-[9px] font-bold text-purple-500 px-1.5">BN</span>
+                          <ModernTooltip label="Edit Bangla translation" variant="editor" alwaysShow>
+                            <Link
+                              href={`/cms/articles/${story.idBn}/edit`}
+                              className="h-6 px-2 rounded-md flex items-center justify-center font-bold text-[9px] bg-purple-500 text-white hover:bg-purple-600 transition-colors"
+                            >
+                              Edit
+                            </Link>
+                          </ModernTooltip>
+                          <ModernTooltip label="View live" variant="editor" alwaysShow>
+                            <a
+                              href={publicArticleUrl(story.slugBn)}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="h-6 w-6 rounded-md flex items-center justify-center border border-border/40 hover:bg-muted/10 transition-colors"
+                            >
+                              <ExternalLink className="h-3 w-3" />
+                            </a>
+                          </ModernTooltip>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </li>
               );
@@ -849,8 +844,8 @@ function UsedInArticlesModal({
           </ul>
         </div>
 
-        <div className="mt-5 pt-3 border-t border-border/40 flex justify-end">
-          <Button type="button" size="sm" onClick={onClose} className="h-8">
+        <div className="mt-6 pt-4 border-t border-border/40 flex justify-end">
+          <Button type="button" size="sm" onClick={onClose} className="h-8 cursor-pointer">
             Close
           </Button>
         </div>
@@ -893,7 +888,7 @@ function MediaCard({
 
   async function copyUrl() {
     try {
-      await navigator.clipboard.writeText(item.url);
+      await navigator.clipboard.writeText(normalizeArticleImageUrl(item.url) ?? item.url);
       toast.success('URL copied');
     } catch {
       toast.error('Could not copy URL');
@@ -919,7 +914,7 @@ function MediaCard({
       <div className="media-library-card__preview">
         {item.type === 'image' ? (
           <img
-            src={item.url}
+            src={normalizeArticleImageUrl(item.url) ?? item.url}
             alt={item.altText ?? item.name}
             className="media-library-card__image"
             onLoad={handleLoad}
@@ -929,8 +924,21 @@ function MediaCard({
             <FileText className="h-9 w-9 opacity-45" />
           </div>
         )}
-        <div className="media-library-card__badge">
-          {getFileFormat(item.mimeType, item.name, item.url, item.type)}
+        <div className="absolute top-2 left-2 flex items-center gap-1.5 z-10">
+          <div className="px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider text-white bg-black/60 backdrop-blur-[4px] border border-white/10 shadow-sm">
+            {getFileFormat(item.mimeType, item.name, item.url, item.type)}
+          </div>
+          <div className={cn(
+            "text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider text-white backdrop-blur-[6px] shadow-sm border",
+            item.placementType === 'cover' ? "bg-blue-600/75 border-blue-500/20" :
+            item.placementType === 'body' ? "bg-amber-600/75 border-amber-500/20" :
+            item.placementType === 'both' ? "bg-purple-600/75 border-purple-500/20" :
+            "bg-neutral-600/75 border-neutral-500/20"
+          )}>
+            {item.placementType === 'cover' ? 'Cover Image' :
+             item.placementType === 'body' ? 'Body Image' :
+             item.placementType === 'both' ? 'Cover + Body' : 'Unused'}
+          </div>
         </div>
       </div>
 
@@ -942,9 +950,23 @@ function MediaCard({
                 {item.name}
               </h3>
             </ModernTooltip>
-            <span className="text-[10px] text-muted-foreground block truncate mt-0.5">
-              by {item.uploadedByName ?? 'System'}
-            </span>
+            <div className="flex items-center gap-1 mt-1 truncate">
+              <span className="text-[10px] text-muted-foreground/75">by</span>
+              <span className={cn(
+                "text-[9px] font-bold px-1.5 py-0.5 rounded border uppercase tracking-wider",
+                item.uploadedByRole === 'SUPER_ADMIN' || item.uploadedByRole === 'ADMIN'
+                  ? "text-rose-500 bg-rose-500/5 border-rose-500/12 dark:border-rose-500/20"
+                  : item.uploadedByRole === 'EDITOR'
+                  ? "text-blue-500 bg-blue-500/5 border-blue-500/12 dark:border-blue-500/20"
+                  : item.uploadedByRole === 'AUTHOR'
+                  ? "text-emerald-500 bg-emerald-500/5 border-emerald-500/12 dark:border-emerald-500/20"
+                  : item.uploadedByRole === 'CONTRIBUTOR'
+                  ? "text-purple-500 bg-purple-500/5 border-purple-500/12 dark:border-purple-500/20"
+                  : "text-muted-foreground bg-muted/10 border-border/12"
+              )}>
+                {item.uploadedByName ?? 'System'}
+              </span>
+            </div>
           </div>
           <span className="media-library-card__size shrink-0 ml-2">{formatBytes(item.size)}</span>
         </div>
@@ -955,22 +977,22 @@ function MediaCard({
         </dl>
 
         {item.usedInArticles.length > 0 && (
-          <div className="media-library-card__usage">
+          <ModernTooltip label="View which stories reference this asset" variant="editor" alwaysShow>
             <button
               type="button"
               onClick={() => onShowUsage?.(item)}
               className={cn(
-                "media-library-card__usage-label flex items-center gap-1.5 text-xs hover:underline font-semibold border px-2.5 py-1.5 rounded-lg w-full justify-center transition-all cursor-pointer",
-                item.usageCount <= 1 ? "text-primary bg-primary/5 border-primary/20 hover:bg-primary/10" :
-                item.usageCount === 2 ? "text-purple-500 bg-purple-500/5 border-purple-500/20 hover:bg-purple-500/10" :
-                item.usageCount === 3 ? "text-amber-600 dark:text-amber-400 bg-amber-500/5 border-amber-500/20 hover:bg-amber-500/10" :
-                "text-rose-500 bg-rose-500/5 border-rose-500/20 hover:bg-rose-500/10"
+                "media-library-card__usage-pill flex items-center justify-center gap-1.5 text-[11px] font-semibold px-2.5 py-1.5 rounded-full transition-all border w-full cursor-pointer",
+                item.usageCount <= 1 ? "text-blue-500 bg-blue-500/5 border-blue-500/12 hover:bg-blue-500/10" :
+                item.usageCount === 2 ? "text-violet-500 bg-violet-500/5 border-violet-500/12 hover:bg-violet-500/10" :
+                item.usageCount === 3 ? "text-amber-500 bg-amber-500/5 border-amber-500/12 hover:bg-amber-500/10" :
+                "text-rose-500 bg-rose-500/5 border-rose-500/12 hover:bg-rose-500/10"
               )}
             >
               <Newspaper className="h-3.5 w-3.5" />
-              Used in {item.usageCount} stor{item.usageCount === 1 ? 'y' : 'ies'}
+              <span>Used in {item.usageCount} {item.usageCount === 1 ? 'story' : 'stories'}</span>
             </button>
-          </div>
+          </ModernTooltip>
         )}
 
         {editing ? (
@@ -994,53 +1016,53 @@ function MediaCard({
             </div>
           </div>
         ) : (
-          <div className="flex items-center justify-between gap-1 mt-auto pt-2.5 border-t border-border/40">
+          <div className="media-library-card__action-row">
             <ModernTooltip label="Copy URL" variant="editor" alwaysShow>
               <button
                 type="button"
-                className="h-7 w-7 rounded-md flex items-center justify-center border border-border/40 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
+                className="media-library-card__action-btn media-library-card__action-btn--copy"
                 onClick={copyUrl}
               >
-                <Copy className="h-3.5 w-3.5 text-muted-foreground hover:text-foreground" />
+                <Copy className="h-3.5 w-3.5 md:h-[1.125rem] md:w-[1.125rem]" />
               </button>
             </ModernTooltip>
             <ModernTooltip label="Open file" variant="editor" alwaysShow>
               {item.type === 'image' ? (
                 <button
                   type="button"
-                  className="h-7 w-7 rounded-md flex items-center justify-center border border-border/40 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors cursor-pointer"
-                  onClick={() => onPreviewImage(item.url, item.name, dims, item.size)}
+                  className="media-library-card__action-btn media-library-card__action-btn--open"
+                  onClick={() => onPreviewImage(normalizeArticleImageUrl(item.url) ?? item.url, item.name, dims, item.size)}
                 >
-                  <ExternalLink className="h-3.5 w-3.5 text-muted-foreground hover:text-foreground" />
+                  <ExternalLink className="h-3.5 w-3.5 md:h-[1.125rem] md:w-[1.125rem]" />
                 </button>
               ) : (
                 <a
-                  href={item.url}
+                  href={normalizeArticleImageUrl(item.url) ?? item.url}
                   target="_blank"
                   rel="noreferrer"
-                  className="h-7 w-7 rounded-md flex items-center justify-center border border-border/40 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
+                  className="media-library-card__action-btn media-library-card__action-btn--open"
                 >
-                  <ExternalLink className="h-3.5 w-3.5 text-muted-foreground hover:text-foreground" />
+                  <ExternalLink className="h-3.5 w-3.5 md:h-[1.125rem] md:w-[1.125rem]" />
                 </a>
               )}
             </ModernTooltip>
             <ModernTooltip label="Edit details" variant="editor" alwaysShow>
               <button
                 type="button"
-                className="h-7 w-7 rounded-md flex items-center justify-center border border-border/40 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
+                className="media-library-card__action-btn media-library-card__action-btn--edit"
                 onClick={() => setEditing(true)}
               >
-                <Pencil className="h-3.5 w-3.5 text-muted-foreground hover:text-foreground" />
+                <Pencil className="h-3.5 w-3.5 md:h-[1.125rem] md:w-[1.125rem]" />
               </button>
             </ModernTooltip>
             {item.type === 'image' && (
               <ModernTooltip label="Replace image/details" variant="editor" alwaysShow>
                 <button
                   type="button"
-                  className="h-7 w-7 rounded-md flex items-center justify-center border border-border/40 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
+                  className="media-library-card__action-btn media-library-card__action-btn--replace"
                   onClick={() => setReplaceOpen(true)}
                 >
-                  <SlidersHorizontal className="h-3.5 w-3.5 text-muted-foreground hover:text-foreground" />
+                  <SlidersHorizontal className="h-3.5 w-3.5 md:h-[1.125rem] md:w-[1.125rem]" />
                 </button>
               </ModernTooltip>
             )}
@@ -1048,17 +1070,17 @@ function MediaCard({
               <ModernTooltip label="Delete file" variant="editor" alwaysShow>
                 <button
                   type="button"
-                  className="h-7 w-7 rounded-md flex items-center justify-center border border-rose-500/20 hover:border-rose-500/30 text-rose-500 hover:bg-rose-500/10 transition-colors"
+                  className="media-library-card__action-btn media-library-card__action-btn--delete"
                   onClick={() => onDelete(item.id)}
                   disabled={pending}
                 >
-                  <Trash2 className="h-3.5 w-3.5" />
+                  <Trash2 className="h-3.5 w-3.5 md:h-[1.125rem] md:w-[1.125rem]" />
                 </button>
               </ModernTooltip>
             ) : (
               <ModernTooltip label={item.usageCount > 0 ? 'In use by articles' : 'Cannot delete'} variant="editor" alwaysShow>
-                <span className="h-7 w-7 rounded-md flex items-center justify-center border border-border/40 text-muted-foreground/40 bg-muted/5 cursor-not-allowed">
-                  <Lock className="h-3.5 w-3.5" />
+                <span className="media-library-card__action-btn media-library-card__action-btn--lock cursor-not-allowed">
+                  <Lock className="h-3.5 w-3.5 md:h-[1.125rem] md:w-[1.125rem]" />
                 </span>
               </ModernTooltip>
             )}
@@ -1195,52 +1217,54 @@ export function MediaUpload({ items }: { items: MediaLibraryItem[] }) {
       </div>
 
       {items.length > 0 && (
-        <div className="media-library__search-panel flex flex-wrap gap-2 items-center justify-between pb-3.5 border-b border-border/40 mb-4 mt-2">
-          <div className="flex flex-1 items-center gap-2 min-w-[240px]">
-            <div className="relative flex-1">
-              <input
-                type="text"
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                placeholder="Search filename, alt text, or connected articles..."
-                className="w-full h-8 text-xs bg-background/50 border border-border/50 rounded-lg pl-8 pr-8 outline-none focus:border-sky-500/50 focus:ring-1 focus:ring-sky-500/20 placeholder:text-muted-foreground/60 transition-all text-foreground"
-              />
-              <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground/60">
-                <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                </svg>
-              </span>
-              {query && (
-                <button
-                  type="button"
-                  onClick={() => setQuery('')}
-                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground/60 hover:text-foreground text-[10px]"
-                >
-                  Clear
-                </button>
-              )}
-            </div>
+        <div className="media-library__search-panel flex flex-col md:flex-row gap-3.5 items-stretch md:items-center justify-between pb-4 border-b border-border/30 mb-5 mt-2 bg-muted/5 p-3 rounded-2xl border border-border/20 shadow-inner">
+          <div className="relative flex-1 min-w-[280px]">
+            <input
+              type="text"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Search filename, alt text, or connected articles..."
+              className="w-full h-10 text-xs bg-background border border-border/60 rounded-xl pl-9 pr-9 outline-none focus:border-sky-500/50 focus:ring-1 focus:ring-sky-500/20 placeholder:text-muted-foreground/60 transition-all text-foreground"
+            />
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground/50">
+              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+            </span>
+            {query && (
+              <button
+                type="button"
+                onClick={() => setQuery('')}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-muted-foreground/60 hover:text-rose-400 hover:scale-105 active:scale-95 transition-all"
+              >
+                Clear
+              </button>
+            )}
           </div>
 
-          <div className="flex items-center gap-2 flex-wrap">
-            {/* Type Filter */}
-            <div className="flex items-center gap-1 bg-muted/20 border border-border/40 rounded-lg p-0.5">
+          <div className="flex flex-wrap items-center gap-3.5">
+            {/* Same-sized Select Buttons for Type Filter */}
+            <div className="flex items-center gap-1 bg-background border border-border/60 rounded-xl p-1 h-10 shadow-sm">
               <button
                 type="button"
                 onClick={() => setTypeFilter('all')}
                 className={cn(
-                  'text-[10px] font-bold px-2.5 py-1 rounded-md transition-colors',
-                  typeFilter === 'all' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'
+                  'h-8 px-4 text-xs font-bold rounded-lg transition-all cursor-pointer',
+                  typeFilter === 'all' 
+                    ? 'bg-sky-500 text-white shadow-md shadow-sky-500/10' 
+                    : 'text-muted-foreground hover:text-foreground hover:bg-muted/30'
                 )}
               >
-                All
+                All Files
               </button>
               <button
                 type="button"
                 onClick={() => setTypeFilter('image')}
                 className={cn(
-                  'text-[10px] font-bold px-2.5 py-1 rounded-md transition-colors',
-                  typeFilter === 'image' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'
+                  'h-8 px-4 text-xs font-bold rounded-lg transition-all cursor-pointer',
+                  typeFilter === 'image' 
+                    ? 'bg-sky-500 text-white shadow-md shadow-sky-500/10' 
+                    : 'text-muted-foreground hover:text-foreground hover:bg-muted/30'
                 )}
               >
                 Images
@@ -1249,20 +1273,22 @@ export function MediaUpload({ items }: { items: MediaLibraryItem[] }) {
                 type="button"
                 onClick={() => setTypeFilter('file')}
                 className={cn(
-                  'text-[10px] font-bold px-2.5 py-1 rounded-md transition-colors',
-                  typeFilter === 'file' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'
+                  'h-8 px-4 text-xs font-bold rounded-lg transition-all cursor-pointer',
+                  typeFilter === 'file' 
+                    ? 'bg-sky-500 text-white shadow-md shadow-sky-500/10' 
+                    : 'text-muted-foreground hover:text-foreground hover:bg-muted/30'
                 )}
               >
-                Files
+                Documents
               </button>
             </div>
 
-            {/* Date Filter */}
+            {/* Same-sized Dropdown for Date Filter */}
             <div className="relative">
               <button
                 type="button"
                 onClick={() => setDateDropdownOpen(!dateDropdownOpen)}
-                className="h-8 flex items-center justify-between gap-1.5 px-3 text-[10px] font-bold bg-muted/20 hover:bg-neutral-100 dark:hover:bg-neutral-800 border border-border/40 hover:border-border/60 rounded-lg transition-all text-muted-foreground hover:text-foreground shadow-sm focus:outline-none"
+                className="h-10 min-w-[140px] flex items-center justify-between gap-2.5 px-4 text-xs font-bold bg-background hover:bg-muted/20 border border-border/60 hover:border-border rounded-xl transition-all text-muted-foreground hover:text-foreground shadow-sm focus:outline-none cursor-pointer"
               >
                 <span>{
                   datePreset === 'all' ? 'All Dates' :
@@ -1271,13 +1297,13 @@ export function MediaUpload({ items }: { items: MediaLibraryItem[] }) {
                   datePreset === '30d' ? 'Last 30 Days' :
                   'Last Year'
                 }</span>
-                <ChevronDown className={cn('h-3 w-3 opacity-60 transition-transform duration-200', dateDropdownOpen && 'rotate-180')} />
+                <ChevronDown className={cn('h-4 w-4 opacity-75 transition-transform duration-300', dateDropdownOpen && 'rotate-180 text-sky-400')} />
               </button>
 
               {dateDropdownOpen && (
                 <>
                   <div className="fixed inset-0 z-40" onClick={() => setDateDropdownOpen(false)} />
-                  <div className="absolute right-0 mt-1.5 w-40 rounded-xl bg-card border border-border/60 shadow-xl py-1 z-50 animate-fadeIn backdrop-blur-md">
+                  <div className="absolute right-0 mt-2 w-48 rounded-2xl bg-card border border-border/60 shadow-2xl py-1.5 z-50 animate-in fade-in slide-in-from-top-2 duration-200 backdrop-blur-md">
                     {[
                       { value: 'all', label: 'All Dates' },
                       { value: '24h', label: 'Last 24 Hours' },
@@ -1293,14 +1319,14 @@ export function MediaUpload({ items }: { items: MediaLibraryItem[] }) {
                           setDateDropdownOpen(false);
                         }}
                         className={cn(
-                          'w-full text-left px-3 py-1.5 text-xs transition-colors flex items-center justify-between',
+                          'w-full text-left px-4 py-2 text-xs transition-colors flex items-center justify-between cursor-pointer',
                           datePreset === opt.value
                             ? 'bg-sky-500/10 text-sky-400 font-bold'
-                            : 'text-muted-foreground hover:bg-neutral-100 dark:hover:bg-neutral-800 hover:text-foreground'
+                            : 'text-muted-foreground hover:bg-muted/40 hover:text-foreground'
                         )}
                       >
                         <span>{opt.label}</span>
-                        {datePreset === opt.value && <Check className="h-3 w-3 text-sky-400" />}
+                        {datePreset === opt.value && <Check className="h-3.5 w-3.5 text-sky-400" />}
                       </button>
                     ))}
                   </div>

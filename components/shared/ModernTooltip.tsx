@@ -58,7 +58,7 @@ export function ModernTooltip({
   clickVisibleMs = 500,
   clickFadeMs = 500,
 }: ModernTooltipProps) {
-  const { showTooltips } = useEditorPreferences();
+  const { showTooltips, guidanceMode } = useEditorPreferences();
   const [mounted, setMounted] = useState(false);
   const [open, setOpen] = useState(false);
   const [closing, setClosing] = useState(false);
@@ -68,6 +68,10 @@ export function ModernTooltip({
   const showTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const hideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lockedRef = useRef(false);
+
+  const isPro = guidanceMode === 'pro';
+  const delay = isPro ? 5000 : showDelayMs;
+  const fadeOutTime = isPro ? 0 : hideFadeMs;
 
   useEffect(() => setMounted(true), []);
 
@@ -115,6 +119,10 @@ export function ModernTooltip({
   const startClose = useCallback(
     (fadeMs: number) => {
       if (!open && !closing) return;
+      if (fadeMs <= 0) {
+        finishClose();
+        return;
+      }
       setClosing(true);
       if (hideTimerRef.current) clearTimeout(hideTimerRef.current);
       hideTimerRef.current = setTimeout(finishClose, fadeMs);
@@ -137,15 +145,15 @@ export function ModernTooltip({
       if (open) return;
     }
     if (showTimerRef.current) return;
-    if (showDelayMs <= 0) {
+    if (delay <= 0) {
       reveal();
       return;
     }
     showTimerRef.current = setTimeout(() => {
       showTimerRef.current = null;
       if (!lockedRef.current) reveal();
-    }, showDelayMs);
-  }, [open, reveal, showDelayMs]);
+    }, delay);
+  }, [open, reveal, delay]);
 
   const scheduleHide = useCallback(() => {
     if (lockedRef.current) return;
@@ -155,8 +163,8 @@ export function ModernTooltip({
       return;
     }
     if (!open) return;
-    startClose(hideFadeMs);
-  }, [hideFadeMs, open, startClose]);
+    startClose(fadeOutTime);
+  }, [fadeOutTime, open, startClose]);
 
   const scheduleClickDismiss = useCallback(() => {
     if (!dismissOnClick) return;
