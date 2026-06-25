@@ -259,8 +259,8 @@ export function PublicNavbar({
                       pathname === '/articles' ? ' public-nav-bar__hub-link--active' : ''
                     }`}
                   >
-                    <Newspaper className="icon-sm shrink-0" aria-hidden />
-                    <span className="hidden md:inline">{t('nav.latest')}</span>
+                    <Newspaper className="h-3.5 w-3.5 shrink-0 opacity-90" aria-hidden />
+                    <span className="hidden lg:inline">{t('nav.latest')}</span>
                   </PublicNavLink>
 
                   <PublicNavLink
@@ -269,8 +269,8 @@ export function PublicNavbar({
                       pathname.includes('/power-grid') ? ' public-nav-bar__hub-link--active' : ''
                     }`}
                   >
-                    <BarChart3 className="icon-sm shrink-0" aria-hidden />
-                    <span className="hidden md:inline">{t('nav.gridExplorer')}</span>
+                    <BarChart3 className="h-3.5 w-3.5 shrink-0 opacity-90" aria-hidden />
+                    <span className="hidden lg:inline">{t('nav.gridExplorer')}</span>
                   </PublicNavLink>
 
                   <PublicNavLink
@@ -279,8 +279,8 @@ export function PublicNavbar({
                       pathname === '/magazine' ? ' public-nav-bar__hub-link--active' : ''
                     }`}
                   >
-                    <BookOpen className="icon-sm shrink-0" aria-hidden />
-                    <span className="hidden md:inline">{t('nav.magazine')}</span>
+                    <BookOpen className="h-3.5 w-3.5 shrink-0 opacity-90" aria-hidden />
+                    <span className="hidden lg:inline">{t('nav.magazine')}</span>
                   </PublicNavLink>
                 </div>
               </div>
@@ -341,8 +341,8 @@ export function PublicNavbar({
                         icon={c.icon}
                         iconImageUrl={c.iconImageUrl}
                         name={c.name}
-                        size={9}
-                        className={`relative z-[1] h-[9px] w-[9px] shrink-0 transition-transform duration-200 group-hover:scale-110 ${
+                        size={10}
+                        className={`relative z-[1] h-2.5 w-2.5 shrink-0 transition-transform duration-200 group-hover:scale-110 ${
                           colors.useCustom ? 'category-nav--custom' : colors.text
                         }`}
                         style={colors.useCustom ? categoryTextStyle(c.color) : undefined}

@@ -116,8 +116,8 @@ export function PublicFooter({ categories = [] }: { categories?: PublicCategory[
                 <a href="mailto:news@esbpowerline.com" className="block break-words transition-colors hover:text-primary">
                   news@esbpowerline.com
                 </a>
-                <a href="mailto:esbplbd@gmail.com" className="block break-words transition-colors hover:text-primary">
-                  esbplbd@gmail.com
+                <a href="mailto:esb.bd08@gmail.com" className="block break-words transition-colors hover:text-primary">
+                  esb.bd08@gmail.com
                 </a>
               </ContactItem>
 
