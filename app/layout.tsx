@@ -63,6 +63,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     >
       <head>
         <style dangerouslySetInnerHTML={{ __html: SITE_THEME_CRITICAL_CSS }} suppressHydrationWarning />
+      </head>
+      <body
+        suppressHydrationWarning
+        className={`${inter.variable} ${spaceGrotesk.variable} ${jetbrainsMono.variable} ${notoSansBengali.variable} min-h-screen bg-background text-foreground antialiased font-sans`}
+      >
         <Script
           id="theme-init"
           strategy="beforeInteractive"
@@ -73,11 +78,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           strategy="beforeInteractive"
           dangerouslySetInnerHTML={{ __html: SITE_LOCALE_INIT_SCRIPT }}
         />
-      </head>
-      <body
-        suppressHydrationWarning
-        className={`${inter.variable} ${spaceGrotesk.variable} ${jetbrainsMono.variable} ${notoSansBengali.variable} min-h-screen bg-background text-foreground antialiased font-sans`}
-      >
 
         <Providers>
           {children}
