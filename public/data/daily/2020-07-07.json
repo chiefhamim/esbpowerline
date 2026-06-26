@@ -1,0 +1,501 @@
+{
+  "systemStats": {
+    "date": "07 Jul 2020",
+    "dayPeakGen": 9863.0,
+    "eveningPeakGen": 11843.0,
+    "dayPeakDemand": 9863.0,
+    "eveningPeakDemand": 11843.0,
+    "minGen": 70000.0,
+    "maxGen": 15221.0,
+    "totalEnergyGen": 244.922085,
+    "totalEnergyUnserved": 0.0,
+    "totalEnergyDemand": 244.92,
+    "maxTemp": 32.8,
+    "totalGasSuppliedPower": 1163.17,
+    "avgProductionCost": 2.812,
+    "totalDailyCost": 688651600
+  },
+  "generationData": [
+    {
+      "name": "Gas",
+      "gen": 0.0,
+      "cost": 0,
+      "unitCost": 3.45,
+      "color": "#0ea5e9"
+    },
+    {
+      "name": "Coal",
+      "gen": 0.0,
+      "cost": 0,
+      "unitCost": 6.62,
+      "color": "#64748b"
+    },
+    {
+      "name": "HFO",
+      "gen": 0.0,
+      "cost": 0,
+      "unitCost": 18.06,
+      "color": "#f97316"
+    },
+    {
+      "name": "Hydro",
+      "gen": 0.0,
+      "cost": 0,
+      "unitCost": 0.1,
+      "color": "#06b6d4"
+    },
+    {
+      "name": "Solar",
+      "gen": 0.0,
+      "cost": 0,
+      "unitCost": 15.77,
+      "color": "#eab308"
+    },
+    {
+      "name": "Imports",
+      "gen": 25.86,
+      "cost": 163927959,
+      "unitCost": 6.34,
+      "color": "#a855f7"
+    },
+    {
+      "name": "HSD (Diesel)",
+      "gen": 0.0,
+      "cost": 0,
+      "unitCost": 0.0,
+      "color": "#ef4444"
+    }
+  ],
+  "borderImportsData": [
+    {
+      "source": "HVDC Bheramara (India)",
+      "energy": 22.49,
+      "peakFlow": 0.0,
+      "type": "C/B Interconnector (West)"
+    },
+    {
+      "source": "Tripura Cumilla (India)",
+      "energy": 3.37,
+      "peakFlow": 0.0,
+      "type": "C/B Interconnector (East)"
+    }
+  ],
+  "regionalDemandData": [
+    {
+      "zone": "Dhaka",
+      "loadShed": 0.0,
+      "demand": 3895.0,
+      "pct": 0.0
+    },
+    {
+      "zone": "Chattogram",
+      "loadShed": 0.0,
+      "demand": 1056.0,
+      "pct": 0.0
+    },
+    {
+      "zone": "Cumilla",
+      "loadShed": 0.0,
+      "demand": 1133.0,
+      "pct": 0.0
+    },
+    {
+      "zone": "Mymensingh",
+      "loadShed": 0.0,
+      "demand": 975.0,
+      "pct": 0.0
+    },
+    {
+      "zone": "Sylhet",
+      "loadShed": 0.0,
+      "demand": 485.0,
+      "pct": 0.0
+    },
+    {
+      "zone": "Khulna",
+      "loadShed": 0.0,
+      "demand": 1495.0,
+      "pct": 0.0
+    },
+    {
+      "zone": "Barishal",
+      "loadShed": 0.0,
+      "demand": 335.0,
+      "pct": 0.0
+    },
+    {
+      "zone": "Rajshahi",
+      "loadShed": 0.0,
+      "demand": 1270.0,
+      "pct": 0.0
+    },
+    {
+      "zone": "Rangpur",
+      "loadShed": 0.0,
+      "demand": 769.0,
+      "pct": 0.0
+    }
+  ],
+  "dailyOutages": [
+    {
+      "time": "at 08:30",
+      "plant": "Hasnabad 132/33 kV T-2 transformer",
+      "load": "HT Outage",
+      "reason": "for C/M."
+    },
+    {
+      "time": "from 08:25 to 18:33",
+      "plant": "Aminbazar-Kallyanpur 132 kV Ckt-1",
+      "load": "HT Outage",
+      "reason": "for D/W."
+    },
+    {
+      "time": "from 08:27 to 13:00",
+      "plant": "Jamalpur-Mymensingh 132 kV Ckt-1",
+      "load": "HT Outage",
+      "reason": "for D/W."
+    },
+    {
+      "time": "from 10:16 to 13:34",
+      "plant": "Mymensingh-Netrokona 132 kV Ckt-2",
+      "load": "HT Outage",
+      "reason": "for C/M."
+    },
+    {
+      "time": "from 11:20 to 14:56",
+      "plant": "Cumilla 132/33 kV T-4 transformer",
+      "load": "HT Outage",
+      "reason": "for R/H maintenance."
+    },
+    {
+      "time": "from 10:55 to 11:58",
+      "plant": "Kishoreganj 132/33 kV T-2 transformer",
+      "load": "HT Outage",
+      "reason": "for isolator maintenance."
+    },
+    {
+      "time": "from 11:34 to 12:30",
+      "plant": "Rampura 132/33 kV T-2 transformer",
+      "load": "HT Outage",
+      "reason": "for Earth Resistance measurement."
+    },
+    {
+      "time": "from 13:05 to 14:50",
+      "plant": "Tongi 33 kV Bus under T-1 & T-2 transformers",
+      "load": "70 MW",
+      "reason": "for Bus isolator About 70 MW power interruption occurred under Tongi S/S area"
+    },
+    {
+      "time": "from 13:36 to 16:31",
+      "plant": "Mymensingh-Netrokona 132 kV Ckt-1",
+      "load": "HT Outage",
+      "reason": "for C/M."
+    },
+    {
+      "time": "at 14:00",
+      "plant": "Faridpur-Bheramara 132 kV Ckt-2",
+      "load": "HT Outage",
+      "reason": "Faridpur-Bheramara 132 kV Ckt-2 tripped at 14:00 from both ends showing Dist. Z1 at Faridpur end &"
+    },
+    {
+      "time": "at 14:00",
+      "plant": "Faridpur-Gopalganj(New) 132 kV Ckt-1",
+      "load": "HT Outage",
+      "reason": "Faridpur-Gopalganj(New) 132 kV Ckt-1 tripped at 14:00 from Faridpur end showing Dist. Z1 and was"
+    },
+    {
+      "time": "from 13:10 to 16:49",
+      "plant": "Mymensingh-Jamalpur 132 kV Ckt-2",
+      "load": "HT Outage",
+      "reason": "for D/W."
+    },
+    {
+      "time": "at 19:53",
+      "plant": "Faridpur-Bheramara 132 kV Ckt-1",
+      "load": "HT Outage",
+      "reason": "Faridpur-Bheramara 132 kV Ckt-1 tripped at 19:53 from both ends showing Dist. Z1 at Faridpur end &"
+    },
+    {
+      "time": "at 20:41",
+      "plant": "Baghabari 71 MW",
+      "load": "71 MW",
+      "reason": "due to gas shortage."
+    },
+    {
+      "time": "at 20:40",
+      "plant": "Hathazari 132/33 kV T-1 transformer",
+      "load": "35 MW",
+      "reason": "due to 33 kV XLPE cable fault. About 35 MW power interruption occurred under Hathazari S/S area"
+    },
+    {
+      "time": "from 21:00 to 21:46",
+      "plant": "Kurigram 132 kV Bus",
+      "load": "45 MW",
+      "reason": "due to R/H maintenance. About 45 MW power interruption occurred under Kurigram S/S area"
+    },
+    {
+      "time": "at 21:24",
+      "plant": "Sirajganj-Ashuganj 230 kV Ckt-2",
+      "load": "HT Outage",
+      "reason": "Sirajganj-Ashuganj 230 kV Ckt-2 was charged from Sirajganj end at 21:24."
+    },
+    {
+      "time": "at 00:28",
+      "plant": "Shahjibazar 330 MW",
+      "load": "330 MW",
+      "reason": "due to gas booster trip."
+    },
+    {
+      "time": "at 22:28",
+      "plant": "Faridpur 132/33 kV T1 transformer tripped at 22:28 showing O/C at HT & E/F at LT side and",
+      "load": "160 MW",
+      "reason": "Faridpur 132/33 kV T1 transformer tripped at 22:28 showing O/C at HT & E/F at LT side and was switched About 160 MW power interruption occurred under Faridpur S/S area"
+    },
+    {
+      "time": "at 22:28",
+      "plant": "Faridpur 132/33 kV T2 transformer's 33 kV side",
+      "load": "HT Outage",
+      "reason": "due to 33 kV karaipur"
+    },
+    {
+      "time": "at 05:10",
+      "plant": "Kabirpur 132/33 kV T-2 transformer",
+      "load": "HT Outage",
+      "reason": "for C/M."
+    }
+  ],
+  "hourlyLoadData": [
+    {
+      "time": "00:00",
+      "generation": 11734.0,
+      "loadShed": 0.0,
+      "demand": 11734.0
+    },
+    {
+      "time": "01:00",
+      "generation": 10812.0,
+      "loadShed": 0.0,
+      "demand": 10812.0
+    },
+    {
+      "time": "02:00",
+      "generation": 10424.0,
+      "loadShed": 0.0,
+      "demand": 10424.0
+    },
+    {
+      "time": "03:00",
+      "generation": 10114.0,
+      "loadShed": 0.0,
+      "demand": 10114.0
+    },
+    {
+      "time": "04:00",
+      "generation": 9945.0,
+      "loadShed": 0.0,
+      "demand": 9945.0
+    },
+    {
+      "time": "05:00",
+      "generation": 9758.0,
+      "loadShed": 0.0,
+      "demand": 9758.0
+    },
+    {
+      "time": "06:00",
+      "generation": 8743.7,
+      "loadShed": 0.0,
+      "demand": 8743.7
+    },
+    {
+      "time": "07:00",
+      "generation": 8559.2,
+      "loadShed": 0.0,
+      "demand": 8559.2
+    },
+    {
+      "time": "08:00",
+      "generation": 8577.8,
+      "loadShed": 0.0,
+      "demand": 8577.8
+    },
+    {
+      "time": "09:00",
+      "generation": 9016.8,
+      "loadShed": 0.0,
+      "demand": 9016.8
+    },
+    {
+      "time": "10:00",
+      "generation": 9363.2,
+      "loadShed": 0.0,
+      "demand": 9363.2
+    },
+    {
+      "time": "11:00",
+      "generation": 9521.7,
+      "loadShed": 0.0,
+      "demand": 9521.7
+    },
+    {
+      "time": "12:00",
+      "generation": 9863.0,
+      "loadShed": 0.0,
+      "demand": 9863.0
+    },
+    {
+      "time": "13:00",
+      "generation": 9933.3,
+      "loadShed": 0.0,
+      "demand": 9933.3
+    },
+    {
+      "time": "14:00",
+      "generation": 9975.2,
+      "loadShed": 0.0,
+      "demand": 9975.2
+    },
+    {
+      "time": "15:00",
+      "generation": 10397.1,
+      "loadShed": 0.0,
+      "demand": 10397.1
+    },
+    {
+      "time": "16:00",
+      "generation": 10221.6,
+      "loadShed": 0.0,
+      "demand": 10221.6
+    },
+    {
+      "time": "17:00",
+      "generation": 9293.9,
+      "loadShed": 0.0,
+      "demand": 9293.9
+    },
+    {
+      "time": "18:00",
+      "generation": 9030.4,
+      "loadShed": 0.0,
+      "demand": 9030.4
+    },
+    {
+      "time": "19:00",
+      "generation": 10147.0,
+      "loadShed": 0.0,
+      "demand": 10147.0
+    },
+    {
+      "time": "20:00",
+      "generation": 11570.0,
+      "loadShed": 0.0,
+      "demand": 11570.0
+    },
+    {
+      "time": "21:00",
+      "generation": 11843.0,
+      "loadShed": 0.0,
+      "demand": 11843.0
+    },
+    {
+      "time": "22:00",
+      "generation": 11904.0,
+      "loadShed": 0.0,
+      "demand": 11904.0
+    },
+    {
+      "time": "23:00",
+      "generation": 11683.0,
+      "loadShed": 0.0,
+      "demand": 11683.0
+    }
+  ],
+  "gasProductionData": [
+    {
+      "company": "BGFCL (Titas, Habiganj, Bakhrabad)",
+      "fields": 5,
+      "gas": 685.7,
+      "condensate": 463.1,
+      "share": 22.3
+    },
+    {
+      "company": "SGFL (Sylhet, Rashidpur, Kailashtila)",
+      "fields": 5,
+      "gas": 59.3,
+      "condensate": 192.8,
+      "share": 1.9
+    },
+    {
+      "company": "BAPEX (Shahbazpur, Srikail, Begumganj)",
+      "fields": 9,
+      "gas": 97.6,
+      "condensate": 98.0,
+      "share": 3.2
+    },
+    {
+      "company": "Chevron (Bibiyana, Jalalabad, Moulavibazar)",
+      "fields": 3,
+      "gas": 1548.6,
+      "condensate": 9123.6,
+      "share": 50.5
+    },
+    {
+      "company": "Tullow (Bangora)",
+      "fields": 1,
+      "gas": 97.4,
+      "condensate": 278.0,
+      "share": 3.2
+    },
+    {
+      "company": "RPGCL (R-LNG Import / LNG Terminal)",
+      "fields": 0,
+      "gas": 580.7,
+      "condensate": 0.0,
+      "share": 18.9
+    }
+  ],
+  "gasDistributionData": [
+    {
+      "company": "TGTDCL (Dhaka & Mymensingh)",
+      "power": 412.2,
+      "fertilizer": 1.6,
+      "others": 1273.7,
+      "total": 1687.5
+    },
+    {
+      "company": "BGDCL (Cumilla & Sylhet)",
+      "power": 202.0,
+      "fertilizer": 40.6,
+      "others": 85.4,
+      "total": 328.0
+    },
+    {
+      "company": "KGDCL (Chattogram)",
+      "power": 66.2,
+      "fertilizer": 69.5,
+      "others": 172.9,
+      "total": 308.6
+    },
+    {
+      "company": "JGTDSL (Sylhet region)",
+      "power": 251.1,
+      "fertilizer": 42.4,
+      "others": 84.9,
+      "total": 378.4
+    },
+    {
+      "company": "PGCL (Rajshahi & Rangpur)",
+      "power": 139.6,
+      "fertilizer": 0.0,
+      "others": 26.2,
+      "total": 165.8
+    },
+    {
+      "company": "SGCL (Barishal & Khulna)",
+      "power": 104.0,
+      "fertilizer": 0.0,
+      "others": 2.1,
+      "total": 106.0
+    }
+  ]
+}
