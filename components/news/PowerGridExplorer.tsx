@@ -1821,11 +1821,11 @@ export function PowerGridExplorer({
                 <thead>
                   <tr>
                     <th>Fuel / Source</th>
-                    <th className="text-right">Generation (MKWh)</th>
-                    <th className="text-right">Generation Share</th>
-                    <th className="text-right">Daily Cost (Crore Tk)</th>
-                    <th className="text-right">Cost Share</th>
-                    <th className="text-right">Unit Cost (Tk/KWh)</th>
+                    <th className="text-left">Generation (MKWh)</th>
+                    <th className="text-left">Generation Share</th>
+                    <th className="text-left">Daily Cost (Crore Tk)</th>
+                    <th className="text-left">Cost Share</th>
+                    <th className="text-left">Unit Cost (Tk/KWh)</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -1838,21 +1838,21 @@ export function PowerGridExplorer({
                           <span className="h-2.5 w-2.5 rounded-full shrink-0" style={{ backgroundColor: g.color }} />
                           {g.name}
                         </td>
-                        <td className="text-right tabular-nums">{g.gen.toFixed(2)}</td>
-                        <td className="text-right tabular-nums text-muted-foreground">{genShare}%</td>
-                        <td className="text-right tabular-nums">{(g.cost / 10000000).toFixed(3)}</td>
-                        <td className="text-right tabular-nums text-muted-foreground">{costShare}%</td>
-                        <td className="text-right tabular-nums font-mono text-sm">{g.unitCost.toFixed(2)}</td>
+                        <td className="text-left tabular-nums">{g.gen.toFixed(2)}</td>
+                        <td className="text-left tabular-nums text-muted-foreground">{genShare}%</td>
+                        <td className="text-left tabular-nums">{(g.cost / 10000000).toFixed(3)}</td>
+                        <td className="text-left tabular-nums text-muted-foreground">{costShare}%</td>
+                        <td className="text-left tabular-nums font-mono text-sm">{g.unitCost.toFixed(2)}</td>
                       </tr>
                     );
                   })}
                   <tr className="border-t border-border/80 font-bold bg-muted/20">
                     <td>Total System / Average</td>
-                    <td className="text-right tabular-nums">{totalGenMkwhr.toFixed(2)}</td>
-                    <td className="text-right tabular-nums">100.00%</td>
-                    <td className="text-right tabular-nums">{(totalCostBdt / 10000000).toFixed(2)}</td>
-                    <td className="text-right tabular-nums">100.00%</td>
-                    <td className="text-right tabular-nums font-mono text-sm text-primary">{avgCostPerKwh.toFixed(3)}</td>
+                    <td className="text-left tabular-nums">{totalGenMkwhr.toFixed(2)}</td>
+                    <td className="text-left tabular-nums">100.00%</td>
+                    <td className="text-left tabular-nums">{(totalCostBdt / 10000000).toFixed(2)}</td>
+                    <td className="text-left tabular-nums">100.00%</td>
+                    <td className="text-left tabular-nums font-mono text-sm text-primary">{avgCostPerKwh.toFixed(3)}</td>
                   </tr>
                 </tbody>
               </table>
@@ -1872,11 +1872,11 @@ export function PowerGridExplorer({
               <div className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Load-Shedding &amp; Demand</div>
               <div className="grid grid-cols-2 gap-y-2 text-xs leading-relaxed">
                 <span>Peak Demand:</span>
-                <span className="font-bold text-foreground text-right">{systemStats.eveningPeakDemand.toFixed(1)} MW</span>
+                <span className="font-bold text-foreground text-left">{systemStats.eveningPeakDemand.toFixed(1)} MW</span>
                 <span>Peak Generation:</span>
-                <span className="font-bold text-foreground text-right">{systemStats.eveningPeakGen.toFixed(1)} MW</span>
+                <span className="font-bold text-foreground text-left">{systemStats.eveningPeakGen.toFixed(1)} MW</span>
                 <span>Unserved Energy:</span>
-                <span className="font-semibold text-destructive text-right">{systemStats.totalEnergyUnserved.toFixed(2)} MKWh</span>
+                <span className="font-semibold text-destructive text-left">{systemStats.totalEnergyUnserved.toFixed(2)} MKWh</span>
               </div>
             </div>
 
@@ -1884,11 +1884,11 @@ export function PowerGridExplorer({
               <div className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Daily System Margins</div>
               <div className="grid grid-cols-2 gap-y-2 text-xs leading-relaxed">
                 <span>Max Generation:</span>
-                <span className="font-bold text-foreground text-right">{systemStats.maxGen.toFixed(1)} MW</span>
+                <span className="font-bold text-foreground text-left">{systemStats.maxGen.toFixed(1)} MW</span>
                 <span>Min Generation:</span>
-                <span className="font-bold text-foreground text-right">{systemStats.minGen.toFixed(1)} MW</span>
+                <span className="font-bold text-foreground text-left">{systemStats.minGen.toFixed(1)} MW</span>
                 <span>Max Temp Yesterday:</span>
-                <span className="font-semibold text-foreground text-right">{systemStats.maxTemp.toFixed(1)} °C</span>
+                <span className="font-semibold text-foreground text-left">{systemStats.maxTemp.toFixed(1)} °C</span>
               </div>
             </div>
 
@@ -1896,11 +1896,11 @@ export function PowerGridExplorer({
               <div className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Gas-to-Power Conversion</div>
               <div className="grid grid-cols-2 gap-y-2 text-xs leading-relaxed">
                 <span>Gas Supplied:</span>
-                <span className="font-bold text-foreground text-right">{systemStats.totalGasSuppliedPower.toFixed(1)} MMCFD</span>
+                <span className="font-bold text-foreground text-left">{systemStats.totalGasSuppliedPower.toFixed(1)} MMCFD</span>
                 <span>Gas Cost:</span>
-                <span className="font-bold text-foreground text-right">43.71 Crore Tk</span>
+                <span className="font-bold text-foreground text-left">43.71 Crore Tk</span>
                 <span>Gas Unit Cost:</span>
-                <span className="font-semibold text-primary text-right">3.45 Tk/KWh</span>
+                <span className="font-semibold text-primary text-left">3.45 Tk/KWh</span>
               </div>
             </div>
           </div>
@@ -1931,28 +1931,28 @@ export function PowerGridExplorer({
                 <thead>
                   <tr>
                     <th>Field / Company Operator</th>
-                    <th className="text-right">Active Fields/Wells</th>
-                    <th className="text-right">Gas Produced (MMCFD)</th>
-                    <th className="text-right">Condensate Produced (BBL)</th>
-                    <th className="text-right">National Gas Share</th>
+                    <th className="text-left">Active Fields/Wells</th>
+                    <th className="text-left">Gas Produced (MMCFD)</th>
+                    <th className="text-left">Condensate Produced (BBL)</th>
+                    <th className="text-left">National Gas Share</th>
                   </tr>
                 </thead>
                 <tbody>
                   {gasProductionData.map((gp, idx) => (
                     <tr key={idx}>
                       <td className="font-semibold">{gp.company}</td>
-                      <td className="text-right tabular-nums text-muted-foreground">{gp.fields || '—'}</td>
-                      <td className="text-right tabular-nums font-medium">{gp.gas.toFixed(1)}</td>
-                      <td className="text-right tabular-nums">{formatNumber(Math.round(gp.condensate))}</td>
-                      <td className="text-right tabular-nums text-muted-foreground">{gp.share.toFixed(1)}%</td>
+                      <td className="text-left tabular-nums text-muted-foreground">{gp.fields || '—'}</td>
+                      <td className="text-left tabular-nums font-medium">{gp.gas.toFixed(1)}</td>
+                      <td className="text-left tabular-nums">{formatNumber(Math.round(gp.condensate))}</td>
+                      <td className="text-left tabular-nums text-muted-foreground">{gp.share.toFixed(1)}%</td>
                     </tr>
                   ))}
                   <tr className="border-t border-border/80 font-bold bg-muted/20">
                     <td>Grand Total Production</td>
-                    <td className="text-right">23 Fields</td>
-                    <td className="text-right text-primary">2,647.5</td>
-                    <td className="text-right">5,864.6</td>
-                    <td className="text-right">100.0%</td>
+                    <td className="text-left">23 Fields</td>
+                    <td className="text-left text-primary">2,647.5</td>
+                    <td className="text-left">5,864.6</td>
+                    <td className="text-left">100.0%</td>
                   </tr>
                 </tbody>
               </table>
@@ -1981,28 +1981,28 @@ export function PowerGridExplorer({
                 <thead>
                   <tr>
                     <th>Distributor</th>
-                    <th className="text-right">Power Grid Supply</th>
-                    <th className="text-right">Fertilizer Supply</th>
-                    <th className="text-right">Industrial / Others</th>
-                    <th className="text-right">Total Gas Distributed</th>
+                    <th className="text-left">Power Grid Supply</th>
+                    <th className="text-left">Fertilizer Supply</th>
+                    <th className="text-left">Industrial / Others</th>
+                    <th className="text-left">Total Gas Distributed</th>
                   </tr>
                 </thead>
                 <tbody>
                   {gasDistributionData.map((gd, idx) => (
                     <tr key={idx}>
                       <td className="font-semibold">{gd.company}</td>
-                      <td className="text-right tabular-nums">{gd.power.toFixed(1)}</td>
-                      <td className="text-right tabular-nums">{gd.fertilizer.toFixed(1)}</td>
-                      <td className="text-right tabular-nums text-muted-foreground">{gd.others.toFixed(1)}</td>
-                      <td className="text-right tabular-nums font-semibold">{gd.total.toFixed(1)}</td>
+                      <td className="text-left tabular-nums">{gd.power.toFixed(1)}</td>
+                      <td className="text-left tabular-nums">{gd.fertilizer.toFixed(1)}</td>
+                      <td className="text-left tabular-nums text-muted-foreground">{gd.others.toFixed(1)}</td>
+                      <td className="text-left tabular-nums font-semibold">{gd.total.toFixed(1)}</td>
                     </tr>
                   ))}
                   <tr className="border-t border-border/80 font-bold bg-muted/20">
                     <td>National Total Supply</td>
-                    <td className="text-right tabular-nums text-primary">917.3</td>
-                    <td className="text-right tabular-nums">151.6</td>
-                    <td className="text-right tabular-nums">1,475.1</td>
-                    <td className="text-right tabular-nums text-primary">2,544.1</td>
+                    <td className="text-left tabular-nums text-primary">917.3</td>
+                    <td className="text-left tabular-nums">151.6</td>
+                    <td className="text-left tabular-nums">1,475.1</td>
+                    <td className="text-left tabular-nums text-primary">2,544.1</td>
                   </tr>
                 </tbody>
               </table>
@@ -2064,10 +2064,10 @@ export function PowerGridExplorer({
                   <tr>
                     <th>Import Source / Line</th>
                     <th>Type</th>
-                    <th className="text-right">Daily Energy Imported (MKWh)</th>
-                    <th className="text-right">Peak Capacity Served (MW)</th>
-                    <th className="text-right">Estimated Cost (Tk)</th>
-                    <th className="text-right">Unit Rate (Tk/KWh)</th>
+                    <th className="text-left">Daily Energy Imported (MKWh)</th>
+                    <th className="text-left">Peak Capacity Served (MW)</th>
+                    <th className="text-left">Estimated Cost (Tk)</th>
+                    <th className="text-left">Unit Rate (Tk/KWh)</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -2079,20 +2079,20 @@ export function PowerGridExplorer({
                       <tr key={idx}>
                         <td className="font-semibold">{bi.source}</td>
                         <td className="text-muted-foreground">{bi.type}</td>
-                        <td className="text-right tabular-nums font-semibold">{bi.energy.toFixed(2)}</td>
-                        <td className="text-right tabular-nums">{formatNumber(Math.round(bi.peakFlow))}</td>
-                        <td className="text-right tabular-nums">{(calculatedCost / 10000000).toFixed(2)} Cr</td>
-                        <td className="text-right tabular-nums font-mono">{unitRate.toFixed(2)}</td>
+                        <td className="text-left tabular-nums font-semibold">{bi.energy.toFixed(2)}</td>
+                        <td className="text-left tabular-nums">{formatNumber(Math.round(bi.peakFlow))}</td>
+                        <td className="text-left tabular-nums">{(calculatedCost / 10000000).toFixed(2)} Cr</td>
+                        <td className="text-left tabular-nums font-mono">{unitRate.toFixed(2)}</td>
                       </tr>
                     );
                   })}
                   <tr className="border-t border-border/80 font-bold bg-muted/20">
                     <td>Total Grid Imports</td>
                     <td className="text-muted-foreground">National aggregate</td>
-                    <td className="text-right tabular-nums text-primary">{borderImportsData.reduce((sum, i) => sum + i.energy, 0).toFixed(2)}</td>
-                    <td className="text-right tabular-nums">2,583.6</td>
-                    <td className="text-right tabular-nums">33.40 Cr</td>
-                    <td className="text-right tabular-nums font-mono text-primary">6.34</td>
+                    <td className="text-left tabular-nums text-primary">{borderImportsData.reduce((sum, i) => sum + i.energy, 0).toFixed(2)}</td>
+                    <td className="text-left tabular-nums">2,583.6</td>
+                    <td className="text-left tabular-nums">33.40 Cr</td>
+                    <td className="text-left tabular-nums font-mono text-primary">6.34</td>
                   </tr>
                 </tbody>
               </table>
@@ -2129,8 +2129,8 @@ export function PowerGridExplorer({
                 <thead>
                   <tr>
                     <th>Technology</th>
-                    <th className="text-right">Installed Capacity (MW)</th>
-                    <th className="text-right">Clean Energy Share</th>
+                    <th className="text-left">Installed Capacity (MW)</th>
+                    <th className="text-left">Clean Energy Share</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -2140,14 +2140,14 @@ export function PowerGridExplorer({
                         <sr.icon className="h-4 w-4 text-primary shrink-0" />
                         {sr.tech}
                       </td>
-                      <td className="text-right tabular-nums font-medium">{sr.capacity.toFixed(2)}</td>
-                      <td className="text-right tabular-nums text-muted-foreground">{sr.share.toFixed(2)}%</td>
+                      <td className="text-left tabular-nums font-medium">{sr.capacity.toFixed(2)}</td>
+                      <td className="text-left tabular-nums text-muted-foreground">{sr.share.toFixed(2)}%</td>
                     </tr>
                   ))}
                   <tr className="border-t border-border/80 font-bold bg-muted/20">
                     <td>SREDA Aggregate Capacity</td>
-                    <td className="text-right tabular-nums text-primary">{totalCapacityRenewables.toFixed(2)}</td>
-                    <td className="text-right tabular-nums">100.00%</td>
+                    <td className="text-left tabular-nums text-primary">{totalCapacityRenewables.toFixed(2)}</td>
+                    <td className="text-left tabular-nums">100.00%</td>
                   </tr>
                 </tbody>
               </table>
@@ -2504,7 +2504,7 @@ export function PowerGridExplorer({
                         </div>
                         <div className="flex items-center justify-between p-3 rounded-xl bg-muted/10 border border-border/30">
                           <span className="text-xs font-semibold text-muted-foreground">Inherited 132 kV Transmission Lines</span>
-                          <div className="text-right">
+                          <div className="text-left">
                             <span className="text-xs font-bold text-foreground bg-muted/20 px-2.5 py-1 rounded-lg border border-border/40">4236 circuit km</span>
                             <span className="block text-[9px] text-muted-foreground mt-1">Plus 27.3 circuit km (Others)</span>
                           </div>
@@ -2693,8 +2693,8 @@ export function PowerGridExplorer({
                           <thead>
                             <tr className="border-b border-border/40">
                               <th className="py-2 text-left">Voltage Class</th>
-                              <th className="py-2 text-right">Main Capacity</th>
-                              <th className="py-2 text-right">Others</th>
+                              <th className="py-2 text-left">Main Capacity</th>
+                              <th className="py-2 text-left">Others</th>
                             </tr>
                           </thead>
                           <tbody>
@@ -2703,28 +2703,28 @@ export function PowerGridExplorer({
                                 <span className="w-2 h-2 rounded-full bg-red-500" />
                                 400kV
                               </td>
-                              <td className="py-2.5 text-right tabular-nums font-bold text-foreground">3,155 Circuit km</td>
-                              <td className="py-2.5 text-right tabular-nums text-muted-foreground">27.8 Circuit km (Others)</td>
+                              <td className="py-2.5 text-left tabular-nums font-bold text-foreground">3,155 Circuit km</td>
+                              <td className="py-2.5 text-left tabular-nums text-muted-foreground">27.8 Circuit km (Others)</td>
                             </tr>
                             <tr className="hover:bg-muted/5 transition-colors">
                               <td className="py-2.5 font-semibold flex items-center gap-2">
                                 <span className="w-2 h-2 rounded-full bg-amber-500" />
                                 230kV
                               </td>
-                              <td className="py-2.5 text-right tabular-nums font-bold text-foreground">5,129.79 Circuit km</td>
-                              <td className="py-2.5 text-right tabular-nums text-muted-foreground">27.3 Circuit km (Others)</td>
+                              <td className="py-2.5 text-left tabular-nums font-bold text-foreground">5,129.79 Circuit km</td>
+                              <td className="py-2.5 text-left tabular-nums text-muted-foreground">27.3 Circuit km (Others)</td>
                             </tr>
                             <tr className="hover:bg-muted/5 transition-colors">
                               <td className="py-2.5 font-semibold flex items-center gap-2">
                                 <span className="w-2 h-2 rounded-full bg-blue-500" />
                                 132kV
                               </td>
-                              <td className="py-2.5 text-right tabular-nums font-bold text-foreground">9,287 Circuit km</td>
-                              <td className="py-2.5 text-right tabular-nums text-muted-foreground">369 Circuit km (Others)</td>
+                              <td className="py-2.5 text-left tabular-nums font-bold text-foreground">9,287 Circuit km</td>
+                              <td className="py-2.5 text-left tabular-nums text-muted-foreground">369 Circuit km (Others)</td>
                             </tr>
                             <tr className="border-t border-border/60 font-bold bg-muted/20">
                               <td className="py-3 pl-3">Total Line</td>
-                              <td className="py-3 text-right tabular-nums text-primary pr-3" colSpan={2}>17955 Circuit km</td>
+                              <td className="py-3 text-left tabular-nums text-primary pr-3" colSpan={2}>17955 Circuit km</td>
                             </tr>
                           </tbody>
                         </table>
@@ -2750,41 +2750,41 @@ export function PowerGridExplorer({
                           <thead>
                             <tr className="border-b border-border/40">
                               <th className="py-2 text-left">Infrastructure Item</th>
-                              <th className="py-2 text-right">Verbatim Capacity / Length</th>
+                              <th className="py-2 text-left">Verbatim Capacity / Length</th>
                             </tr>
                           </thead>
                           <tbody className="divide-y divide-border/10">
                             <tr className="hover:bg-muted/5 transition-colors">
                               <td className="py-2 font-semibold">400/230kV Substation</td>
-                              <td className="py-2 text-right tabular-nums text-foreground font-bold">9 Nos. 13,100 MVA</td>
+                              <td className="py-2 text-left tabular-nums text-foreground font-bold">9 Nos. 13,100 MVA</td>
                             </tr>
                             <tr className="hover:bg-muted/5 transition-colors">
                               <td className="py-2 font-semibold">400/132 kV Substation</td>
-                              <td className="py-2 text-right tabular-nums text-foreground font-bold">4 Nos. 2,990 MVA</td>
+                              <td className="py-2 text-left tabular-nums text-foreground font-bold">4 Nos. 2,990 MVA</td>
                             </tr>
                             <tr className="hover:bg-muted/5 transition-colors">
                               <td className="py-2 font-semibold">230/132kV Substation</td>
-                              <td className="py-2 text-right tabular-nums text-foreground font-bold">10 Nos: 7,550 MVA</td>
+                              <td className="py-2 text-left tabular-nums text-foreground font-bold">10 Nos: 7,550 MVA</td>
                             </tr>
                             <tr className="hover:bg-muted/5 transition-colors">
                               <td className="py-2 font-semibold">230/33KV Substation</td>
-                              <td className="py-2 text-right tabular-nums text-foreground font-bold">1 Nos 280 MVA</td>
+                              <td className="py-2 text-left tabular-nums text-foreground font-bold">1 Nos 280 MVA</td>
                             </tr>
                             <tr className="hover:bg-muted/5 transition-colors">
                               <td className="py-2 font-semibold">132/33kV Substation</td>
-                              <td className="py-2 text-right tabular-nums text-foreground font-bold">38 Nos. 7,647 MVA</td>
+                              <td className="py-2 text-left tabular-nums text-foreground font-bold">38 Nos. 7,647 MVA</td>
                             </tr>
                             <tr className="hover:bg-muted/5 transition-colors">
                               <td className="py-2 font-semibold text-emerald-500">400kV Transmission Line</td>
-                              <td className="py-2 text-right tabular-nums text-emerald-500 font-bold">2,124.77 Circuit km</td>
+                              <td className="py-2 text-left tabular-nums text-emerald-500 font-bold">2,124.77 Circuit km</td>
                             </tr>
                             <tr className="hover:bg-muted/5 transition-colors">
                               <td className="py-2 font-semibold text-emerald-500">230kV Transmission Line</td>
-                              <td className="py-2 text-right tabular-nums text-emerald-500 font-bold">1,481.94 Circuit km</td>
+                              <td className="py-2 text-left tabular-nums text-emerald-500 font-bold">1,481.94 Circuit km</td>
                             </tr>
                             <tr className="hover:bg-muted/5 transition-colors">
                               <td className="py-2 font-semibold text-emerald-500">132kV Transmission Line</td>
-                              <td className="py-2 text-right tabular-nums text-emerald-500 font-bold">1,249.874 Circuit km</td>
+                              <td className="py-2 text-left tabular-nums text-emerald-500 font-bold">1,249.874 Circuit km</td>
                             </tr>
                           </tbody>
                         </table>
@@ -2810,59 +2810,59 @@ export function PowerGridExplorer({
                           <tr className="border-b border-border/40">
                             <th className="py-2 text-left">Substation / Station Class</th>
                             <th className="py-2 text-left">Count / Quantity</th>
-                            <th className="py-2 text-right">Main Capacity / Rating</th>
-                            <th className="py-2 text-right">Others (Quantity &amp; Capacity)</th>
+                            <th className="py-2 text-left">Main Capacity / Rating</th>
+                            <th className="py-2 text-left">Others (Quantity &amp; Capacity)</th>
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-border/10">
                           <tr className="hover:bg-muted/5 transition-colors">
                             <td className="py-2.5 font-semibold text-foreground">400kV HVDC Station</td>
                             <td className="py-2.5 text-foreground">1 Nos.</td>
-                            <td className="py-2.5 text-right font-medium text-foreground">2x500MW HVDC Back to Back station</td>
-                            <td className="py-2.5 text-right text-muted-foreground">—</td>
+                            <td className="py-2.5 text-left font-medium text-foreground">2x500MW HVDC Back to Back station</td>
+                            <td className="py-2.5 text-left text-muted-foreground">—</td>
                           </tr>
                           <tr className="hover:bg-muted/5 transition-colors">
                             <td className="py-2.5 font-semibold text-foreground">400/230kV Substation</td>
                             <td className="py-2.5 text-foreground">11 Nos.</td>
-                            <td className="py-2.5 text-right font-bold text-foreground">15,180 MVA</td>
-                            <td className="py-2.5 text-right font-medium text-muted-foreground">3 Nos. 2730 MVA (Others)</td>
+                            <td className="py-2.5 text-left font-bold text-foreground">15,180 MVA</td>
+                            <td className="py-2.5 text-left font-medium text-muted-foreground">3 Nos. 2730 MVA (Others)</td>
                           </tr>
                           <tr className="hover:bg-muted/5 transition-colors">
                             <td className="py-2.5 font-semibold text-foreground">400/132 kV Substation</td>
                             <td className="py-2.5 text-foreground">5 Nos.</td>
-                            <td className="py-2.5 text-right font-bold text-foreground">4,265 MVA</td>
-                            <td className="py-2.5 text-right text-muted-foreground">—</td>
+                            <td className="py-2.5 text-left font-bold text-foreground">4,265 MVA</td>
+                            <td className="py-2.5 text-left text-muted-foreground">—</td>
                           </tr>
                           <tr className="hover:bg-muted/5 transition-colors">
                             <td className="py-2.5 font-semibold text-foreground">230/132kV Substation</td>
                             <td className="py-2.5 text-foreground">36 Nos.</td>
-                            <td className="py-2.5 text-right font-bold text-foreground">24,275 MVA</td>
-                            <td className="py-2.5 text-right font-medium text-muted-foreground">1 Nos. 250 MVA (Others)</td>
+                            <td className="py-2.5 text-left font-bold text-foreground">24,275 MVA</td>
+                            <td className="py-2.5 text-left font-medium text-muted-foreground">1 Nos. 250 MVA (Others)</td>
                           </tr>
                           <tr className="hover:bg-muted/5 transition-colors">
                             <td className="py-2.5 font-semibold text-foreground">230/33KV Substation</td>
                             <td className="py-2.5 text-foreground">2 Nos.</td>
-                            <td className="py-2.5 text-right font-bold text-foreground">560 MVA</td>
-                            <td className="py-2.5 text-right font-medium text-muted-foreground">4 Nos. 1,050 MVA (Others)</td>
+                            <td className="py-2.5 text-left font-bold text-foreground">560 MVA</td>
+                            <td className="py-2.5 text-left font-medium text-muted-foreground">4 Nos. 1,050 MVA (Others)</td>
                           </tr>
                           <tr className="hover:bg-muted/5 transition-colors">
                             <td className="py-2.5 font-semibold text-foreground">132/33kV Substation</td>
                             <td className="py-2.5 text-foreground">150 Nos.</td>
-                            <td className="py-2.5 text-right font-bold text-foreground">33,185 MVA</td>
-                            <td className="py-2.5 text-right font-medium text-muted-foreground">46 Nos. 7,660 MVA (Others)</td>
+                            <td className="py-2.5 text-left font-bold text-foreground">33,185 MVA</td>
+                            <td className="py-2.5 text-left font-medium text-muted-foreground">46 Nos. 7,660 MVA (Others)</td>
                           </tr>
                           
                           {/* Summary Row 1: Overall Capacity */}
                           <tr className="border-t border-border/50 bg-primary/5 font-semibold text-foreground">
                             <td className="py-3 pl-3 text-primary font-bold">Overall Capacity</td>
                             <td className="py-3 font-bold" colSpan={2}>259 Nos.</td>
-                            <td className="py-3 text-right font-bold text-primary pr-3">89,155 MVA</td>
+                            <td className="py-3 text-left font-bold text-primary pr-3">89,155 MVA</td>
                           </tr>
                           
                           {/* Summary Row 2: Dispatch Capacity */}
                           <tr className="bg-emerald-500/5 font-semibold text-foreground">
                             <td className="py-3 pl-3 text-emerald-500 font-bold" colSpan={2}>Dispatch Capacity at 33kV level</td>
-                            <td className="py-3 text-right font-bold text-emerald-500 pr-3" colSpan={2}>
+                            <td className="py-3 text-left font-bold text-emerald-500 pr-3" colSpan={2}>
                               36267.21 MW <span className="text-[10px] text-muted-foreground font-normal">(Including all organizations)</span>
                             </td>
                           </tr>
@@ -2972,56 +2972,56 @@ export function PowerGridExplorer({
                     <thead>
                       <tr>
                         <th>Rating / Type</th>
-                        <th className="text-right">Quantity</th>
-                        <th className="text-right">Capacity (MVA)</th>
-                        <th className="text-right">Others Capacity</th>
+                        <th className="text-left">Quantity</th>
+                        <th className="text-left">Capacity (MVA)</th>
+                        <th className="text-left">Others Capacity</th>
                       </tr>
                     </thead>
                     <tbody>
                       <tr>
                         <td className="font-semibold">400 kV HVDC Back-to-Back</td>
-                        <td className="text-right tabular-nums font-medium text-foreground">1 Station</td>
-                        <td className="text-right tabular-nums font-semibold text-foreground">2x500 MW</td>
-                        <td className="text-right text-muted-foreground">—</td>
+                        <td className="text-left tabular-nums font-medium text-foreground">1 Station</td>
+                        <td className="text-left tabular-nums font-semibold text-foreground">2x500 MW</td>
+                        <td className="text-left text-muted-foreground">—</td>
                       </tr>
                       <tr>
                         <td className="font-semibold">400/230 kV Substations</td>
-                        <td className="text-right tabular-nums font-medium text-foreground">11 Nos.</td>
-                        <td className="text-right tabular-nums font-semibold text-foreground">15,180 MVA</td>
-                        <td className="text-right tabular-nums text-muted-foreground">3 Nos. (2,730 MVA)</td>
+                        <td className="text-left tabular-nums font-medium text-foreground">11 Nos.</td>
+                        <td className="text-left tabular-nums font-semibold text-foreground">15,180 MVA</td>
+                        <td className="text-left tabular-nums text-muted-foreground">3 Nos. (2,730 MVA)</td>
                       </tr>
                       <tr>
                         <td className="font-semibold">400/132 kV Substations</td>
-                        <td className="text-right tabular-nums font-medium text-foreground">5 Nos.</td>
-                        <td className="text-right tabular-nums font-semibold text-foreground">4,265 MVA</td>
-                        <td className="text-right text-muted-foreground">—</td>
+                        <td className="text-left tabular-nums font-medium text-foreground">5 Nos.</td>
+                        <td className="text-left tabular-nums font-semibold text-foreground">4,265 MVA</td>
+                        <td className="text-left text-muted-foreground">—</td>
                       </tr>
                       <tr>
                         <td className="font-semibold">230/132 kV Substations</td>
-                        <td className="text-right tabular-nums font-medium text-foreground">36 Nos.</td>
-                        <td className="text-right tabular-nums font-semibold text-foreground">24,275 MVA</td>
-                        <td className="text-right tabular-nums text-muted-foreground">1 Nos. (250 MVA)</td>
+                        <td className="text-left tabular-nums font-medium text-foreground">36 Nos.</td>
+                        <td className="text-left tabular-nums font-semibold text-foreground">24,275 MVA</td>
+                        <td className="text-left tabular-nums text-muted-foreground">1 Nos. (250 MVA)</td>
                       </tr>
                       <tr>
                         <td className="font-semibold">230/33 kV Substations</td>
-                        <td className="text-right tabular-nums font-medium text-foreground">2 Nos.</td>
-                        <td className="text-right tabular-nums font-semibold text-foreground">560 MVA</td>
-                        <td className="text-right tabular-nums text-muted-foreground">4 Nos. (1,050 MVA)</td>
+                        <td className="text-left tabular-nums font-medium text-foreground">2 Nos.</td>
+                        <td className="text-left tabular-nums font-semibold text-foreground">560 MVA</td>
+                        <td className="text-left tabular-nums text-muted-foreground">4 Nos. (1,050 MVA)</td>
                       </tr>
                       <tr>
                         <td className="font-semibold">132/33 kV Substations</td>
-                        <td className="text-right tabular-nums font-medium text-foreground">150 Nos.</td>
-                        <td className="text-right tabular-nums font-semibold text-foreground">33,185 MVA</td>
-                        <td className="text-right tabular-nums text-muted-foreground">46 Nos. (7,660 MVA)</td>
+                        <td className="text-left tabular-nums font-medium text-foreground">150 Nos.</td>
+                        <td className="text-left tabular-nums font-semibold text-foreground">33,185 MVA</td>
+                        <td className="text-left tabular-nums text-muted-foreground">46 Nos. (7,660 MVA)</td>
                       </tr>
                       <tr className="border-t border-border/80 font-bold bg-muted/20">
                         <td>Overall Substation Capacity</td>
-                        <td className="text-right tabular-nums text-primary">259 Stations</td>
-                        <td className="text-right tabular-nums text-primary" colSpan={2}>89,155 MVA</td>
+                        <td className="text-left tabular-nums text-primary">259 Stations</td>
+                        <td className="text-left tabular-nums text-primary" colSpan={2}>89,155 MVA</td>
                       </tr>
                       <tr className="font-bold bg-muted/10">
                         <td>Dispatch Capacity (33kV level)</td>
-                        <td className="text-right tabular-nums text-emerald-500 font-extrabold" colSpan={3}>36,267.21 MW</td>
+                        <td className="text-left tabular-nums text-emerald-500 font-extrabold" colSpan={3}>36,267.21 MW</td>
                       </tr>
                     </tbody>
                   </table>
@@ -3083,7 +3083,7 @@ export function PowerGridExplorer({
                         <th>Voltage Class</th>
                         <th>Operation Zone</th>
                         <th>Transformer Detail</th>
-                        <th className="text-right">Total Capacity</th>
+                        <th className="text-left">Total Capacity</th>
                         <th>Ownership</th>
                         <th>Grid Circle</th>
                       </tr>
@@ -3107,7 +3107,7 @@ export function PowerGridExplorer({
                             </td>
                             <td>{sub.zone}</td>
                             <td className="font-mono text-xs">{sub.transformer}</td>
-                            <td className="text-right font-medium tabular-nums text-foreground">{sub.capacity}</td>
+                            <td className="text-left font-medium tabular-nums text-foreground">{sub.capacity}</td>
                             <td>
                               <span className={cn(
                                 "px-2 py-0.5 rounded-full text-[10px] font-semibold",
@@ -4193,20 +4193,20 @@ export function PowerGridExplorer({
                   <thead>
                     <tr>
                       <th>Grid Zone</th>
-                      <th className="text-right">Evening Demand (MW)</th>
-                      <th className="text-right">Load-Shedding (MW)</th>
-                      <th className="text-right">Shedding Severity</th>
+                      <th className="text-left">Evening Demand (MW)</th>
+                      <th className="text-left">Load-Shedding (MW)</th>
+                      <th className="text-left">Shedding Severity</th>
                     </tr>
                   </thead>
                   <tbody>
                     {regionalDemandData.map((rd, idx) => (
                       <tr key={idx}>
                         <td className="font-semibold">{rd.zone}</td>
-                        <td className="text-right tabular-nums font-medium">{formatNumber(rd.demand)}</td>
-                        <td className="text-right tabular-nums text-destructive font-semibold">
+                        <td className="text-left tabular-nums font-medium">{formatNumber(rd.demand)}</td>
+                        <td className="text-left tabular-nums text-destructive font-semibold">
                           {rd.loadShed > 0 ? `${rd.loadShed} MW` : '0 MW'}
                         </td>
-                        <td className="text-right tabular-nums">
+                        <td className="text-left tabular-nums">
                           {rd.loadShed > 0 ? (
                             <div className="flex items-center justify-end gap-1.5">
                               <span className="font-mono font-bold text-xs text-amber-500">{rd.pct}%</span>
@@ -4225,9 +4225,9 @@ export function PowerGridExplorer({
                     ))}
                     <tr className="border-t border-border/80 font-bold bg-muted/20">
                       <td>Entire Grid Total</td>
-                      <td className="text-right tabular-nums text-primary">{formatNumber(totalRegionalDemand)}</td>
-                      <td className="text-right tabular-nums text-destructive">{formatNumber(totalRegionalLoadShed)}</td>
-                      <td className="text-right tabular-nums text-primary">{avgRegionalPct}% avg</td>
+                      <td className="text-left tabular-nums text-primary">{formatNumber(totalRegionalDemand)}</td>
+                      <td className="text-left tabular-nums text-destructive">{formatNumber(totalRegionalLoadShed)}</td>
+                      <td className="text-left tabular-nums text-primary">{avgRegionalPct}% avg</td>
                     </tr>
                   </tbody>
                 </table>
@@ -4811,8 +4811,8 @@ export function PowerGridExplorer({
                               <thead>
                                 <tr className="border-b border-border/40 text-muted-foreground text-left">
                                   <th className="pb-1.5 font-bold">Fuel Type</th>
-                                  <th className="pb-1.5 text-right font-bold">MKWh</th>
-                                  <th className="pb-1.5 text-right font-bold">Share %</th>
+                                  <th className="pb-1.5 text-left font-bold">MKWh</th>
+                                  <th className="pb-1.5 text-left font-bold">Share %</th>
                                 </tr>
                               </thead>
                               <tbody className="divide-y divide-border/20 text-foreground">
@@ -4831,8 +4831,8 @@ export function PowerGridExplorer({
                                           <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: f.color }} />
                                           <span className="capitalize">{f.name === 'hfo' ? 'Furnace Oil (HFO)' : f.name === 'import' ? 'India Imports' : f.name}</span>
                                         </td>
-                                        <td className="py-1.5 text-right tabular-nums font-semibold">{formatNumber(f.val, 1)}</td>
-                                        <td className="py-1.5 text-right tabular-nums text-muted-foreground">{f.pct.toFixed(1)}%</td>
+                                        <td className="py-1.5 text-left tabular-nums font-semibold">{formatNumber(f.val, 1)}</td>
+                                        <td className="py-1.5 text-left tabular-nums text-muted-foreground">{f.pct.toFixed(1)}%</td>
                                       </tr>
                                     ))}
                               </tbody>
@@ -5055,7 +5055,7 @@ export function PowerGridExplorer({
                                         <span className="font-bold text-primary tabular-nums">{formatNumber(d.max_evening_peak_gen)} MW</span>
                                       </div>
                                       {genYoY !== null && (
-                                        <div className="text-right text-[10px]">
+                                        <div className="text-left text-[10px]">
                                           <span className="text-muted-foreground mr-1">YoY:</span>
                                           <span className={cn("font-semibold", genYoY >= 0 ? "text-emerald-500" : "text-destructive")}>
                                             {genYoY >= 0 ? "+" : ""}{genYoY.toFixed(1)}%
@@ -5069,7 +5069,7 @@ export function PowerGridExplorer({
                                         <span className="font-bold text-foreground tabular-nums">{formatNumber(d.max_evening_peak_demand)} MW</span>
                                       </div>
                                       {demandYoY !== null && (
-                                        <div className="text-right text-[10px]">
+                                        <div className="text-left text-[10px]">
                                           <span className="text-muted-foreground mr-1">YoY:</span>
                                           <span className={cn("font-semibold", demandYoY >= 0 ? "text-emerald-500" : "text-destructive")}>
                                             {demandYoY >= 0 ? "+" : ""}{demandYoY.toFixed(1)}%
@@ -5085,7 +5085,7 @@ export function PowerGridExplorer({
                                         </span>
                                       </div>
                                       {deficit > 0 && (
-                                        <div className="text-right text-[10px]">
+                                        <div className="text-left text-[10px]">
                                           <span className="text-muted-foreground mr-1">Deficit Share:</span>
                                           <span className="font-semibold text-destructive">{deficitPct.toFixed(1)}%</span>
                                         </div>
@@ -5170,7 +5170,7 @@ export function PowerGridExplorer({
                                         <span className="font-bold text-amber-500 tabular-nums">{formatNumber(d.total_net_generation, 1)} MKWh</span>
                                       </div>
                                       {energyYoY !== null && (
-                                        <div className="text-right text-[10px]">
+                                        <div className="text-left text-[10px]">
                                           <span className="text-muted-foreground mr-1">YoY Growth:</span>
                                           <span className={cn("font-semibold", energyYoY >= 0 ? "text-emerald-500" : "text-destructive")}>
                                             {energyYoY >= 0 ? "+" : ""}{energyYoY.toFixed(1)}%
@@ -5247,7 +5247,7 @@ export function PowerGridExplorer({
                                         </span>
                                       </div>
                                       {fuelYoY !== null && (
-                                        <div className="text-right text-[10px]">
+                                        <div className="text-left text-[10px]">
                                           <span className="text-muted-foreground mr-1">YoY Growth:</span>
                                           <span className={cn("font-semibold", fuelYoY >= 0 ? "text-emerald-500" : "text-destructive")}>
                                             {fuelYoY >= 0 ? "+" : ""}{fuelYoY.toFixed(1)}%
@@ -5459,24 +5459,24 @@ export function PowerGridExplorer({
                     <thead>
                       <tr>
                         <th>Year</th>
-                        <th className="text-right">Retail Diesel (Tk/L)</th>
-                        <th className="text-right">Retail Octane (Tk/L)</th>
-                        <th className="text-right">Spot LNG (USD/MMBtu)</th>
-                        <th className="text-right">Import Coal (USD/Ton)</th>
-                        <th className="text-right">Exchange Rate (BDT/USD)</th>
-                        <th className="text-right">Inflation Rate (CPI %)</th>
+                        <th className="text-left">Retail Diesel (Tk/L)</th>
+                        <th className="text-left">Retail Octane (Tk/L)</th>
+                        <th className="text-left">Spot LNG (USD/MMBtu)</th>
+                        <th className="text-left">Import Coal (USD/Ton)</th>
+                        <th className="text-left">Exchange Rate (BDT/USD)</th>
+                        <th className="text-left">Inflation Rate (CPI %)</th>
                       </tr>
                     </thead>
                     <tbody>
                       {macroEconomicData.map((d, idx) => (
                         <tr key={idx}>
                           <td className="font-semibold">{d.year}</td>
-                          <td className="text-right tabular-nums">{d.retailDiesel.toFixed(2)} Tk</td>
-                          <td className="text-right tabular-nums">{d.retailOctane.toFixed(2)} Tk</td>
-                          <td className="text-right tabular-nums">${d.spotLng.toFixed(2)}</td>
-                          <td className="text-right tabular-nums">${d.importCoal.toFixed(2)}</td>
-                          <td className="text-right tabular-nums font-semibold text-primary">{d.exchangeRate.toFixed(2)} Tk</td>
-                          <td className="text-right tabular-nums font-semibold text-amber-500">{d.inflation.toFixed(2)}%</td>
+                          <td className="text-left tabular-nums">{d.retailDiesel.toFixed(2)} Tk</td>
+                          <td className="text-left tabular-nums">{d.retailOctane.toFixed(2)} Tk</td>
+                          <td className="text-left tabular-nums">${d.spotLng.toFixed(2)}</td>
+                          <td className="text-left tabular-nums">${d.importCoal.toFixed(2)}</td>
+                          <td className="text-left tabular-nums font-semibold text-primary">{d.exchangeRate.toFixed(2)} Tk</td>
+                          <td className="text-left tabular-nums font-semibold text-amber-500">{d.inflation.toFixed(2)}%</td>
                         </tr>
                       ))}
                     </tbody>
@@ -5610,20 +5610,20 @@ export function PowerGridExplorer({
                         <thead>
                           <tr>
                             <th>Fiscal Year</th>
-                            <th className="text-right">Operating Revenue (Crore BDT)</th>
-                            <th className="text-right">Generation &amp; Purchase Cost (Crore BDT)</th>
-                            <th className="text-right">Govt Subsidy Received (Crore BDT)</th>
-                            <th className="text-right">Net Profit / Loss (Crore BDT)</th>
+                            <th className="text-left">Operating Revenue (Crore BDT)</th>
+                            <th className="text-left">Generation &amp; Purchase Cost (Crore BDT)</th>
+                            <th className="text-left">Govt Subsidy Received (Crore BDT)</th>
+                            <th className="text-left">Net Profit / Loss (Crore BDT)</th>
                           </tr>
                         </thead>
                         <tbody>
                           {bpdbAuditedFinancials.map((d, idx) => (
                             <tr key={idx}>
                               <td className="font-semibold">{d.year}</td>
-                              <td className="text-right tabular-nums">{formatNumber(d.revenue)}</td>
-                              <td className="text-right tabular-nums text-destructive">{formatNumber(d.cost)}</td>
-                              <td className="text-right tabular-nums text-emerald-500 font-semibold">{formatNumber(d.subsidy)}</td>
-                              <td className="text-right tabular-nums font-bold text-destructive">{formatNumber(d.loss)}</td>
+                              <td className="text-left tabular-nums">{formatNumber(d.revenue)}</td>
+                              <td className="text-left tabular-nums text-destructive">{formatNumber(d.cost)}</td>
+                              <td className="text-left tabular-nums text-emerald-500 font-semibold">{formatNumber(d.subsidy)}</td>
+                              <td className="text-left tabular-nums font-bold text-destructive">{formatNumber(d.loss)}</td>
                             </tr>
                           ))}
                         </tbody>
@@ -5719,18 +5719,18 @@ export function PowerGridExplorer({
                         <thead>
                           <tr>
                             <th>Fiscal Year</th>
-                            <th className="text-right">Gas Sales Revenue (Crore BDT)</th>
-                            <th className="text-right">LNG Import Costs (Crore BDT)</th>
-                            <th className="text-right">Net Profit / Loss (Crore BDT)</th>
+                            <th className="text-left">Gas Sales Revenue (Crore BDT)</th>
+                            <th className="text-left">LNG Import Costs (Crore BDT)</th>
+                            <th className="text-left">Net Profit / Loss (Crore BDT)</th>
                           </tr>
                         </thead>
                         <tbody>
                           {petrobanglaAuditedFinancials.map((d, idx) => (
                             <tr key={idx}>
                               <td className="font-semibold">{d.year}</td>
-                              <td className="text-right tabular-nums">{formatNumber(d.revenue)}</td>
-                              <td className="text-right tabular-nums text-purple-500">{formatNumber(d.lngCost)}</td>
-                              <td className={cn("text-right tabular-nums font-bold", d.netProfit > 0 ? "text-emerald-500" : "text-destructive")}>
+                              <td className="text-left tabular-nums">{formatNumber(d.revenue)}</td>
+                              <td className="text-left tabular-nums text-purple-500">{formatNumber(d.lngCost)}</td>
+                              <td className={cn("text-left tabular-nums font-bold", d.netProfit > 0 ? "text-emerald-500" : "text-destructive")}>
                                 {formatNumber(d.netProfit)}
                               </td>
                             </tr>
