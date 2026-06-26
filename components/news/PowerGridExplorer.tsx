@@ -4,7 +4,7 @@ import { useEffect, useId, useState, useRef, RefObject, useMemo } from 'react';
 import Link from 'next/link';
 import {
   Zap, Activity, Cable, TrendingUp, FileText, BarChart3, MapPin, DollarSign, Database, Droplet, Globe, Sun,
-  Search, ChevronLeft, ChevronRight, ChevronDown, Check, Info, Map, Network, CheckSquare, Calendar
+  Search, ChevronLeft, ChevronRight, ChevronDown, Check, Info, Map, Network, CheckSquare, Calendar, RotateCcw
 } from 'lucide-react';
 import { substationsData } from '@/lib/substations-data';
 import {
@@ -299,6 +299,12 @@ interface CustomDropdownProps {
   dropdownRef: RefObject<HTMLDivElement | null>;
   icon?: React.ReactNode;
   prefixLabel?: string;
+  layout?: 'list' | 'grid';
+  gridColumns?: number;
+  menuWidth?: string;
+  noBackground?: boolean;
+  hideDecorationsOnSelect?: boolean;
+  align?: 'left' | 'right';
 }
 
 function CustomDropdown({
@@ -310,26 +316,51 @@ function CustomDropdown({
   setIsOpen,
   dropdownRef,
   icon,
-  prefixLabel
+  prefixLabel,
+  layout = 'list',
+  gridColumns = 3,
+  menuWidth,
+  noBackground = false,
+  hideDecorationsOnSelect = false,
+  align = 'left'
 }: CustomDropdownProps) {
   const selectedOption = options.find((opt) => opt.value === value) || { label: placeholder, value };
+  const hasValue = value && value !== '';
+  const showDecorations = !hideDecorationsOnSelect || !hasValue;
+
   return (
     <div className="relative w-full text-left" ref={dropdownRef}>
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className="w-full flex items-center justify-between gap-2 px-3.5 py-2 text-xs md:text-sm bg-muted/20 border border-border/40 rounded-xl text-foreground hover:bg-muted/30 hover:border-primary/30 focus:outline-none focus:border-primary/50 transition-all duration-150 font-medium shadow-sm"
+        className={cn(
+          "w-full relative flex items-center justify-center gap-2 px-3.5 py-2 text-xs md:text-sm border border-border/40 rounded-xl text-foreground focus:outline-none focus:border-primary/50 transition-all duration-150 font-medium shadow-sm pr-8",
+          noBackground
+            ? "bg-transparent hover:bg-muted/10 hover:border-primary/30"
+            : "bg-muted/20 hover:bg-muted/30 hover:border-primary/30"
+        )}
       >
-        <span className="truncate flex items-center gap-1.5 font-bold">
-          {icon}
-          {prefixLabel && <span className="text-muted-foreground font-medium mr-0.5">{prefixLabel}</span>}
-          <span>{selectedOption.label}</span>
+        <span className="flex items-center justify-center gap-1.5 font-bold min-w-0 w-full text-center">
+          {showDecorations && icon}
+          {showDecorations && prefixLabel && <span className="text-muted-foreground font-medium mr-0.5 shrink-0">{prefixLabel}</span>}
+          <span className="truncate whitespace-nowrap text-center">{selectedOption.label}</span>
         </span>
-        <ChevronDown className={cn("h-4 w-4 text-muted-foreground shrink-0 transition-transform duration-150", isOpen && "rotate-180")} />
+        <ChevronDown className={cn("absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground shrink-0 transition-transform duration-150", isOpen && "rotate-180")} />
       </button>
 
       {isOpen && (
-        <div className="absolute left-0 mt-2 w-full max-h-60 overflow-y-auto rounded-2xl border border-border bg-card/95 backdrop-blur-xl shadow-2xl p-1.5 z-[100] animate-in fade-in slide-in-from-top-1 duration-150 scrollbar-thin">
+        <div 
+          style={menuWidth ? { width: menuWidth } : undefined}
+          className={cn(
+            "absolute mt-2.5 max-h-60 overflow-y-auto rounded-2xl border border-border bg-card/95 backdrop-blur-xl shadow-2xl p-1.5 z-[100] animate-in fade-in slide-in-from-top-1 duration-150 scrollbar-thin",
+            align === 'right' ? "right-0" : "left-0",
+            layout === 'grid' ? "grid gap-1" : "flex flex-col",
+            layout === 'grid' && gridColumns === 3 && "grid-cols-3",
+            layout === 'grid' && gridColumns === 4 && "grid-cols-4",
+            layout === 'grid' && gridColumns === 6 && "grid-cols-6",
+            layout !== 'grid' && "w-full"
+          )}
+        >
           {options.map((opt) => {
             const active = opt.value === value;
             return (
@@ -341,14 +372,17 @@ function CustomDropdown({
                   setIsOpen(false);
                 }}
                 className={cn(
-                  "w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs md:text-sm font-semibold transition-all select-none text-left",
+                  "flex items-center rounded-xl text-xs md:text-sm font-semibold transition-all select-none text-left",
+                  layout === 'grid' 
+                    ? "justify-center p-2" 
+                    : "w-full justify-between px-3.5 py-2.5",
                   active
                     ? "bg-primary/10 text-primary font-bold"
                     : "text-muted-foreground hover:text-foreground hover:bg-muted/40"
                 )}
               >
-                <span className="truncate">{opt.label}</span>
-                {active && <Check className="h-3.5 w-3.5 shrink-0" />}
+                <span className={cn(layout === 'grid' ? "whitespace-nowrap text-center w-full" : "truncate")}>{opt.label}</span>
+                {active && layout !== 'grid' && <Check className="h-3.5 w-3.5 shrink-0" />}
               </button>
             );
           })}
@@ -492,7 +526,7 @@ export function PowerGridExplorer({
     return years.map(y => ({ label: y, value: y }));
   }, [years]);
 
-  const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 
   const monthsForYear = useMemo(() => {
     return Array.from(new Set(
@@ -784,6 +818,8 @@ export function PowerGridExplorer({
   const [reportsCompany, setReportsCompany] = useState<'bpdb' | 'petrobangla'>('bpdb');
   const [chartsReady, setChartsReady] = useState(false);
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
+  const [hoveredCostIndex, setHoveredCostIndex] = useState<number | null>(null);
+  const [hoveredZoneIndex, setHoveredZoneIndex] = useState<number | null>(null);
 
   // PGCB Monthly Archives States
   const [selectedMonthlyKey, setSelectedMonthlyKey] = useState<string>(
@@ -956,50 +992,16 @@ export function PowerGridExplorer({
     icon: any;
   }
 
-  interface TabGroup {
-    label: string;
-    tabs: TabInfo[];
-  }
-
-  const tabGroups: TabGroup[] = [
-    {
-      label: 'Operations',
-      tabs: [
-        { id: 'overview', label: 'Overview', icon: BarChart3 },
-        { id: 'gen', label: 'Generation & Cost', icon: Zap },
-      ]
-    },
-    {
-      label: 'Supply & Logistics',
-      tabs: [
-        { id: 'gas', label: 'Gas & LNG Supply', icon: Droplet },
-        { id: 'imports', label: 'C/B Imports', icon: Globe },
-        { id: 'renewables', label: 'Renewables (SREDA)', icon: Sun },
-      ]
-    },
-    {
-      label: 'Infrastructure & Projects',
-      tabs: [
-        { id: 'transmission', label: 'Technical Information', icon: Activity },
-        { id: 'regional', label: 'Regional Grid', icon: Cable },
-      ]
-    },
-    {
-      label: 'Analytics & Planning (Macro Trends)',
-      tabs: [
-        { id: 'macro', label: 'Macro Trends', icon: TrendingUp },
-      ]
-    }
-  ];
-
-  const tabs = useMemo<TabInfo[]>(() => {
-    return tabGroups.flatMap(g => g.tabs);
-  }, []);
-
-  const activeGroup = useMemo(() => {
-    const group = tabGroups.find(g => g.tabs.some(t => t.id === activeTab));
-    return group ? group.label : 'Operations';
-  }, [activeTab]);
+  const tabs = [
+    { id: 'overview', label: 'Overview', icon: BarChart3 },
+    { id: 'gen', label: 'Generation & Cost', icon: Zap },
+    { id: 'gas', label: 'Gas & LNG Supply', icon: Droplet },
+    { id: 'imports', label: 'C/B Imports', icon: Globe },
+    { id: 'renewables', label: 'Renewables (SREDA)', icon: Sun },
+    { id: 'transmission', label: 'Technical Information', icon: Activity },
+    { id: 'regional', label: 'Regional Grid', icon: Cable },
+    { id: 'macro', label: 'Macro Trends', icon: TrendingUp },
+  ] as const;
 
   // Substation Filtering Logic
   const filteredSubstations = substationsData.filter((sub) => {
@@ -1099,8 +1101,18 @@ export function PowerGridExplorer({
             Active reporting date: <span className="font-semibold text-primary">{systemStats.date}</span> <span className="text-[10px] bg-primary/10 text-primary px-1.5 py-0.5 rounded font-bold ml-1 uppercase tracking-wider">Today</span>
           </p>
         </div>
-        <div className="grid grid-cols-3 gap-2 w-full sm:w-auto">
-          <div className="relative z-50">
+        <div className="flex flex-wrap sm:flex-nowrap items-center gap-2 w-full sm:w-auto">
+          {/* TODAY Reset Button */}
+          <button
+            type="button"
+            onClick={() => setSelectedDate(latestDate)}
+            className="flex items-center justify-center gap-1 px-3 py-2 text-xs md:text-sm font-bold bg-transparent border border-border/40 hover:bg-muted/10 hover:border-primary/30 rounded-xl transition-all duration-150 shadow-sm text-foreground"
+          >
+            <RotateCcw className="h-3.5 w-3.5 text-primary shrink-0" />
+            <span>Today</span>
+          </button>
+
+          <div className="w-full sm:w-28 relative z-50">
             <CustomDropdown
               value={selectedYear}
               onChange={handleYearChange}
@@ -1111,10 +1123,15 @@ export function PowerGridExplorer({
               dropdownRef={dailyYearDropdownRef}
               icon={<Calendar className="h-3.5 w-3.5 text-primary shrink-0" />}
               prefixLabel="Year:"
+              layout="grid"
+              gridColumns={3}
+              menuWidth="12rem"
+              noBackground={true}
+              hideDecorationsOnSelect={true}
             />
           </div>
 
-          <div className="relative z-50">
+          <div className="w-full sm:w-36 relative z-50">
             <CustomDropdown
               value={selectedMonth}
               onChange={handleMonthChange}
@@ -1125,10 +1142,15 @@ export function PowerGridExplorer({
               dropdownRef={dailyMonthDropdownRef}
               icon={<FileText className="h-3.5 w-3.5 text-primary shrink-0" />}
               prefixLabel="Month:"
+              layout="grid"
+              gridColumns={3}
+              menuWidth="18rem"
+              noBackground={true}
+              hideDecorationsOnSelect={true}
             />
           </div>
 
-          <div className="relative z-50">
+          <div className="w-full sm:w-28 relative z-50">
             <CustomDropdown
               value={selectedDay}
               onChange={handleDayChange}
@@ -1139,6 +1161,12 @@ export function PowerGridExplorer({
               dropdownRef={dailyDayDropdownRef}
               icon={<Activity className="h-3.5 w-3.5 text-primary shrink-0" />}
               prefixLabel="Day:"
+              layout="grid"
+              gridColumns={6}
+              menuWidth="18rem"
+              noBackground={true}
+              hideDecorationsOnSelect={true}
+              align="right"
             />
           </div>
         </div>
@@ -1152,8 +1180,8 @@ export function PowerGridExplorer({
         >
           <Zap className="grid-explorer-kpi__icon" />
           <div className="min-w-0">
-            <div className="grid-explorer-kpi__label">Daily Generation</div>
-            <div className="grid-explorer-kpi__value">{systemStats.totalEnergyGen.toFixed(1)} MKWh<sup className="text-[10px] font-bold ml-0.5">r</sup></div>
+            <div className="grid-explorer-kpi__label">Daily Generation<sup className="text-emerald-500 font-extrabold text-[10px] ml-2 select-none">Daily</sup></div>
+            <div className="grid-explorer-kpi__value">{systemStats.totalEnergyGen.toFixed(1)} MKWh</div>
           </div>
           {/* Custom Tooltip */}
           <div 
@@ -1202,7 +1230,7 @@ export function PowerGridExplorer({
         >
           <Activity className="grid-explorer-kpi__icon text-amber-500" />
           <div className="min-w-0">
-            <div className="grid-explorer-kpi__label">Peak Demand</div>
+            <div className="grid-explorer-kpi__label">Peak Demand<sup className="text-emerald-500 font-extrabold text-[10px] ml-2 select-none">Daily</sup></div>
             <div className="grid-explorer-kpi__value">{formatNumber(Math.round(systemStats.eveningPeakDemand))} MW</div>
           </div>
           {/* Custom Tooltip */}
@@ -1252,7 +1280,7 @@ export function PowerGridExplorer({
         >
           <Droplet className="grid-explorer-kpi__icon text-sky-500" />
           <div className="min-w-0">
-            <div className="grid-explorer-kpi__label">Gas Production</div>
+            <div className="grid-explorer-kpi__label">Gas Production<sup className="text-emerald-500 font-extrabold text-[10px] ml-2 select-none">Daily</sup></div>
             <div className="grid-explorer-kpi__value">2,647.5 MMCFD</div>
           </div>
           {/* Custom Tooltip */}
@@ -1306,7 +1334,7 @@ export function PowerGridExplorer({
         >
           <Sun className="grid-explorer-kpi__icon text-yellow-500" />
           <div className="min-w-0">
-            <div className="grid-explorer-kpi__label">Renewables Online</div>
+            <div className="grid-explorer-kpi__label">Renewables Online<sup className="text-orange-500 font-extrabold text-[10px] ml-2 select-none">Monthly</sup></div>
             <div className="grid-explorer-kpi__value">{totalCapacityRenewables.toFixed(1)} MW</div>
           </div>
           {/* Custom Tooltip */}
@@ -1360,7 +1388,7 @@ export function PowerGridExplorer({
         >
           <TakaIcon className="grid-explorer-kpi__icon text-emerald-500" />
           <div className="min-w-0">
-            <div className="grid-explorer-kpi__label">Est. Fuel Cost</div>
+            <div className="grid-explorer-kpi__label">Est. Fuel Cost<sup className="text-emerald-500 font-extrabold text-[10px] ml-2 select-none">Daily</sup></div>
             <div className="grid-explorer-kpi__value">{(systemStats.totalDailyCost / 10000000).toFixed(1)} Cr Tk.</div>
           </div>
           {/* Custom Tooltip */}
@@ -1409,53 +1437,26 @@ export function PowerGridExplorer({
         </div>
       </div>
 
-      {/* Grouped Tab Navigation */}
-      <div className="flex flex-col gap-3 mt-6 mb-4 w-full">
-        {/* Category Groups Row */}
-        <div className="flex flex-wrap items-center gap-1.5 border-b border-border/40 pb-2.5">
-          {tabGroups.map((group) => {
-            const isGroupActive = activeGroup === group.label;
-            return (
-              <button
-                key={group.label}
-                type="button"
-                onClick={() => {
-                  // Switch to the first tab in this group
-                  handleTabClick(group.tabs[0].id);
-                }}
-                className={cn(
-                  "px-3.5 py-1.5 rounded-xl text-[10px] font-bold transition-all duration-200 uppercase tracking-wider border",
-                  isGroupActive
-                    ? "bg-primary/10 text-primary border-primary/20 shadow-sm"
-                    : "text-muted-foreground border-transparent hover:bg-muted/40 hover:text-foreground"
-                )}
-              >
-                {group.label}
-              </button>
-            );
-          })}
-        </div>
-
-        {/* Sub-Tabs Row under active group */}
-        <div className="grid-explorer-tabs" role="tablist" aria-label="Grid reports views">
-          {tabGroups.find(g => g.label === activeGroup)?.tabs.map((t) => {
-            const TabIcon = t.icon;
-            const active = activeTab === t.id;
-            return (
-              <button
-                key={t.id}
-                type="button"
-                role="tab"
-                aria-selected={active}
-                onClick={() => handleTabClick(t.id)}
-                className={cn('explorer-tab', active && 'active')}
-              >
-                <TabIcon className="h-4 w-4 shrink-0" />
-                {t.label}
-              </button>
-            );
-          })}
-        </div>
+      {/* Flat Tab Navigation */}
+      <div className="grid-explorer-tabs mt-6 mb-4" role="tablist" aria-label="Grid reports views">
+        {tabs.map((t) => {
+          const TabIcon = t.icon;
+          const active = activeTab === t.id;
+          return (
+            <button
+              key={t.id}
+              type="button"
+              role="tab"
+              aria-selected={active}
+              onClick={() => handleTabClick(t.id)}
+              className={cn('explorer-tab', active && 'active')}
+            >
+              <TabIcon className="h-4 w-4 shrink-0" />
+              <span>{t.label}</span>
+              {t.id === 'renewables' && <sup className="text-orange-500 font-extrabold text-[10px] ml-2 select-none">Monthly</sup>}
+            </button>
+          );
+        })}
       </div>
 
       {/* Tab Panels */}
@@ -1479,7 +1480,7 @@ export function PowerGridExplorer({
           <div className="grid-explorer-chart-card card">
             <div className="grid-explorer-chart-card__head">
               <div>
-                <h3 className="grid-explorer-chart-card__title">Daily Generation Mix Snapshot</h3>
+                <h3 className="grid-explorer-chart-card__title">Daily Generation Mix Snapshot<sup className="text-emerald-500 font-extrabold text-[10px] ml-2 select-none">Daily</sup></h3>
                 <p className="grid-explorer-chart-card__sub">Energy share by fuel type (Total: {totalGenMkwhr.toFixed(1)} MKWh)</p>
               </div>
               <GridLiveBadge label={`Report: ${systemStats.date}`} />
@@ -1622,7 +1623,7 @@ export function PowerGridExplorer({
           <div className="grid-explorer-chart-card card">
             <div className="grid-explorer-chart-card__head">
               <div>
-                <h3 className="grid-explorer-chart-card__title">Daily Fuel &amp; Import Cost</h3>
+                <h3 className="grid-explorer-chart-card__title">Daily Fuel &amp; Import Cost<sup className="text-emerald-500 font-extrabold text-[10px] ml-2 select-none">Daily</sup></h3>
                 <p className="grid-explorer-chart-card__sub">Cost in Crore BDT by fuel type (Total: {(totalCostBdt / 10000000).toFixed(1)} Cr Tk.)</p>
               </div>
               <span className="grid-explorer-chip">Cost Analysis</span>
@@ -1678,10 +1679,24 @@ export function PowerGridExplorer({
                       }}
                       cursor={{ fill: chartTheme.hoverFill, radius: 8 }}
                     />
-                    <Bar dataKey={(d) => d.cost / 10000000} radius={[6, 6, 0, 0]} maxBarSize={40}>
-                      {generationData.filter(d => d.cost > 0).map((entry, idx) => (
-                        <Cell key={idx} fill={entry.color} />
-                      ))}
+                    <Bar
+                      dataKey={(d) => d.cost / 10000000}
+                      radius={[6, 6, 0, 0]}
+                      maxBarSize={40}
+                    >
+                      {generationData.filter(d => d.cost > 0).map((entry, idx) => {
+                        const isDimmed = hoveredCostIndex !== null && hoveredCostIndex !== idx;
+                        return (
+                          <Cell
+                            key={idx}
+                            fill={entry.color}
+                            fillOpacity={isDimmed ? 0.35 : 1}
+                            style={{ transition: 'fill-opacity 200ms ease', cursor: 'pointer' }}
+                            onMouseEnter={() => setHoveredCostIndex(idx)}
+                            onMouseLeave={() => setHoveredCostIndex(null)}
+                          />
+                        );
+                      })}
                     </Bar>
                   </BarChart>
                 </ResponsiveContainer>
@@ -1715,7 +1730,7 @@ export function PowerGridExplorer({
         <div className="grid-explorer-chart-card card">
           <div className="grid-explorer-chart-card__head">
             <div>
-              <h3 className="grid-explorer-chart-card__title">24-Hour System Load Curve</h3>
+              <h3 className="grid-explorer-chart-card__title">24-Hour System Load Curve<sup className="text-emerald-500 font-extrabold text-[10px] ml-2 select-none">Daily</sup></h3>
               <p className="grid-explorer-chart-card__sub">SCADA demand, actual generation, and load shedding profile (Date: {systemStats.date})</p>
             </div>
             <span className="grid-explorer-chip bg-destructive/10 text-destructive border-destructive/20">NLDC SCADA Curve</span>
@@ -1811,7 +1826,7 @@ export function PowerGridExplorer({
             <div className="grid-explorer-chart-card__head grid-explorer-chart-card__head--border">
               <Zap className="h-5 w-5 text-primary shrink-0" />
               <div>
-                <h3 className="grid-explorer-chart-card__title">Generation &amp; Production Cost Breakdown</h3>
+                <h3 className="grid-explorer-chart-card__title">Generation &amp; Production Cost Breakdown<sup className="text-emerald-500 font-extrabold text-[10px] ml-2 select-none">Daily</sup></h3>
                 <p className="grid-explorer-chart-card__sub">System performance data logged on {systemStats.date}</p>
               </div>
             </div>
@@ -1921,7 +1936,7 @@ export function PowerGridExplorer({
             <div className="grid-explorer-chart-card__head grid-explorer-chart-card__head--border">
               <Droplet className="h-5 w-5 text-sky-500 shrink-0" />
               <div>
-                <h3 className="grid-explorer-chart-card__title">Daily Gas &amp; Condensate Production</h3>
+                <h3 className="grid-explorer-chart-card__title">Daily Gas &amp; Condensate Production<sup className="text-emerald-500 font-extrabold text-[10px] ml-2 select-none">Daily</sup></h3>
                 <p className="grid-explorer-chart-card__sub">Petrobangla Production &amp; Marketing Division Report (22-23 Jun 2026)</p>
               </div>
             </div>
@@ -1971,7 +1986,7 @@ export function PowerGridExplorer({
             <div className="grid-explorer-chart-card__head grid-explorer-chart-card__head--border">
               <Database className="h-5 w-5 text-sky-600 shrink-0" />
               <div>
-                <h3 className="grid-explorer-chart-card__title">Sectorwise Gas Distribution</h3>
+                <h3 className="grid-explorer-chart-card__title">Sectorwise Gas Distribution<sup className="text-emerald-500 font-extrabold text-[10px] ml-2 select-none">Daily</sup></h3>
                 <p className="grid-explorer-chart-card__sub">Allocated supply (MMCFD) across regional gas distributors</p>
               </div>
             </div>
@@ -2053,7 +2068,7 @@ export function PowerGridExplorer({
             <div className="grid-explorer-chart-card__head grid-explorer-chart-card__head--border">
               <Globe className="h-5 w-5 text-purple-500 shrink-0" />
               <div>
-                <h3 className="grid-explorer-chart-card__title">Cross-Border Power Imports Tracker</h3>
+                <h3 className="grid-explorer-chart-card__title">Cross-Border Power Imports Tracker<sup className="text-emerald-500 font-extrabold text-[10px] ml-2 select-none">Daily</sup></h3>
                 <p className="grid-explorer-chart-card__sub">Real-time import allocations and daily power trade (Report: {systemStats.date})</p>
               </div>
             </div>
@@ -2119,7 +2134,7 @@ export function PowerGridExplorer({
             <div className="grid-explorer-chart-card__head grid-explorer-chart-card__head--border">
               <Sun className="h-5 w-5 text-yellow-500 shrink-0" />
               <div>
-                <h3 className="grid-explorer-chart-card__title">Renewable Installed Capacity</h3>
+                <h3 className="grid-explorer-chart-card__title">Renewable Installed Capacity<sup className="text-orange-500 font-extrabold text-[10px] ml-2 select-none">Monthly</sup></h3>
                 <p className="grid-explorer-chart-card__sub">Source: SREDA National Database of Renewable Energy</p>
               </div>
             </div>
@@ -2166,7 +2181,7 @@ export function PowerGridExplorer({
             <div className="space-y-4">
               <div className="grid-explorer-chart-card__head">
                 <div>
-                  <h3 className="grid-explorer-chart-card__title">SREDA Renewable Target Progress</h3>
+                  <h3 className="grid-explorer-chart-card__title">SREDA Renewable Target Progress<sup className="text-orange-500 font-extrabold text-[10px] ml-2 select-none">Monthly</sup></h3>
                   <p className="grid-explorer-chart-card__sub">Tracking towards Sustainable Development Goals (SDG 7)</p>
                 </div>
               </div>
@@ -4183,7 +4198,7 @@ export function PowerGridExplorer({
               <div className="grid-explorer-chart-card__head grid-explorer-chart-card__head--border">
                 <Cable className="h-5 w-5 text-primary shrink-0" />
                 <div>
-                  <h3 className="grid-explorer-chart-card__title">Zone-wise Demand &amp; Load-Shedding</h3>
+                  <h3 className="grid-explorer-chart-card__title">Zone-wise Demand &amp; Load-Shedding<sup className="text-emerald-500 font-extrabold text-[10px] ml-2 select-none">Daily</sup></h3>
                   <p className="grid-explorer-chart-card__sub">SCADA readings recorded at evening peak hour (21:00 Hr.)</p>
                 </div>
               </div>
@@ -4208,7 +4223,7 @@ export function PowerGridExplorer({
                         </td>
                         <td className="text-left tabular-nums">
                           {rd.loadShed > 0 ? (
-                            <div className="flex items-center justify-end gap-1.5">
+                            <div className="flex items-center justify-start gap-1.5">
                               <span className="font-mono font-bold text-xs text-amber-500">{rd.pct}%</span>
                               <div className="w-12 h-2 rounded bg-muted overflow-hidden">
                                 <div
@@ -4246,7 +4261,7 @@ export function PowerGridExplorer({
               <div className="grid-explorer-chart-card__head grid-explorer-chart-card__head--border">
                 <FileText className="h-5 w-5 text-amber-500 shrink-0" />
                 <div>
-                  <h3 className="grid-explorer-chart-card__title">NLDC Daily Outage Log</h3>
+                  <h3 className="grid-explorer-chart-card__title">NLDC Daily Outage Log<sup className="text-emerald-500 font-extrabold text-[10px] ml-2 select-none">Daily</sup></h3>
                   <p className="grid-explorer-chart-card__sub">Major event log of yesterday's grid outages</p>
                 </div>
               </div>
@@ -4275,9 +4290,8 @@ export function PowerGridExplorer({
             </div>
           </div>
 
-          {/* Transmission & Projects Grid */}
-          <div className="grid md:grid-cols-2 gap-6">
-            {/* Key Transmission Lines */}
+          {/* Key Transmission Lines */}
+          <div className="w-full">
             <div className="grid-explorer-chart-card card">
               <div className="grid-explorer-chart-card__head grid-explorer-chart-card__head--border">
                 <Cable className="h-5 w-5 text-primary shrink-0" />
@@ -4324,59 +4338,17 @@ export function PowerGridExplorer({
                   </tbody>
                 </table>
               </div>
-            </div>
 
-            {/* Key Power Projects */}
-            <div className="grid-explorer-chart-card card">
-              <div className="grid-explorer-chart-card__head grid-explorer-chart-card__head--border">
-                <Zap className="h-5 w-5 text-yellow-500 shrink-0" />
-                <div>
-                  <h3 className="grid-explorer-chart-card__title">Upcoming Generation Projects</h3>
-                  <p className="grid-explorer-chart-card__sub">Major power stations and capacity additions under tracking</p>
-                </div>
-              </div>
-              <div className="grid-explorer-table-wrap">
-                <table className="grid-explorer-table">
-                  <thead>
-                    <tr>
-                      <th>Project Name</th>
-                      <th>Status</th>
-                      <th>Capacity / Cost</th>
-                      <th>Expected Date</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {(initialProjects && initialProjects.length > 0 ? initialProjects : ongoingProjectsData.map(p => ({
-                      name: p.name,
-                      status: p.status.physical.includes('%') ? `Phys: ${p.status.physical.trim()}` : p.status.physical,
-                      mw: p.cost.total.split(" ")[0] + " Lakh",
-                      date: p.duration.split(" to ")[1] || p.duration
-                    })))
-                    .map((proj: any, idx: number) => (
-                      <tr key={idx}>
-                        <td className="font-semibold">{proj.name}</td>
-                        <td>
-                          <span className={cn(
-                            "px-2 py-0.5 rounded-full text-[10px] font-bold",
-                            proj.status === 'Construction' || proj.status === 'Ongoing' ? "bg-emerald-500/10 text-emerald-500 border border-emerald-500/20" :
-                            proj.status === 'Tender' ? "bg-amber-500/10 text-amber-500 border border-amber-500/20" :
-                            "bg-sky-500/10 text-sky-500 border border-sky-500/20"
-                          )}>
-                            {proj.status}
-                          </span>
-                        </td>
-                        <td className="tabular-nums font-medium">{proj.mw}</td>
-                        <td className="tabular-nums text-muted-foreground font-medium">{proj.date}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+              {/* Card Metadata Footer */}
+              <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1.5 mt-4 pt-3 border-t border-border/40 text-[10px] text-muted-foreground/80 px-4 pb-4">
+                <span>Source: <a href="https://www.pgcb.gov.bd/" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline font-semibold">PGCB System Operations &amp; NLDC Grid Map</a></span>
+                <span>Audited by: National Load Despatch Centre (NLDC)</span>
+                <span className="font-medium">Status: Indicative Operating Capacity &amp; Load</span>
               </div>
             </div>
           </div>
         </div>
       )}
-      </div>
 
       {activeTab === 'macro' && (
         <div className="grid-explorer-panel space-y-6">
@@ -4630,7 +4602,7 @@ export function PowerGridExplorer({
                 const monthOptions = availableMonths.map(d => ({ label: d.month, value: d.month }));
                 return (
                   <>
-                    <div className="card p-4 flex flex-col md:flex-row md:items-center justify-between gap-4 bg-card border border-border/60 rounded-2xl shadow-sm">
+                    <div className="card p-4 flex flex-col md:flex-row md:items-center justify-between gap-4 bg-card border border-border/60 rounded-2xl shadow-sm relative z-50">
                       <div>
                         <h4 className="text-sm font-bold text-foreground">Select Operating Period</h4>
                         <p className="text-[11px] text-muted-foreground mt-0.5">Browse 157 historical monthly records parsed directly from PGCB archives</p>
@@ -4652,6 +4624,11 @@ export function PowerGridExplorer({
                             dropdownRef={yearDropdownRef}
                             icon={<Calendar className="h-3.5 w-3.5 text-primary shrink-0" />}
                             prefixLabel="Year:"
+                            layout="grid"
+                            gridColumns={3}
+                            menuWidth="12rem"
+                            noBackground={true}
+                            hideDecorationsOnSelect={true}
                           />
                         </div>
 
@@ -4669,6 +4646,12 @@ export function PowerGridExplorer({
                             dropdownRef={monthDropdownRef}
                             icon={<FileText className="h-3.5 w-3.5 text-primary shrink-0" />}
                             prefixLabel="Month:"
+                            layout="grid"
+                            gridColumns={3}
+                            menuWidth="18rem"
+                            noBackground={true}
+                            hideDecorationsOnSelect={true}
+                            align="right"
                           />
                         </div>
                       </div>
@@ -4718,19 +4701,20 @@ export function PowerGridExplorer({
                       
                       {/* Fuel Mix Card */}
                       <div className="grid-explorer-chart-card card">
-                        <div className="grid-explorer-chart-card__head">
-                          <div>
-                            <h3 className="grid-explorer-chart-card__title">Energy Fuel Mix</h3>
-                            <p className="grid-explorer-chart-card__sub">Net generation by fuel source in {currentMonthlyData?.month} {currentMonthlyData?.year} (MKWh)</p>
-                          </div>
-                        </div>
-
-                        <div className="grid lg:grid-cols-12 gap-4 mt-4">
-                          {/* Fuel Mix Pie Chart */}
-                          <div className="lg:col-span-6 h-48 lg:h-56 relative flex items-center justify-center">
-                            {chartsReady ? (
-                              <ResponsiveContainer width="100%" height="100%">
-                                <PieChart>
+                        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                          {/* Left Column: Title & Chart */}
+                          <div className="lg:col-span-6 flex flex-col justify-between">
+                            <div className="mb-2">
+                              <h3 className="grid-explorer-chart-card__title">Energy Fuel Mix<sup className="text-orange-500 font-extrabold text-[10px] ml-2 select-none">Monthly</sup></h3>
+                              <p className="grid-explorer-chart-card__sub text-xs text-muted-foreground mt-0.5 leading-relaxed">
+                                Net generation by fuel source in {currentMonthlyData?.month} {currentMonthlyData?.year} (MKWh)
+                              </p>
+                            </div>
+                            
+                            {/* Fuel Mix Pie Chart */}
+                            <div className="grid-explorer-donut-wrap mt-2">
+                              {chartsReady ? (
+                                <PieChart width={200} height={200} margin={{ top: 0, right: 0, bottom: 0, left: 0 }}>
                                   <Pie
                                     data={
                                       currentMonthlyData
@@ -4743,10 +4727,10 @@ export function PowerGridExplorer({
                                             .filter(d => d.value > 0)
                                         : []
                                     }
-                                    cx="50%"
-                                    cy="50%"
-                                    innerRadius={60}
-                                    outerRadius={80}
+                                    cx={100}
+                                    cy={100}
+                                    innerRadius={55}
+                                    outerRadius={82}
                                     paddingAngle={2}
                                     dataKey="value"
                                   >
@@ -4788,31 +4772,45 @@ export function PowerGridExplorer({
                                         </div>
                                       );
                                     }}
+                                    wrapperStyle={{ outline: 'none', zIndex: 20 }}
                                   />
+                                  <g className="pointer-events-none select-none">
+                                    <text
+                                      x={100}
+                                      y={92}
+                                      textAnchor="middle"
+                                      dominantBaseline="central"
+                                      className="fill-foreground font-sans font-bold"
+                                      style={{ fontSize: '24px', letterSpacing: '-0.02em' }}
+                                    >
+                                      {currentMonthlyData ? formatNumber(currentMonthlyData.total_net_generation, 0) : '0'}
+                                    </text>
+                                    <text
+                                      x={100}
+                                      y={114}
+                                      textAnchor="middle"
+                                      dominantBaseline="central"
+                                      className="fill-muted-foreground font-sans font-semibold uppercase"
+                                      style={{ fontSize: '9.5px', letterSpacing: '0.1em' }}
+                                    >
+                                      MKWh Net
+                                    </text>
+                                  </g>
                                 </PieChart>
-                              </ResponsiveContainer>
-                            ) : (
-                              <div className="grid-explorer-skeleton" />
-                            )}
-                            
-                            {/* Center labels */}
-                            <div className="absolute flex flex-col items-center justify-center text-center">
-                              <span className="text-[10px] text-muted-foreground uppercase font-semibold">Total Net</span>
-                              <span className="text-base font-bold text-foreground tabular-nums">
-                                {currentMonthlyData ? formatNumber(currentMonthlyData.total_net_generation, 0) : 0}
-                              </span>
-                              <span className="text-[9px] text-muted-foreground font-medium">MKWh</span>
+                              ) : (
+                                <div className="grid-explorer-skeleton" />
+                              )}
                             </div>
                           </div>
 
-                          {/* Fuel Mix Table */}
-                          <div className="lg:col-span-6 overflow-y-auto max-h-[14rem] pr-1">
+                          {/* Right Column: Fuel Mix Table */}
+                          <div className="lg:col-span-6 flex flex-col justify-start pt-1.5">
                             <table className="w-full text-[11px] leading-relaxed">
                               <thead>
                                 <tr className="border-b border-border/40 text-muted-foreground text-left">
-                                  <th className="pb-1.5 font-bold">Fuel Type</th>
-                                  <th className="pb-1.5 text-left font-bold">MKWh</th>
-                                  <th className="pb-1.5 text-left font-bold">Share %</th>
+                                  <th className="pb-2 font-bold">Fuel Type</th>
+                                  <th className="pb-2 text-left font-bold">MKWh</th>
+                                  <th className="pb-2 text-left font-bold">Share %</th>
                                 </tr>
                               </thead>
                               <tbody className="divide-y divide-border/20 text-foreground">
@@ -4827,12 +4825,12 @@ export function PowerGridExplorer({
                                     .sort((a, b) => b.val - a.val)
                                     .map((f, idx) => (
                                       <tr key={idx} className="hover:bg-muted/10">
-                                        <td className="py-1.5 flex items-center gap-1.5 font-medium">
+                                        <td className="py-2.5 flex items-center gap-1.5 font-medium">
                                           <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: f.color }} />
                                           <span className="capitalize">{f.name === 'hfo' ? 'Furnace Oil (HFO)' : f.name === 'import' ? 'India Imports' : f.name}</span>
                                         </td>
-                                        <td className="py-1.5 text-left tabular-nums font-semibold">{formatNumber(f.val, 1)}</td>
-                                        <td className="py-1.5 text-left tabular-nums text-muted-foreground">{f.pct.toFixed(1)}%</td>
+                                        <td className="py-2.5 text-left tabular-nums font-semibold">{formatNumber(f.val, 1)}</td>
+                                        <td className="py-2.5 text-left tabular-nums text-muted-foreground">{f.pct.toFixed(1)}%</td>
                                       </tr>
                                     ))}
                               </tbody>
@@ -4843,88 +4841,128 @@ export function PowerGridExplorer({
 
                       {/* Regional Peak Supply Card */}
                       <div className="grid-explorer-chart-card card">
-                        <div className="grid-explorer-chart-card__head">
-                          <div>
-                            <h3 className="grid-explorer-chart-card__title">Regional Maximum Peak Supply</h3>
-                            <p className="grid-explorer-chart-card__sub">Substation peak loads served by grid zone in {currentMonthlyData?.month} {currentMonthlyData?.year} (MW)</p>
-                          </div>
-                        </div>
+                        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                          {/* Left Column: Title & Chart */}
+                          <div className="lg:col-span-6 flex flex-col justify-between">
+                             <div className="grid-explorer-chart-card__head !p-0 !border-b-0">
+                              <div>
+                                <h3 className="grid-explorer-chart-card__title">Regional Maximum Peak Supply<sup className="text-orange-500 font-extrabold text-[10px] ml-2 select-none">Monthly</sup></h3>
+                                <p className="grid-explorer-chart-card__sub">
+                                  Substation peak loads served by grid zone in {currentMonthlyData?.month} {currentMonthlyData?.year} (MW)
+                                </p>
+                              </div>
+                            </div>
 
-                        <div className="mt-4">
-                          <div className="h-56">
-                            {chartsReady ? (
-                              <ResponsiveContainer width="100%" height="100%">
-                                <BarChart
-                                  data={
-                                    currentMonthlyData
-                                      ? Object.entries(currentMonthlyData.regional_supply).map(([name, value]) => ({
-                                          name: name.charAt(0).toUpperCase() + name.slice(1),
-                                          value
-                                        }))
-                                      : []
-                                  }
-                                  margin={{ top: 10, right: 10, left: 10, bottom: 20 }}
-                                >
-                                  <CartesianGrid strokeDasharray="3 6" stroke={chartTheme.gridStroke} opacity={0.3} vertical={false} />
-                                  <XAxis
-                                    dataKey="name"
-                                    tick={{ fontSize: 9, fill: chartTheme.axisTick }}
-                                    axisLine={false}
-                                    tickLine={false}
-                                    angle={-25}
-                                    textAnchor="end"
-                                  />
-                                  <YAxis
-                                    tick={{ fontSize: 10, fill: chartTheme.axisTick }}
-                                    axisLine={false}
-                                    tickLine={false}
-                                    tickFormatter={(v) => `${v} MW`}
-                                  />
-                                  <Tooltip
-                                    content={({ active, payload }) => {
-                                      if (!active || !payload?.length) return null;
-                                      const data = payload[0].payload;
-                                      const totalRegional = currentMonthlyData
-                                        ? Object.values(currentMonthlyData.regional_supply).reduce((a, b) => a + b, 0)
-                                        : 1;
-                                      const pct = (data.value / totalRegional) * 100;
-                                      return (
-                                        <div className="p-3 text-card-foreground border border-border/80 rounded-xl shadow-lg bg-card/95 backdrop-blur-md text-xs z-50">
-                                          <div className="font-bold mb-1.5 border-b border-border/40 pb-1 flex justify-between gap-4">
-                                            <span>{data.name} Zone</span>
-                                            <span className="text-[9px] uppercase font-bold text-primary">Peak Load</span>
-                                          </div>
-                                          <div className="space-y-1">
-                                            <div className="flex justify-between gap-4">
-                                              <span className="text-muted-foreground">Peak Served:</span>
-                                              <span className="font-bold text-foreground tabular-nums">{formatNumber(data.value)} MW</span>
-                                            </div>
-                                            <div className="flex justify-between gap-4">
-                                              <span className="text-muted-foreground">Share of System:</span>
-                                              <span className="font-bold text-primary tabular-nums">{pct.toFixed(1)}%</span>
-                                            </div>
-                                          </div>
-                                        </div>
-                                      );
-                                    }}
-                                  />
-                                  <Bar dataKey="value" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} maxBarSize={25}>
-                                    {(currentMonthlyData
-                                      ? Object.entries(currentMonthlyData.regional_supply).map(([name, value]) => ({ name, value }))
-                                      : []
-                                    ).map((entry, index) => {
+                            {/* Bar Chart */}
+                            <div className="grid-explorer-chart-area grid-explorer-chart-area--lg mt-4 !min-h-[16rem] !h-[16rem]">
+                              {chartsReady ? (
+                                <ResponsiveContainer width="100%" height="100%">
+                                  <BarChart
+                                    data={
+                                      currentMonthlyData
+                                        ? Object.entries(currentMonthlyData.regional_supply).map(([name, value]) => ({
+                                            name: name.charAt(0).toUpperCase() + name.slice(1),
+                                            value
+                                          }))
+                                        : []
+                                    }
+                                    margin={{ top: 10, right: 10, left: 10, bottom: 5 }}
+                                    onMouseLeave={() => setHoveredZoneIndex(null)}
+                                  >
+                                    <CartesianGrid strokeDasharray="3 6" stroke={chartTheme.gridStroke} opacity={0.3} vertical={false} />
+                                    <XAxis
+                                      dataKey="name"
+                                      tick={{ fontSize: 11, fill: chartTheme.axisTick }}
+                                      axisLine={false}
+                                      tickLine={false}
+                                    />
+                                    <YAxis
+                                      tick={{ fontSize: 11, fill: chartTheme.axisTick }}
+                                      axisLine={false}
+                                      tickLine={false}
+                                      tickFormatter={(v) => `${v} MW`}
+                                    />
+                                    <Bar
+                                      dataKey="value"
+                                      radius={[6, 6, 0, 0]}
+                                      maxBarSize={32}
+                                    >
+                                      {(currentMonthlyData
+                                        ? Object.entries(currentMonthlyData.regional_supply).map(([name, value]) => ({ name, value }))
+                                        : []
+                                      ).map((entry, index) => {
+                                        const colors = [
+                                          '#0ea5e9', '#06b6d4', '#10b981', '#a855f7',
+                                          '#f97316', '#64748b', '#ef4444', '#eab308', '#ec4899'
+                                        ];
+                                        const color = colors[index % colors.length];
+                                        const isDimmed = hoveredZoneIndex !== null && hoveredZoneIndex !== index;
+                                        return (
+                                          <Cell
+                                            key={`cell-${index}`}
+                                            fill={color}
+                                            fillOpacity={isDimmed ? 0.35 : 1}
+                                            style={{ transition: 'fill-opacity 200ms ease', cursor: 'pointer' }}
+                                            onMouseEnter={() => setHoveredZoneIndex(index)}
+                                            onMouseLeave={() => setHoveredZoneIndex(null)}
+                                          />
+                                        );
+                                      })}
+                                    </Bar>
+                                  </BarChart>
+                                </ResponsiveContainer>
+                              ) : (
+                                <div className="grid-explorer-skeleton" />
+                              )}
+                            </div>
+                          </div>
+
+                          {/* Right Column: Regional Table */}
+                          <div className="lg:col-span-6 flex flex-col justify-start pt-1.5">
+                            <table className="w-full text-[11px] leading-relaxed">
+                              <thead>
+                                <tr className="border-b border-border/40 text-muted-foreground text-left">
+                                  <th className="pb-2 font-bold">Grid Zone</th>
+                                  <th className="pb-2 text-left font-bold">Peak Load (MW)</th>
+                                  <th className="pb-2 text-left font-bold">Share %</th>
+                                </tr>
+                              </thead>
+                              <tbody className="divide-y divide-border/20 text-foreground">
+                                {currentMonthlyData &&
+                                  Object.entries(currentMonthlyData.regional_supply)
+                                    .map(([name, val]) => {
+                                      const totalRegional = Object.values(currentMonthlyData.regional_supply).reduce((a, b) => a + b, 0);
+                                      const pct = (val / totalRegional) * 100;
+                                      return { name, val, pct };
+                                    })
+                                    .sort((a, b) => b.val - a.val)
+                                    .map((z, idx) => {
                                       const colors = [
                                         '#0ea5e9', '#06b6d4', '#10b981', '#a855f7',
                                         '#f97316', '#64748b', '#ef4444', '#eab308', '#ec4899'
                                       ];
-                                      return <Cell key={`cell-${index}`} fill={colors[index % colors.length]} />;
+                                      const zoneName = z.name.charAt(0).toUpperCase() + z.name.slice(1);
+                                      const origIndex = Object.keys(currentMonthlyData.regional_supply).indexOf(z.name);
+                                      const color = colors[origIndex % colors.length];
+                                      const isDimmed = hoveredZoneIndex !== null && hoveredZoneIndex !== origIndex;
+                                      return (
+                                        <tr
+                                          key={idx}
+                                          className={`hover:bg-muted/10 transition-opacity duration-200 ${isDimmed ? 'opacity-35' : 'opacity-100'}`}
+                                          onMouseEnter={() => setHoveredZoneIndex(origIndex)}
+                                          onMouseLeave={() => setHoveredZoneIndex(null)}
+                                        >
+                                          <td className="py-1.5 flex items-center gap-1.5 font-medium">
+                                            <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: color }} />
+                                            <span>{zoneName}</span>
+                                          </td>
+                                          <td className="py-1.5 text-left tabular-nums font-semibold">{formatNumber(z.val)}</td>
+                                          <td className="py-1.5 text-left tabular-nums text-muted-foreground">{z.pct.toFixed(1)}%</td>
+                                        </tr>
+                                      );
                                     })}
-                                  </Bar>
-                                </BarChart>
-                              </ResponsiveContainer>
-                            ) : (
-                              <div className="grid-explorer-skeleton" />
-                            )}
+                              </tbody>
+                            </table>
                           </div>
                         </div>
                       </div>
@@ -4935,22 +4973,22 @@ export function PowerGridExplorer({
 
               {/* Historical Long-term Trend Chart */}
               <div className="grid-explorer-chart-card card">
-                <div className="grid-explorer-chart-card__head grid-explorer-chart-card__head--border flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div className="grid-explorer-chart-card__head grid-explorer-chart-card__head--border flex flex-col sm:flex-row sm:items-center justify-between gap-4 sm:pr-4">
                   <div>
-                    <h3 className="grid-explorer-chart-card__title">PGCB 13-Year Historical Growth Trends</h3>
+                    <h3 className="grid-explorer-chart-card__title">PGCB 13-Year Historical Growth Trends<sup className="text-orange-500 font-extrabold text-[10px] ml-2 select-none">Monthly</sup></h3>
                     <p className="grid-explorer-chart-card__sub">Grid operational metrics charted monthly from 2013 to 2026</p>
                   </div>
                   
                   {/* Selector Controls for Chart */}
-                  <div className="flex flex-wrap items-center gap-2 self-start sm:self-center">
+                  <div className="flex flex-wrap items-center justify-start sm:justify-end gap-2.5 self-start sm:self-center shrink-0 w-full sm:w-auto relative z-50">
                     <button
                       type="button"
                       onClick={() => setMonthlyTrendMetric('peaks')}
                       className={cn(
-                        "px-3 py-1.5 text-xs font-semibold rounded-lg border transition-all",
+                        "flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold rounded-xl border transition-all duration-150 shadow-sm",
                         monthlyTrendMetric === 'peaks'
-                          ? "bg-primary text-primary-foreground border-primary"
-                          : "border-border/50 text-muted-foreground hover:bg-muted/50 hover:text-foreground"
+                          ? "bg-primary/10 text-primary border-primary/20"
+                          : "bg-transparent border-border/40 text-muted-foreground hover:bg-muted/10 hover:border-primary/30"
                       )}
                     >
                       Grid Peaks (MW)
@@ -4959,10 +4997,10 @@ export function PowerGridExplorer({
                       type="button"
                       onClick={() => setMonthlyTrendMetric('energy')}
                       className={cn(
-                        "px-3 py-1.5 text-xs font-semibold rounded-lg border transition-all",
+                        "flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold rounded-xl border transition-all duration-150 shadow-sm",
                         monthlyTrendMetric === 'energy'
-                          ? "bg-primary text-primary-foreground border-primary"
-                          : "border-border/50 text-muted-foreground hover:bg-muted/50 hover:text-foreground"
+                          ? "bg-primary/10 text-primary border-primary/20"
+                          : "bg-transparent border-border/40 text-muted-foreground hover:bg-muted/10 hover:border-primary/30"
                       )}
                     >
                       Energy (MKWh)
@@ -4971,10 +5009,10 @@ export function PowerGridExplorer({
                       type="button"
                       onClick={() => setMonthlyTrendMetric('fuels')}
                       className={cn(
-                        "px-3 py-1.5 text-xs font-semibold rounded-lg border transition-all",
+                        "flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold rounded-xl border transition-all duration-150 shadow-sm",
                         monthlyTrendMetric === 'fuels'
-                          ? "bg-primary text-primary-foreground border-primary"
-                          : "border-border/50 text-muted-foreground hover:bg-muted/50 hover:text-foreground"
+                          ? "bg-primary/10 text-primary border-primary/20"
+                          : "bg-transparent border-border/40 text-muted-foreground hover:bg-muted/10 hover:border-primary/30"
                       )}
                     >
                       Fuel Trends
@@ -4995,6 +5033,11 @@ export function PowerGridExplorer({
                           isOpen={isFuelDropdownOpen}
                           setIsOpen={setIsFuelDropdownOpen}
                           dropdownRef={fuelDropdownRef}
+                          icon={<Zap className="h-3.5 w-3.5 text-primary shrink-0" />}
+                          prefixLabel="Fuel:"
+                          noBackground={true}
+                          hideDecorationsOnSelect={true}
+                          align="right"
                         />
                       </div>
                     )}
@@ -6287,48 +6330,53 @@ export function PowerGridExplorer({
           )}
         </div>
       )}
+      </div>
 
       {/* Footer / Notes */}
-      <div className="mt-8 p-4 bg-muted/10 border border-border/30 rounded-2xl text-[10px] text-muted-foreground/80 leading-relaxed space-y-3 shadow-sm">
+      <div className="mt-12 p-6 bg-muted/5 border border-border/30 rounded-2xl text-[11px] text-muted-foreground/80 leading-relaxed space-y-4 shadow-sm">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-border/20 pb-3">
-          <div className="flex items-center gap-1.5">
-            <Info className="h-3.5 w-3.5 text-primary shrink-0" />
-            <span className="font-bold text-foreground">Data Reporting Standards &amp; Attributions</span>
+          <div className="flex items-center gap-2">
+            <Info className="h-4 w-4 text-primary shrink-0" />
+            <span className="font-bold text-foreground text-xs md:text-sm">Data Reporting Standards &amp; Attributions</span>
           </div>
-          <div className="flex items-center gap-2 text-muted-foreground/70 text-[9.5px]">
+          <div className="flex items-center gap-2 text-muted-foreground/70 text-[10px]">
             <span>Report Period: <span className="font-semibold text-foreground">22-23 Jun 2026</span></span>
-            <span>·</span>
+            <span className="text-muted-foreground/30">·</span>
             <span>All data scraped from verified official daily publications.</span>
           </div>
         </div>
 
-        <div className="grid md:grid-cols-2 gap-4">
-          <div className="space-y-1.5">
-            <div className="font-semibold text-foreground text-[10.5px]">Backlog Reactivity &amp; Updates</div>
-            <div className="space-y-1 text-muted-foreground/75">
-              <div className="flex items-start gap-1.5">
-                <span className="inline-flex items-center justify-center px-1.5 py-0.5 text-[8.5px] font-extrabold uppercase bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 rounded-md shrink-0 mt-0.5">Daily</span>
-                <span>Data updates daily, fully reactive to daily backlog selections.</span>
+        <div className="grid md:grid-cols-2 gap-8">
+          <div className="space-y-2">
+            <div className="font-semibold text-foreground text-[11.5px]">Backlog Reactivity &amp; Updates</div>
+            <div className="space-y-2 text-muted-foreground/75">
+              <div className="flex items-start gap-2.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 mt-1.5 shrink-0" />
+                <span>
+                  Data updates <span className="font-semibold text-emerald-500">daily</span>, fully reactive to daily backlog selections.
+                </span>
               </div>
-              <div className="flex items-start gap-1.5">
-                <span className="inline-flex items-center justify-center px-1.5 py-0.5 text-[8.5px] font-extrabold uppercase bg-orange-500/10 text-orange-500 border border-orange-500/20 rounded-md shrink-0 mt-0.5">Monthly</span>
-                <span>Data updates monthly (SREDA installed capacity is static/monthly and unaffected by daily backlog, while actual renewable generation output updates daily).</span>
+              <div className="flex items-start gap-2.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-orange-500 mt-1.5 shrink-0" />
+                <span>
+                  Data updates <span className="font-semibold text-orange-500">monthly</span> (SREDA installed capacity is static/monthly and unaffected by daily backlog, while actual renewable generation output updates daily).
+                </span>
               </div>
             </div>
           </div>
 
-          <div className="space-y-1.5">
-            <div className="font-semibold text-foreground text-[10.5px]">Source Directories</div>
-            <div className="flex flex-wrap gap-x-3 gap-y-1 text-muted-foreground/90 font-semibold">
+          <div className="space-y-2">
+            <div className="font-semibold text-foreground text-[11.5px]">Source Directories</div>
+            <div className="flex flex-wrap gap-x-4 gap-y-1.5 text-muted-foreground/90 font-semibold">
               <a href="https://www.pgcb.gov.bd/" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline flex items-center gap-1">PGCB/NLDC Operations</a>
-              <span>·</span>
+              <span className="text-muted-foreground/30">·</span>
               <a href="https://www.petrobangla.org.bd/" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline flex items-center gap-1">Petrobangla Reports</a>
-              <span>·</span>
+              <span className="text-muted-foreground/30">·</span>
               <a href="http://www.renewableenergy.gov.bd/" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline flex items-center gap-1">SREDA Database</a>
-              <span>·</span>
+              <span className="text-muted-foreground/30">·</span>
               <a href="https://bpc.gov.bd/" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline flex items-center gap-1">BPC Pricing</a>
             </div>
-            <div className="text-[9.5px] text-muted-foreground/60 border-t border-border/10 pt-1.5">
+            <div className="text-[10px] text-muted-foreground/60 border-t border-border/10 pt-2 mt-2">
               Sources: BPDB, PGCB, SREDA, BERC, Petrobangla. Figures are indicative and editor-managed unless noted. Member downloads are logged for reference.
             </div>
           </div>
@@ -6550,6 +6598,9 @@ export function PowerGridExplorer({
                 ))}
               </tbody>
             </table>
+            <div className="text-[8px] text-muted-foreground mt-1 px-1">
+              Source: PGCB System Operations &amp; NLDC National Grid Map
+            </div>
           </div>
 
           <div>
@@ -6564,20 +6615,19 @@ export function PowerGridExplorer({
                 </tr>
               </thead>
               <tbody>
-                {(initialProjects && initialProjects.length > 0 ? initialProjects : ongoingProjectsData.map(p => ({
-                  name: p.name,
-                  status: p.status.physical.includes('%') ? `Phys: ${p.status.physical.trim()}` : p.status.physical,
-                  mw: p.cost.total.split(" ")[0] + " Lakh",
-                  date: p.duration.split(" to ")[1] || p.duration
-                })))
-                .map((proj: any, idx: number) => (
+                {[
+                  { name: 'SREDA 1800 MW Solar+Wind', status: 'Tender', mw: '1800', date: 'Q3 2026' },
+                  { name: 'Matarbari Phase-2 Coal', status: 'Construction', mw: '1200', date: '2027' },
+                  { name: 'Payra 1320 MW Expansion', status: 'Planned', mw: '1320', date: '2028' },
+                  { name: 'BREB 500k SHS + Mini-grid', status: 'Ongoing', mw: '—', date: '2026-27' }
+                ].map((proj: any, idx: number) => (
                   <tr key={idx} className="border-b border-border/40">
                     <td className="py-1 px-2 font-medium">{proj.name}</td>
                     <td className="py-1 px-2">
                       <span className="font-semibold">{proj.status}</span>
                     </td>
-                    <td className="text-right py-1 px-2 tabular-nums">{proj.mw} MW</td>
-                    <td className="text-right py-1 px-2 text-muted-foreground">{proj.date}</td>
+                    <td className="py-1 px-2 tabular-nums">{proj.mw === '—' ? '—' : `${proj.mw} MW`}</td>
+                    <td className="py-1 px-2 text-muted-foreground">{proj.date}</td>
                   </tr>
                 ))}
               </tbody>
@@ -6586,65 +6636,7 @@ export function PowerGridExplorer({
         </div>
       </div>
 
-      {/* Section 5: Macro Trends & BPDB Financial History */}
-      <div className="space-y-4 page-break-inside-avoid">
-        <h2 className="text-lg font-bold border-b border-border pb-1.5 flex items-center gap-1.5 text-primary">
-          <TrendingUp className="h-4 w-4" /> 5. Macro Trends & BPDB Financial History
-        </h2>
-        <div className="grid grid-cols-2 gap-6">
-          <div>
-            <h3 className="text-xs font-bold text-muted-foreground uppercase mb-2">BPDB Audited Financial Statements</h3>
-            <table className="print-report-table w-full text-[10px]">
-              <thead>
-                <tr className="border-b border-border bg-muted/10">
-                  <th className="text-left py-1.5 px-2">Fiscal Year</th>
-                  <th className="text-right py-1.5 px-2">Revenue (Cr Tk)</th>
-                  <th className="text-right py-1.5 px-2">Cost (Cr Tk)</th>
-                  <th className="text-right py-1.5 px-2">Subsidy (Cr Tk)</th>
-                  <th className="text-right py-1.5 px-2">Profit/Loss</th>
-                </tr>
-              </thead>
-              <tbody>
-                {bpdbAuditedFinancials.slice(-6).map((f, idx) => (
-                  <tr key={idx} className="border-b border-border/40">
-                    <td className="py-1 px-2 font-medium">{f.year}</td>
-                    <td className="text-right py-1 px-2 tabular-nums">{formatNumber(f.revenue)}</td>
-                    <td className="text-right py-1 px-2 tabular-nums">{formatNumber(f.cost)}</td>
-                    <td className="text-right py-1 px-2 tabular-nums text-emerald-500">{formatNumber(f.subsidy)}</td>
-                    <td className="text-right py-1 px-2 tabular-nums font-semibold text-destructive">{f.loss} Cr</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
 
-          <div>
-            <h3 className="text-xs font-bold text-muted-foreground uppercase mb-2">Exchange, Inflation & Fuel Drivers</h3>
-            <table className="print-report-table w-full text-[10px]">
-              <thead>
-                <tr className="border-b border-border bg-muted/10">
-                  <th className="text-left py-1.5 px-2">Year</th>
-                  <th className="text-right py-1.5 px-2">USD/BDT</th>
-                  <th className="text-right py-1.5 px-2">Inflation</th>
-                  <th className="text-right py-1.5 px-2">Spot LNG ($)</th>
-                  <th className="text-right py-1.5 px-2">Retail Diesel</th>
-                </tr>
-              </thead>
-              <tbody>
-                {macroEconomicData.slice(-6).map((m, idx) => (
-                  <tr key={idx} className="border-b border-border/40">
-                    <td className="py-1 px-2 font-medium">{m.year}</td>
-                    <td className="text-right py-1 px-2 tabular-nums">{m.exchangeRate.toFixed(2)}</td>
-                    <td className="text-right py-1 px-2 tabular-nums">{m.inflation.toFixed(2)}%</td>
-                    <td className="text-right py-1 px-2 tabular-nums">{m.spotLng > 0 ? `$${m.spotLng.toFixed(1)}` : '—'}</td>
-                    <td className="text-right py-1 px-2 tabular-nums">{m.retailDiesel.toFixed(2)} Tk</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
       
       {/* Report Footer */}
       <div className="border-t border-border/40 pt-4 text-[9px] text-muted-foreground flex justify-between">

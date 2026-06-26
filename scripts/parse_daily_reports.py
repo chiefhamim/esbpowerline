@@ -4,8 +4,8 @@ import json
 import datetime
 from concurrent.futures import ThreadPoolExecutor
 
-PGCB_DIR = r"c:\Users\hamim\Desktop\PGCB\Daily Reports\Daily Reports Parsed"
-PB_DIR = r"c:\Users\hamim\Desktop\Petrobangla\Daily Gas Reports - D\Daily Gas Reports Parsed"
+PGCB_DIR = r"C:\Users\hamim\Desktop\PGCB\Daily Reports - D\Daily Reports Parsed"
+PB_DIR = r"C:\Users\hamim\Desktop\Petrobangla\Daily Gas Reports - D\Daily Gas Reports Parsed"
 OUTPUT_DIR = r"C:\Users\hamim\esbpowerline\public\data\daily"
 DATES_OUTPUT_PATH = r"C:\Users\hamim\esbpowerline\lib\available-dates.json"
 
@@ -181,7 +181,72 @@ def parse_pgcb_file(filepath, op_date):
 
     # Extract outages from P1
     daily_outages = []
+    current_outage = None
     for line in p1.split('\n'):
+        parts = [p.strip() for p in line.split('|')]
+        # Format 1: Tabular format (newer reports)
+        if len(parts) >= 5:
+            time_in = parts[2]
+            time_out = parts[3]
+            desc = parts[4]
+            
+            is_new = False
+            if time_in and re.match(r'^\d{2}:\d{2}', time_in):
+                is_new = True
+            elif time_out and re.match(r'^\d{2}:\d{2}', time_out):
+                is_new = True
+                
+            if is_new:
+                time_val = f"{time_in} - {time_out}" if (time_in and time_out) else (time_in or time_out)
+                plant_val = desc
+                reason_val = ""
+                for keyword in [' due to ', ' for ', ' Due to ']:
+                    if keyword in desc:
+                        split_parts = desc.split(keyword, 1)
+                        plant_val = split_parts[0]
+                        reason_val = keyword.strip() + " " + split_parts[1]
+                        break
+                for verb in [' was ', ' is ', ' tripped ', ' synchronized ', ' S/D ', ' Scheduled S/D ']:
+                    if verb in plant_val:
+                        plant_val = plant_val.split(verb, 1)[0]
+                        break
+                load_match = re.search(r'(\d+(?:\.\d+)?\s*MW)', desc, re.IGNORECASE)
+                load_val = load_match.group(1) if load_match else "HT Outage"
+                
+                current_outage = {
+                    'time': time_val,
+                    'plant': plant_val.strip(),
+                    'load': load_val,
+                    'reason': reason_val.strip() if reason_val else desc.strip(),
+                    'full_desc': desc
+                }
+                daily_outages.append(current_outage)
+                continue
+            elif current_outage and desc and len(parts) > 4 and not parts[1] and not parts[2] and not parts[3]:
+                # Continuation of description line
+                current_outage['full_desc'] += " " + desc
+                desc_full = current_outage['full_desc']
+                plant_val = desc_full
+                reason_val = ""
+                for keyword in [' due to ', ' for ', ' Due to ']:
+                    if keyword in desc_full:
+                        split_parts = desc_full.split(keyword, 1)
+                        plant_val = split_parts[0]
+                        reason_val = keyword.strip() + " " + split_parts[1]
+                        break
+                for verb in [' was ', ' is ', ' tripped ', ' synchronized ', ' S/D ', ' Scheduled S/D ']:
+                    if verb in plant_val:
+                        plant_val = plant_val.split(verb, 1)[0]
+                        break
+                load_match = re.search(r'(\d+(?:\.\d+)?\s*MW)', desc_full, re.IGNORECASE)
+                load_val = load_match.group(1) if load_match else "HT Outage"
+                
+                current_outage['plant'] = plant_val.strip()
+                current_outage['load'] = load_val
+                current_outage['reason'] = reason_val.strip() if reason_val else desc_full.strip()
+                continue
+                
+        # Format 2: Fallback to lettered list pattern (legacy reports)
         cells = [c.strip() for c in line.split('|') if c.strip()]
         if not cells:
             continue
@@ -196,15 +261,15 @@ def parse_pgcb_file(filepath, op_date):
             reason_val = ""
             for keyword in [' due to ', ' for ']:
                 if keyword in desc:
-                    parts = desc.split(keyword, 1)
-                    plant_val = parts[0]
-                    reason_val = keyword.strip() + " " + parts[1]
+                    parts_legacy = desc.split(keyword, 1)
+                    plant_val = parts_legacy[0]
+                    reason_val = keyword.strip() + " " + parts_legacy[1]
                     break
             for verb in [' was ', ' is ', ' tripped ', ' synchronized ']:
                 if verb in plant_val:
                     plant_val = plant_val.split(verb, 1)[0]
                     break
-            load_match = re.search(r'(\d+\s*MW)', desc, re.IGNORECASE)
+            load_match = re.search(r'(\d+(?:\.\d+)?\s*MW)', desc, re.IGNORECASE)
             load_val = load_match.group(1) if load_match else "HT Outage"
             
             daily_outages.append({

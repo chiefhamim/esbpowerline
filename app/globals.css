@@ -4968,7 +4968,7 @@ html.theme-dark .locale-toggle__btn--active:hover {
 
 /* Power / data explorer polish */
 .explorer-tab {
-  @apply flex items-center gap-2 px-5 py-2.5 text-sm font-medium rounded-2xl transition-all border border-transparent;
+  @apply flex items-center gap-2 px-5 py-2.5 text-sm font-medium rounded-2xl transition-all border border-transparent shrink-0;
 }
 .explorer-tab.active {
   @apply bg-primary/10 text-primary border-primary/20 shadow-sm;
@@ -5015,7 +5015,12 @@ html.theme-dark .locale-toggle__btn--active:hover {
 }
 
 .grid-explorer-tabs {
-  @apply flex flex-wrap gap-1.5;
+  @apply flex flex-nowrap overflow-x-auto gap-1.5 pb-1;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.grid-explorer-tabs::-webkit-scrollbar {
+  display: none;
 }
 
 .grid-explorer-panel {
@@ -5040,11 +5045,24 @@ html.theme-dark .locale-toggle__btn--active:hover {
 }
 
 .grid-explorer-chart-card__head--border {
-  @apply items-center gap-2.5 pb-4 mb-5 border-b border-border/40;
+  @apply items-center justify-start gap-2.5 pb-4 mb-5 border-b border-border/40;
 }
 
 .grid-explorer-chart-card__title {
   @apply font-display font-bold text-base text-foreground;
+}
+
+.grid-explorer-chart-card__title sup,
+.grid-explorer-kpi__label sup,
+.explorer-tab sup {
+  font-size: 10px !important;
+  font-weight: 800 !important;
+  vertical-align: baseline !important;
+  position: relative !important;
+  top: -0.45em !important;
+  margin-left: 8px !important;
+  letter-spacing: normal !important;
+  text-transform: none !important;
 }
 
 .grid-explorer-chart-card__sub {
