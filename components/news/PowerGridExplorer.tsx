@@ -1,10 +1,10 @@
 'use client';
 
-import { useEffect, useId, useState, useRef, RefObject } from 'react';
+import { useEffect, useId, useState, useRef, RefObject, useMemo } from 'react';
 import Link from 'next/link';
 import {
   Zap, Activity, Cable, TrendingUp, FileText, BarChart3, MapPin, DollarSign, Database, Droplet, Globe, Sun,
-  Search, ChevronLeft, ChevronRight, ChevronDown, Check, Info, Map, Network, CheckSquare
+  Search, ChevronLeft, ChevronRight, ChevronDown, Check, Info, Map, Network, CheckSquare, Calendar
 } from 'lucide-react';
 import { substationsData } from '@/lib/substations-data';
 import {
@@ -18,7 +18,9 @@ import {
   GridStatusBadge,
   mixColor,
 } from '@/components/news/PowerGridChartUI';
-import { powerGridArchive } from '@/lib/power-grid-archive';
+import { powerGridArchive, GridDailyData } from '@/lib/power-grid-archive';
+import availableDatesListRaw from '@/lib/available-dates.json';
+import pgcbMonthlyData from '@/lib/pgcb-monthly-data.json';
 import { ongoingProjectsData } from '@/lib/ongoing-projects-data';
 import { upcomingProjectsData } from '@/lib/upcoming-projects-data';
 import { completedProjectsData } from '@/lib/completed-projects-data';
@@ -295,6 +297,8 @@ interface CustomDropdownProps {
   isOpen: boolean;
   setIsOpen: (open: boolean) => void;
   dropdownRef: RefObject<HTMLDivElement | null>;
+  icon?: React.ReactNode;
+  prefixLabel?: string;
 }
 
 function CustomDropdown({
@@ -304,7 +308,9 @@ function CustomDropdown({
   placeholder,
   isOpen,
   setIsOpen,
-  dropdownRef
+  dropdownRef,
+  icon,
+  prefixLabel
 }: CustomDropdownProps) {
   const selectedOption = options.find((opt) => opt.value === value) || { label: placeholder, value };
   return (
@@ -314,7 +320,11 @@ function CustomDropdown({
         onClick={() => setIsOpen(!isOpen)}
         className="w-full flex items-center justify-between gap-2 px-3.5 py-2 text-xs md:text-sm bg-muted/20 border border-border/40 rounded-xl text-foreground hover:bg-muted/30 hover:border-primary/30 focus:outline-none focus:border-primary/50 transition-all duration-150 font-medium shadow-sm"
       >
-        <span className="truncate">{selectedOption.label}</span>
+        <span className="truncate flex items-center gap-1.5 font-bold">
+          {icon}
+          {prefixLabel && <span className="text-muted-foreground font-medium mr-0.5">{prefixLabel}</span>}
+          <span>{selectedOption.label}</span>
+        </span>
         <ChevronDown className={cn("h-4 w-4 text-muted-foreground shrink-0 transition-transform duration-150", isOpen && "rotate-180")} />
       </button>
 
@@ -442,12 +452,151 @@ export function PowerGridExplorer({ initialMix, initialLines, initialProjects }:
   const chartTheme = useChartTheme();
   
   // Date Selection States
-  const availableDates = Object.keys(powerGridArchive);
-  const [selectedDate, setSelectedDate] = useState<string>(availableDates[availableDates.length - 1]);
-  const [isDateDropdownOpen, setIsDateDropdownOpen] = useState(false);
-  const dateDropdownRef = useRef<HTMLDivElement>(null);
+  const availableDatesList = useMemo(() => {
+    const rawList = Array.isArray(availableDatesListRaw)
+      ? availableDatesListRaw
+      : (availableDatesListRaw as any)?.default || [];
+    return rawList.filter((d: string) => /^(202[0-6])-\d{2}-\d{2}$/.test(d));
+  }, []);
 
-  const activeData = powerGridArchive[selectedDate] || powerGridArchive[availableDates[availableDates.length - 1]];
+  const latestDate = availableDatesList[availableDatesList.length - 1] || '2026-06-24';
+  const [selectedDate, setSelectedDate] = useState<string>(latestDate);
+  const [activeData, setActiveData] = useState<GridDailyData>(powerGridArchive['24 Jun 2026']);
+  const [isLoadingDaily, setIsLoadingDaily] = useState<boolean>(false);
+
+  const [isDailyYearDropdownOpen, setIsDailyYearDropdownOpen] = useState(false);
+  const [isDailyMonthDropdownOpen, setIsDailyMonthDropdownOpen] = useState(false);
+  const [isDailyDayDropdownOpen, setIsDailyDayDropdownOpen] = useState(false);
+
+  const dailyYearDropdownRef = useRef<HTMLDivElement>(null);
+  const dailyMonthDropdownRef = useRef<HTMLDivElement>(null);
+  const dailyDayDropdownRef = useRef<HTMLDivElement>(null);
+
+  // Split selectedDate (e.g. "2026-06-24") into year, month, day
+  const [selectedYear, selectedMonth, selectedDay] = selectedDate.split('-');
+
+  // Calculate options dynamically
+  const years = useMemo(() => {
+    return Array.from(new Set(availableDatesList.map(d => d.split('-')[0]))).sort((a, b) => b.localeCompare(a));
+  }, [availableDatesList]);
+
+  const yearOptions = useMemo(() => {
+    return years.map(y => ({ label: y, value: y }));
+  }, [years]);
+
+  const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+  const monthsForYear = useMemo(() => {
+    return Array.from(new Set(
+      availableDatesList
+        .filter(d => d.startsWith(selectedYear + '-'))
+        .map(d => d.split('-')[1])
+    )).sort((a, b) => a.localeCompare(b));
+  }, [availableDatesList, selectedYear]);
+
+  const monthOptions = useMemo(() => {
+    return monthsForYear.map(m => ({
+      label: monthNames[parseInt(m) - 1] || m,
+      value: m
+    }));
+  }, [monthsForYear]);
+
+  const daysForMonth = useMemo(() => {
+    return Array.from(new Set(
+      availableDatesList
+        .filter(d => d.startsWith(selectedYear + '-' + selectedMonth + '-'))
+        .map(d => d.split('-')[2])
+    )).sort((a, b) => a.localeCompare(b));
+  }, [availableDatesList, selectedYear, selectedMonth]);
+
+  const dayOptions = useMemo(() => {
+    return daysForMonth.map(d => ({
+      label: String(parseInt(d)),
+      value: d
+    }));
+  }, [daysForMonth]);
+
+  const handleYearChange = (newYear: string) => {
+    const months = Array.from(new Set(
+      availableDatesList
+        .filter(d => d.startsWith(newYear + '-'))
+        .map(d => d.split('-')[1])
+    )).sort((a, b) => a.localeCompare(b));
+    if (months.length === 0) return;
+    let targetMonth = selectedMonth;
+    if (!months.includes(targetMonth)) {
+      targetMonth = months[months.length - 1];
+    }
+    const days = Array.from(new Set(
+      availableDatesList
+        .filter(d => d.startsWith(newYear + '-' + targetMonth + '-'))
+        .map(d => d.split('-')[2])
+    )).sort((a, b) => a.localeCompare(b));
+    if (days.length === 0) return;
+    let targetDay = selectedDay;
+    if (!days.includes(targetDay)) {
+      targetDay = days[days.length - 1];
+    }
+    setSelectedDate(`${newYear}-${targetMonth}-${targetDay}`);
+  };
+
+  const handleMonthChange = (newMonth: string) => {
+    const days = Array.from(new Set(
+      availableDatesList
+        .filter(d => d.startsWith(selectedYear + '-' + newMonth + '-'))
+        .map(d => d.split('-')[2])
+    )).sort((a, b) => a.localeCompare(b));
+    if (days.length === 0) return;
+    let targetDay = selectedDay;
+    if (!days.includes(targetDay)) {
+      targetDay = days[days.length - 1];
+    }
+    setSelectedDate(`${selectedYear}-${newMonth}-${targetDay}`);
+  };
+
+  const handleDayChange = (newDay: string) => {
+    setSelectedDate(`${selectedYear}-${selectedMonth}-${newDay}`);
+  };
+
+  // Dynamic Fetch Effect
+  useEffect(() => {
+    let isMounted = true;
+    if (!selectedDate) return;
+
+    setIsLoadingDaily(true);
+    fetch(`/data/daily/${selectedDate}.json`)
+      .then((res) => {
+        if (!res.ok) {
+          throw new Error(`Failed to fetch daily data: ${res.statusText}`);
+        }
+        return res.json();
+      })
+      .then((data) => {
+        if (isMounted) {
+          setActiveData(data);
+          setIsLoadingDaily(false);
+        }
+      })
+      .catch((err) => {
+        console.error(err);
+        if (isMounted) {
+          const formattedKeys: Record<string, string> = {
+            '2026-06-22': '22 Jun 2026',
+            '2026-06-24': '24 Jun 2026',
+          };
+          const legacyKey = formattedKeys[selectedDate];
+          if (legacyKey && powerGridArchive[legacyKey]) {
+            setActiveData(powerGridArchive[legacyKey]);
+          }
+          setIsLoadingDaily(false);
+        }
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [selectedDate]);
+
   const [activeKpiTooltip, setActiveKpiTooltip] = useState<string | null>(null);
   const kpiStripRef = useRef<HTMLDivElement>(null);
   const kpiTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -616,9 +765,9 @@ export function PowerGridExplorer({ initialMix, initialLines, initialProjects }:
     }
   }, [activeTab]);
 
-  const [macroSubTab, setMacroSubTab] = useState<'overview' | 'pricing' | 'global' | 'reports' | 'reserves' | 'insights'>('overview');
+  const [macroSubTab, setMacroSubTab] = useState<'overview' | 'monthly' | 'pricing' | 'global' | 'reports' | 'reserves' | 'insights'>('overview');
   
-  const handleSubTabClick = (subTabId: typeof macroSubTab) => {
+  const handleSubTabClick = (subTabId: any) => {
     setMacroSubTab(subTabId);
     const timer = setTimeout(() => {
       triggerScrollToElement('macro-subtabs-nav');
@@ -627,6 +776,36 @@ export function PowerGridExplorer({ initialMix, initialLines, initialProjects }:
   const [reportsCompany, setReportsCompany] = useState<'bpdb' | 'petrobangla'>('bpdb');
   const [chartsReady, setChartsReady] = useState(false);
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
+
+  // PGCB Monthly Archives States
+  const [selectedMonthlyKey, setSelectedMonthlyKey] = useState<string>(
+    pgcbMonthlyData && pgcbMonthlyData.length > 0
+      ? pgcbMonthlyData[pgcbMonthlyData.length - 1].date_key
+      : '2026-02'
+  );
+  const [monthlyTrendMetric, setMonthlyTrendMetric] = useState<'peaks' | 'energy' | 'fuels'>('peaks');
+  const [selectedFuelTrend, setSelectedFuelTrend] = useState<'gas' | 'coal' | 'hfo' | 'import'>('gas');
+  const [isYearDropdownOpen, setIsYearDropdownOpen] = useState(false);
+  const [isMonthDropdownOpen, setIsMonthDropdownOpen] = useState(false);
+  const [isFuelDropdownOpen, setIsFuelDropdownOpen] = useState(false);
+
+  const yearDropdownRef = useRef<HTMLDivElement>(null);
+  const monthDropdownRef = useRef<HTMLDivElement>(null);
+  const fuelDropdownRef = useRef<HTMLDivElement>(null);
+
+  const getFuelColor = (fuel: string) => {
+    const mapping: Record<string, string> = {
+      gas: '#0ea5e9',
+      coal: '#64748b',
+      hfo: '#f97316',
+      diesel: '#ef4444',
+      hydro: '#06b6d4',
+      solar: '#eab308',
+      wind: '#10b981',
+      import: '#a855f7',
+    };
+    return mapping[fuel.toLowerCase()] || '#94a3b8';
+  };
 
   // Substation & Transmission Tab States
   const [transSubTab, setTransSubTab] = useState<'transmission' | 'lines' | 'substations' | 'projects' | 'completed_projects' | 'grid_net' | 'geo_map' | 'opgw_map' | 'opgw_lease'>('transmission');
@@ -689,14 +868,29 @@ export function PowerGridExplorer({ initialMix, initialLines, initialProjects }:
       if (ownerDropdownRef.current && !ownerDropdownRef.current.contains(target)) {
         setIsOwnerDropdownOpen(false);
       }
-      if (dateDropdownRef.current && !dateDropdownRef.current.contains(target)) {
-        setIsDateDropdownOpen(false);
+      if (dailyYearDropdownRef.current && !dailyYearDropdownRef.current.contains(target)) {
+        setIsDailyYearDropdownOpen(false);
+      }
+      if (dailyMonthDropdownRef.current && !dailyMonthDropdownRef.current.contains(target)) {
+        setIsDailyMonthDropdownOpen(false);
+      }
+      if (dailyDayDropdownRef.current && !dailyDayDropdownRef.current.contains(target)) {
+        setIsDailyDayDropdownOpen(false);
       }
       if (partnerDropdownRef.current && !partnerDropdownRef.current.contains(target)) {
         setIsPartnerDropdownOpen(false);
       }
       if (completedPartnerDropdownRef.current && !completedPartnerDropdownRef.current.contains(target)) {
         setIsCompletedPartnerDropdownOpen(false);
+      }
+      if (yearDropdownRef.current && !yearDropdownRef.current.contains(target)) {
+        setIsYearDropdownOpen(false);
+      }
+      if (monthDropdownRef.current && !monthDropdownRef.current.contains(target)) {
+        setIsMonthDropdownOpen(false);
+      }
+      if (fuelDropdownRef.current && !fuelDropdownRef.current.contains(target)) {
+        setIsFuelDropdownOpen(false);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
@@ -857,46 +1051,47 @@ export function PowerGridExplorer({ initialMix, initialLines, initialProjects }:
             Active reporting date: <span className="font-semibold text-primary">{systemStats.date}</span>
           </p>
         </div>
-        <div className="w-full sm:w-56" ref={dateDropdownRef}>
-          <div className="relative text-left">
-            <button
-              type="button"
-              onClick={() => setIsDateDropdownOpen(!isDateDropdownOpen)}
-              className="w-full flex items-center justify-between gap-2 px-3.5 py-2 text-xs md:text-sm bg-muted/20 border border-border/40 rounded-xl text-foreground hover:bg-muted/30 hover:border-primary/30 focus:outline-none focus:border-primary/50 transition-all duration-150 font-medium shadow-sm"
-            >
-              <span className="truncate flex items-center gap-1.5 font-bold">
-                <FileText className="h-3.5 w-3.5 text-primary" />
-                Date: {selectedDate}
-              </span>
-              <ChevronDown className={cn("h-4 w-4 text-muted-foreground shrink-0 transition-transform duration-150", isDateDropdownOpen && "rotate-180")} />
-            </button>
+        <div className="flex flex-wrap sm:flex-nowrap items-center gap-3 w-full sm:w-auto">
+          <div className="w-full sm:w-28 relative z-50">
+            <CustomDropdown
+              value={selectedYear}
+              onChange={handleYearChange}
+              options={yearOptions}
+              placeholder="Year"
+              isOpen={isDailyYearDropdownOpen}
+              setIsOpen={setIsDailyYearDropdownOpen}
+              dropdownRef={dailyYearDropdownRef}
+              icon={<Calendar className="h-3.5 w-3.5 text-primary shrink-0" />}
+              prefixLabel="Year:"
+            />
+          </div>
 
-            {isDateDropdownOpen && (
-              <div className="absolute right-0 mt-2 w-full max-h-60 overflow-y-auto rounded-2xl border border-border bg-card/95 backdrop-blur-xl shadow-2xl p-1.5 z-[100] animate-in fade-in slide-in-from-top-1 duration-150 scrollbar-thin">
-                {availableDates.map((date) => {
-                  const active = date === selectedDate;
-                  return (
-                    <button
-                      key={date}
-                      type="button"
-                      onClick={() => {
-                        setSelectedDate(date);
-                        setIsDateDropdownOpen(false);
-                      }}
-                      className={cn(
-                        "w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs md:text-sm font-semibold transition-all select-none text-left",
-                        active
-                          ? "bg-primary/10 text-primary font-bold"
-                          : "text-muted-foreground hover:text-foreground hover:bg-muted/40"
-                      )}
-                    >
-                      <span>{date} {date === availableDates[availableDates.length - 1] ? '(Latest)' : '(Archived)'}</span>
-                      {active && <Check className="h-3.5 w-3.5 shrink-0" />}
-                    </button>
-                  );
-                })}
-              </div>
-            )}
+          <div className="w-full sm:w-32 relative z-50">
+            <CustomDropdown
+              value={selectedMonth}
+              onChange={handleMonthChange}
+              options={monthOptions}
+              placeholder="Month"
+              isOpen={isDailyMonthDropdownOpen}
+              setIsOpen={setIsDailyMonthDropdownOpen}
+              dropdownRef={dailyMonthDropdownRef}
+              icon={<FileText className="h-3.5 w-3.5 text-primary shrink-0" />}
+              prefixLabel="Month:"
+            />
+          </div>
+
+          <div className="w-full sm:w-28 relative z-50">
+            <CustomDropdown
+              value={selectedDay}
+              onChange={handleDayChange}
+              options={dayOptions}
+              placeholder="Day"
+              isOpen={isDailyDayDropdownOpen}
+              setIsOpen={setIsDailyDayDropdownOpen}
+              dropdownRef={dailyDayDropdownRef}
+              icon={<Activity className="h-3.5 w-3.5 text-primary shrink-0" />}
+              prefixLabel="Day:"
+            />
           </div>
         </div>
       </div>
@@ -1188,7 +1383,20 @@ export function PowerGridExplorer({ initialMix, initialLines, initialProjects }:
       </div>
 
       {/* Tab Panels */}
-      {activeTab === 'overview' && (
+      <div className="relative min-h-[400px]">
+        {isLoadingDaily && (
+          <div className="absolute inset-0 bg-background/50 backdrop-blur-[2px] z-50 flex items-center justify-center rounded-2xl transition-all duration-300">
+            <div className="flex flex-col items-center gap-3 bg-card/60 px-6 py-4 rounded-2xl border border-border/50 shadow-2xl backdrop-blur-md animate-in zoom-in-95 duration-150">
+              <div className="relative">
+                <div className="h-10 w-10 rounded-full border-2 border-primary/20 border-t-primary animate-spin" />
+                <Activity className="h-5 w-5 text-primary animate-pulse absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
+              </div>
+              <span className="text-xs font-semibold text-primary tracking-wide animate-pulse">Loading Grid Data...</span>
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'overview' && (
         <div className="grid-explorer-panel space-y-6">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Generation Pie Chart */}
@@ -4092,6 +4300,7 @@ export function PowerGridExplorer({ initialMix, initialLines, initialProjects }:
           </div>
         </div>
       )}
+      </div>
 
       {activeTab === 'macro' && (
         <div className="grid-explorer-panel space-y-6">
@@ -4099,6 +4308,7 @@ export function PowerGridExplorer({ initialMix, initialLines, initialProjects }:
           <div id="macro-subtabs-nav" className="flex flex-wrap gap-1.5 border-b border-border/40 pb-3">
             {[
               { id: 'overview', label: 'Macro Overview', icon: BarChart3 },
+              { id: 'monthly', label: 'PGCB Monthly Archives', icon: FileText },
               { id: 'pricing', label: 'Pricing & Drivers', icon: TrendingUp },
               { id: 'global', label: 'Global vs. Domestic', icon: Globe },
               { id: 'reports', label: 'Annual Reports', icon: FileText },
@@ -4321,6 +4531,691 @@ export function PowerGridExplorer({ initialMix, initialLines, initialProjects }:
                 <span>Source: <a href="https://www.petrobangla.org.bd/" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline font-medium">Petrobangla Hydrocarbon Unit</a> &amp; <a href="https://bpdb.gov.bd/" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline font-medium">BPDB Annual Financials</a></span>
                 <span>Audited by: CAG Audit Reports &amp; Ministry of Finance (MoF) Gazettes</span>
                 <span>Reporting Period: Macro Analysis (2026 Audit Reports)</span>
+              </div>
+            </div>
+          )}
+
+          {/* Sub-tab: PGCB Monthly Archives */}
+          {macroSubTab === 'monthly' && (
+            <div className="space-y-6 animate-in fade-in duration-200">
+              <div className="p-4 bg-primary/5 border border-primary/20 rounded-xl text-xs text-muted-foreground flex flex-col gap-2">
+                <div>
+                  <strong className="text-primary font-bold">PGCB Monthly Operating Data:</strong> This archive contains official, authenticated monthly reports from the Power Grid Company of Bangladesh (PGCB) from 2013 to 2026. Explore peak generation records, demand curves, fuel mix metrics, and regional maximum power flows.
+                </div>
+              </div>
+
+              {/* Month/Year Selection Control Panel */}
+              {(() => {
+                const currentMonthlyData = pgcbMonthlyData.find(d => d.date_key === selectedMonthlyKey) || pgcbMonthlyData[pgcbMonthlyData.length - 1];
+                const availableYears = Array.from(new Set(pgcbMonthlyData.map(d => d.year))).sort((a, b) => b - a);
+                const availableMonths = pgcbMonthlyData.filter(d => d.year === currentMonthlyData?.year);
+                
+                const yearOptions = availableYears.map(y => ({ label: String(y), value: String(y) }));
+                const monthOptions = availableMonths.map(d => ({ label: d.month, value: d.month }));
+                return (
+                  <>
+                    <div className="card p-4 flex flex-col md:flex-row md:items-center justify-between gap-4 bg-card border border-border/60 rounded-2xl shadow-sm">
+                      <div>
+                        <h4 className="text-sm font-bold text-foreground">Select Operating Period</h4>
+                        <p className="text-[11px] text-muted-foreground mt-0.5">Browse 157 historical monthly records parsed directly from PGCB archives</p>
+                      </div>
+                      
+                      <div className="flex items-center gap-3 self-start md:self-center">
+                        <div className="w-32 relative z-50">
+                          <CustomDropdown
+                            value={String(currentMonthlyData?.year)}
+                            onChange={(val) => {
+                              const newYear = parseInt(val);
+                              const firstMonth = pgcbMonthlyData.find(d => d.year === newYear);
+                              if (firstMonth) setSelectedMonthlyKey(firstMonth.date_key);
+                            }}
+                            options={yearOptions}
+                            placeholder="Year"
+                            isOpen={isYearDropdownOpen}
+                            setIsOpen={setIsYearDropdownOpen}
+                            dropdownRef={yearDropdownRef}
+                            icon={<Calendar className="h-3.5 w-3.5 text-primary shrink-0" />}
+                            prefixLabel="Year:"
+                          />
+                        </div>
+
+                        <div className="w-44 relative z-50">
+                          <CustomDropdown
+                            value={currentMonthlyData?.month}
+                            onChange={(val) => {
+                              const targetData = pgcbMonthlyData.find(d => d.year === currentMonthlyData.year && d.month === val);
+                              if (targetData) setSelectedMonthlyKey(targetData.date_key);
+                            }}
+                            options={monthOptions}
+                            placeholder="Month"
+                            isOpen={isMonthDropdownOpen}
+                            setIsOpen={setIsMonthDropdownOpen}
+                            dropdownRef={monthDropdownRef}
+                            icon={<FileText className="h-3.5 w-3.5 text-primary shrink-0" />}
+                            prefixLabel="Month:"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* KPI Grid */}
+                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                      <div className="bg-muted/15 border border-border/50 rounded-2xl p-4 shadow-sm flex flex-col justify-between">
+                        <div className="text-[10px] text-muted-foreground font-semibold uppercase tracking-wider">Max Peak Generation</div>
+                        <div className="text-2xl font-bold mt-1 text-primary tabular-nums">
+                          {currentMonthlyData ? formatNumber(currentMonthlyData.max_evening_peak_gen) : 0} <span className="text-xs font-medium text-muted-foreground">MW</span>
+                        </div>
+                        <p className="text-[9px] text-muted-foreground mt-1">Evening peak generation recorded</p>
+                      </div>
+
+                      <div className="bg-muted/15 border border-border/50 rounded-2xl p-4 shadow-sm flex flex-col justify-between">
+                        <div className="text-[10px] text-muted-foreground font-semibold uppercase tracking-wider">Estimated Peak Demand</div>
+                        <div className="text-2xl font-bold mt-1 text-foreground tabular-nums">
+                          {currentMonthlyData ? formatNumber(currentMonthlyData.max_evening_peak_demand) : 0} <span className="text-xs font-medium text-muted-foreground">MW</span>
+                        </div>
+                        <p className="text-[9px] text-muted-foreground mt-1">System operational peak demand</p>
+                      </div>
+
+                      <div className="bg-muted/15 border border-border/50 rounded-2xl p-4 shadow-sm flex flex-col justify-between">
+                        <div className="text-[10px] text-muted-foreground font-semibold uppercase tracking-wider">Peak Deficit / Load Shed</div>
+                        <div className="text-2xl font-bold mt-1 text-destructive tabular-nums">
+                          {currentMonthlyData && currentMonthlyData.max_evening_peak_demand > currentMonthlyData.max_evening_peak_gen
+                            ? formatNumber(Math.round(currentMonthlyData.max_evening_peak_demand - currentMonthlyData.max_evening_peak_gen))
+                            : 0}{' '}
+                          <span className="text-xs font-medium text-muted-foreground">MW</span>
+                        </div>
+                        <p className="text-[9px] text-muted-foreground mt-1">Peak capacity deficit gap</p>
+                      </div>
+
+                      <div className="bg-muted/15 border border-border/50 rounded-2xl p-4 shadow-sm flex flex-col justify-between">
+                        <div className="text-[10px] text-muted-foreground font-semibold uppercase tracking-wider">Total Net Energy</div>
+                        <div className="text-2xl font-bold mt-1 text-amber-500 tabular-nums">
+                          {currentMonthlyData ? formatNumber(currentMonthlyData.total_net_generation, 1) : 0}{' '}
+                          <span className="text-xs font-medium text-muted-foreground">MKWh</span>
+                        </div>
+                        <p className="text-[9px] text-muted-foreground mt-1">Monthly total energy generation</p>
+                      </div>
+                    </div>
+
+                    {/* Fuel and Regional supply details */}
+                    <div className="grid lg:grid-cols-2 gap-6">
+                      
+                      {/* Fuel Mix Card */}
+                      <div className="grid-explorer-chart-card card">
+                        <div className="grid-explorer-chart-card__head">
+                          <div>
+                            <h3 className="grid-explorer-chart-card__title">Energy Fuel Mix</h3>
+                            <p className="grid-explorer-chart-card__sub">Net generation by fuel source in {currentMonthlyData?.month} {currentMonthlyData?.year} (MKWh)</p>
+                          </div>
+                        </div>
+
+                        <div className="grid lg:grid-cols-12 gap-4 mt-4">
+                          {/* Fuel Mix Pie Chart */}
+                          <div className="lg:col-span-6 h-48 lg:h-56 relative flex items-center justify-center">
+                            {chartsReady ? (
+                              <ResponsiveContainer width="100%" height="100%">
+                                <PieChart>
+                                  <Pie
+                                    data={
+                                      currentMonthlyData
+                                        ? Object.entries(currentMonthlyData.generation_by_fuel)
+                                            .map(([name, val]) => ({
+                                              name: name.toUpperCase(),
+                                              value: val,
+                                              color: getFuelColor(name)
+                                            }))
+                                            .filter(d => d.value > 0)
+                                        : []
+                                    }
+                                    cx="50%"
+                                    cy="50%"
+                                    innerRadius={60}
+                                    outerRadius={80}
+                                    paddingAngle={2}
+                                    dataKey="value"
+                                  >
+                                    {(currentMonthlyData
+                                      ? Object.entries(currentMonthlyData.generation_by_fuel)
+                                          .map(([name, val]) => ({
+                                            name: name.toUpperCase(),
+                                            value: val,
+                                            color: getFuelColor(name)
+                                          }))
+                                          .filter(d => d.value > 0)
+                                      : []
+                                    ).map((entry, idx) => (
+                                      <Cell key={`cell-${idx}`} fill={entry.color} />
+                                    ))}
+                                  </Pie>
+                                  <Tooltip
+                                    content={({ active, payload }) => {
+                                      if (!active || !payload?.length) return null;
+                                      const data = payload[0].payload;
+                                      const total = currentMonthlyData ? currentMonthlyData.total_net_generation : 1;
+                                      const pct = (data.value / total) * 100;
+                                      return (
+                                        <div className="p-3 text-card-foreground border border-border/80 rounded-xl shadow-lg bg-card/95 backdrop-blur-md text-xs z-50">
+                                          <div className="font-bold mb-1.5 flex items-center gap-1.5 border-b border-border/40 pb-1">
+                                            <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: data.color }} />
+                                            <span>{data.name}</span>
+                                          </div>
+                                          <div className="space-y-1">
+                                            <div className="flex justify-between gap-4">
+                                              <span className="text-muted-foreground">Generation:</span>
+                                              <span className="font-bold text-foreground tabular-nums">{formatNumber(data.value, 1)} MKWh</span>
+                                            </div>
+                                            <div className="flex justify-between gap-4">
+                                              <span className="text-muted-foreground">Share of Mix:</span>
+                                              <span className="font-bold text-primary tabular-nums">{pct.toFixed(1)}%</span>
+                                            </div>
+                                          </div>
+                                        </div>
+                                      );
+                                    }}
+                                  />
+                                </PieChart>
+                              </ResponsiveContainer>
+                            ) : (
+                              <div className="grid-explorer-skeleton" />
+                            )}
+                            
+                            {/* Center labels */}
+                            <div className="absolute flex flex-col items-center justify-center text-center">
+                              <span className="text-[10px] text-muted-foreground uppercase font-semibold">Total Net</span>
+                              <span className="text-base font-bold text-foreground tabular-nums">
+                                {currentMonthlyData ? formatNumber(currentMonthlyData.total_net_generation, 0) : 0}
+                              </span>
+                              <span className="text-[9px] text-muted-foreground font-medium">MKWh</span>
+                            </div>
+                          </div>
+
+                          {/* Fuel Mix Table */}
+                          <div className="lg:col-span-6 overflow-y-auto max-h-[14rem] pr-1">
+                            <table className="w-full text-[11px] leading-relaxed">
+                              <thead>
+                                <tr className="border-b border-border/40 text-muted-foreground text-left">
+                                  <th className="pb-1.5 font-bold">Fuel Type</th>
+                                  <th className="pb-1.5 text-right font-bold">MKWh</th>
+                                  <th className="pb-1.5 text-right font-bold">Share %</th>
+                                </tr>
+                              </thead>
+                              <tbody className="divide-y divide-border/20 text-foreground">
+                                {currentMonthlyData &&
+                                  Object.entries(currentMonthlyData.generation_by_fuel)
+                                    .map(([name, val]) => {
+                                      const total = currentMonthlyData.total_net_generation || 1;
+                                      const pct = (val / total) * 100;
+                                      return { name, val, pct, color: getFuelColor(name) };
+                                    })
+                                    .filter(d => d.val > 0)
+                                    .sort((a, b) => b.val - a.val)
+                                    .map((f, idx) => (
+                                      <tr key={idx} className="hover:bg-muted/10">
+                                        <td className="py-1.5 flex items-center gap-1.5 font-medium">
+                                          <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: f.color }} />
+                                          <span className="capitalize">{f.name === 'hfo' ? 'Furnace Oil (HFO)' : f.name === 'import' ? 'India Imports' : f.name}</span>
+                                        </td>
+                                        <td className="py-1.5 text-right tabular-nums font-semibold">{formatNumber(f.val, 1)}</td>
+                                        <td className="py-1.5 text-right tabular-nums text-muted-foreground">{f.pct.toFixed(1)}%</td>
+                                      </tr>
+                                    ))}
+                              </tbody>
+                            </table>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Regional Peak Supply Card */}
+                      <div className="grid-explorer-chart-card card">
+                        <div className="grid-explorer-chart-card__head">
+                          <div>
+                            <h3 className="grid-explorer-chart-card__title">Regional Maximum Peak Supply</h3>
+                            <p className="grid-explorer-chart-card__sub">Substation peak loads served by grid zone in {currentMonthlyData?.month} {currentMonthlyData?.year} (MW)</p>
+                          </div>
+                        </div>
+
+                        <div className="mt-4">
+                          <div className="h-56">
+                            {chartsReady ? (
+                              <ResponsiveContainer width="100%" height="100%">
+                                <BarChart
+                                  data={
+                                    currentMonthlyData
+                                      ? Object.entries(currentMonthlyData.regional_supply).map(([name, value]) => ({
+                                          name: name.charAt(0).toUpperCase() + name.slice(1),
+                                          value
+                                        }))
+                                      : []
+                                  }
+                                  margin={{ top: 10, right: 10, left: 10, bottom: 20 }}
+                                >
+                                  <CartesianGrid strokeDasharray="3 6" stroke={chartTheme.gridStroke} opacity={0.3} vertical={false} />
+                                  <XAxis
+                                    dataKey="name"
+                                    tick={{ fontSize: 9, fill: chartTheme.axisTick }}
+                                    axisLine={false}
+                                    tickLine={false}
+                                    angle={-25}
+                                    textAnchor="end"
+                                  />
+                                  <YAxis
+                                    tick={{ fontSize: 10, fill: chartTheme.axisTick }}
+                                    axisLine={false}
+                                    tickLine={false}
+                                    tickFormatter={(v) => `${v} MW`}
+                                  />
+                                  <Tooltip
+                                    content={({ active, payload }) => {
+                                      if (!active || !payload?.length) return null;
+                                      const data = payload[0].payload;
+                                      const totalRegional = currentMonthlyData
+                                        ? Object.values(currentMonthlyData.regional_supply).reduce((a, b) => a + b, 0)
+                                        : 1;
+                                      const pct = (data.value / totalRegional) * 100;
+                                      return (
+                                        <div className="p-3 text-card-foreground border border-border/80 rounded-xl shadow-lg bg-card/95 backdrop-blur-md text-xs z-50">
+                                          <div className="font-bold mb-1.5 border-b border-border/40 pb-1 flex justify-between gap-4">
+                                            <span>{data.name} Zone</span>
+                                            <span className="text-[9px] uppercase font-bold text-primary">Peak Load</span>
+                                          </div>
+                                          <div className="space-y-1">
+                                            <div className="flex justify-between gap-4">
+                                              <span className="text-muted-foreground">Peak Served:</span>
+                                              <span className="font-bold text-foreground tabular-nums">{formatNumber(data.value)} MW</span>
+                                            </div>
+                                            <div className="flex justify-between gap-4">
+                                              <span className="text-muted-foreground">Share of System:</span>
+                                              <span className="font-bold text-primary tabular-nums">{pct.toFixed(1)}%</span>
+                                            </div>
+                                          </div>
+                                        </div>
+                                      );
+                                    }}
+                                  />
+                                  <Bar dataKey="value" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} maxBarSize={25}>
+                                    {(currentMonthlyData
+                                      ? Object.entries(currentMonthlyData.regional_supply).map(([name, value]) => ({ name, value }))
+                                      : []
+                                    ).map((entry, index) => {
+                                      const colors = [
+                                        '#0ea5e9', '#06b6d4', '#10b981', '#a855f7',
+                                        '#f97316', '#64748b', '#ef4444', '#eab308', '#ec4899'
+                                      ];
+                                      return <Cell key={`cell-${index}`} fill={colors[index % colors.length]} />;
+                                    })}
+                                  </Bar>
+                                </BarChart>
+                              </ResponsiveContainer>
+                            ) : (
+                              <div className="grid-explorer-skeleton" />
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </>
+                );
+              })()}
+
+              {/* Historical Long-term Trend Chart */}
+              <div className="grid-explorer-chart-card card">
+                <div className="grid-explorer-chart-card__head grid-explorer-chart-card__head--border flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <div>
+                    <h3 className="grid-explorer-chart-card__title">PGCB 13-Year Historical Growth Trends</h3>
+                    <p className="grid-explorer-chart-card__sub">Grid operational metrics charted monthly from 2013 to 2026</p>
+                  </div>
+                  
+                  {/* Selector Controls for Chart */}
+                  <div className="flex flex-wrap items-center gap-2 self-start sm:self-center">
+                    <button
+                      type="button"
+                      onClick={() => setMonthlyTrendMetric('peaks')}
+                      className={cn(
+                        "px-3 py-1.5 text-xs font-semibold rounded-lg border transition-all",
+                        monthlyTrendMetric === 'peaks'
+                          ? "bg-primary text-primary-foreground border-primary"
+                          : "border-border/50 text-muted-foreground hover:bg-muted/50 hover:text-foreground"
+                      )}
+                    >
+                      Grid Peaks (MW)
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setMonthlyTrendMetric('energy')}
+                      className={cn(
+                        "px-3 py-1.5 text-xs font-semibold rounded-lg border transition-all",
+                        monthlyTrendMetric === 'energy'
+                          ? "bg-primary text-primary-foreground border-primary"
+                          : "border-border/50 text-muted-foreground hover:bg-muted/50 hover:text-foreground"
+                      )}
+                    >
+                      Energy (MKWh)
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setMonthlyTrendMetric('fuels')}
+                      className={cn(
+                        "px-3 py-1.5 text-xs font-semibold rounded-lg border transition-all",
+                        monthlyTrendMetric === 'fuels'
+                          ? "bg-primary text-primary-foreground border-primary"
+                          : "border-border/50 text-muted-foreground hover:bg-muted/50 hover:text-foreground"
+                      )}
+                    >
+                      Fuel Trends
+                    </button>
+
+                    {monthlyTrendMetric === 'fuels' && (
+                      <div className="w-44 relative z-50">
+                        <CustomDropdown
+                          value={selectedFuelTrend}
+                          onChange={(val: any) => setSelectedFuelTrend(val)}
+                          options={[
+                            { label: 'Gas', value: 'gas' },
+                            { label: 'Coal', value: 'coal' },
+                            { label: 'Furnace Oil (HFO)', value: 'hfo' },
+                            { label: 'Imports', value: 'import' }
+                          ]}
+                          placeholder="Select Fuel"
+                          isOpen={isFuelDropdownOpen}
+                          setIsOpen={setIsFuelDropdownOpen}
+                          dropdownRef={fuelDropdownRef}
+                        />
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div className="grid-explorer-chart-area mt-4 !h-[26rem]">
+                  {chartsReady ? (
+                    <ResponsiveContainer width="100%" height="100%">
+                      {monthlyTrendMetric === 'peaks' ? (
+                        <ComposedChart data={pgcbMonthlyData} margin={{ top: 10, right: 10, left: 10, bottom: 10 }}>
+                          <CartesianGrid strokeDasharray="3 6" stroke={chartTheme.gridStroke} opacity={0.3} vertical={false} />
+                          <XAxis
+                            dataKey="date_key"
+                            tick={{ fontSize: 9, fill: chartTheme.axisTick }}
+                            axisLine={false}
+                            tickLine={false}
+                            tickFormatter={(v) => {
+                              if (v.endsWith("-01")) return v.split("-")[0];
+                              return "";
+                            }}
+                          />
+                          <YAxis
+                            tick={{ fontSize: 10, fill: chartTheme.axisTick }}
+                            axisLine={false}
+                            tickLine={false}
+                            tickFormatter={(v) => `${v} MW`}
+                          />
+                          <Tooltip
+                            content={({ active, payload }) => {
+                              if (!active || !payload?.length) return null;
+                              const d = payload[0].payload;
+                              
+                              // YoY calculation
+                              const prevData = pgcbMonthlyData.find(m => m.year === d.year - 1 && m.month === d.month);
+                              const genYoY = prevData && prevData.max_evening_peak_gen > 0
+                                ? ((d.max_evening_peak_gen - prevData.max_evening_peak_gen) / prevData.max_evening_peak_gen) * 100
+                                : null;
+                              const demandYoY = prevData && prevData.max_evening_peak_demand > 0
+                                ? ((d.max_evening_peak_demand - prevData.max_evening_peak_demand) / prevData.max_evening_peak_demand) * 100
+                                : null;
+                                
+                              const deficit = d.max_evening_peak_demand > d.max_evening_peak_gen
+                                ? Math.round(d.max_evening_peak_demand - d.max_evening_peak_gen)
+                                : 0;
+                              const deficitPct = d.max_evening_peak_demand > 0 ? (deficit / d.max_evening_peak_demand) * 100 : 0;
+                              
+                              return (
+                                <div className="p-4 text-card-foreground border border-border rounded-2xl shadow-xl bg-card/95 backdrop-blur-md text-xs min-w-[240px] z-50">
+                                  <div className="font-bold mb-2 border-b border-border/40 pb-1.5 flex justify-between items-center gap-4">
+                                    <span className="text-sm">{d.month} {d.year}</span>
+                                    <span className="text-[10px] uppercase font-extrabold text-primary">Grid Peak</span>
+                                  </div>
+                                  <div className="space-y-2">
+                                    <div>
+                                      <div className="flex justify-between gap-4 items-center">
+                                        <span className="text-muted-foreground">Max Generation:</span>
+                                        <span className="font-bold text-primary tabular-nums">{formatNumber(d.max_evening_peak_gen)} MW</span>
+                                      </div>
+                                      {genYoY !== null && (
+                                        <div className="text-right text-[10px]">
+                                          <span className="text-muted-foreground mr-1">YoY:</span>
+                                          <span className={cn("font-semibold", genYoY >= 0 ? "text-emerald-500" : "text-destructive")}>
+                                            {genYoY >= 0 ? "+" : ""}{genYoY.toFixed(1)}%
+                                          </span>
+                                        </div>
+                                      )}
+                                    </div>
+                                    <div>
+                                      <div className="flex justify-between gap-4 items-center">
+                                        <span className="text-muted-foreground">Peak Demand:</span>
+                                        <span className="font-bold text-foreground tabular-nums">{formatNumber(d.max_evening_peak_demand)} MW</span>
+                                      </div>
+                                      {demandYoY !== null && (
+                                        <div className="text-right text-[10px]">
+                                          <span className="text-muted-foreground mr-1">YoY:</span>
+                                          <span className={cn("font-semibold", demandYoY >= 0 ? "text-emerald-500" : "text-destructive")}>
+                                            {demandYoY >= 0 ? "+" : ""}{demandYoY.toFixed(1)}%
+                                          </span>
+                                        </div>
+                                      )}
+                                    </div>
+                                    <div className="border-t border-border/30 pt-1.5">
+                                      <div className="flex justify-between gap-4 items-center">
+                                        <span className="text-destructive font-semibold">Deficit Gap:</span>
+                                        <span className="font-bold text-destructive tabular-nums">
+                                          {formatNumber(deficit)} MW
+                                        </span>
+                                      </div>
+                                      {deficit > 0 && (
+                                        <div className="text-right text-[10px]">
+                                          <span className="text-muted-foreground mr-1">Deficit Share:</span>
+                                          <span className="font-semibold text-destructive">{deficitPct.toFixed(1)}%</span>
+                                        </div>
+                                      )}
+                                    </div>
+                                    
+                                    {/* Alert Banner */}
+                                    <div className={cn(
+                                      "mt-2 p-1.5 rounded-lg text-[10px] font-semibold text-center border",
+                                      deficit > 1000
+                                        ? "bg-destructive/10 border-destructive/20 text-destructive"
+                                        : deficit > 0
+                                          ? "bg-amber-500/10 border-amber-500/20 text-amber-500"
+                                          : "bg-emerald-500/10 border-emerald-500/20 text-emerald-500"
+                                    )}>
+                                      {deficit > 1000
+                                        ? "⚠️ Severe Load Shedding Alert"
+                                        : deficit > 0
+                                          ? "⚠️ Moderate Load Shedding Alert"
+                                          : "✅ Stable Grid Capacity"}
+                                    </div>
+                                  </div>
+                                </div>
+                              );
+                            }}
+                          />
+                          <Legend verticalAlign="top" height={36} wrapperStyle={{ fontSize: '11px' }} />
+                          <Area type="monotone" dataKey="max_evening_peak_demand" name="Estimated Peak Demand" stroke="#f97316" fill="rgba(249, 115, 22, 0.05)" strokeWidth={1.5} />
+                          <Line type="monotone" dataKey="max_evening_peak_gen" name="Maximum Peak Generation" stroke="hsl(var(--primary))" strokeWidth={2.5} dot={false} activeDot={{ r: 5 }} />
+                        </ComposedChart>
+                      ) : monthlyTrendMetric === 'energy' ? (
+                        <ComposedChart data={pgcbMonthlyData} margin={{ top: 10, right: 10, left: 10, bottom: 10 }}>
+                          <CartesianGrid strokeDasharray="3 6" stroke={chartTheme.gridStroke} opacity={0.3} vertical={false} />
+                          <XAxis
+                            dataKey="date_key"
+                            tick={{ fontSize: 9, fill: chartTheme.axisTick }}
+                            axisLine={false}
+                            tickLine={false}
+                            tickFormatter={(v) => {
+                              if (v.endsWith("-01")) return v.split("-")[0];
+                              return "";
+                            }}
+                          />
+                          <YAxis
+                            tick={{ fontSize: 10, fill: chartTheme.axisTick }}
+                            axisLine={false}
+                            tickLine={false}
+                            tickFormatter={(v) => `${v} MKWh`}
+                          />
+                          <Tooltip
+                            content={({ active, payload }) => {
+                              if (!active || !payload?.length) return null;
+                              const d = payload[0].payload;
+                              
+                              // YoY calculation
+                              const prevData = pgcbMonthlyData.find(m => m.year === d.year - 1 && m.month === d.month);
+                              const energyYoY = prevData && prevData.total_net_generation > 0
+                                ? ((d.total_net_generation - prevData.total_net_generation) / prevData.total_net_generation) * 100
+                                : null;
+                                
+                              // Average dispatch computation
+                              const daysInMonth = (month: string, year: number) => {
+                                const m = month.toLowerCase();
+                                if (['january', 'march', 'may', 'july', 'august', 'october', 'december'].includes(m)) return 31;
+                                if (['april', 'june', 'september', 'november'].includes(m)) return 30;
+                                if (m === 'february') return year % 4 === 0 ? 29 : 28;
+                                return 30;
+                              };
+                              const days = daysInMonth(d.month, d.year);
+                              const avgMW = (d.total_net_generation * 1000) / (days * 24);
+                              
+                              return (
+                                <div className="p-4 text-card-foreground border border-border rounded-2xl shadow-xl bg-card/95 backdrop-blur-md text-xs min-w-[240px] z-50">
+                                  <div className="font-bold mb-2 border-b border-border/40 pb-1.5 flex justify-between items-center gap-4">
+                                    <span className="text-sm">{d.month} {d.year}</span>
+                                    <span className="text-[10px] uppercase font-extrabold text-amber-500">Energy Net</span>
+                                  </div>
+                                  <div className="space-y-2">
+                                    <div>
+                                      <div className="flex justify-between gap-4 items-center">
+                                        <span className="text-muted-foreground">Total Generation:</span>
+                                        <span className="font-bold text-amber-500 tabular-nums">{formatNumber(d.total_net_generation, 1)} MKWh</span>
+                                      </div>
+                                      {energyYoY !== null && (
+                                        <div className="text-right text-[10px]">
+                                          <span className="text-muted-foreground mr-1">YoY Growth:</span>
+                                          <span className={cn("font-semibold", energyYoY >= 0 ? "text-emerald-500" : "text-destructive")}>
+                                            {energyYoY >= 0 ? "+" : ""}{energyYoY.toFixed(1)}%
+                                          </span>
+                                        </div>
+                                      )}
+                                    </div>
+                                    <div className="border-t border-border/30 pt-1.5">
+                                      <div className="flex justify-between gap-4 items-center">
+                                        <span className="text-muted-foreground">Avg continuous dispatch:</span>
+                                        <span className="font-bold text-foreground tabular-nums">{formatNumber(Math.round(avgMW))} MW</span>
+                                      </div>
+                                      <div className="text-[9px] text-muted-foreground mt-0.5">
+                                        Calculated across {days} operational days
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+                              );
+                            }}
+                          />
+                          <Legend verticalAlign="top" height={36} wrapperStyle={{ fontSize: '11px' }} />
+                          <Area type="monotone" dataKey="total_net_generation" name="Total Monthly Energy Generation (MKWh)" stroke="#f59e0b" fill="rgba(245, 158, 11, 0.1)" strokeWidth={2.5} />
+                        </ComposedChart>
+                      ) : (
+                        <ComposedChart data={pgcbMonthlyData} margin={{ top: 10, right: 10, left: 10, bottom: 10 }}>
+                          <CartesianGrid strokeDasharray="3 6" stroke={chartTheme.gridStroke} opacity={0.3} vertical={false} />
+                          <XAxis
+                            dataKey="date_key"
+                            tick={{ fontSize: 9, fill: chartTheme.axisTick }}
+                            axisLine={false}
+                            tickLine={false}
+                            tickFormatter={(v) => {
+                              if (v.endsWith("-01")) return v.split("-")[0];
+                              return "";
+                            }}
+                          />
+                          <YAxis
+                            tick={{ fontSize: 10, fill: chartTheme.axisTick }}
+                            axisLine={false}
+                            tickLine={false}
+                            tickFormatter={(v) => `${v} MKWh`}
+                          />
+                          <Tooltip
+                            content={({ active, payload }) => {
+                              if (!active || !payload?.length) return null;
+                              const d = payload[0].payload;
+                              const fuelVal = d.generation_by_fuel[selectedFuelTrend] || 0;
+                              
+                              // YoY calculation
+                              const prevData = pgcbMonthlyData.find(m => m.year === d.year - 1 && m.month === d.month);
+                              const prevFuelVal = prevData ? (prevData.generation_by_fuel[selectedFuelTrend] || 0) : 0;
+                              const fuelYoY = prevFuelVal > 0
+                                ? ((fuelVal - prevFuelVal) / prevFuelVal) * 100
+                                : null;
+                                
+                              const share = d.total_net_generation > 0 ? (fuelVal / d.total_net_generation) * 100 : 0;
+                              const fuelLabel = selectedFuelTrend === 'hfo' ? 'Furnace Oil (HFO)' : selectedFuelTrend === 'import' ? 'India Imports' : selectedFuelTrend;
+                              
+                              return (
+                                <div className="p-4 text-card-foreground border border-border rounded-2xl shadow-xl bg-card/95 backdrop-blur-md text-xs min-w-[240px] z-50">
+                                  <div className="font-bold mb-2 border-b border-border/40 pb-1.5 flex justify-between items-center gap-4">
+                                    <span className="text-sm">{d.month} {d.year}</span>
+                                    <span className="text-[10px] uppercase font-extrabold" style={{ color: getFuelColor(selectedFuelTrend) }}>
+                                      {selectedFuelTrend}
+                                    </span>
+                                  </div>
+                                  <div className="space-y-2">
+                                    <div>
+                                      <div className="flex justify-between gap-4 items-center">
+                                        <span className="text-muted-foreground capitalize">{fuelLabel}:</span>
+                                        <span className="font-bold tabular-nums" style={{ color: getFuelColor(selectedFuelTrend) }}>
+                                          {formatNumber(fuelVal, 1)} MKWh
+                                        </span>
+                                      </div>
+                                      {fuelYoY !== null && (
+                                        <div className="text-right text-[10px]">
+                                          <span className="text-muted-foreground mr-1">YoY Growth:</span>
+                                          <span className={cn("font-semibold", fuelYoY >= 0 ? "text-emerald-500" : "text-destructive")}>
+                                            {fuelYoY >= 0 ? "+" : ""}{fuelYoY.toFixed(1)}%
+                                          </span>
+                                        </div>
+                                      )}
+                                    </div>
+                                    <div className="border-t border-border/30 pt-1.5">
+                                      <div className="flex justify-between gap-4 items-center">
+                                        <span className="text-muted-foreground">Share of Month Mix:</span>
+                                        <span className="font-bold text-foreground tabular-nums">{share.toFixed(1)}%</span>
+                                      </div>
+                                      <div className="flex justify-between gap-4 items-center mt-1">
+                                        <span className="text-muted-foreground">Total Month Net:</span>
+                                        <span className="font-bold text-foreground/80 tabular-nums">{formatNumber(d.total_net_generation, 1)} MKWh</span>
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+                              );
+                            }}
+                          />
+                          <Legend verticalAlign="top" height={36} wrapperStyle={{ fontSize: '11px' }} />
+                          <Line
+                            type="monotone"
+                            dataKey={(d) => d.generation_by_fuel[selectedFuelTrend] || 0}
+                            name={`${selectedFuelTrend.toUpperCase()} Generation Trend (MKWh)`}
+                            stroke={getFuelColor(selectedFuelTrend)}
+                            strokeWidth={2.5}
+                            dot={false}
+                            activeDot={{ r: 5 }}
+                          />
+                        </ComposedChart>
+                      )}
+                    </ResponsiveContainer>
+                  ) : (
+                    <div className="grid-explorer-skeleton" />
+                  )}
+                </div>
+
+                <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1.5 mt-4 pt-3 border-t border-border/40 text-[10px] text-muted-foreground/80 px-4 pb-4">
+                  <span>Source: <a href="https://www.pgcb.gov.bd/" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline font-semibold">PGCB Monthly System Operation Reports</a></span>
+                  <span>Data Period: January 2013 - April 2026 (157 Consecutive Reports)</span>
+                </div>
               </div>
             </div>
           )}
