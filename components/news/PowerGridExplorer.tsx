@@ -446,17 +446,25 @@ interface PowerGridExplorerProps {
   initialMix?: any;
   initialLines?: any;
   initialProjects?: any;
+  dbNodes?: any[];
+  dbEdges?: any[];
 }
 
-export function PowerGridExplorer({ initialMix, initialLines, initialProjects }: PowerGridExplorerProps = {}) {
+export function PowerGridExplorer({ 
+  initialMix, 
+  initialLines, 
+  initialProjects,
+  dbNodes = [],
+  dbEdges = []
+}: PowerGridExplorerProps = {}) {
   const chartTheme = useChartTheme();
   
   // Date Selection States
-  const availableDatesList = useMemo(() => {
+  const availableDatesList = useMemo<string[]>(() => {
     const rawList = Array.isArray(availableDatesListRaw)
-      ? availableDatesListRaw
-      : (availableDatesListRaw as any)?.default || [];
-    return rawList.filter((d: string) => /^(202[0-6])-\d{2}-\d{2}$/.test(d));
+      ? (availableDatesListRaw as string[])
+      : ((availableDatesListRaw as any)?.default as string[]) || [];
+    return rawList.filter((d: any) => /^(201[3-9]|202[0-6])-\d{2}-\d{2}$/.test(String(d))) as string[];
   }, []);
 
   const latestDate = availableDatesList[availableDatesList.length - 1] || '2026-06-24';
@@ -942,16 +950,56 @@ export function PowerGridExplorer({ initialMix, initialLines, initialProjects }:
 
   const glow = tabGlowColors[activeTab] || tabGlowColors.overview;
 
-  const tabs = [
-    { id: 'overview', label: 'Overview', icon: BarChart3 },
-    { id: 'gen', label: 'Generation & Cost', icon: Zap },
-    { id: 'gas', label: 'Gas & LNG Supply', icon: Droplet },
-    { id: 'imports', label: 'C/B Imports', icon: Globe },
-    { id: 'renewables', label: 'Renewables (SREDA)', icon: Sun },
-    { id: 'transmission', label: 'Technical Information', icon: Activity },
-    { id: 'regional', label: 'Regional Grid', icon: Cable },
-    { id: 'macro', label: 'Macro Trends', icon: TrendingUp },
-  ] as const;
+  interface TabInfo {
+    id: 'overview' | 'gen' | 'gas' | 'imports' | 'renewables' | 'transmission' | 'regional' | 'macro';
+    label: string;
+    icon: any;
+  }
+
+  interface TabGroup {
+    label: string;
+    tabs: TabInfo[];
+  }
+
+  const tabGroups: TabGroup[] = [
+    {
+      label: 'Operations',
+      tabs: [
+        { id: 'overview', label: 'Overview', icon: BarChart3 },
+        { id: 'gen', label: 'Generation & Cost', icon: Zap },
+      ]
+    },
+    {
+      label: 'Supply & Logistics',
+      tabs: [
+        { id: 'gas', label: 'Gas & LNG Supply', icon: Droplet },
+        { id: 'imports', label: 'C/B Imports', icon: Globe },
+        { id: 'renewables', label: 'Renewables (SREDA)', icon: Sun },
+      ]
+    },
+    {
+      label: 'Infrastructure & Projects',
+      tabs: [
+        { id: 'transmission', label: 'Technical Information', icon: Activity },
+        { id: 'regional', label: 'Regional Grid', icon: Cable },
+      ]
+    },
+    {
+      label: 'Analytics & Planning (Macro Trends)',
+      tabs: [
+        { id: 'macro', label: 'Macro Trends', icon: TrendingUp },
+      ]
+    }
+  ];
+
+  const tabs = useMemo<TabInfo[]>(() => {
+    return tabGroups.flatMap(g => g.tabs);
+  }, []);
+
+  const activeGroup = useMemo(() => {
+    const group = tabGroups.find(g => g.tabs.some(t => t.id === activeTab));
+    return group ? group.label : 'Operations';
+  }, [activeTab]);
 
   // Substation Filtering Logic
   const filteredSubstations = substationsData.filter((sub) => {
@@ -1361,25 +1409,53 @@ export function PowerGridExplorer({ initialMix, initialLines, initialProjects }:
         </div>
       </div>
 
-      {/* Tabs */}
-      <div className="grid-explorer-tabs" role="tablist" aria-label="Grid reports views">
-        {tabs.map((t) => {
-          const TabIcon = t.icon;
-          const active = activeTab === t.id;
-          return (
-            <button
-              key={t.id}
-              type="button"
-              role="tab"
-              aria-selected={active}
-              onClick={() => handleTabClick(t.id)}
-              className={cn('explorer-tab', active && 'active')}
-            >
-              <TabIcon className="h-4 w-4 shrink-0" />
-              {t.label}
-            </button>
-          );
-        })}
+      {/* Grouped Tab Navigation */}
+      <div className="flex flex-col gap-3 mt-6 mb-4 w-full">
+        {/* Category Groups Row */}
+        <div className="flex flex-wrap items-center gap-1.5 border-b border-border/40 pb-2.5">
+          {tabGroups.map((group) => {
+            const isGroupActive = activeGroup === group.label;
+            return (
+              <button
+                key={group.label}
+                type="button"
+                onClick={() => {
+                  // Switch to the first tab in this group
+                  handleTabClick(group.tabs[0].id);
+                }}
+                className={cn(
+                  "px-3.5 py-1.5 rounded-xl text-[10px] font-bold transition-all duration-200 uppercase tracking-wider border",
+                  isGroupActive
+                    ? "bg-primary/10 text-primary border-primary/20 shadow-sm"
+                    : "text-muted-foreground border-transparent hover:bg-muted/40 hover:text-foreground"
+                )}
+              >
+                {group.label}
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Sub-Tabs Row under active group */}
+        <div className="grid-explorer-tabs" role="tablist" aria-label="Grid reports views">
+          {tabGroups.find(g => g.label === activeGroup)?.tabs.map((t) => {
+            const TabIcon = t.icon;
+            const active = activeTab === t.id;
+            return (
+              <button
+                key={t.id}
+                type="button"
+                role="tab"
+                aria-selected={active}
+                onClick={() => handleTabClick(t.id)}
+                className={cn('explorer-tab', active && 'active')}
+              >
+                <TabIcon className="h-4 w-4 shrink-0" />
+                {t.label}
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       {/* Tab Panels */}
@@ -4216,8 +4292,8 @@ export function PowerGridExplorer({ initialMix, initialLines, initialProjects }:
                     <tr>
                       <th>Line Asset</th>
                       <th>Owner</th>
-                      <th className="text-right">Capacity</th>
-                      <th className="text-right">Load Status</th>
+                      <th>Capacity</th>
+                      <th>Load Status</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -4235,8 +4311,8 @@ export function PowerGridExplorer({ initialMix, initialLines, initialProjects }:
                           </div>
                         </td>
                         <td>{line.owner}</td>
-                        <td className="text-right tabular-nums font-medium">{line.capacity}</td>
-                        <td className="text-right tabular-nums">
+                        <td className="tabular-nums font-medium">{line.capacity}</td>
+                        <td className="tabular-nums">
                           {line.load > 0 ? (
                             <span className="font-bold text-primary">{line.load}% load</span>
                           ) : (
@@ -4265,8 +4341,8 @@ export function PowerGridExplorer({ initialMix, initialLines, initialProjects }:
                     <tr>
                       <th>Project Name</th>
                       <th>Status</th>
-                      <th className="text-right">Capacity / Cost</th>
-                      <th className="text-right">Expected Date</th>
+                      <th>Capacity / Cost</th>
+                      <th>Expected Date</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -4289,8 +4365,8 @@ export function PowerGridExplorer({ initialMix, initialLines, initialProjects }:
                             {proj.status}
                           </span>
                         </td>
-                        <td className="text-right tabular-nums font-medium">{proj.mw}</td>
-                        <td className="text-right tabular-nums text-muted-foreground font-medium">{proj.date}</td>
+                        <td className="tabular-nums font-medium">{proj.mw}</td>
+                        <td className="tabular-nums text-muted-foreground font-medium">{proj.date}</td>
                       </tr>
                     ))}
                   </tbody>

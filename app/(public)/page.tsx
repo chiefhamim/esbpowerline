@@ -68,6 +68,7 @@ export default async function Home() {
     : 'Latest';
   const snapshotLabel = getSnapshotLabel(settings);
   const professionalsCta = getProfessionalsCta(settings);
+  const snapshotDate = settings.snapshotDate as string | undefined;
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -79,7 +80,12 @@ export default async function Home() {
               tickerItems={settings.ticker as TickerItem[] | undefined}
               inBand
             />
-            <HomeSnapshotPanel snapshotStats={settings.snapshot} snapshotLabel={snapshotLabel} layout="hero-rail" />
+            <HomeSnapshotPanel
+              snapshotStats={settings.snapshot}
+              snapshotLabel={snapshotLabel}
+              snapshotDate={snapshotDate}
+              layout="hero-rail"
+            />
           </div>
         </div>
 

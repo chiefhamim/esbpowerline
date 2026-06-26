@@ -13,6 +13,12 @@ const PowerGridExplorer = dynamic(
   },
 );
 
-export function PowerGridExplorerClient(props: ComponentProps<typeof PowerGridExplorer>) {
+export function PowerGridExplorerClient(props: {
+  initialMix?: any;
+  initialLines?: any;
+  initialProjects?: any;
+  dbNodes?: any[];
+  dbEdges?: any[];
+}) {
   return <PowerGridExplorer {...props} />;
 }

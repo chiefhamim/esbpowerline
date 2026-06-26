@@ -4,6 +4,7 @@ import { PowerGridExportControls } from '@/components/members/PowerGridExportCon
 import { PowerGridExplorerClient } from '@/components/news/PowerGridExplorerClient';
 import { RefreshGridDataButton } from '@/components/members/RefreshGridDataButton';
 import { MemberToolsPanel } from '@/components/members/MemberToolsPanel';
+import prisma from '@/lib/prisma';
 
 export const revalidate = 60;
 
@@ -15,6 +16,12 @@ export const metadata = {
 export default async function PowerGridExplorerPage() {
   const settings = await getGridSettingsMap();
   const grid = normalizeGridSettings(settings);
+
+  // Fetch nodes and edges from database
+  const dbNodes = await prisma.node.findMany({
+    orderBy: { label: 'asc' },
+  });
+  const dbEdges = await prisma.edge.findMany();
 
   return (
     <div id="power-grid-page-container" className="container container--shell py-8 md:py-10">
@@ -38,13 +45,12 @@ export default async function PowerGridExplorerPage() {
         initialMix={grid.gridMix}
         initialLines={grid.gridLines}
         initialProjects={grid.gridProjects}
+        dbNodes={dbNodes}
+        dbEdges={dbEdges}
       />
 
       <MemberToolsPanel />
 
-      <div className="mt-10 pt-6 border-t border-border/60 text-[11px] text-muted-foreground flex flex-wrap gap-x-5 gap-y-1.5 leading-relaxed">
-        Sources: BPDB, PGCB, SREDA, BERC, Petrobangla. Figures are indicative and editor-managed unless noted. Member downloads are logged for reference.
-      </div>
     </div>
   );
 }

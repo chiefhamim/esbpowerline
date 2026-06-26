@@ -9,10 +9,12 @@ import { localizeSnapshotLabel } from '@/lib/i18n/homepage-copy';
 export function HomeSnapshotPanel({
   snapshotStats,
   snapshotLabel,
+  snapshotDate,
   layout = 'rail',
 }: {
   snapshotStats?: unknown;
   snapshotLabel: string;
+  snapshotDate?: string;
   layout?: 'rail' | 'hero-rail';
 }) {
   const { locale, t } = useLocale();
@@ -25,15 +27,22 @@ export function HomeSnapshotPanel({
   const sourcesText = agencies.join(' • ');
   const isHeroRail = layout === 'hero-rail';
 
-  const formattedDate = new Date().toLocaleDateString(locale === 'bn' ? 'bn-BD' : 'en-US', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  });
+  let dateObj = new Date();
+  if (snapshotDate) {
+    const cleanDate = snapshotDate.replace(/^"|"$/g, '');
+    const match = cleanDate.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    if (match) {
+      const [_, y, m, d] = match;
+      dateObj = new Date(Number(y), Number(m) - 1, Number(d));
+    } else {
+      const parsed = new Date(cleanDate);
+      if (!isNaN(parsed.getTime())) {
+        dateObj = parsed;
+      }
+    }
+  }
 
-  const headerDate = new Date().toLocaleDateString(locale === 'bn' ? 'bn-BD' : 'en-US', {
+  const headerDate = dateObj.toLocaleDateString(locale === 'bn' ? 'bn-BD' : 'en-US', {
     month: 'short',
     day: 'numeric',
     year: 'numeric',

@@ -78,6 +78,10 @@ export function productionSiteSettings() {
       ],
     },
     {
+      key: 'snapshotDate',
+      value: '2026-06-24',
+    },
+    {
       key: 'interviews',
       value: [],
     },

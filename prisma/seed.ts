@@ -142,7 +142,7 @@ async function main() {
       views: 0,
       author: editor.id,
       publishedAt: new Date('2026-06-10T09:36:00'),
-      imageUrl: '/images/download (6).jfif',
+      imageUrl: '/images/INNER001.jpg',
       excerpt: "Primary energy imports rose to 62.5% and generation costs surged 83% in four years, an IEEFA report finds, while renewables account for only 2.3% of grid output.",
       content: `<p>Bangladesh's reliance on primary energy imports rose from 47.7 percent to 62.5 percent in four years, leaving the country exposed to volatile global fossil fuel markets. As a result, power generation costs have gone up by 83%, according to a new report.</p>
 <p>The report, <strong>"Fostering Bangladesh's Energy Transition,"</strong> published by the Institute for Energy Economics and Financial Analysis (IEEFA), analysed data from FY2020-21 to FY2024-25.</p>
@@ -164,7 +164,7 @@ async function main() {
       views: 0,
       author: editor.id,
       publishedAt: new Date('2026-06-10T09:33:00'),
-      imageUrl: '/images/download (7).jfif',
+      imageUrl: '/images/INNER002.jpg',
       excerpt: 'The Cabinet Committee on Government Purchase approved five LNG cargoes—including three spot purchases—to meet summer demand amid Middle East supply uncertainty.',
       content: `<p>The government yesterday approved the purchase of five liquefied natural gas (LNG) cargoes, including three from the spot market, to help meet the country's energy demand as supplies under long-term contracts face uncertainty amid the conflict in the Middle East.</p>
 <p>The Cabinet Committee on Government Purchase (CCGP) approved the proposals at a meeting yesterday following recommendations from the Energy and Mineral Resources Division.</p>
@@ -182,7 +182,7 @@ async function main() {
       views: 0,
       author: editor.id,
       publishedAt: new Date('2026-06-04T10:00:00'),
-      imageUrl: '/images/download (8).jfif',
+      imageUrl: '/images/INNER003.jpg',
       excerpt: 'BERC has raised average electricity prices by 16.68%, pushing up costs for households and export-oriented industries already under margin pressure.',
       content: `<p>The Bangladesh Energy Regulatory Commission (BERC) has once again significantly increased electricity prices in the country. Under the new announcement, electricity prices have been raised by an average of 16.68 percent across consumer categories.</p>
 <p>Industrial consumers, particularly those in the readymade garment and textile sectors, face steep increases that will feed directly into production costs. Household consumers in higher slab categories will also see noticeably larger monthly bills.</p>
@@ -200,7 +200,7 @@ async function main() {
       views: 0,
       author: editor.id,
       publishedAt: new Date('2026-06-03T14:30:00'),
-      imageUrl: '/images/download (9).jfif',
+      imageUrl: '/images/INNER004.jpg',
       excerpt: 'BERC announced simultaneous increases at wholesale and retail levels, publishing revised tariffs at a press conference attended by utility executives and consumer representatives.',
       content: `<p>The Bangladesh Energy Regulatory Commission (BERC) has announced an increase in electricity prices at both the consumer and wholesale levels. The new tariffs were published at a press conference, where commissioners outlined the phased implementation schedule.</p>
 <p>At the wholesale level, the Bangladesh Power Development Board and affiliated entities will pay higher bulk supply tariffs designed to narrow the gap between average cost of service and regulated revenue recovery.</p>
@@ -217,7 +217,7 @@ async function main() {
       views: 0,
       author: editor.id,
       publishedAt: new Date('2026-05-24T11:00:00'),
-      imageUrl: '/images/download (10).jfif',
+      imageUrl: '/images/INNER005.jpg',
       excerpt: 'Chief Whip Md. Nurul Islam said expanding renewables is central to long-term power stability and reducing dependence on imported fossil fuels.',
       content: `<p>Chief Whip of the National Parliament, Md. Nurul Islam has stated that the government is focusing on expanding the use of renewable energy to achieve long-term stability and self-reliance in the power sector.</p>
 <p>Speaking at a policy dialogue on national energy security, the Chief Whip highlighted solar, wind, and cross-border hydropower as pillars of a diversified generation mix that could reduce exposure to LNG and coal price shocks.</p>
@@ -234,7 +234,7 @@ async function main() {
       views: 0,
       author: editor.id,
       publishedAt: new Date('2026-05-24T09:15:00'),
-      imageUrl: '/images/download (11).jfif',
+      imageUrl: '/images/INNER006.jpg',
       excerpt: 'At least Tk 35,000 crore in private investment across economic zones is stalled as factories await gas connections amid chronic supply deficits.',
       content: `<p>At least Tk 35,000 crore in private investments across various economic and industrial zones in the country is virtually stalled due to a gas connection crisis. With numerous factories that have completed construction unable to commence operations, investors are facing mounting carrying costs.</p>
 <p>Petrobangla and the Energy and Mineral Resources Division have struggled to allocate new connections as domestic production declines and LNG import capacity remains constrained during peak demand periods.</p>
@@ -251,7 +251,7 @@ async function main() {
       views: 0,
       author: editor.id,
       publishedAt: new Date('2026-05-23T16:00:00'),
-      imageUrl: '/images/download (12).jfif',
+      imageUrl: '/images/INNER001.jpg',
       excerpt: 'Petrobangla will invite international tenders for offshore blocks in the Bay of Bengal under revised fiscal terms aimed at attracting foreign explorers.',
       content: `<p>To inject new momentum into oil and gas exploration in the Bay of Bengal, the Bangladesh Oil, Gas and Mineral Resources Corporation (Petrobangla) will invite international tenders on Sunday under an updated production-sharing framework.</p>
 <p>The initiative covers multiple offshore blocks and introduces improved cost-recovery provisions and arbitration clauses designed to address concerns raised by international majors in previous bidding rounds.</p>
@@ -268,7 +268,7 @@ async function main() {
       views: 0,
       author: editor.id,
       publishedAt: new Date('2026-05-18T12:00:00'),
-      imageUrl: '/images/download (13).jfif',
+      imageUrl: '/images/INNER002.jpg',
       excerpt: 'The World Bank approved $350 million in additional financing to help Bangladesh secure LNG supplies and stabilise the gas grid during peak demand.',
       content: `<p>The World Bank approved USD 350 million in additional financing on Friday to help Bangladesh secure liquefied natural gas (LNG) imports and support related infrastructure upgrades.</p>
 <p>The funding is intended to cushion fiscal pressures associated with spot and term LNG purchases while Petrobangla and RPGCL expand delivery capacity to power plants and industrial consumers.</p>
@@ -285,7 +285,7 @@ async function main() {
       views: 0,
       author: editor.id,
       publishedAt: new Date('2026-05-18T10:30:00'),
-      imageUrl: '/images/download (14).jfif',
+      imageUrl: '/images/INNER003.jpg',
       excerpt: 'Smaller RMG exporters are installing rooftop solar to meet European buyer sustainability requirements and hedge against rising grid tariffs.',
       content: `<p>A growing number of small and medium garment exporters are adopting rooftop solar systems as European buyers intensify sustainability requirements in sourcing contracts.</p>
 <p>Factory owners cite dual motivations: meeting buyer audit standards on carbon footprint reduction and insulating operations from successive electricity tariff increases that have compressed already thin margins.</p>
@@ -357,7 +357,7 @@ async function main() {
         views: a.views,
         readTime: Math.ceil((a.content.length || 600) / 200),
         publishedAt: a.status === 'PUBLISHED' ? new Date(Date.now() - Math.random() * 1000 * 3600 * 24 * 12) : null,
-        imageUrl: `/images/download (${10 + (i % 5)}).jfif`,
+        imageUrl: `/images/INNER00${1 + (i % 6)}.jpg`,
         tags: [a.cat.split(' ')[0].toLowerCase()],
         seo: { metaTitle: a.title, metaDescription: a.excerpt },
       },
@@ -369,8 +369,8 @@ async function main() {
   await prisma.magazineIssue.createMany({
     data: [
       { title: 'Renewables Surge & Tariff Reform', issueDate: new Date('2026-05-01'), coverUrl: '/images/demo_magazine_cover.jpg', pdfUrl: 'https://example.com/magazine/2026-05.pdf', summary: 'Cover story on the 1,800 MW solar tender and BERC’s latest bulk tariff order.', status: 'published' },
-      { title: 'Grid Modernization & Nuclear Dawn', issueDate: new Date('2026-04-01'), coverUrl: '/images/download (11).jfif', pdfUrl: 'https://example.com/magazine/2026-04.pdf', summary: 'Rooppur fuel loading, 400 kV backbone projects, and digital dispatch upgrades.', status: 'published' },
-      { title: 'Gas Security & Regional Trade', issueDate: new Date('2026-03-01'), coverUrl: '/images/download (12).jfif', pdfUrl: 'https://example.com/magazine/2026-03.pdf', summary: 'LNG strategy, Nepal-Bhutan hydro prospects, and the future of domestic gas fields.', status: 'published' },
+      { title: 'Grid Modernization & Nuclear Dawn', issueDate: new Date('2026-04-01'), coverUrl: '/images/COVER001.jpg', pdfUrl: 'https://example.com/magazine/2026-04.pdf', summary: 'Rooppur fuel loading, 400 kV backbone projects, and digital dispatch upgrades.', status: 'published' },
+      { title: 'Gas Security & Regional Trade', issueDate: new Date('2026-03-01'), coverUrl: '/images/COVER002.jpg', pdfUrl: 'https://example.com/magazine/2026-03.pdf', summary: 'LNG strategy, Nepal-Bhutan hydro prospects, and the future of domestic gas fields.', status: 'published' },
     ],
   });
   console.log('✓ Magazine issues seeded');
@@ -451,7 +451,7 @@ async function main() {
     data: [
       { key: 'site', value: { name: 'ESB PowerLine', tagline: "Bangladesh's premier energy news portal" } },
       { key: 'seo', value: { metaTitle: 'ESB PowerLine — Bangladesh Energy News', metaDescription: 'Authoritative coverage of power generation, renewables, policy, and grid infrastructure.' } },
-      { key: 'hero', value: { title: 'Bangladesh Energy Intelligence', subtitle: 'Real-time news, data, and analysis for the power sector', imageUrl: '/images/download (6).jfif' } },
+      { key: 'hero', value: { title: 'Bangladesh Energy Intelligence', subtitle: 'Real-time news, data, and analysis for the power sector', imageUrl: '/images/banner_final.jpg' } },
       {
         key: 'homepage',
         value: {
@@ -501,6 +501,10 @@ async function main() {
         ],
       },
       {
+        key: 'snapshotDate',
+        value: '2026-06-24',
+      },
+      {
         key: 'interviews',
         value: [
           {
@@ -510,7 +514,7 @@ async function main() {
             role: 'Chairman, SREDA',
             duration: '24:15',
             date: 'Jun 11',
-            thumbnail: '/images/download (6).jfif',
+            thumbnail: '/images/yt_tm_1.jpg',
             youtubeId: 'dQw4w9wgxcQ',
             excerpt: 'Inside the new solar + wind tender pipeline and grid integration challenges.',
           },
@@ -521,7 +525,7 @@ async function main() {
             role: 'Managing Director, PGCB',
             duration: '18:40',
             date: 'Jun 9',
-            thumbnail: '/images/download (7).jfif',
+            thumbnail: '/images/yt_tm_2.jpg',
             youtubeId: '3JZ_2t4vV3c',
             excerpt: 'How the new transmission corridors are unlocking southern generation.',
           },
@@ -532,7 +536,7 @@ async function main() {
             role: 'Member, BERC',
             duration: '31:05',
             date: 'Jun 5',
-            thumbnail: '/images/download (8).jfif',
+            thumbnail: '/images/yt_tm_3.jpg',
             youtubeId: '9bZkp7q19f0',
             excerpt: 'Balancing cost recovery with affordability in the new bulk supply tariff.',
           },
@@ -543,7 +547,7 @@ async function main() {
             role: 'Project Director, Rooppur NPP',
             duration: '27:30',
             date: 'Jun 3',
-            thumbnail: '/images/download (9).jfif',
+            thumbnail: '/images/yt_tm_1.jpg',
             youtubeId: 'jNQXAC9IVRw',
             excerpt: 'Milestones, fuel cycle, and what it means for Bangladesh’s baseload.',
           },

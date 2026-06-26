@@ -1,5 +1,3 @@
-const url = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim();
-
 /** Prefer the new publishable key; fall back to legacy anon JWT for older env files. */
 function resolvePublicKey() {
   return (
@@ -10,6 +8,7 @@ function resolvePublicKey() {
 }
 
 export function getSupabaseEnv() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim();
   const publicKey = resolvePublicKey();
   const isConfigured = !!(url && publicKey && !url.includes('your-project') && !url.includes('dummy'));
 

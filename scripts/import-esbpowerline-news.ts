@@ -394,9 +394,20 @@ async function ensureEditor(prisma: PrismaClient) {
 }
 
 async function purgeDemoArticles(prisma: PrismaClient) {
-  const articleIds = (await prisma.article.findMany({ select: { id: true } })).map((a) => a.id);
+  const demoArticles = await prisma.article.findMany({
+    where: {
+      OR: [
+        { imageUrl: { startsWith: '/images/' } },
+        { imageUrl: { startsWith: '/uploads/' } },
+        { imageUrl: null },
+      ],
+    },
+    select: { id: true },
+  });
+
+  const articleIds = demoArticles.map((a) => a.id);
   if (articleIds.length === 0) {
-    console.log('✓ No existing articles to remove');
+    console.log('✓ No demo articles to remove');
     return 0;
   }
 
@@ -405,7 +416,7 @@ async function purgeDemoArticles(prisma: PrismaClient) {
   await prisma.comment.deleteMany({ where: { articleId: { in: articleIds } } });
   await prisma.articleHistory.deleteMany({ where: { articleId: { in: articleIds } } });
   await prisma.bookmark.deleteMany({ where: { articleId: { in: articleIds } } });
-  const deleted = await prisma.article.deleteMany();
+  const deleted = await prisma.article.deleteMany({ where: { id: { in: articleIds } } });
   console.log(`✓ Removed ${deleted.count} demo/fake article(s)`);
   return deleted.count;
 }
@@ -593,20 +604,34 @@ async function importArticles(
     // 4. Retrieve or create Author profile from API
     const finalAuthorId = await getOrCreateAuthor(prisma, post.author, dryRun, defaultEditorId);
 
-    // 5. Image pipeline (Featured / Cover Image)
-    let imageUrl = await fetchFeaturedImage(post.featured_media);
-    if (isDemoImage(imageUrl)) {
-      imageUrl = extractContentImage(rawContent);
-    }
-    if (imageUrl && !isDemoImage(imageUrl)) {
-      const newFeaturedUrl = await downloadAndProcessImage(imageUrl, title, dryRun);
-      if (newFeaturedUrl) {
-        imageUrl = newFeaturedUrl;
-      }
-    }
+    let imageUrl: string | null = null;
+    let processedContent = rawContent;
 
-    // 6. Image pipeline (Inline body images)
-    const processedContent = await processContentImages(sanitizeContent(rawContent), title, dryRun);
+    const existingArticle = !dryRun ? await prisma.article.findUnique({
+      where: { slug },
+      select: { imageUrl: true, content: true }
+    }) : null;
+
+    if (existingArticle && existingArticle.imageUrl?.startsWith('https://')) {
+      imageUrl = existingArticle.imageUrl;
+      processedContent = existingArticle.content;
+      console.log(`  ⚡ Reusing existing processed image and content for: "${title.slice(0, 60)}…"`);
+    } else {
+      // 5. Image pipeline (Featured / Cover Image)
+      imageUrl = await fetchFeaturedImage(post.featured_media);
+      if (isDemoImage(imageUrl)) {
+        imageUrl = extractContentImage(rawContent);
+      }
+      if (imageUrl && !isDemoImage(imageUrl)) {
+        const newFeaturedUrl = await downloadAndProcessImage(imageUrl, title, dryRun);
+        if (newFeaturedUrl) {
+          imageUrl = newFeaturedUrl;
+        }
+      }
+
+      // 6. Image pipeline (Inline body images)
+      processedContent = await processContentImages(sanitizeContent(rawContent), title, dryRun);
+    }
 
     const publishedAt = new Date(post.date);
     const importedAt = new Date();

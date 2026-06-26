@@ -134,6 +134,7 @@ async function runIngestionPipeline() {
   
   let powerGridData: any = null;
   let localExcelPath = '';
+  let activeReportDate: Date | null = null;
   
   // Try today and up to the last 7 days to find the latest published PGCB Excel report
   for (let i = 0; i < 8; i++) {
@@ -153,6 +154,7 @@ async function runIngestionPipeline() {
         const parsed = JSON.parse(output);
         if (!parsed.error) {
           powerGridData = parsed;
+          activeReportDate = checkDate;
           console.log(`[Ingest] Successfully parsed local Excel file for date ${dateStr}.`);
           break;
         }
@@ -171,6 +173,7 @@ async function runIngestionPipeline() {
         const parsed = JSON.parse(output);
         if (!parsed.error) {
           powerGridData = parsed;
+          activeReportDate = checkDate;
           console.log(`[Ingest] Successfully downloaded and parsed Excel file for date ${dateStr}.`);
           break;
         }
@@ -222,38 +225,89 @@ async function runIngestionPipeline() {
   }
 
   // Fallback to desktop files if no downloads succeeded (e.g. offline dev environment)
+  const userHome = process.env.USERPROFILE || process.env.HOME || 'C:\\Users\\hamim';
+  const pgcbDesktopDir = path.join(userHome, 'Desktop', 'PGCB', 'Daily Reports - D');
+  const pbDesktopDir = path.join(userHome, 'Desktop', 'Petrobangla', 'Daily Gas Reports - D');
+
   if (!powerGridData) {
-    const devExcelPath = 'C:\\Users\\user\\Desktop\\Daily Report 23-06-2026.xlsx';
-    if (fs.existsSync(devExcelPath)) {
-      console.log(`[Ingest] Falling back to desktop sample Excel: ${devExcelPath}`);
-      const pythonScript = path.join(process.cwd(), 'scripts', 'parse_energy_reports.py');
-      try {
-        const { execSync } = require('child_process');
-        const output = execSync(`python "${pythonScript}" "${devExcelPath}"`, { encoding: 'utf8' });
-        const parsed = JSON.parse(output);
-        if (!parsed.error) {
-          powerGridData = parsed;
+    if (fs.existsSync(pgcbDesktopDir)) {
+      const files = fs.readdirSync(pgcbDesktopDir);
+      let latestFile = '';
+      let latestDate: Date | null = null;
+      for (const f of files) {
+        if (!f.endsWith('.xlsx') && !f.endsWith('.xlsm')) continue;
+        const match = f.match(/(\d{1,2})[-. ](\d{1,2})[-. ](\d{2,4})/);
+        if (match) {
+          const dVal = parseInt(match[1]);
+          const mVal = parseInt(match[2]);
+          let yVal = parseInt(match[3]);
+          if (yVal < 50) yVal += 2000;
+          else if (yVal < 100) yVal += 1900;
+          const dt = new Date(yVal, mVal - 1, dVal);
+          if (!latestDate || dt > latestDate) {
+            latestDate = dt;
+            latestFile = f;
+          }
         }
-      } catch (err) {
-        console.error(`[Ingest] Error parsing desktop Excel fallback:`, err);
+      }
+      
+      if (latestFile) {
+        const devExcelPath = path.join(pgcbDesktopDir, latestFile);
+        console.log(`[Ingest] Falling back to desktop sample Excel: ${devExcelPath}`);
+        const pythonScript = path.join(process.cwd(), 'scripts', 'parse_energy_reports.py');
+        try {
+          const { execSync } = require('child_process');
+          const output = execSync(`python "${pythonScript}" "${devExcelPath}"`, { encoding: 'utf8' });
+          const parsed = JSON.parse(output);
+          if (!parsed.error) {
+            powerGridData = parsed;
+            activeReportDate = latestDate;
+            console.log(`[Ingest] Successfully parsed fallback PGCB report for date: ${latestDate?.toLocaleDateString()}`);
+          }
+        } catch (err) {
+          console.error(`[Ingest] Error parsing desktop Excel fallback:`, err);
+        }
       }
     }
   }
   
   if (!gasData) {
-    const devPdfPath = 'C:\\Users\\user\\Desktop\\Petrobangla.pdf';
-    if (fs.existsSync(devPdfPath)) {
-      console.log(`[Ingest] Falling back to desktop sample PDF: ${devPdfPath}`);
-      const pythonScript = path.join(process.cwd(), 'scripts', 'parse_energy_reports.py');
-      try {
-        const { execSync } = require('child_process');
-        const output = execSync(`python "${pythonScript}" "${devPdfPath}"`, { encoding: 'utf8' });
-        const parsed = JSON.parse(output);
-        if (!parsed.error) {
-          gasData = parsed;
+    if (fs.existsSync(pbDesktopDir)) {
+      const files = fs.readdirSync(pbDesktopDir);
+      let latestFile = '';
+      let latestDate: Date | null = null;
+      for (const f of files) {
+        if (!f.endsWith('.pdf')) continue;
+        const match = f.match(/(\d{1,2})[-. ](\d{1,2})[-. ](\d{2,4})/);
+        if (match) {
+          const dVal = parseInt(match[1]);
+          const mVal = parseInt(match[2]);
+          let yVal = parseInt(match[3]);
+          if (yVal < 50) yVal += 2000;
+          else if (yVal < 100) yVal += 1900;
+          const dt = new Date(yVal, mVal - 1, dVal);
+          if (!latestDate || dt > latestDate) {
+            latestDate = dt;
+            latestFile = f;
+          }
         }
-      } catch (err) {
-        console.error(`[Ingest] Error parsing desktop PDF fallback:`, err);
+      }
+      
+      if (latestFile) {
+        const devPdfPath = path.join(pbDesktopDir, latestFile);
+        console.log(`[Ingest] Falling back to desktop sample PDF: ${devPdfPath}`);
+        const pythonScript = path.join(process.cwd(), 'scripts', 'parse_energy_reports.py');
+        try {
+          const { execSync } = require('child_process');
+          const output = execSync(`python "${pythonScript}" "${devPdfPath}"`, { encoding: 'utf8' });
+          const parsed = JSON.parse(output);
+          if (!parsed.error) {
+            gasData = parsed;
+            console.log(`[Ingest] Successfully parsed fallback PB PDF for date: ${latestDate?.toLocaleDateString()}`);
+          }
+        } catch (err) {
+          console.error(`[Ingest] Error parsing desktop PDF fallback:`, err);
+        }
       }
     }
   }
@@ -274,6 +328,17 @@ async function runIngestionPipeline() {
       if (gasData) {
         dbPayload.gas_supply = String(gasData.totalGasProduction);
       }
+      
+      // Calculate snapshotDate based on activeReportDate
+      const finalReportDate = activeReportDate || new Date();
+      const telemetryDate = new Date(finalReportDate.getTime());
+      // The telemetry date is the day before the report is published
+      telemetryDate.setDate(telemetryDate.getDate() - 1);
+      
+      const yyyy = telemetryDate.getFullYear();
+      const mm = String(telemetryDate.getMonth() + 1).padStart(2, '0');
+      const dd = String(telemetryDate.getDate()).padStart(2, '0');
+      dbPayload.snapshotDate = `${yyyy}-${mm}-${dd}`;
       
       // Update key-value siteSetting table
       for (const [key, value] of Object.entries(dbPayload)) {

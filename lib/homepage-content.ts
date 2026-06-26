@@ -7,7 +7,7 @@ import { MAX_CAROUSEL_ITEMS } from '@/lib/placement-rules';
 import { normalizeArticleImageUrl } from '@/lib/article-image';
 
 const PUBLIC_SETTING_KEYS = [
-  'homepage', 'ticker', 'snapshot', 'interviews', 'site', 'seo', 'hero', 'coverage',
+  'homepage', 'ticker', 'snapshot', 'snapshotDate', 'interviews', 'site', 'seo', 'hero', 'coverage',
 ] as const;
 
 const GRID_SETTING_KEYS = ['gridMix', 'gridLines', 'gridProjects'] as const;

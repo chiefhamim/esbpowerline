@@ -100,7 +100,7 @@ function normalizeInterviewEntry(raw: unknown, index: number): Interview | null 
     role: item.role?.trim() || 'Energy sector',
     duration: item.duration?.trim() || '—',
     date: item.date?.trim() || '',
-    thumbnail: encodeInterviewAssetUrl(item.thumbnail?.trim() || '/images/download (6).jfif'),
+    thumbnail: encodeInterviewAssetUrl(item.thumbnail?.trim() || '/images/yt_tm_1.jpg'),
     youtubeId,
     excerpt: item.excerpt?.trim() || '',
   };
