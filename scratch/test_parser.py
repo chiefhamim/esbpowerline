@@ -1,206 +1,298 @@
 import os
 import re
-import json
-import glob
+
+filepath = r"c:\Users\hamim\Desktop\PGCB\Daily Reports\Daily Reports Parsed\Daily Report 25-06-2026;.txt"
 
 def clean_float(val_str):
     if not val_str:
         return 0.0
-    clean = re.sub(r'[^\d\.\-]', '', val_str.replace(',', '').strip())
+    clean = re.sub(r'[^\d\.\-]', '', str(val_str).replace(',', '').strip())
     try:
-        return float(clean)
+        return float(clean) if '.' in clean else float(int(clean))
     except ValueError:
         return 0.0
 
-def parse_report_file(filepath):
-    filename = os.path.basename(filepath)
-    m = re.match(r'([a-zA-Z]+)[-_ ]*(\d{4})', filename)
+def extract_first_number(val_str):
+    if not val_str:
+        return 0.0
+    s = str(val_str).replace(',', '')
+    nums = re.findall(r'[-+]?\d*\.\d+|\d+', s)
+    if nums:
+        return float(nums[0])
+    return 0.0
+
+def get_sheet_content(content, sheet_name):
+    pattern = r'## Sheet:\s*' + re.escape(sheet_name) + r'\b'
+    m = re.search(pattern, content, re.IGNORECASE)
     if not m:
-        m = re.search(r'([a-zA-Z]+).+?(\d{4})', filename)
-        if not m:
-            return None
-    
-    month_name = m.group(1).strip().capitalize()
-    year = int(m.group(2).strip())
-    
-    month_map = {
-        'January': '01', 'February': '02', 'March': '03', 'April': '04',
-        'May': '05', 'June': '06', 'July': '07', 'August': '08',
-        'September': '09', 'October': '10', 'November': '11', 'December': '12'
-    }
-    
-    if month_name not in month_map:
-        for k in month_map:
-            if k.lower() in month_name.lower():
-                month_name = k
-                break
-            
-    date_key = f"{year}-{month_map[month_name]}"
-    
-    data = {
-        "filename": filename,
-        "month": month_name,
-        "year": year,
-        "date_key": date_key,
-        "max_evening_peak_gen": 0.0,
-        "max_evening_peak_demand": 0.0,
-        "total_net_generation": 0.0,
-        "generation_by_fuel": {
-            "gas": 0.0,
-            "coal": 0.0,
-            "hfo": 0.0,
-            "diesel": 0.0,
-            "hydro": 0.0,
-            "solar": 0.0,
-            "wind": 0.0,
-            "import": 0.0
-        },
-        "regional_supply": {
-            "dhaka": 0.0,
-            "chittagong": 0.0,
-            "comilla": 0.0,
-            "mymensingh": 0.0,
-            "sylhet": 0.0,
-            "khulna": 0.0,
-            "barisal": 0.0,
-            "rajshahi": 0.0,
-            "rangpur": 0.0
-        }
-    }
-    
+        return ""
+    start_idx = m.end()
+    rest = content[start_idx:]
+    next_sheet = rest.find('## Sheet:')
+    if next_sheet != -1:
+        return rest[:next_sheet]
+    return rest
+
+def test():
     with open(filepath, 'r', encoding='utf-8', errors='ignore') as f:
-        lines = f.readlines()
+        content = f.read()
+
+    p1 = get_sheet_content(content, 'P1')
+    if not p1:
+        print("P1 not found!")
+        return
+
+    # Basic stats
+    day_peak_gen = 0.0
+    evening_peak_gen = 0.0
+    evening_peak_demand = 0.0
+    total_energy_gen = 0.0
+    total_gas_supplied_power = 0.0
+    total_daily_cost = 0.0
+    min_gen = 0.0
+    max_gen = 0.0
+
+    for line in p1.split('\n'):
+        line_lower = line.lower()
+        parts = [p.strip() for p in line.split('|') if p.strip()]
+        if not parts:
+            continue
         
-    in_mis3_sheet = False
-    in_ldc22_sheet = False
-    in_fuel_section = False
+        for idx, cell in enumerate(parts):
+            cell_lower = cell.lower()
+            if 'day peak generation' in cell_lower:
+                if idx + 1 < len(parts): day_peak_gen = clean_float(parts[idx+1])
+            elif 'evening peak generation' in cell_lower:
+                if idx + 1 < len(parts): evening_peak_gen = clean_float(parts[idx+1])
+            elif 'evening peak demand' in cell_lower or 'e.p. demand' in cell_lower:
+                if idx + 1 < len(parts): evening_peak_demand = clean_float(parts[idx+1])
+            elif 'energy generated' in cell_lower or 'total gen.' in cell_lower or 'total gen (' in cell_lower:
+                if idx + 1 < len(parts): total_energy_gen = clean_float(parts[idx+1])
+            elif 'total gas supplied' in cell_lower or 'gas consumed' in cell_lower:
+                if idx + 1 < len(parts):
+                    val = clean_float(parts[idx+1])
+                    if val > 0: total_gas_supplied_power = val
+                if total_gas_supplied_power == 0.0:
+                    nums = re.findall(r'[-+]?\d*\.\d+|\d+', cell)
+                    if nums: total_gas_supplied_power = float(nums[0])
+            elif 'min. gen.' in cell_lower or 'minimum generation' in cell_lower:
+                if idx + 1 < len(parts):
+                    val = clean_float(parts[idx+1])
+                    if val > 0: min_gen = val
+            elif 'max. gen.' in cell_lower or 'maximum generation' in cell_lower:
+                if idx + 1 < len(parts):
+                    val = clean_float(parts[idx+1])
+                    if val > 0: max_gen = val
+            elif 'coal    :' in cell_lower or 'total   :' in cell_lower or 'total:' in cell_lower:
+                if 'total' in cell_lower:
+                    if idx + 1 < len(parts): total_daily_cost = clean_float(parts[idx+1])
+
+    # Regional loadshedding
+    regional_loadshed = {
+        'Dhaka': 0.0, 'Chattogram': 0.0, 'Cumilla': 0.0, 'Mymensingh': 0.0,
+        'Sylhet': 0.0, 'Khulna': 0.0, 'Barishal': 0.0, 'Rajshahi': 0.0, 'Rangpur': 0.0
+    }
     
-    for line in lines:
-        line_strip = line.strip()
-        if line_strip.startswith("## Sheet: QF-MIS-03") or line_strip.startswith("## Sheet: MIS"):
-            in_mis3_sheet = True
-            in_ldc22_sheet = False
+    in_loadshed_section = False
+    for line in p1.split('\n'):
+        line_lower = line.lower()
+        if 'load-shed' in line_lower or 'load shedding' in line_lower or 'loadshed' in line_lower or 'area' in line_lower and 'yesterday' in line_lower:
+            in_loadshed_section = True
             continue
-        elif line_strip.startswith("## Sheet: QF-LDC-22"):
-            in_mis3_sheet = False
-            in_ldc22_sheet = True
-            continue
-        elif line_strip.startswith("## Sheet:"):
-            in_mis3_sheet = False
-            in_ldc22_sheet = False
-            continue
+        if in_loadshed_section:
+            if '|' in line:
+                parts = [p.strip() for p in line.split('|')]
+                cells = [c for c in parts if c]
+                if len(cells) > 1:
+                    zone_name = cells[0].strip()
+                    matched_zone = None
+                    if 'dhaka' in zone_name.lower(): matched_zone = 'Dhaka'
+                    elif 'chittagong' in zone_name.lower() or 'chattogram' in zone_name.lower(): matched_zone = 'Chattogram'
+                    elif 'comilla' in zone_name.lower() or 'cumilla' in zone_name.lower(): matched_zone = 'Cumilla'
+                    elif 'mymensingh' in zone_name.lower(): matched_zone = 'Mymensingh'
+                    elif 'sylhet' in zone_name.lower(): matched_zone = 'Sylhet'
+                    elif 'khulna' in zone_name.lower(): matched_zone = 'Khulna'
+                    elif 'barisal' in zone_name.lower() or 'barishal' in zone_name.lower(): matched_zone = 'Barishal'
+                    elif 'rajshahi' in zone_name.lower(): matched_zone = 'Rajshahi'
+                    elif 'rangpur' in zone_name.lower(): matched_zone = 'Rangpur'
+                    
+                    if matched_zone:
+                        val = 0.0
+                        if len(cells) > 1:
+                            val = clean_float(cells[1])
+                        regional_loadshed[matched_zone] = val
+                    elif 'total' in zone_name.lower():
+                        in_loadshed_section = False
+
+    # Regional served
+    regional_served = {
+        'Dhaka': 0.0, 'Chattogram': 0.0, 'Cumilla': 0.0, 'Mymensingh': 0.0,
+        'Sylhet': 0.0, 'Khulna': 0.0, 'Barishal': 0.0, 'Rajshahi': 0.0, 'Rangpur': 0.0
+    }
+    p3_content = get_sheet_content(content, 'P3')
+    if p3_content:
+        for line in p3_content.split('\n'):
+            if '|' in line:
+                parts = [p.strip() for p in line.split('|')]
+                cells = [c for c in parts if c]
+                for idx, cell in enumerate(cells):
+                    cell_lower = cell.lower()
+                    val = 0.0
+                    matched_zone = None
+                    if 'dhaka area' in cell_lower: matched_zone = 'Dhaka'
+                    elif 'chittagong area' in cell_lower or 'chattogram area' in cell_lower: matched_zone = 'Chattogram'
+                    elif 'comilla area' in cell_lower or 'cumilla area' in cell_lower: matched_zone = 'Cumilla'
+                    elif 'mymensingh area' in cell_lower: matched_zone = 'Mymensingh'
+                    elif 'sylhet area' in cell_lower: matched_zone = 'Sylhet'
+                    elif 'khulna area' in cell_lower: matched_zone = 'Khulna'
+                    elif 'rajshahi area' in cell_lower: matched_zone = 'Rajshahi'
+                    elif 'barisal area' in cell_lower or 'barishal area' in cell_lower: matched_zone = 'Barishal'
+                    elif 'rangpur area' in cell_lower: matched_zone = 'Rangpur'
+                    
+                    if matched_zone:
+                        if idx + 2 < len(cells):
+                            val = clean_float(cells[idx+2])
+                        regional_served[matched_zone] = val
+
+    # Fuel Generation Mix
+    gas_gen, coal_gen, solar_gen, oil_gen, hydro_gen = 0.0, 0.0, 0.0, 0.0, 0.0
+    wind_gen = 0.0
+    total_imports = 0.0
+    parsed_via_table = False
+
+    # Look for Zone-wise Generation Summary (MKWHr.) table in P1
+    header_idx = -1
+    lines = p1.split('\n')
+    for idx, line in enumerate(lines):
+        if '|' in line:
+            parts = [p.strip().lower() for p in line.split('|') if p.strip()]
+            if 'gas' in parts and 'coal' in parts and 'hfo' in parts and 'total' in parts:
+                header_idx = idx
+                headers = parts
+                break
+
+    if header_idx != -1:
+        for line in lines[header_idx + 1:]:
+            if '|' in line:
+                parts = [p.strip() for p in line.split('|')]
+                cells = [c for c in parts if c]
+                if cells and cells[0].lower() == 'total':
+                    val_map = {}
+                    for h_idx, h in enumerate(headers):
+                        if h_idx < len(cells) - 1:
+                            val_map[h] = clean_float(cells[h_idx + 1])
+                    
+                    gas_gen = val_map.get('gas', 0.0)
+                    coal_gen = val_map.get('coal', 0.0)
+                    oil_gen = val_map.get('hfo', 0.0) + val_map.get('hsd', 0.0)
+                    hydro_gen = val_map.get('hydro', 0.0)
+                    solar_gen = val_map.get('solar', 0.0)
+                    wind_gen = val_map.get('wind', 0.0)
+                    total_imports = val_map.get('import', 0.0)
+                    parsed_via_table = True
+                    break
+
+    if not parsed_via_table:
+        # Fallback to search By Gas etc. in whole file
+        for line in content.split('\n'):
+            if '|' in line:
+                parts = [p.strip() for p in line.split('|')]
+                for idx, cell in enumerate(parts):
+                    cell_clean = cell.lower()
+                    if 'by gas' in cell_clean:
+                        if idx + 1 < len(parts): gas_gen = clean_float(parts[idx+1])
+                    elif 'by coal' in cell_clean:
+                        if idx + 1 < len(parts): coal_gen = clean_float(parts[idx+1])
+                    elif 'by solar' in cell_clean:
+                        if idx + 1 < len(parts): solar_gen = clean_float(parts[idx+1])
+                    elif 'by oil' in cell_clean:
+                        if idx + 1 < len(parts): oil_gen = clean_float(parts[idx+1])
+                    elif 'by hydro' in cell_clean:
+                        if idx + 1 < len(parts): hydro_gen = clean_float(parts[idx+1])
+                    elif 'by adani' in cell_clean:
+                        if idx + 1 < len(parts): adani_gen = clean_float(parts[idx+1])
+
+    # Import stats
+    border_imports_data = []
+    hvdc_gen, adani_gen, tripura_gen = 0.0, 0.0, 0.0
+    hvdc_peak, adani_peak, tripura_peak = 0.0, 0.0, 0.0
+
+    if parsed_via_table:
+        # Newer files: parse from P1 interconnector section using cell keywords
+        for line in p1.split('\n'):
+            if '|' in line:
+                parts = [p.strip() for p in line.split('|')]
+                cells = [c for c in parts if c]
+                for idx, cell in enumerate(cells):
+                    cell_lower = cell.lower()
+                    if 'hvdc' in cell_lower and 'interconnector' in cell_lower:
+                        if idx + 2 < len(cells): hvdc_gen = extract_first_number(cells[idx+2])
+                        if idx + 4 < len(cells): hvdc_peak = extract_first_number(cells[idx+4])
+                    elif 'adani' in cell_lower and 'interconnector' in cell_lower:
+                        if idx + 2 < len(cells): adani_gen = extract_first_number(cells[idx+2])
+                        if idx + 4 < len(cells): adani_peak = extract_first_number(cells[idx+4])
+                    elif ('cumilla' in cell_lower or 'tripura' in cell_lower) and 'interconnector' in cell_lower:
+                        if idx + 2 < len(cells): tripura_gen = extract_first_number(cells[idx+2])
+                        if idx + 4 < len(cells): tripura_peak = extract_first_number(cells[idx+4])
+    else:
+        # Older files: parse from YesterdayGen
+        ygen_content = get_sheet_content(content, 'YesterdayGen') or get_sheet_content(content, 'GenLog')
+        if ygen_content:
+            lines = ygen_content.split('\n')
+            name_row, kwh_row, peak_row = None, None, None
+            for line in lines:
+                if 'plant name' in line.lower():
+                    name_row = line
+                elif '|' in line:
+                    parts = [p.strip() for p in line.split('|')]
+                    if len(parts) > 1:
+                        if parts[1] == 'KWH': kwh_row = line
+                        elif parts[1] == 'Yesterday Evening Peak': peak_row = line
             
-        if in_mis3_sheet:
-            if line_strip.startswith("|") and not line_strip.startswith("|:"):
-                parts = [p.strip() for p in line_strip.split("|")]
-                if len(parts) > 3:
-                    lbl = parts[2].lower()
+            if name_row and kwh_row and peak_row:
+                names = [n.strip() for n in name_row.split('|')]
+                kwhs = [k.strip() for k in kwh_row.split('|')]
+                peaks = [p.strip() for p in peak_row.split('|')]
+                
+                for i in range(len(names)):
+                    name = names[i]
+                    k = clean_float(kwhs[i]) if i < len(kwhs) else 0.0
+                    p = clean_float(peaks[i]) if i < len(peaks) else 0.0
+                    name_lower = name.lower()
                     
-                    if len(parts) > 4 and parts[3].strip().lower() in ["mw", "mkwh", "mkwhr", "m.taka", "%", "nos.", "mva", "unit"]:
-                        val = clean_float(parts[4])
-                    else:
-                        val = clean_float(parts[3])
-                    
-                    if "fuel wise generation" in lbl:
-                        in_fuel_section = True
-                        continue
-                    elif in_fuel_section and ("maximum of the daily total" in lbl or "monthly load factor" in lbl or "total fuel cost" in lbl):
-                        in_fuel_section = False
-                        
-                    if in_fuel_section:
-                        if "gas" in lbl:
-                            data["generation_by_fuel"]["gas"] = val
-                        elif "oil" in lbl or "liquid fuel" in lbl or "furnace" in lbl:
-                            data["generation_by_fuel"]["hfo"] = val
-                        elif "diesel" in lbl:
-                            data["generation_by_fuel"]["diesel"] = val
-                        elif "hydro" in lbl:
-                            data["generation_by_fuel"]["hydro"] = val
-                        elif "coal" in lbl:
-                            data["generation_by_fuel"]["coal"] = val
-                        elif "solar" in lbl:
-                            data["generation_by_fuel"]["solar"] = val
-                        elif "wind" in lbl:
-                            data["generation_by_fuel"]["wind"] = val
-                        elif "hvdc" in lbl or "import" in lbl or "biptc" in lbl or "a.c" in lbl or "india" in lbl:
-                            data["generation_by_fuel"]["import"] += val
-                    else:
-                        lbl_clean = lbl.strip()
-                        is_average_or_history = "average" in lbl_clean or ("recorded" in lbl_clean or "till-to-date" in lbl_clean or "last year" in lbl_clean)
-                        
-                        if not is_average_or_history:
-                            if "evening peak generation" in lbl_clean or lbl_clean == "peak generation" or lbl_clean == "peak genaration" or lbl_clean == "maximum generation":
-                                data["max_evening_peak_gen"] = val
-                            elif "evening peak demand" in lbl_clean or "peak demand" in lbl_clean or "maximum demand" in lbl_clean:
-                                data["max_evening_peak_demand"] = val
-                            elif "total net generation" in lbl_clean or lbl_clean == "total generation":
-                                data["total_net_generation"] = val
-                            elif "energy generation by gas" in lbl_clean:
-                                data["generation_by_fuel"]["gas"] = val
-                            elif "energy generation by coal" in lbl_clean:
-                                data["generation_by_fuel"]["coal"] = val
-                            elif "energy generation by furnace" in lbl_clean or "furnace oil" in lbl_clean:
-                                data["generation_by_fuel"]["hfo"] = val
-                            elif "energy generation by diesel" in lbl_clean:
-                                data["generation_by_fuel"]["diesel"] = val
-                            elif "energy generation by hydro" in lbl_clean:
-                                data["generation_by_fuel"]["hydro"] = val
-                            elif "energy generation by solar" in lbl_clean:
-                                data["generation_by_fuel"]["solar"] = val
-                            elif "energy generation by wind" in lbl_clean:
-                                data["generation_by_fuel"]["wind"] = val
-                            elif "enegry import from india" in lbl_clean or "energy import from india" in lbl_clean:
-                                data["generation_by_fuel"]["import"] = val
-                            
-        elif in_ldc22_sheet:
-            if line_strip.startswith("|") and not line_strip.startswith("|:"):
-                parts = [p.strip() for p in line_strip.split("|")]
-                if len(parts) > 4:
-                    region_lbl = parts[2].lower()
-                    val = clean_float(parts[4])
-                    
-                    if region_lbl == "dhaka":
-                        data["regional_supply"]["dhaka"] = val
-                    elif region_lbl in ["chittagong", "chattogram"]:
-                        data["regional_supply"]["chittagong"] = val
-                    elif region_lbl in ["comilla", "cumilla"]:
-                        data["regional_supply"]["comilla"] = val
-                    elif region_lbl == "mymensingh":
-                        data["regional_supply"]["mymensingh"] = val
-                    elif region_lbl == "sylhet":
-                        data["regional_supply"]["sylhet"] = val
-                    elif region_lbl == "khulna":
-                        data["regional_supply"]["khulna"] = val
-                    elif region_lbl in ["barisal", "barishal"]:
-                        data["regional_supply"]["barisal"] = val
-                    elif region_lbl == "rajshahi":
-                        data["regional_supply"]["rajshahi"] = val
-                    elif region_lbl == "rangpur":
-                        data["regional_supply"]["rangpur"] = val
-                        
-    return data
+                    if 'hvdc' in name_lower or 'bheramara (hvdc' in name_lower or 'bheramara hvdc' in name_lower:
+                        hvdc_gen = k / 1000000.0
+                        hvdc_peak = p
+                    elif 'tripura' in name_lower or 'impoprt (tripura)' in name_lower:
+                        tripura_gen = k / 1000000.0
+                        tripura_peak = p
+                    elif 'adani' in name_lower:
+                        adani_gen = k / 1000000.0
+                        adani_peak = p
 
-reports_dir = r"c:\Users\hamim\Desktop\PGCB\Monthy Reports\Parsed_monthly_report"
-txt_files = glob.glob(os.path.join(reports_dir, "*.txt"))
-all_data = []
-for filepath in txt_files:
-    res = parse_report_file(filepath)
-    if res:
-        all_data.append(res)
-        
-all_data.sort(key=lambda x: x["date_key"])
+    if hvdc_gen > 0.0 or hvdc_peak > 0.0:
+        border_imports_data.append({'source': 'HVDC Bheramara (India)', 'energy': round(hvdc_gen, 2), 'peakFlow': hvdc_peak, 'type': 'C/B Interconnector (West)'})
+    if adani_gen > 0.0 or adani_peak > 0.0:
+        border_imports_data.append({'source': 'Adani Godda (India)', 'energy': round(adani_gen, 2), 'peakFlow': adani_peak, 'type': 'C/B Interconnector (North)'})
+    if tripura_gen > 0.0 or tripura_peak > 0.0:
+        border_imports_data.append({'source': 'Tripura Cumilla (India)', 'energy': round(tripura_gen, 2), 'peakFlow': tripura_peak, 'type': 'C/B Interconnector (East)'})
 
-print(f"Total parsed: {len(all_data)}")
-missing_demand = [x["date_key"] for x in all_data if x["max_evening_peak_demand"] == 0]
-missing_gen = [x["date_key"] for x in all_data if x["max_evening_peak_gen"] == 0]
-missing_net = [x["date_key"] for x in all_data if x["total_net_generation"] == 0]
+    if total_imports == 0.0:
+        total_imports = hvdc_gen + adani_gen + tripura_gen
 
-print("Missing peak demand count:", len(missing_demand), missing_demand)
-print("Missing peak gen count:", len(missing_gen), missing_gen)
-print("Missing total net generation count:", len(missing_net), missing_net)
+    print(f"Day Peak Gen: {day_peak_gen}")
+    print(f"Evening Peak Gen: {evening_peak_gen}")
+    print(f"Total Energy Gen: {total_energy_gen}")
+    print(f"Gas Supplied: {total_gas_supplied_power}")
+    print(f"Total Daily Cost: {total_daily_cost}")
+    print(f"Gas Gen: {gas_gen}")
+    print(f"Coal Gen: {coal_gen}")
+    print(f"Oil Gen: {oil_gen}")
+    print(f"Hydro Gen: {hydro_gen}")
+    print(f"Solar Gen: {solar_gen}")
+    print(f"Imports Gen: {total_imports}")
+    print(f"Border Imports Data: {border_imports_data}")
+    print(f"Dhaka Loadshed: {regional_loadshed['Dhaka']}, Served: {regional_served['Dhaka']}")
 
-for date_k in ["2013-12", "2021-11"]:
-    match = [x for x in all_data if x["date_key"] == date_k]
-    if match:
-        print(f"\nData for {date_k}:")
-        print(json.dumps(match[0], indent=2))
+if __name__ == '__main__':
+    test()

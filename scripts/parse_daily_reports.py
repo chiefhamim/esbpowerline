@@ -54,6 +54,27 @@ def extract_production_values(line, field_name):
         return nums[2], 0.0
     return 0.0, 0.0
 
+def extract_first_number(val_str):
+    if not val_str:
+        return 0.0
+    s = str(val_str).replace(',', '')
+    nums = re.findall(r'[-+]?\d*\.\d+|\d+', s)
+    if nums:
+        return float(nums[0])
+    return 0.0
+
+def get_sheet_content(content, sheet_name):
+    pattern = r'## Sheet:\s*' + re.escape(sheet_name) + r'\b'
+    m = re.search(pattern, content, re.IGNORECASE)
+    if not m:
+        return ""
+    start_idx = m.end()
+    rest = content[start_idx:]
+    next_sheet = rest.find('## Sheet:')
+    if next_sheet != -1:
+        return rest[:next_sheet]
+    return rest
+
 def parse_pgcb_file(filepath, op_date):
     try:
         with open(filepath, 'r', encoding='utf-8', errors='ignore') as f:
@@ -62,10 +83,10 @@ def parse_pgcb_file(filepath, op_date):
         print(f"Error reading PGCB file {filepath}: {e}")
         return None
 
-    if '## Sheet: P1' not in content:
-        return None
-
-    p1 = content.split('## Sheet: P1')[1].split('## Sheet:')[0]
+    # Load sheets dynamically
+    p1 = get_sheet_content(content, 'P1')
+    forecast = get_sheet_content(content, 'Forecast')
+    p3 = get_sheet_content(content, 'P3')
 
     # Initialize stats
     day_peak_gen = 0.0
@@ -77,113 +98,86 @@ def parse_pgcb_file(filepath, op_date):
     min_gen = 0.0
     max_gen = 0.0
 
-    # Extract basic stats from P1
-    for line in p1.split('\n'):
+    # Combine P1 and Forecast for basic stats parsing to cover all formats
+    stats_content = p1 + "\n" + forecast
+    for line in stats_content.split('\n'):
         line_lower = line.lower()
-        if 'day peak generation' in line_lower:
-            parts = [p.strip() for p in line.split('|') if p.strip()]
-            if len(parts) > 1:
-                day_peak_gen = clean_float(parts[1])
-            # Check min gen
-            for idx, part in enumerate(parts):
-                if 'min. gen.' in part.lower():
-                    # The value is usually after it
-                    for next_p in parts[idx+1:]:
-                        val = clean_float(next_p)
-                        if val > 0:
-                            min_gen = val
-                            break
-        elif 'evening peak generation' in line_lower:
-            parts = [p.strip() for p in line.split('|') if p.strip()]
-            if len(parts) > 1:
-                evening_peak_gen = clean_float(parts[1])
-            # Check available max gen
-            for idx, part in enumerate(parts):
-                if 'available max generation' in part.lower() or 'max generation' in part.lower():
-                    for next_p in parts[idx+1:]:
-                        val = clean_float(next_p)
-                        if val > 0:
-                            max_gen = val
-                            break
-        elif 'e.p. demand' in line_lower or 'evening peak demand' in line_lower:
-            parts = [p.strip() for p in line.split('|') if p.strip()]
-            if len(parts) > 1:
-                evening_peak_demand = clean_float(parts[1])
-        elif 'total gen. (mkwh)' in line_lower or 'total gen (mkwh)' in line_lower:
-            parts = [p.strip() for p in line.split('|') if p.strip()]
-            if len(parts) > 1:
-                total_energy_gen = clean_float(parts[1])
-        elif 'gas consumed' in line_lower:
-            parts = [p.strip() for p in line.split('|') if p.strip()]
-            for p in parts:
-                if 'total' in p.lower() or '=' in p:
-                    # search for numbers in parts
-                    nums = re.findall(r'[-+]?\d*\.\d+|\d+', p)
-                    if nums:
-                        total_gas_supplied_power = float(nums[0])
-                        break
-            if total_gas_supplied_power == 0.0 and len(parts) > 2:
-                total_gas_supplied_power = clean_float(parts[2])
-        elif 'cost of the consumed fuel' in line_lower or 'gas     :' in line_lower:
-            # Gas cost row
-            pass
-        elif 'coal    :' in line_lower or 'total   :' in line_lower:
-            # Coal and Total cost row
-            parts = [p.strip() for p in line.split('|') if p.strip()]
-            for idx, p in enumerate(parts):
-                if 'total' in p.lower():
-                    # The total fuel cost value is the next cell
-                    if idx + 1 < len(parts):
-                        total_daily_cost = clean_float(parts[idx+1])
-                        break
+        parts = [p.strip() for p in line.split('|') if p.strip()]
+        if not parts:
+            continue
+        
+        for idx, cell in enumerate(parts):
+            cell_lower = cell.lower()
+            if 'day peak generation' in cell_lower:
+                if idx + 1 < len(parts): day_peak_gen = clean_float(parts[idx+1])
+            elif 'evening peak generation' in cell_lower:
+                if idx + 1 < len(parts): evening_peak_gen = clean_float(parts[idx+1])
+            elif 'evening peak demand' in cell_lower or 'e.p. demand' in cell_lower:
+                if idx + 1 < len(parts): evening_peak_demand = clean_float(parts[idx+1])
+            elif 'energy generated' in cell_lower or 'total gen.' in cell_lower or 'total gen (' in cell_lower:
+                if idx + 1 < len(parts): total_energy_gen = clean_float(parts[idx+1])
+            elif 'total gas supplied' in cell_lower or 'gas consumed' in cell_lower:
+                if idx + 1 < len(parts):
+                    val = clean_float(parts[idx+1])
+                    if val > 0: total_gas_supplied_power = val
+                if total_gas_supplied_power == 0.0:
+                    nums = re.findall(r'[-+]?\d*\.\d+|\d+', cell)
+                    if nums: total_gas_supplied_power = float(nums[0])
+            elif 'min. gen.' in cell_lower or 'minimum generation' in cell_lower:
+                if idx + 1 < len(parts):
+                    val = clean_float(parts[idx+1])
+                    if val > 0: min_gen = val
+            elif 'max. gen.' in cell_lower or 'maximum generation' in cell_lower:
+                if idx + 1 < len(parts):
+                    val = clean_float(parts[idx+1])
+                    if val > 0: max_gen = val
+            elif 'coal    :' in cell_lower or 'total   :' in cell_lower or 'total:' in cell_lower:
+                if 'total' in cell_lower:
+                    if idx + 1 < len(parts): total_daily_cost = clean_float(parts[idx+1])
 
     if evening_peak_demand == 0.0:
         evening_peak_demand = evening_peak_gen
 
-    # If min_gen or max_gen still 0, try YesterdayGen summary or L-Curve
-    # Hourly load shedding per region from P1
+    # Regional loadshedding
     regional_loadshed = {
-        'Dhaka': 0.0,
-        'Chattogram': 0.0,
-        'Cumilla': 0.0,
-        'Mymensingh': 0.0,
-        'Sylhet': 0.0,
-        'Khulna': 0.0,
-        'Barishal': 0.0,
-        'Rajshahi': 0.0,
-        'Rangpur': 0.0
+        'Dhaka': 0.0, 'Chattogram': 0.0, 'Cumilla': 0.0, 'Mymensingh': 0.0,
+        'Sylhet': 0.0, 'Khulna': 0.0, 'Barishal': 0.0, 'Rajshahi': 0.0, 'Rangpur': 0.0
     }
     
     in_loadshed_section = False
     for line in p1.split('\n'):
-        if 'load shedding & other information' in line.lower() or 'area' in line.lower() and 'yesterday' in line.lower():
+        line_lower = line.lower()
+        if 'load-shed' in line_lower or 'load shedding' in line_lower or 'loadshed' in line_lower or 'area' in line_lower and 'yesterday' in line_lower:
             in_loadshed_section = True
             continue
         if in_loadshed_section:
             if '|' in line:
                 parts = [p.strip() for p in line.split('|')]
-                if len(parts) > 1:
-                    zone_name = parts[1].strip()
-                    # Check if it corresponds to a region
+                for idx, cell in enumerate(parts):
+                    cell_lower = cell.lower()
                     matched_zone = None
-                    if 'dhaka' in zone_name.lower(): matched_zone = 'Dhaka'
-                    elif 'chittagong' in zone_name.lower() or 'chattogram' in zone_name.lower(): matched_zone = 'Chattogram'
-                    elif 'comilla' in zone_name.lower() or 'cumilla' in zone_name.lower(): matched_zone = 'Cumilla'
-                    elif 'mymensingh' in zone_name.lower(): matched_zone = 'Mymensingh'
-                    elif 'sylhet' in zone_name.lower(): matched_zone = 'Sylhet'
-                    elif 'khulna' in zone_name.lower(): matched_zone = 'Khulna'
-                    elif 'barisal' in zone_name.lower() or 'barishal' in zone_name.lower(): matched_zone = 'Barishal'
-                    elif 'rajshahi' in zone_name.lower(): matched_zone = 'Rajshahi'
-                    elif 'rangpur' in zone_name.lower(): matched_zone = 'Rangpur'
+                    if 'dhaka' in cell_lower: matched_zone = 'Dhaka'
+                    elif 'chittagong' in cell_lower or 'chattogram' in cell_lower: matched_zone = 'Chattogram'
+                    elif 'comilla' in cell_lower or 'cumilla' in cell_lower: matched_zone = 'Cumilla'
+                    elif 'mymensingh' in cell_lower: matched_zone = 'Mymensingh'
+                    elif 'sylhet' in cell_lower: matched_zone = 'Sylhet'
+                    elif 'khulna' in cell_lower: matched_zone = 'Khulna'
+                    elif 'barisal' in cell_lower or 'barishal' in cell_lower: matched_zone = 'Barishal'
+                    elif 'rajshahi' in cell_lower: matched_zone = 'Rajshahi'
+                    elif 'rangpur' in cell_lower: matched_zone = 'Rangpur'
                     
                     if matched_zone:
-                        # Yesterday's load shedding in MW is at index 3
+                        right_cells = [c.strip() for c in parts[idx+1:] if c.strip()]
                         val = 0.0
-                        if len(parts) > 3:
-                            val = clean_float(parts[3])
+                        if right_cells:
+                            val = clean_float(right_cells[0])
                         regional_loadshed[matched_zone] = val
-                    elif 'total' in zone_name.lower():
+                        break
+                    elif 'total' in cell_lower:
                         in_loadshed_section = False
+                        break
+                if not in_loadshed_section:
+                    break
 
     # Extract outages from P1
     daily_outages = []
@@ -195,7 +189,6 @@ def parse_pgcb_file(filepath, op_date):
         m = re.search(r'\b([a-z]{1,2})\)\s*([A-Z].*)', merged)
         if m:
             desc = m.group(2)
-            # Parse description
             time_match = re.search(r'((?:from|at|since|under)\s*\d{2}:\d{2}(?:\s*to\s*\d{2}:\d{2})?)', desc, re.IGNORECASE)
             time_val = time_match.group(1) if time_match else "Outage"
             
@@ -223,24 +216,16 @@ def parse_pgcb_file(filepath, op_date):
 
     # Extract regional max load served from P3
     regional_served = {
-        'Dhaka': 0.0,
-        'Chattogram': 0.0,
-        'Cumilla': 0.0,
-        'Mymensingh': 0.0,
-        'Sylhet': 0.0,
-        'Khulna': 0.0,
-        'Barishal': 0.0,
-        'Rajshahi': 0.0,
-        'Rangpur': 0.0
+        'Dhaka': 0.0, 'Chattogram': 0.0, 'Cumilla': 0.0, 'Mymensingh': 0.0,
+        'Sylhet': 0.0, 'Khulna': 0.0, 'Barishal': 0.0, 'Rajshahi': 0.0, 'Rangpur': 0.0
     }
-    if '## Sheet: P3' in content:
-        p3 = content.split('## Sheet: P3')[1].split('## Sheet:')[0]
+    if p3:
         for line in p3.split('\n'):
             if '|' in line:
                 parts = [p.strip() for p in line.split('|')]
-                for idx, cell in enumerate(parts):
+                cells = [c.strip() for c in parts if c.strip()]
+                for idx, cell in enumerate(cells):
                     cell_lower = cell.lower()
-                    val = 0.0
                     matched_zone = None
                     if 'dhaka area' in cell_lower: matched_zone = 'Dhaka'
                     elif 'chittagong area' in cell_lower or 'chattogram area' in cell_lower: matched_zone = 'Chattogram'
@@ -253,8 +238,9 @@ def parse_pgcb_file(filepath, op_date):
                     elif 'rangpur area' in cell_lower: matched_zone = 'Rangpur'
                     
                     if matched_zone:
-                        if idx + 2 < len(parts):
-                            val = clean_float(parts[idx+2])
+                        val = 0.0
+                        if idx + 1 < len(cells):
+                            val = clean_float(cells[idx+1])
                         regional_served[matched_zone] = val
 
     # Combine load shedding and served to get regional demand
@@ -273,8 +259,8 @@ def parse_pgcb_file(filepath, op_date):
 
     # Extract hourly load data from L-Curve
     hourly_load_data = []
-    if '## Sheet: L-Curve' in content:
-        lcurve = content.split('## Sheet: L-Curve')[1].split('## Sheet:')[0]
+    lcurve = get_sheet_content(content, 'L-Curve')
+    if lcurve:
         for line in lcurve.split('\n'):
             if '|' in line:
                 parts = [p.strip() for p in line.split('|') if p.strip()]
@@ -307,13 +293,45 @@ def parse_pgcb_file(filepath, op_date):
 
     # Extract fuel mix generation
     gas_gen, coal_gen, solar_gen, oil_gen, hydro_gen = 0.0, 0.0, 0.0, 0.0, 0.0
-    adani_gen = 0.0
-    tripura_gen = 0.0
-    hvdc_gen = 0.0
-    
-    if '## Sheet: YesterdayGen' in content:
-        yesterdaygen = content.split('## Sheet: YesterdayGen')[1].split('## Sheet:')[0]
-        for line in yesterdaygen.split('\n'):
+    wind_gen = 0.0
+    total_imports = 0.0
+    parsed_via_table = False
+
+    # Look for Zone-wise Generation Summary (MKWHr.) table in P1
+    header_idx = -1
+    lines = p1.split('\n')
+    for idx, line in enumerate(lines):
+        if '|' in line:
+            parts = [p.strip().lower() for p in line.split('|') if p.strip()]
+            if 'gas' in parts and 'coal' in parts and 'hfo' in parts and 'total' in parts:
+                header_idx = idx
+                headers = parts
+                break
+
+    if header_idx != -1:
+        for line in lines[header_idx + 1:]:
+            if '|' in line:
+                parts = [p.strip() for p in line.split('|')]
+                cells = [c for c in parts if c]
+                if cells and cells[0].lower() == 'total':
+                    val_map = {}
+                    for h_idx, h in enumerate(headers):
+                        if h_idx < len(cells) - 1:
+                            val_map[h] = clean_float(cells[h_idx + 1])
+                    
+                    gas_gen = val_map.get('gas', 0.0)
+                    coal_gen = val_map.get('coal', 0.0)
+                    oil_gen = val_map.get('hfo', 0.0) + val_map.get('hsd', 0.0)
+                    hydro_gen = val_map.get('hydro', 0.0)
+                    solar_gen = val_map.get('solar', 0.0)
+                    wind_gen = val_map.get('wind', 0.0)
+                    total_imports = val_map.get('import', 0.0)
+                    parsed_via_table = True
+                    break
+
+    if not parsed_via_table:
+        # Fallback to search By Gas etc. in whole file
+        for line in content.split('\n'):
             if '|' in line:
                 parts = [p.strip() for p in line.split('|')]
                 for idx, cell in enumerate(parts):
@@ -328,70 +346,75 @@ def parse_pgcb_file(filepath, op_date):
                         if idx + 1 < len(parts): oil_gen = clean_float(parts[idx+1])
                     elif 'by hydro' in cell_clean:
                         if idx + 1 < len(parts): hydro_gen = clean_float(parts[idx+1])
-                    elif 'by adani' in cell_clean:
-                        if idx + 1 < len(parts): adani_gen = clean_float(parts[idx+1])
 
-    # Extract border imports data
+    # Import stats
     border_imports_data = []
-    hvdc_peak, tripura_peak, adani_peak = 0.0, 0.0, 0.0
+    hvdc_gen, adani_gen, tripura_gen = 0.0, 0.0, 0.0
+    hvdc_peak, adani_peak, tripura_peak = 0.0, 0.0, 0.0
 
-    if '## Sheet: YesterdayGen' in content:
-        yesterdaygen = content.split('## Sheet: YesterdayGen')[1].split('## Sheet:')[0]
-        lines = yesterdaygen.split('\n')
-        name_row, kwh_row, peak_row = None, None, None
-        for line in lines:
-            if 'plant name' in line.lower():
-                name_row = line
-            elif '|' in line:
+    if parsed_via_table:
+        # Newer files: parse from P1 interconnector section using cell keywords
+        for line in p1.split('\n'):
+            if '|' in line:
                 parts = [p.strip() for p in line.split('|')]
-                if len(parts) > 1:
-                    if parts[1] == 'KWH': kwh_row = line
-                    elif parts[1] == 'Yesterday Evening Peak': peak_row = line
-        
-        if name_row and kwh_row and peak_row:
-            names = [n.strip() for n in name_row.split('|')]
-            kwhs = [k.strip() for k in kwh_row.split('|')]
-            peaks = [p.strip() for p in peak_row.split('|')]
+                cells = [c for c in parts if c]
+                for idx, cell in enumerate(cells):
+                    cell_lower = cell.lower()
+                    if 'hvdc' in cell_lower and 'interconnector' in cell_lower:
+                        if idx + 2 < len(cells): hvdc_gen = extract_first_number(cells[idx+2])
+                        if idx + 4 < len(cells): hvdc_peak = extract_first_number(cells[idx+4])
+                    elif 'adani' in cell_lower and 'interconnector' in cell_lower:
+                        if idx + 2 < len(cells): adani_gen = extract_first_number(cells[idx+2])
+                        if idx + 4 < len(cells): adani_peak = extract_first_number(cells[idx+4])
+                    elif ('cumilla' in cell_lower or 'tripura' in cell_lower) and 'interconnector' in cell_lower:
+                        if idx + 2 < len(cells): tripura_gen = extract_first_number(cells[idx+2])
+                        if idx + 4 < len(cells): tripura_peak = extract_first_number(cells[idx+4])
+    else:
+        # Older files: parse from YesterdayGen or GenLog
+        ygen_content = get_sheet_content(content, 'YesterdayGen') or get_sheet_content(content, 'GenLog')
+        if ygen_content:
+            lines = ygen_content.split('\n')
+            name_row, kwh_row, peak_row = None, None, None
+            for line in lines:
+                if 'plant name' in line.lower():
+                    name_row = line
+                elif '|' in line:
+                    parts = [p.strip() for p in line.split('|')]
+                    if len(parts) > 1:
+                        if parts[1] == 'KWH': kwh_row = line
+                        elif parts[1] == 'Yesterday Evening Peak': peak_row = line
             
-            for i in range(len(names)):
-                name = names[i]
-                k = clean_float(kwhs[i]) if i < len(kwhs) else 0.0
-                p = clean_float(peaks[i]) if i < len(peaks) else 0.0
-                name_lower = name.lower()
+            if name_row and kwh_row and peak_row:
+                names = [n.strip() for n in name_row.split('|')]
+                kwhs = [k.strip() for k in kwh_row.split('|')]
+                peaks = [p.strip() for p in peak_row.split('|')]
                 
-                if 'hvdc' in name_lower or 'bheramara (hvdc' in name_lower or 'bheramara hvdc' in name_lower:
-                    hvdc_gen = k / 1000000.0
-                    hvdc_peak = p
-                elif 'tripura' in name_lower or 'impoprt (tripura)' in name_lower:
-                    tripura_gen = k / 1000000.0
-                    tripura_peak = p
-                elif 'adani' in name_lower:
-                    adani_gen = k / 1000000.0
-                    adani_peak = p
+                for i in range(len(names)):
+                    name = names[i]
+                    k = clean_float(kwhs[i]) if i < len(kwhs) else 0.0
+                    p = clean_float(peaks[i]) if i < len(peaks) else 0.0
+                    name_lower = name.lower()
+                    
+                    if 'hvdc' in name_lower or 'bheramara (hvdc' in name_lower or 'bheramara hvdc' in name_lower:
+                        hvdc_gen = k / 1000000.0
+                        hvdc_peak = p
+                    elif 'tripura' in name_lower or 'impoprt (tripura)' in name_lower:
+                        tripura_gen = k / 1000000.0
+                        tripura_peak = p
+                    elif 'adani' in name_lower:
+                        adani_gen = k / 1000000.0
+                        adani_peak = p
 
     if hvdc_gen > 0.0 or hvdc_peak > 0.0:
-        border_imports_data.append({
-            'source': 'HVDC Bheramara (India)',
-            'energy': round(hvdc_gen, 2),
-            'peakFlow': hvdc_peak,
-            'type': 'C/B Interconnector (West)'
-        })
+        border_imports_data.append({'source': 'HVDC Bheramara (India)', 'energy': round(hvdc_gen, 2), 'peakFlow': hvdc_peak, 'type': 'C/B Interconnector (West)'})
     if adani_gen > 0.0 or adani_peak > 0.0:
-        border_imports_data.append({
-            'source': 'Adani Godda (India)',
-            'energy': round(adani_gen, 2),
-            'peakFlow': adani_peak,
-            'type': 'C/B Interconnector (North)'
-        })
+        border_imports_data.append({'source': 'Adani Godda (India)', 'energy': round(adani_gen, 2), 'peakFlow': adani_peak, 'type': 'C/B Interconnector (North)'})
     if tripura_gen > 0.0 or tripura_peak > 0.0:
-        border_imports_data.append({
-            'source': 'Tripura Cumilla (India)',
-            'energy': round(tripura_gen, 2),
-            'peakFlow': tripura_peak,
-            'type': 'C/B Interconnector (East)'
-        })
+        border_imports_data.append({'source': 'Tripura Cumilla (India)', 'energy': round(tripura_gen, 2), 'peakFlow': tripura_peak, 'type': 'C/B Interconnector (East)'})
 
-    total_imports = hvdc_gen + adani_gen + tripura_gen
+    if total_imports == 0.0:
+        total_imports = hvdc_gen + adani_gen + tripura_gen
+
     avg_production_cost = 0.0
     if total_energy_gen > 0.0:
         avg_production_cost = total_daily_cost / (total_energy_gen * 1000000.0)

@@ -2,59 +2,59 @@
   "systemStats": {
     "date": "11 Mar 2026",
     "dayPeakGen": 13333.42,
-    "eveningPeakGen": 14855.0,
-    "dayPeakDemand": 13333.42,
+    "eveningPeakGen": 14856.09,
+    "dayPeakDemand": 13383.42,
     "eveningPeakDemand": 14960.09,
-    "minGen": 9333.394,
-    "maxGen": 16340.500000000002,
-    "totalEnergyGen": 0.0,
-    "totalEnergyUnserved": 0.0,
-    "totalEnergyDemand": 0.0,
+    "minGen": 10933.81,
+    "maxGen": 13259.9,
+    "totalEnergyGen": 320.21876796,
+    "totalEnergyUnserved": 0.4,
+    "totalEnergyDemand": 320.62,
     "maxTemp": 32.8,
-    "totalGasSuppliedPower": 0.0,
-    "avgProductionCost": 0.0,
-    "totalDailyCost": 0
+    "totalGasSuppliedPower": 814.73,
+    "avgProductionCost": 6.663,
+    "totalDailyCost": 2133582393
   },
   "generationData": [
     {
       "name": "Gas",
-      "gen": 0.0,
-      "cost": 0,
+      "gen": 110.75,
+      "cost": 382088954,
       "unitCost": 3.45,
       "color": "#0ea5e9"
     },
     {
       "name": "Coal",
-      "gen": 0.0,
-      "cost": 0,
+      "gen": 106.86,
+      "cost": 707387372,
       "unitCost": 6.62,
       "color": "#64748b"
     },
     {
       "name": "HFO",
-      "gen": 0.0,
-      "cost": 0,
+      "gen": 38.56,
+      "cost": 696303964,
       "unitCost": 18.06,
       "color": "#f97316"
     },
     {
       "name": "Hydro",
-      "gen": 0.0,
-      "cost": 0,
+      "gen": 1.92,
+      "cost": 191970,
       "unitCost": 0.1,
       "color": "#06b6d4"
     },
     {
       "name": "Solar",
-      "gen": 0.0,
-      "cost": 0,
+      "gen": 3.76,
+      "cost": 59250021,
       "unitCost": 15.77,
       "color": "#eab308"
     },
     {
       "name": "Imports",
-      "gen": 0.0,
-      "cost": 0,
+      "gen": 58.35,
+      "cost": 369964207,
       "unitCost": 6.34,
       "color": "#a855f7"
     },
@@ -66,60 +66,79 @@
       "color": "#ef4444"
     }
   ],
-  "borderImportsData": [],
+  "borderImportsData": [
+    {
+      "source": "HVDC Bheramara (India)",
+      "energy": 20.9,
+      "peakFlow": 793.0,
+      "type": "C/B Interconnector (West)"
+    },
+    {
+      "source": "Adani Godda (India)",
+      "energy": 33.56,
+      "peakFlow": 1449.19,
+      "type": "C/B Interconnector (North)"
+    },
+    {
+      "source": "Tripura Cumilla (India)",
+      "energy": 3.89,
+      "peakFlow": 176.0,
+      "type": "C/B Interconnector (East)"
+    }
+  ],
   "regionalDemandData": [
     {
       "zone": "Dhaka",
       "loadShed": 0.0,
-      "demand": 0.0,
+      "demand": 5463.1,
       "pct": 0.0
     },
     {
       "zone": "Chattogram",
-      "loadShed": 0.0,
-      "demand": 0.0,
-      "pct": 0.0
+      "loadShed": 40.0,
+      "demand": 1416.0,
+      "pct": 2.8
     },
     {
       "zone": "Cumilla",
-      "loadShed": 0.0,
-      "demand": 0.0,
-      "pct": 0.0
+      "loadShed": 15.0,
+      "demand": 1370.0,
+      "pct": 1.1
     },
     {
       "zone": "Mymensingh",
-      "loadShed": 0.0,
-      "demand": 0.0,
-      "pct": 0.0
+      "loadShed": 25.0,
+      "demand": 1217.0,
+      "pct": 2.1
     },
     {
       "zone": "Sylhet",
-      "loadShed": 0.0,
-      "demand": 0.0,
-      "pct": 0.0
+      "loadShed": 10.0,
+      "demand": 570.0,
+      "pct": 1.8
     },
     {
       "zone": "Khulna",
-      "loadShed": 0.0,
-      "demand": 0.0,
-      "pct": 0.0
+      "loadShed": 10.0,
+      "demand": 1672.0,
+      "pct": 0.6
     },
     {
       "zone": "Barishal",
       "loadShed": 0.0,
-      "demand": 0.0,
+      "demand": 414.48,
       "pct": 0.0
     },
     {
       "zone": "Rajshahi",
       "loadShed": 0.0,
-      "demand": 0.0,
+      "demand": 1459.0,
       "pct": 0.0
     },
     {
       "zone": "Rangpur",
       "loadShed": 0.0,
-      "demand": 0.0,
+      "demand": 892.0,
       "pct": 0.0
     }
   ],
@@ -235,33 +254,33 @@
     },
     {
       "time": "18:00",
-      "generation": 14855.0,
+      "generation": 14856.09,
       "loadShed": 0.0,
-      "demand": 14855.0
+      "demand": 14856.09
     },
     {
       "time": "19:00",
-      "generation": 14855.0,
+      "generation": 14856.09,
       "loadShed": 0.0,
-      "demand": 14855.0
+      "demand": 14856.09
     },
     {
       "time": "20:00",
-      "generation": 14855.0,
+      "generation": 14856.09,
       "loadShed": 0.0,
-      "demand": 14855.0
+      "demand": 14856.09
     },
     {
       "time": "21:00",
-      "generation": 14855.0,
+      "generation": 14856.09,
       "loadShed": 0.0,
-      "demand": 14855.0
+      "demand": 14856.09
     },
     {
       "time": "22:00",
-      "generation": 14855.0,
+      "generation": 14856.09,
       "loadShed": 0.0,
-      "demand": 14855.0
+      "demand": 14856.09
     },
     {
       "time": "23:00",

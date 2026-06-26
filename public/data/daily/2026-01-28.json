@@ -3,58 +3,58 @@
     "date": "28 Jan 2026",
     "dayPeakGen": 10751.14,
     "eveningPeakGen": 11159.0,
-    "dayPeakDemand": 10751.14,
+    "dayPeakDemand": 11000.14,
     "eveningPeakDemand": 11679.0,
-    "minGen": 7525.797999999999,
-    "maxGen": 12274.900000000001,
-    "totalEnergyGen": 0.0,
-    "totalEnergyUnserved": 0.0,
-    "totalEnergyDemand": 0.0,
+    "minGen": 8034.27,
+    "maxGen": 11670.0,
+    "totalEnergyGen": 244.84800084,
+    "totalEnergyUnserved": 1.99,
+    "totalEnergyDemand": 246.84,
     "maxTemp": 32.8,
-    "totalGasSuppliedPower": 0.0,
-    "avgProductionCost": 0.0,
-    "totalDailyCost": 0
+    "totalGasSuppliedPower": 741.17,
+    "avgProductionCost": 6.403,
+    "totalDailyCost": 1567647328
   },
   "generationData": [
     {
       "name": "Gas",
-      "gen": 0.0,
-      "cost": 0,
+      "gen": 98.72,
+      "cost": 340600284,
       "unitCost": 3.45,
       "color": "#0ea5e9"
     },
     {
       "name": "Coal",
-      "gen": 0.0,
-      "cost": 0,
+      "gen": 72.62,
+      "cost": 480745644,
       "unitCost": 6.62,
       "color": "#64748b"
     },
     {
       "name": "HFO",
-      "gen": 0.0,
-      "cost": 0,
+      "gen": 26.59,
+      "cost": 480147685,
       "unitCost": 18.06,
       "color": "#f97316"
     },
     {
       "name": "Hydro",
-      "gen": 0.0,
-      "cost": 0,
+      "gen": 0.97,
+      "cost": 97200,
       "unitCost": 0.1,
       "color": "#06b6d4"
     },
     {
       "name": "Solar",
-      "gen": 0.0,
-      "cost": 0,
+      "gen": 4.0,
+      "cost": 63104556,
       "unitCost": 15.77,
       "color": "#eab308"
     },
     {
       "name": "Imports",
-      "gen": 0.0,
-      "cost": 0,
+      "gen": 41.92,
+      "cost": 265789569,
       "unitCost": 6.34,
       "color": "#a855f7"
     },
@@ -66,61 +66,80 @@
       "color": "#ef4444"
     }
   ],
-  "borderImportsData": [],
+  "borderImportsData": [
+    {
+      "source": "HVDC Bheramara (India)",
+      "energy": 21.62,
+      "peakFlow": 893.0,
+      "type": "C/B Interconnector (West)"
+    },
+    {
+      "source": "Adani Godda (India)",
+      "energy": 17.54,
+      "peakFlow": 765.0,
+      "type": "C/B Interconnector (North)"
+    },
+    {
+      "source": "Tripura Cumilla (India)",
+      "energy": 2.77,
+      "peakFlow": 124.0,
+      "type": "C/B Interconnector (East)"
+    }
+  ],
   "regionalDemandData": [
     {
       "zone": "Dhaka",
-      "loadShed": 0.0,
-      "demand": 0.0,
-      "pct": 0.0
+      "loadShed": 115.0,
+      "demand": 4349.44,
+      "pct": 2.6
     },
     {
       "zone": "Chattogram",
       "loadShed": 0.0,
-      "demand": 0.0,
+      "demand": 1220.9,
       "pct": 0.0
     },
     {
       "zone": "Cumilla",
-      "loadShed": 0.0,
-      "demand": 0.0,
-      "pct": 0.0
+      "loadShed": 8.0,
+      "demand": 1000.0,
+      "pct": 0.8
     },
     {
       "zone": "Mymensingh",
-      "loadShed": 0.0,
-      "demand": 0.0,
-      "pct": 0.0
+      "loadShed": 56.0,
+      "demand": 998.0,
+      "pct": 5.6
     },
     {
       "zone": "Sylhet",
-      "loadShed": 0.0,
-      "demand": 0.0,
-      "pct": 0.0
+      "loadShed": 31.0,
+      "demand": 400.0,
+      "pct": 7.8
     },
     {
       "zone": "Khulna",
-      "loadShed": 0.0,
-      "demand": 0.0,
-      "pct": 0.0
+      "loadShed": 137.0,
+      "demand": 1232.4,
+      "pct": 11.1
     },
     {
       "zone": "Barishal",
-      "loadShed": 0.0,
-      "demand": 0.0,
-      "pct": 0.0
+      "loadShed": 36.0,
+      "demand": 321.5,
+      "pct": 11.2
     },
     {
       "zone": "Rajshahi",
-      "loadShed": 0.0,
-      "demand": 0.0,
-      "pct": 0.0
+      "loadShed": 65.0,
+      "demand": 1046.6,
+      "pct": 6.2
     },
     {
       "zone": "Rangpur",
-      "loadShed": 0.0,
-      "demand": 0.0,
-      "pct": 0.0
+      "loadShed": 50.0,
+      "demand": 728.0,
+      "pct": 6.9
     }
   ],
   "dailyOutages": [],
