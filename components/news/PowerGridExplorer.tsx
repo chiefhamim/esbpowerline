@@ -6289,16 +6289,50 @@ export function PowerGridExplorer({
       )}
 
       {/* Footer / Notes */}
-      <div className="text-[10px] text-muted-foreground leading-relaxed mt-4 flex flex-wrap gap-x-5 gap-y-1 border-t border-border/40 pt-4">
-        <span>Report Period: 22-23 Jun 2026</span>
-        <span>
-          Sources:{' '}
-          <a href="https://www.pgcb.gov.bd/" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline font-semibold">PGCB/NLDC Operations</a> ·{' '}
-          <a href="https://www.petrobangla.org.bd/" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline font-semibold">Petrobangla Reports</a> ·{' '}
-          <a href="http://www.renewableenergy.gov.bd/" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline font-semibold">SREDA Database</a> ·{' '}
-          <a href="https://bpc.gov.bd/" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline font-semibold">BPC Pricing</a>
-        </span>
-        <span>All data scraped from verified official daily publications.</span>
+      <div className="mt-8 p-4 bg-muted/10 border border-border/30 rounded-2xl text-[10px] text-muted-foreground/80 leading-relaxed space-y-3 shadow-sm">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-border/20 pb-3">
+          <div className="flex items-center gap-1.5">
+            <Info className="h-3.5 w-3.5 text-primary shrink-0" />
+            <span className="font-bold text-foreground">Data Reporting Standards &amp; Attributions</span>
+          </div>
+          <div className="flex items-center gap-2 text-muted-foreground/70 text-[9.5px]">
+            <span>Report Period: <span className="font-semibold text-foreground">22-23 Jun 2026</span></span>
+            <span>·</span>
+            <span>All data scraped from verified official daily publications.</span>
+          </div>
+        </div>
+
+        <div className="grid md:grid-cols-2 gap-4">
+          <div className="space-y-1.5">
+            <div className="font-semibold text-foreground text-[10.5px]">Backlog Reactivity &amp; Updates</div>
+            <div className="space-y-1 text-muted-foreground/75">
+              <div className="flex items-start gap-1.5">
+                <span className="inline-flex items-center justify-center px-1.5 py-0.5 text-[8.5px] font-extrabold uppercase bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 rounded-md shrink-0 mt-0.5">Daily</span>
+                <span>Data updates daily, fully reactive to daily backlog selections.</span>
+              </div>
+              <div className="flex items-start gap-1.5">
+                <span className="inline-flex items-center justify-center px-1.5 py-0.5 text-[8.5px] font-extrabold uppercase bg-orange-500/10 text-orange-500 border border-orange-500/20 rounded-md shrink-0 mt-0.5">Monthly</span>
+                <span>Data updates monthly (SREDA installed capacity is static/monthly and unaffected by daily backlog, while actual renewable generation output updates daily).</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-1.5">
+            <div className="font-semibold text-foreground text-[10.5px]">Source Directories</div>
+            <div className="flex flex-wrap gap-x-3 gap-y-1 text-muted-foreground/90 font-semibold">
+              <a href="https://www.pgcb.gov.bd/" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline flex items-center gap-1">PGCB/NLDC Operations</a>
+              <span>·</span>
+              <a href="https://www.petrobangla.org.bd/" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline flex items-center gap-1">Petrobangla Reports</a>
+              <span>·</span>
+              <a href="http://www.renewableenergy.gov.bd/" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline flex items-center gap-1">SREDA Database</a>
+              <span>·</span>
+              <a href="https://bpc.gov.bd/" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline flex items-center gap-1">BPC Pricing</a>
+            </div>
+            <div className="text-[9.5px] text-muted-foreground/60 border-t border-border/10 pt-1.5">
+              Sources: BPDB, PGCB, SREDA, BERC, Petrobangla. Figures are indicative and editor-managed unless noted. Member downloads are logged for reference.
+            </div>
+          </div>
+        </div>
       </div>
     </div>
 
