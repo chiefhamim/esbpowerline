@@ -1096,11 +1096,11 @@ export function PowerGridExplorer({
             Grid Status Overview
           </h2>
           <p className="text-xs text-muted-foreground mt-0.5">
-            Active reporting date: <span className="font-semibold text-primary">{systemStats.date}</span>
+            Active reporting date: <span className="font-semibold text-primary">{systemStats.date}</span> <span className="text-[10px] bg-primary/10 text-primary px-1.5 py-0.5 rounded font-bold ml-1 uppercase tracking-wider">Today</span>
           </p>
         </div>
-        <div className="flex flex-wrap sm:flex-nowrap items-center gap-3 w-full sm:w-auto">
-          <div className="w-full sm:w-28 relative z-50">
+        <div className="grid grid-cols-3 gap-2 w-full sm:w-auto">
+          <div className="relative z-50">
             <CustomDropdown
               value={selectedYear}
               onChange={handleYearChange}
@@ -1114,7 +1114,7 @@ export function PowerGridExplorer({
             />
           </div>
 
-          <div className="w-full sm:w-32 relative z-50">
+          <div className="relative z-50">
             <CustomDropdown
               value={selectedMonth}
               onChange={handleMonthChange}
@@ -1128,7 +1128,7 @@ export function PowerGridExplorer({
             />
           </div>
 
-          <div className="w-full sm:w-28 relative z-50">
+          <div className="relative z-50">
             <CustomDropdown
               value={selectedDay}
               onChange={handleDayChange}
@@ -1153,7 +1153,7 @@ export function PowerGridExplorer({
           <Zap className="grid-explorer-kpi__icon" />
           <div className="min-w-0">
             <div className="grid-explorer-kpi__label">Daily Generation</div>
-            <div className="grid-explorer-kpi__value">{systemStats.totalEnergyGen.toFixed(1)} MKWh</div>
+            <div className="grid-explorer-kpi__value">{systemStats.totalEnergyGen.toFixed(1)} MKWh<sup className="text-[10px] font-bold ml-0.5">r</sup></div>
           </div>
           {/* Custom Tooltip */}
           <div 
@@ -4707,7 +4707,7 @@ export function PowerGridExplorer({
                         <div className="text-[10px] text-muted-foreground font-semibold uppercase tracking-wider">Total Net Energy</div>
                         <div className="text-2xl font-bold mt-1 text-amber-500 tabular-nums">
                           {currentMonthlyData ? formatNumber(currentMonthlyData.total_net_generation, 1) : 0}{' '}
-                          <span className="text-xs font-medium text-muted-foreground">MKWh</span>
+                          <span className="text-xs font-medium text-muted-foreground">MKWh<sup className="text-[9px] font-bold ml-0.5">r</sup></span>
                         </div>
                         <p className="text-[9px] text-muted-foreground mt-1">Monthly total energy generation</p>
                       </div>
