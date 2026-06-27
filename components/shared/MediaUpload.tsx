@@ -135,9 +135,15 @@ function ReplaceMediaModal({
     input.onchange = async () => {
       const file = input.files?.[0];
       if (!file) return;
+
+      const convertToWebp = localStorage.getItem('esbpowerline_webp_optimize') !== 'false';
+      if (!convertToWebp && file.size > 4.5 * 1024 * 1024) {
+        toast.error('Raw uploads must be under 4.5 MB. Enable "Convert to WebP" to upload this file.');
+        return;
+      }
+
       setUploading(true);
       try {
-        const convertToWebp = localStorage.getItem('esbpowerline_webp_optimize') !== 'false';
         const fileToUpload = convertToWebp && file.type.startsWith('image/') && file.type !== 'image/gif' && file.type !== 'image/svg+xml'
           ? await optimizeImageToWebP(file)
           : file;
@@ -1137,6 +1143,12 @@ export function MediaUpload({ items }: { items: MediaLibraryItem[] }) {
     input.onchange = async () => {
       const file = input.files?.[0];
       if (!file) return;
+
+      if (!convertToWebp && file.size > 4.5 * 1024 * 1024) {
+        toast.error('Raw uploads must be under 4.5 MB. Enable "Convert to WebP" to upload this file.');
+        return;
+      }
+
       setUploading(true);
       try {
         const fileToUpload = convertToWebp && file.type.startsWith('image/') && file.type !== 'image/gif' && file.type !== 'image/svg+xml'

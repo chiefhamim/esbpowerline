@@ -73,6 +73,11 @@ export function FeaturedImageEditor({
       const file = input.files?.[0];
       if (!file) return;
 
+      if (!convertToWebp && file.size > 4.5 * 1024 * 1024) {
+        cmsToast.error('Upload failed', 'Raw uploads must be under 4.5 MB. Please select "Convert to WebP".');
+        return;
+      }
+
       setUploading(true);
       setUploadState('checking');
 

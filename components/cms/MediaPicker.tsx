@@ -52,6 +52,12 @@ export function MediaPicker({
     input.onchange = async () => {
       const file = input.files?.[0];
       if (!file) return;
+
+      if (!convertToWebp && file.size > 4.5 * 1024 * 1024) {
+        cmsToast.error('Upload failed', 'Raw uploads must be under 4.5 MB. Please select "Convert to WebP".');
+        return;
+      }
+
       setUploading(true);
       try {
         const fileToUpload = convertToWebp && file.type.startsWith('image/') && file.type !== 'image/gif' && file.type !== 'image/svg+xml'
