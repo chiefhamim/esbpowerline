@@ -6,7 +6,7 @@
     "dayPeakDemand": 14337.6,
     "eveningPeakDemand": 16420.29,
     "minGen": 12346.28,
-    "maxGen": 15830.0,
+    "maxGen": 15830,
     "totalEnergyGen": 341.39524756,
     "totalEnergyUnserved": 1.52,
     "totalEnergyDemand": 342.92,
@@ -60,9 +60,9 @@
     },
     {
       "name": "HSD (Diesel)",
-      "gen": 0.0,
+      "gen": 0,
       "cost": 0,
-      "unitCost": 0.0,
+      "unitCost": 0,
       "color": "#ef4444"
     }
   ],
@@ -70,7 +70,7 @@
     {
       "source": "HVDC Bheramara (India)",
       "energy": 21.69,
-      "peakFlow": 782.0,
+      "peakFlow": 782,
       "type": "C/B Interconnector (West)"
     },
     {
@@ -82,64 +82,64 @@
     {
       "source": "Tripura Cumilla (India)",
       "energy": 0.96,
-      "peakFlow": 44.0,
+      "peakFlow": 44,
       "type": "C/B Interconnector (East)"
     }
   ],
   "regionalDemandData": [
     {
       "zone": "Dhaka",
-      "loadShed": 140.0,
-      "demand": 5993.12,
-      "pct": 2.3
+      "loadShed": 140,
+      "demand": 5993,
+      "pct": 2.34
     },
     {
       "zone": "Chattogram",
-      "loadShed": 0.0,
-      "demand": 1554.5,
-      "pct": 0.0
-    },
-    {
-      "zone": "Cumilla",
-      "loadShed": 15.0,
-      "demand": 1345.0,
-      "pct": 1.1
-    },
-    {
-      "zone": "Mymensingh",
-      "loadShed": 45.0,
-      "demand": 1266.0,
-      "pct": 3.6
-    },
-    {
-      "zone": "Sylhet",
-      "loadShed": 15.0,
-      "demand": 630.0,
-      "pct": 2.4
+      "loadShed": 0,
+      "demand": 1554,
+      "pct": 0
     },
     {
       "zone": "Khulna",
-      "loadShed": 0.0,
-      "demand": 1933.0,
-      "pct": 0.0
-    },
-    {
-      "zone": "Barishal",
-      "loadShed": 0.0,
-      "demand": 504.5,
-      "pct": 0.0
+      "loadShed": 0,
+      "demand": 1933,
+      "pct": 0
     },
     {
       "zone": "Rajshahi",
-      "loadShed": 0.0,
-      "demand": 1701.6,
-      "pct": 0.0
+      "loadShed": 0,
+      "demand": 1702,
+      "pct": 0
+    },
+    {
+      "zone": "Cumilla",
+      "loadShed": 15,
+      "demand": 1345,
+      "pct": 1.12
+    },
+    {
+      "zone": "Mymensingh",
+      "loadShed": 45,
+      "demand": 1266,
+      "pct": 3.55
+    },
+    {
+      "zone": "Sylhet",
+      "loadShed": 15,
+      "demand": 630,
+      "pct": 2.38
+    },
+    {
+      "zone": "Barishal",
+      "loadShed": 0,
+      "demand": 504,
+      "pct": 0
     },
     {
       "zone": "Rangpur",
-      "loadShed": 165.0,
-      "demand": 972.0,
-      "pct": 17.0
+      "loadShed": 165,
+      "demand": 972,
+      "pct": 16.98
     }
   ],
   "dailyOutages": [
@@ -252,15 +252,15 @@
       "time": "11:15 - 12:49",
       "plant": "Khulna (C) S/S TR-1 425T LT Forced S/D",
       "load": "HT Outage",
-      "reason": "Due to \u09e9\u09e9 \u0995\u09c7\u09ad\u09bf \u09b8\u09be\u0987\u09a1\u09c7\u09b0 \u0995\u09c7\u09ac\u09b2 \u09ae\u09be\u099f\u09bf\u09b0 \u09ae\u09a7\u09cd\u09af\u09c7 \u09a2\u09c7\u0995\u09c7 \u09b0\u09be\u0996\u09be\u09b0 \u099c\u09a8\u09cd\u09af \u09b8\u09be\u099f\u09a1\u09be\u0989\u09a8 \u09a8\u09c7\u09df\u09be \u09b9\u09df\u0964",
-      "full_desc": "Khulna (C) S/S TR-1 425T LT Forced S/D Due to \u09e9\u09e9 \u0995\u09c7\u09ad\u09bf \u09b8\u09be\u0987\u09a1\u09c7\u09b0 \u0995\u09c7\u09ac\u09b2 \u09ae\u09be\u099f\u09bf\u09b0 \u09ae\u09a7\u09cd\u09af\u09c7 \u09a2\u09c7\u0995\u09c7 \u09b0\u09be\u0996\u09be\u09b0 \u099c\u09a8\u09cd\u09af \u09b8\u09be\u099f\u09a1\u09be\u0989\u09a8 \u09a8\u09c7\u09df\u09be \u09b9\u09df\u0964"
+      "reason": "Due to ৩৩ কেভি সাইডের কেবল মাটির মধ্যে ঢেকে রাখার জন্য সাটডাউন নেয়া হয়।",
+      "full_desc": "Khulna (C) S/S TR-1 425T LT Forced S/D Due to ৩৩ কেভি সাইডের কেবল মাটির মধ্যে ঢেকে রাখার জন্য সাটডাউন নেয়া হয়।"
     },
     {
       "time": "11:16 - 12:48",
       "plant": "Khulna (C) S/S TR-1 425T HT Forced S/D",
       "load": "HT Outage",
-      "reason": "Due to \u09e9\u09e9 \u0995\u09c7\u09ad\u09bf \u09b8\u09be\u0987\u09a1\u09c7\u09b0 \u0995\u09c7\u09ac\u09b2 \u09ae\u09be\u099f\u09bf\u09b0 \u09ae\u09a7\u09cd\u09af\u09c7 \u09a2\u09c7\u0995\u09c7 \u09b0\u09be\u0996\u09be\u09b0 \u099c\u09a8\u09cd\u09af \u09b8\u09be\u099f\u09a1\u09be\u0989\u09a8 \u09a8\u09c7\u09df\u09be \u09b9\u09df\u0964",
-      "full_desc": "Khulna (C) S/S TR-1 425T HT Forced S/D Due to \u09e9\u09e9 \u0995\u09c7\u09ad\u09bf \u09b8\u09be\u0987\u09a1\u09c7\u09b0 \u0995\u09c7\u09ac\u09b2 \u09ae\u09be\u099f\u09bf\u09b0 \u09ae\u09a7\u09cd\u09af\u09c7 \u09a2\u09c7\u0995\u09c7 \u09b0\u09be\u0996\u09be\u09b0 \u099c\u09a8\u09cd\u09af \u09b8\u09be\u099f\u09a1\u09be\u0989\u09a8 \u09a8\u09c7\u09df\u09be \u09b9\u09df\u0964"
+      "reason": "Due to ৩৩ কেভি সাইডের কেবল মাটির মধ্যে ঢেকে রাখার জন্য সাটডাউন নেয়া হয়।",
+      "full_desc": "Khulna (C) S/S TR-1 425T HT Forced S/D Due to ৩৩ কেভি সাইডের কেবল মাটির মধ্যে ঢেকে রাখার জন্য সাটডাউন নেয়া হয়।"
     },
     {
       "time": "11:25 - 11:36",
@@ -582,145 +582,145 @@
     {
       "time": "00:00",
       "generation": 14147.6,
-      "loadShed": 0.0,
+      "loadShed": 0,
       "demand": 14147.6
     },
     {
       "time": "01:00",
       "generation": 14147.6,
-      "loadShed": 0.0,
+      "loadShed": 0,
       "demand": 14147.6
     },
     {
       "time": "02:00",
       "generation": 14147.6,
-      "loadShed": 0.0,
+      "loadShed": 0,
       "demand": 14147.6
     },
     {
       "time": "03:00",
       "generation": 14147.6,
-      "loadShed": 0.0,
+      "loadShed": 0,
       "demand": 14147.6
     },
     {
       "time": "04:00",
       "generation": 14147.6,
-      "loadShed": 0.0,
+      "loadShed": 0,
       "demand": 14147.6
     },
     {
       "time": "05:00",
       "generation": 14147.6,
-      "loadShed": 0.0,
+      "loadShed": 0,
       "demand": 14147.6
     },
     {
       "time": "06:00",
       "generation": 14147.6,
-      "loadShed": 0.0,
+      "loadShed": 0,
       "demand": 14147.6
     },
     {
       "time": "07:00",
       "generation": 14147.6,
-      "loadShed": 0.0,
+      "loadShed": 0,
       "demand": 14147.6
     },
     {
       "time": "08:00",
       "generation": 14147.6,
-      "loadShed": 0.0,
+      "loadShed": 0,
       "demand": 14147.6
     },
     {
       "time": "09:00",
       "generation": 14147.6,
-      "loadShed": 0.0,
+      "loadShed": 0,
       "demand": 14147.6
     },
     {
       "time": "10:00",
       "generation": 14147.6,
-      "loadShed": 0.0,
+      "loadShed": 0,
       "demand": 14147.6
     },
     {
       "time": "11:00",
       "generation": 14147.6,
-      "loadShed": 0.0,
+      "loadShed": 0,
       "demand": 14147.6
     },
     {
       "time": "12:00",
       "generation": 14147.6,
-      "loadShed": 0.0,
+      "loadShed": 0,
       "demand": 14147.6
     },
     {
       "time": "13:00",
       "generation": 14147.6,
-      "loadShed": 0.0,
+      "loadShed": 0,
       "demand": 14147.6
     },
     {
       "time": "14:00",
       "generation": 14147.6,
-      "loadShed": 0.0,
+      "loadShed": 0,
       "demand": 14147.6
     },
     {
       "time": "15:00",
       "generation": 14147.6,
-      "loadShed": 0.0,
+      "loadShed": 0,
       "demand": 14147.6
     },
     {
       "time": "16:00",
       "generation": 14147.6,
-      "loadShed": 0.0,
+      "loadShed": 0,
       "demand": 14147.6
     },
     {
       "time": "17:00",
       "generation": 14147.6,
-      "loadShed": 0.0,
+      "loadShed": 0,
       "demand": 14147.6
     },
     {
       "time": "18:00",
       "generation": 16023.29,
-      "loadShed": 0.0,
+      "loadShed": 0,
       "demand": 16023.29
     },
     {
       "time": "19:00",
       "generation": 16023.29,
-      "loadShed": 0.0,
+      "loadShed": 0,
       "demand": 16023.29
     },
     {
       "time": "20:00",
       "generation": 16023.29,
-      "loadShed": 0.0,
+      "loadShed": 0,
       "demand": 16023.29
     },
     {
       "time": "21:00",
       "generation": 16023.29,
-      "loadShed": 0.0,
+      "loadShed": 0,
       "demand": 16023.29
     },
     {
       "time": "22:00",
       "generation": 16023.29,
-      "loadShed": 0.0,
+      "loadShed": 0,
       "demand": 16023.29
     },
     {
       "time": "23:00",
       "generation": 14147.6,
-      "loadShed": 0.0,
+      "loadShed": 0,
       "demand": 14147.6
     }
   ],
@@ -757,14 +757,14 @@
       "company": "Tullow (Bangora)",
       "fields": 1,
       "gas": 36.1,
-      "condensate": 106.0,
+      "condensate": 106,
       "share": 1.4
     },
     {
       "company": "RPGCL (R-LNG Import / LNG Terminal)",
       "fields": 0,
       "gas": 729.8,
-      "condensate": 0.0,
+      "condensate": 0,
       "share": 28.6
     }
   ],
@@ -774,19 +774,19 @@
       "power": 267.6,
       "fertilizer": 70.2,
       "others": 1136.3,
-      "total": 1474.0
+      "total": 1474
     },
     {
       "company": "BGDCL (Cumilla & Sylhet)",
       "power": 197.8,
-      "fertilizer": 0.0,
+      "fertilizer": 0,
       "others": 93.4,
       "total": 291.2
     },
     {
       "company": "KGDCL (Chattogram)",
       "power": 32.5,
-      "fertilizer": 46.0,
+      "fertilizer": 46,
       "others": 177.9,
       "total": 256.4
     },
@@ -800,14 +800,14 @@
     {
       "company": "PGCL (Rajshahi & Rangpur)",
       "power": 109.3,
-      "fertilizer": 0.0,
+      "fertilizer": 0,
       "others": 28.1,
       "total": 137.5
     },
     {
       "company": "SGCL (Barishal & Khulna)",
       "power": 100.7,
-      "fertilizer": 0.0,
+      "fertilizer": 0,
       "others": 4.5,
       "total": 105.2
     }

@@ -6,7 +6,7 @@
     "dayPeakDemand": 13332.34,
     "eveningPeakDemand": 16021.65,
     "minGen": 12245.5,
-    "maxGen": 16140.0,
+    "maxGen": 16140,
     "totalEnergyGen": 342.83097954,
     "totalEnergyUnserved": 0.18,
     "totalEnergyDemand": 343.01,
@@ -60,9 +60,9 @@
     },
     {
       "name": "HSD (Diesel)",
-      "gen": 0.0,
+      "gen": 0,
       "cost": 0,
-      "unitCost": 0.0,
+      "unitCost": 0,
       "color": "#ef4444"
     }
   ],
@@ -70,7 +70,7 @@
     {
       "source": "HVDC Bheramara (India)",
       "energy": 22.26,
-      "peakFlow": 840.0,
+      "peakFlow": 840,
       "type": "C/B Interconnector (West)"
     },
     {
@@ -82,64 +82,64 @@
     {
       "source": "Tripura Cumilla (India)",
       "energy": 1.14,
-      "peakFlow": 54.0,
+      "peakFlow": 54,
       "type": "C/B Interconnector (East)"
     }
   ],
   "regionalDemandData": [
     {
       "zone": "Dhaka",
-      "loadShed": 0.0,
-      "demand": 5404.02,
-      "pct": 0.0
+      "loadShed": 0,
+      "demand": 5404,
+      "pct": 0
     },
     {
       "zone": "Chattogram",
-      "loadShed": 0.0,
-      "demand": 1380.5,
-      "pct": 0.0
-    },
-    {
-      "zone": "Cumilla",
-      "loadShed": 0.0,
-      "demand": 1547.06,
-      "pct": 0.0
-    },
-    {
-      "zone": "Mymensingh",
-      "loadShed": 45.0,
-      "demand": 1266.0,
-      "pct": 3.6
-    },
-    {
-      "zone": "Sylhet",
-      "loadShed": 0.0,
-      "demand": 710.0,
-      "pct": 0.0
+      "loadShed": 0,
+      "demand": 1380,
+      "pct": 0
     },
     {
       "zone": "Khulna",
-      "loadShed": 0.0,
-      "demand": 1913.0,
-      "pct": 0.0
-    },
-    {
-      "zone": "Barishal",
-      "loadShed": 0.0,
-      "demand": 490.0,
-      "pct": 0.0
+      "loadShed": 0,
+      "demand": 1913,
+      "pct": 0
     },
     {
       "zone": "Rajshahi",
-      "loadShed": 0.0,
-      "demand": 1681.6,
-      "pct": 0.0
+      "loadShed": 0,
+      "demand": 1682,
+      "pct": 0
+    },
+    {
+      "zone": "Cumilla",
+      "loadShed": 0,
+      "demand": 1547,
+      "pct": 0
+    },
+    {
+      "zone": "Mymensingh",
+      "loadShed": 45,
+      "demand": 1266,
+      "pct": 3.55
+    },
+    {
+      "zone": "Sylhet",
+      "loadShed": 0,
+      "demand": 710,
+      "pct": 0
+    },
+    {
+      "zone": "Barishal",
+      "loadShed": 0,
+      "demand": 490,
+      "pct": 0
     },
     {
       "zone": "Rangpur",
-      "loadShed": 0.0,
-      "demand": 1060.0,
-      "pct": 0.0
+      "loadShed": 0,
+      "demand": 1060,
+      "pct": 0
     }
   ],
   "dailyOutages": [
@@ -161,8 +161,8 @@
       "time": "09:31",
       "plant": "Full interruption (around 495MW) occurred from 09:31 to 09:47 hrs under Bhaluka, Mymensingh, Netrokona, Kishoreganj and Bajitpur substations",
       "load": "495MW",
-      "reason": "due to the tripping of Ashuganj-Bajitpur ckt-1 showing distance relay from Ashuganj end (NB: Ashuganj-Bajitpur ckt-2 was under shut down condition). Now, no interruption\u00a0is\u00a0occurring.",
-      "full_desc": "Full interruption (around 495MW) occurred from 09:31 to 09:47 hrs under Bhaluka, Mymensingh, Netrokona, Kishoreganj and Bajitpur substations due to the tripping of Ashuganj-Bajitpur ckt-1 showing distance relay from Ashuganj end (NB: Ashuganj-Bajitpur ckt-2 was under shut down condition). Now, no interruption\u00a0is\u00a0occurring."
+      "reason": "due to the tripping of Ashuganj-Bajitpur ckt-1 showing distance relay from Ashuganj end (NB: Ashuganj-Bajitpur ckt-2 was under shut down condition). Now, no interruption is occurring.",
+      "full_desc": "Full interruption (around 495MW) occurred from 09:31 to 09:47 hrs under Bhaluka, Mymensingh, Netrokona, Kishoreganj and Bajitpur substations due to the tripping of Ashuganj-Bajitpur ckt-1 showing distance relay from Ashuganj end (NB: Ashuganj-Bajitpur ckt-2 was under shut down condition). Now, no interruption is occurring."
     },
     {
       "time": "09:32 - 09:50",
@@ -371,22 +371,22 @@
       "time": "03:24 - 03:50",
       "plant": "Thakurgaon 132/33kV S/S T-3(432T) HT Tripped showing N/A relays",
       "load": "HT Outage",
-      "reason": "Due to 914B, 905B, 920B & 923B Trip \u0995\u09b0\u09c7 T-3 \u0993\u09aa\u09c7\u09a8 \u09b9\u09df\u09c7 \u09af\u09be\u09df\u0964",
-      "full_desc": "Thakurgaon 132/33kV S/S T-3(432T) HT Tripped showing N/A relays Due to 914B, 905B, 920B & 923B Trip \u0995\u09b0\u09c7 T-3 \u0993\u09aa\u09c7\u09a8 \u09b9\u09df\u09c7 \u09af\u09be\u09df\u0964"
+      "reason": "Due to 914B, 905B, 920B & 923B Trip করে T-3 ওপেন হয়ে যায়।",
+      "full_desc": "Thakurgaon 132/33kV S/S T-3(432T) HT Tripped showing N/A relays Due to 914B, 905B, 920B & 923B Trip করে T-3 ওপেন হয়ে যায়।"
     },
     {
       "time": "03:24 - 03:50",
       "plant": "Thakurgaon 132/33kV S/S T-2(412T) HT Tripped showing N/A relays",
       "load": "HT Outage",
-      "reason": "Due to 914B, 905B, 920B & 923B Trip \u0995\u09b0\u09c7 T-2 \u0993\u09aa\u09c7\u09a8 \u09b9\u09df\u09c7 \u09af\u09be\u09df\u0964",
-      "full_desc": "Thakurgaon 132/33kV S/S T-2(412T) HT Tripped showing N/A relays Due to 914B, 905B, 920B & 923B Trip \u0995\u09b0\u09c7 T-2 \u0993\u09aa\u09c7\u09a8 \u09b9\u09df\u09c7 \u09af\u09be\u09df\u0964"
+      "reason": "Due to 914B, 905B, 920B & 923B Trip করে T-2 ওপেন হয়ে যায়।",
+      "full_desc": "Thakurgaon 132/33kV S/S T-2(412T) HT Tripped showing N/A relays Due to 914B, 905B, 920B & 923B Trip করে T-2 ওপেন হয়ে যায়।"
     },
     {
       "time": "03:24 - 03:50",
       "plant": "Thakurgaon 132/33kV S/S T-1(422T) HT Tripped showing N/A relays",
       "load": "HT Outage",
-      "reason": "Due to 914B, 905B, 920B & 923B Trip \u0995\u09b0\u09c7 T-1 \u0993\u09aa\u09c7\u09a8 \u09b9\u09df\u09c7 \u09af\u09be\u09df\u0964",
-      "full_desc": "Thakurgaon 132/33kV S/S T-1(422T) HT Tripped showing N/A relays Due to 914B, 905B, 920B & 923B Trip \u0995\u09b0\u09c7 T-1 \u0993\u09aa\u09c7\u09a8 \u09b9\u09df\u09c7 \u09af\u09be\u09df\u0964"
+      "reason": "Due to 914B, 905B, 920B & 923B Trip করে T-1 ওপেন হয়ে যায়।",
+      "full_desc": "Thakurgaon 132/33kV S/S T-1(422T) HT Tripped showing N/A relays Due to 914B, 905B, 920B & 923B Trip করে T-1 ওপেন হয়ে যায়।"
     },
     {
       "time": "03:24 - 04:19",
@@ -442,145 +442,145 @@
     {
       "time": "00:00",
       "generation": 13309.84,
-      "loadShed": 0.0,
+      "loadShed": 0,
       "demand": 13309.84
     },
     {
       "time": "01:00",
       "generation": 13309.84,
-      "loadShed": 0.0,
+      "loadShed": 0,
       "demand": 13309.84
     },
     {
       "time": "02:00",
       "generation": 13309.84,
-      "loadShed": 0.0,
+      "loadShed": 0,
       "demand": 13309.84
     },
     {
       "time": "03:00",
       "generation": 13309.84,
-      "loadShed": 0.0,
+      "loadShed": 0,
       "demand": 13309.84
     },
     {
       "time": "04:00",
       "generation": 13309.84,
-      "loadShed": 0.0,
+      "loadShed": 0,
       "demand": 13309.84
     },
     {
       "time": "05:00",
       "generation": 13309.84,
-      "loadShed": 0.0,
+      "loadShed": 0,
       "demand": 13309.84
     },
     {
       "time": "06:00",
       "generation": 13309.84,
-      "loadShed": 0.0,
+      "loadShed": 0,
       "demand": 13309.84
     },
     {
       "time": "07:00",
       "generation": 13309.84,
-      "loadShed": 0.0,
+      "loadShed": 0,
       "demand": 13309.84
     },
     {
       "time": "08:00",
       "generation": 13309.84,
-      "loadShed": 0.0,
+      "loadShed": 0,
       "demand": 13309.84
     },
     {
       "time": "09:00",
       "generation": 13309.84,
-      "loadShed": 0.0,
+      "loadShed": 0,
       "demand": 13309.84
     },
     {
       "time": "10:00",
       "generation": 13309.84,
-      "loadShed": 0.0,
+      "loadShed": 0,
       "demand": 13309.84
     },
     {
       "time": "11:00",
       "generation": 13309.84,
-      "loadShed": 0.0,
+      "loadShed": 0,
       "demand": 13309.84
     },
     {
       "time": "12:00",
       "generation": 13309.84,
-      "loadShed": 0.0,
+      "loadShed": 0,
       "demand": 13309.84
     },
     {
       "time": "13:00",
       "generation": 13309.84,
-      "loadShed": 0.0,
+      "loadShed": 0,
       "demand": 13309.84
     },
     {
       "time": "14:00",
       "generation": 13309.84,
-      "loadShed": 0.0,
+      "loadShed": 0,
       "demand": 13309.84
     },
     {
       "time": "15:00",
       "generation": 13309.84,
-      "loadShed": 0.0,
+      "loadShed": 0,
       "demand": 13309.84
     },
     {
       "time": "16:00",
       "generation": 13309.84,
-      "loadShed": 0.0,
+      "loadShed": 0,
       "demand": 13309.84
     },
     {
       "time": "17:00",
       "generation": 13309.84,
-      "loadShed": 0.0,
+      "loadShed": 0,
       "demand": 13309.84
     },
     {
       "time": "18:00",
       "generation": 15974.65,
-      "loadShed": 0.0,
+      "loadShed": 0,
       "demand": 15974.65
     },
     {
       "time": "19:00",
       "generation": 15974.65,
-      "loadShed": 0.0,
+      "loadShed": 0,
       "demand": 15974.65
     },
     {
       "time": "20:00",
       "generation": 15974.65,
-      "loadShed": 0.0,
+      "loadShed": 0,
       "demand": 15974.65
     },
     {
       "time": "21:00",
       "generation": 15974.65,
-      "loadShed": 0.0,
+      "loadShed": 0,
       "demand": 15974.65
     },
     {
       "time": "22:00",
       "generation": 15974.65,
-      "loadShed": 0.0,
+      "loadShed": 0,
       "demand": 15974.65
     },
     {
       "time": "23:00",
       "generation": 13309.84,
-      "loadShed": 0.0,
+      "loadShed": 0,
       "demand": 13309.84
     }
   ],
@@ -617,14 +617,14 @@
       "company": "Tullow (Bangora)",
       "fields": 1,
       "gas": 31.6,
-      "condensate": 101.0,
+      "condensate": 101,
       "share": 1.2
     },
     {
       "company": "RPGCL (R-LNG Import / LNG Terminal)",
       "fields": 0,
       "gas": 1008.1,
-      "condensate": 0.0,
+      "condensate": 0,
       "share": 37.2
     }
   ],
@@ -639,7 +639,7 @@
     {
       "company": "BGDCL (Cumilla & Sylhet)",
       "power": 235.5,
-      "fertilizer": 0.0,
+      "fertilizer": 0,
       "others": 92.3,
       "total": 327.8
     },
@@ -655,20 +655,20 @@
       "power": 215.4,
       "fertilizer": 3.1,
       "others": 112.5,
-      "total": 331.0
+      "total": 331
     },
     {
       "company": "PGCL (Rajshahi & Rangpur)",
       "power": 150.3,
-      "fertilizer": 0.0,
+      "fertilizer": 0,
       "others": 27.7,
-      "total": 178.0
+      "total": 178
     },
     {
       "company": "SGCL (Barishal & Khulna)",
       "power": 110.1,
-      "fertilizer": 0.0,
-      "others": 5.0,
+      "fertilizer": 0,
+      "others": 5,
       "total": 115.1
     }
   ]

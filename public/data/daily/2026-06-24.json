@@ -6,7 +6,7 @@
     "dayPeakDemand": 15333.57,
     "eveningPeakDemand": 17565.01,
     "minGen": 13478.64,
-    "maxGen": 15700.0,
+    "maxGen": 15700,
     "totalEnergyGen": 347.06060948,
     "totalEnergyUnserved": 7.14,
     "totalEnergyDemand": 354.2,
@@ -60,9 +60,9 @@
     },
     {
       "name": "HSD (Diesel)",
-      "gen": 0.0,
+      "gen": 0,
       "cost": 0,
-      "unitCost": 0.0,
+      "unitCost": 0,
       "color": "#ef4444"
     }
   ],
@@ -70,7 +70,7 @@
     {
       "source": "HVDC Bheramara (India)",
       "energy": 20.1,
-      "peakFlow": 902.0,
+      "peakFlow": 902,
       "type": "C/B Interconnector (West)"
     },
     {
@@ -82,64 +82,64 @@
     {
       "source": "Tripura Cumilla (India)",
       "energy": 3.94,
-      "peakFlow": 166.0,
+      "peakFlow": 166,
       "type": "C/B Interconnector (East)"
     }
   ],
   "regionalDemandData": [
     {
       "zone": "Dhaka",
-      "loadShed": 219.0,
-      "demand": 6082.3,
+      "loadShed": 219,
+      "demand": 6082,
       "pct": 3.6
     },
     {
       "zone": "Chattogram",
-      "loadShed": 31.0,
-      "demand": 1575.7,
-      "pct": 2.0
-    },
-    {
-      "zone": "Cumilla",
-      "loadShed": 342.0,
-      "demand": 1742.0,
-      "pct": 19.6
-    },
-    {
-      "zone": "Mymensingh",
-      "loadShed": 449.0,
-      "demand": 1407.0,
-      "pct": 31.9
-    },
-    {
-      "zone": "Sylhet",
-      "loadShed": 47.0,
-      "demand": 713.0,
-      "pct": 6.6
+      "loadShed": 31,
+      "demand": 1522,
+      "pct": 2.04
     },
     {
       "zone": "Khulna",
-      "loadShed": 349.0,
-      "demand": 2009.0,
-      "pct": 17.4
-    },
-    {
-      "zone": "Barishal",
-      "loadShed": 85.0,
-      "demand": 546.5,
-      "pct": 15.6
+      "loadShed": 349,
+      "demand": 2009,
+      "pct": 17.37
     },
     {
       "zone": "Rajshahi",
-      "loadShed": 58.0,
-      "demand": 1751.8,
-      "pct": 3.3
+      "loadShed": 58,
+      "demand": 1752,
+      "pct": 3.31
+    },
+    {
+      "zone": "Cumilla",
+      "loadShed": 342,
+      "demand": 1742,
+      "pct": 19.63
+    },
+    {
+      "zone": "Mymensingh",
+      "loadShed": 449,
+      "demand": 1407,
+      "pct": 31.91
+    },
+    {
+      "zone": "Sylhet",
+      "loadShed": 47,
+      "demand": 713,
+      "pct": 6.59
+    },
+    {
+      "zone": "Barishal",
+      "loadShed": 85,
+      "demand": 547,
+      "pct": 15.54
     },
     {
       "zone": "Rangpur",
-      "loadShed": 205.0,
-      "demand": 1125.0,
-      "pct": 18.2
+      "loadShed": 205,
+      "demand": 1125,
+      "pct": 18.22
     }
   ],
   "dailyOutages": [
@@ -280,8 +280,8 @@
       "time": "17:10 - 18:25",
       "plant": "Purbasadipur-Thakurgaon-EPV  132kV Ckt-2 Forced",
       "load": "HT Outage",
-      "reason": "Due to \u09ac\u09be\u09b8\u09be\u09ac\u09be\u09dc\u09bf\u09b0 \u09aa\u09cd\u09af\u09be\u09a8\u09c7\u09b2 \u09a4\u09c1\u09b2\u09a4\u09c7 \u0997\u09bf\u09df\u09c7 \u0995\u09a8\u09cd\u09a1\u09be\u0995\u09b0 \u099b\u09bf\u09dc\u09c7 \u09ab\u09c7\u09b2\u09c7\u099b\u09c7\u0964 \u09a4\u09be\u0987 \u0986\u09b0\u09cd\u09ae\u09be\u09b0\u09bf\u0982 \u0995\u09b0\u09be\u09b0 \u099c\u09a8\u09cd\u09af \u09b6\u09be\u099f\u09a1\u09be\u0989\u09a8 \u09aa\u09cd\u09b0\u09df\u09cb\u099c\u09a8\u0964",
-      "full_desc": "Purbasadipur-Thakurgaon-EPV  132kV Ckt-2 Forced S/D from Purbasadipur 230/132/33kV end Due to \u09ac\u09be\u09b8\u09be\u09ac\u09be\u09dc\u09bf\u09b0 \u09aa\u09cd\u09af\u09be\u09a8\u09c7\u09b2 \u09a4\u09c1\u09b2\u09a4\u09c7 \u0997\u09bf\u09df\u09c7 \u0995\u09a8\u09cd\u09a1\u09be\u0995\u09b0 \u099b\u09bf\u09dc\u09c7 \u09ab\u09c7\u09b2\u09c7\u099b\u09c7\u0964 \u09a4\u09be\u0987 \u0986\u09b0\u09cd\u09ae\u09be\u09b0\u09bf\u0982 \u0995\u09b0\u09be\u09b0 \u099c\u09a8\u09cd\u09af \u09b6\u09be\u099f\u09a1\u09be\u0989\u09a8 \u09aa\u09cd\u09b0\u09df\u09cb\u099c\u09a8\u0964"
+      "reason": "Due to বাসাবাড়ির প্যানেল তুলতে গিয়ে কন্ডাকর ছিড়ে ফেলেছে। তাই আর্মারিং করার জন্য শাটডাউন প্রয়োজন।",
+      "full_desc": "Purbasadipur-Thakurgaon-EPV  132kV Ckt-2 Forced S/D from Purbasadipur 230/132/33kV end Due to বাসাবাড়ির প্যানেল তুলতে গিয়ে কন্ডাকর ছিড়ে ফেলেছে। তাই আর্মারিং করার জন্য শাটডাউন প্রয়োজন।"
     },
     {
       "time": "19:26",
@@ -344,145 +344,145 @@
     {
       "time": "00:00",
       "generation": 14441.07,
-      "loadShed": 0.0,
+      "loadShed": 0,
       "demand": 14441.07
     },
     {
       "time": "01:00",
       "generation": 14441.07,
-      "loadShed": 0.0,
+      "loadShed": 0,
       "demand": 14441.07
     },
     {
       "time": "02:00",
       "generation": 14441.07,
-      "loadShed": 0.0,
+      "loadShed": 0,
       "demand": 14441.07
     },
     {
       "time": "03:00",
       "generation": 14441.07,
-      "loadShed": 0.0,
+      "loadShed": 0,
       "demand": 14441.07
     },
     {
       "time": "04:00",
       "generation": 14441.07,
-      "loadShed": 0.0,
+      "loadShed": 0,
       "demand": 14441.07
     },
     {
       "time": "05:00",
       "generation": 14441.07,
-      "loadShed": 0.0,
+      "loadShed": 0,
       "demand": 14441.07
     },
     {
       "time": "06:00",
       "generation": 14441.07,
-      "loadShed": 0.0,
+      "loadShed": 0,
       "demand": 14441.07
     },
     {
       "time": "07:00",
       "generation": 14441.07,
-      "loadShed": 0.0,
+      "loadShed": 0,
       "demand": 14441.07
     },
     {
       "time": "08:00",
       "generation": 14441.07,
-      "loadShed": 0.0,
+      "loadShed": 0,
       "demand": 14441.07
     },
     {
       "time": "09:00",
       "generation": 14441.07,
-      "loadShed": 0.0,
+      "loadShed": 0,
       "demand": 14441.07
     },
     {
       "time": "10:00",
       "generation": 14441.07,
-      "loadShed": 0.0,
+      "loadShed": 0,
       "demand": 14441.07
     },
     {
       "time": "11:00",
       "generation": 14441.07,
-      "loadShed": 0.0,
+      "loadShed": 0,
       "demand": 14441.07
     },
     {
       "time": "12:00",
       "generation": 14441.07,
-      "loadShed": 0.0,
+      "loadShed": 0,
       "demand": 14441.07
     },
     {
       "time": "13:00",
       "generation": 14441.07,
-      "loadShed": 0.0,
+      "loadShed": 0,
       "demand": 14441.07
     },
     {
       "time": "14:00",
       "generation": 14441.07,
-      "loadShed": 0.0,
+      "loadShed": 0,
       "demand": 14441.07
     },
     {
       "time": "15:00",
       "generation": 14441.07,
-      "loadShed": 0.0,
+      "loadShed": 0,
       "demand": 14441.07
     },
     {
       "time": "16:00",
       "generation": 14441.07,
-      "loadShed": 0.0,
+      "loadShed": 0,
       "demand": 14441.07
     },
     {
       "time": "17:00",
       "generation": 14441.07,
-      "loadShed": 0.0,
+      "loadShed": 0,
       "demand": 14441.07
     },
     {
       "time": "18:00",
       "generation": 15700.01,
-      "loadShed": 0.0,
+      "loadShed": 0,
       "demand": 15700.01
     },
     {
       "time": "19:00",
       "generation": 15700.01,
-      "loadShed": 0.0,
+      "loadShed": 0,
       "demand": 15700.01
     },
     {
       "time": "20:00",
       "generation": 15700.01,
-      "loadShed": 0.0,
+      "loadShed": 0,
       "demand": 15700.01
     },
     {
       "time": "21:00",
       "generation": 15700.01,
-      "loadShed": 0.0,
+      "loadShed": 0,
       "demand": 15700.01
     },
     {
       "time": "22:00",
       "generation": 15700.01,
-      "loadShed": 0.0,
+      "loadShed": 0,
       "demand": 15700.01
     },
     {
       "time": "23:00",
       "generation": 14441.07,
-      "loadShed": 0.0,
+      "loadShed": 0,
       "demand": 14441.07
     }
   ],
@@ -491,7 +491,7 @@
       "company": "BGFCL (Titas, Habiganj, Bakhrabad)",
       "fields": 5,
       "gas": 477.7,
-      "condensate": 370.0,
+      "condensate": 370,
       "share": 18.4
     },
     {
@@ -519,14 +519,14 @@
       "company": "Tullow (Bangora)",
       "fields": 1,
       "gas": 31.4,
-      "condensate": 93.0,
+      "condensate": 93,
       "share": 1.2
     },
     {
       "company": "RPGCL (R-LNG Import / LNG Terminal)",
       "fields": 0,
       "gas": 1002.7,
-      "condensate": 0.0,
+      "condensate": 0,
       "share": 38.7
     }
   ],
@@ -541,7 +541,7 @@
     {
       "company": "BGDCL (Cumilla & Sylhet)",
       "power": 207.2,
-      "fertilizer": 0.0,
+      "fertilizer": 0,
       "others": 88.3,
       "total": 295.4
     },
@@ -549,8 +549,8 @@
       "company": "KGDCL (Chattogram)",
       "power": 36.6,
       "fertilizer": 38.3,
-      "others": 171.0,
-      "total": 246.0
+      "others": 171,
+      "total": 246
     },
     {
       "company": "JGTDSL (Sylhet region)",
@@ -562,14 +562,14 @@
     {
       "company": "PGCL (Rajshahi & Rangpur)",
       "power": 127.9,
-      "fertilizer": 0.0,
+      "fertilizer": 0,
       "others": 29.4,
       "total": 157.3
     },
     {
       "company": "SGCL (Barishal & Khulna)",
       "power": 54.2,
-      "fertilizer": 0.0,
+      "fertilizer": 0,
       "others": 4.6,
       "total": 58.8
     }

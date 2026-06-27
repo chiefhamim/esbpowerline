@@ -6,7 +6,7 @@
     "dayPeakDemand": 14687.19,
     "eveningPeakDemand": 16957.41,
     "minGen": 12988.3,
-    "maxGen": 16800.0,
+    "maxGen": 16800,
     "totalEnergyGen": 354.47001347,
     "totalEnergyUnserved": 1.96,
     "totalEnergyDemand": 356.43,
@@ -60,9 +60,9 @@
     },
     {
       "name": "HSD (Diesel)",
-      "gen": 0.0,
+      "gen": 0,
       "cost": 0,
-      "unitCost": 0.0,
+      "unitCost": 0,
       "color": "#ef4444"
     }
   ],
@@ -70,7 +70,7 @@
     {
       "source": "HVDC Bheramara (India)",
       "energy": 21.08,
-      "peakFlow": 888.0,
+      "peakFlow": 888,
       "type": "C/B Interconnector (West)"
     },
     {
@@ -82,64 +82,64 @@
     {
       "source": "Tripura Cumilla (India)",
       "energy": 3.17,
-      "peakFlow": 110.0,
+      "peakFlow": 110,
       "type": "C/B Interconnector (East)"
     }
   ],
   "regionalDemandData": [
     {
       "zone": "Dhaka",
-      "loadShed": 213.0,
-      "demand": 6318.56,
-      "pct": 3.4
+      "loadShed": 213,
+      "demand": 6319,
+      "pct": 3.37
     },
     {
       "zone": "Chattogram",
-      "loadShed": 37.0,
-      "demand": 1632.0,
-      "pct": 2.3
-    },
-    {
-      "zone": "Cumilla",
-      "loadShed": 27.0,
-      "demand": 1612.0,
-      "pct": 1.7
-    },
-    {
-      "zone": "Mymensingh",
-      "loadShed": 200.0,
-      "demand": 1263.0,
-      "pct": 15.8
-    },
-    {
-      "zone": "Sylhet",
-      "loadShed": 0.0,
-      "demand": 531.0,
-      "pct": 0.0
+      "loadShed": 37,
+      "demand": 1632,
+      "pct": 2.27
     },
     {
       "zone": "Khulna",
-      "loadShed": 6.0,
-      "demand": 1780.0,
-      "pct": 0.3
-    },
-    {
-      "zone": "Barishal",
-      "loadShed": 6.0,
-      "demand": 534.8,
-      "pct": 1.1
+      "loadShed": 6,
+      "demand": 1780,
+      "pct": 0.34
     },
     {
       "zone": "Rajshahi",
-      "loadShed": 0.0,
-      "demand": 1682.2,
-      "pct": 0.0
+      "loadShed": 0,
+      "demand": 1682,
+      "pct": 0
+    },
+    {
+      "zone": "Cumilla",
+      "loadShed": 27,
+      "demand": 1612,
+      "pct": 1.67
+    },
+    {
+      "zone": "Mymensingh",
+      "loadShed": 200,
+      "demand": 1263,
+      "pct": 15.84
+    },
+    {
+      "zone": "Sylhet",
+      "loadShed": 0,
+      "demand": 531,
+      "pct": 0
+    },
+    {
+      "zone": "Barishal",
+      "loadShed": 6,
+      "demand": 535,
+      "pct": 1.12
     },
     {
       "zone": "Rangpur",
-      "loadShed": 0.0,
-      "demand": 990.0,
-      "pct": 0.0
+      "loadShed": 0,
+      "demand": 990,
+      "pct": 0
     }
   ],
   "dailyOutages": [
@@ -301,8 +301,8 @@
       "time": "09:45 - 16:40",
       "plant": "Baghabari-Roppur 230kV Ckt-2 Project Work",
       "load": "HT Outage",
-      "reason": "Due to \u099f\u09c7\u09b2\u09bf\u0995\u09ae\u09bf\u0989\u09a8\u09bf\u0995\u09c7\u09b6\u09a8 \u09b8\u09bf\u09b8\u09cd\u099f\u09c7\u09ae \u099f\u09c7\u09b8\u09cd\u099f\u09bf\u0982 \u098f\u09a8\u09cd\u09a1 \u0995\u09ae\u09bf\u09b6\u09a8\u09bf\u0982",
-      "full_desc": "Baghabari-Roppur 230kV Ckt-2 Project Work S/D from Baghabari 230/132kV end Due to \u099f\u09c7\u09b2\u09bf\u0995\u09ae\u09bf\u0989\u09a8\u09bf\u0995\u09c7\u09b6\u09a8 \u09b8\u09bf\u09b8\u09cd\u099f\u09c7\u09ae \u099f\u09c7\u09b8\u09cd\u099f\u09bf\u0982 \u098f\u09a8\u09cd\u09a1 \u0995\u09ae\u09bf\u09b6\u09a8\u09bf\u0982"
+      "reason": "Due to টেলিকমিউনিকেশন সিস্টেম টেস্টিং এন্ড কমিশনিং",
+      "full_desc": "Baghabari-Roppur 230kV Ckt-2 Project Work S/D from Baghabari 230/132kV end Due to টেলিকমিউনিকেশন সিস্টেম টেস্টিং এন্ড কমিশনিং"
     },
     {
       "time": "09:45",
@@ -813,145 +813,145 @@
     {
       "time": "00:00",
       "generation": 14442.69,
-      "loadShed": 0.0,
+      "loadShed": 0,
       "demand": 14442.69
     },
     {
       "time": "01:00",
       "generation": 14442.69,
-      "loadShed": 0.0,
+      "loadShed": 0,
       "demand": 14442.69
     },
     {
       "time": "02:00",
       "generation": 14442.69,
-      "loadShed": 0.0,
+      "loadShed": 0,
       "demand": 14442.69
     },
     {
       "time": "03:00",
       "generation": 14442.69,
-      "loadShed": 0.0,
+      "loadShed": 0,
       "demand": 14442.69
     },
     {
       "time": "04:00",
       "generation": 14442.69,
-      "loadShed": 0.0,
+      "loadShed": 0,
       "demand": 14442.69
     },
     {
       "time": "05:00",
       "generation": 14442.69,
-      "loadShed": 0.0,
+      "loadShed": 0,
       "demand": 14442.69
     },
     {
       "time": "06:00",
       "generation": 14442.69,
-      "loadShed": 0.0,
+      "loadShed": 0,
       "demand": 14442.69
     },
     {
       "time": "07:00",
       "generation": 14442.69,
-      "loadShed": 0.0,
+      "loadShed": 0,
       "demand": 14442.69
     },
     {
       "time": "08:00",
       "generation": 14442.69,
-      "loadShed": 0.0,
+      "loadShed": 0,
       "demand": 14442.69
     },
     {
       "time": "09:00",
       "generation": 14442.69,
-      "loadShed": 0.0,
+      "loadShed": 0,
       "demand": 14442.69
     },
     {
       "time": "10:00",
       "generation": 14442.69,
-      "loadShed": 0.0,
+      "loadShed": 0,
       "demand": 14442.69
     },
     {
       "time": "11:00",
       "generation": 14442.69,
-      "loadShed": 0.0,
+      "loadShed": 0,
       "demand": 14442.69
     },
     {
       "time": "12:00",
       "generation": 14442.69,
-      "loadShed": 0.0,
+      "loadShed": 0,
       "demand": 14442.69
     },
     {
       "time": "13:00",
       "generation": 14442.69,
-      "loadShed": 0.0,
+      "loadShed": 0,
       "demand": 14442.69
     },
     {
       "time": "14:00",
       "generation": 14442.69,
-      "loadShed": 0.0,
+      "loadShed": 0,
       "demand": 14442.69
     },
     {
       "time": "15:00",
       "generation": 14442.69,
-      "loadShed": 0.0,
+      "loadShed": 0,
       "demand": 14442.69
     },
     {
       "time": "16:00",
       "generation": 14442.69,
-      "loadShed": 0.0,
+      "loadShed": 0,
       "demand": 14442.69
     },
     {
       "time": "17:00",
       "generation": 14442.69,
-      "loadShed": 0.0,
+      "loadShed": 0,
       "demand": 14442.69
     },
     {
       "time": "18:00",
       "generation": 16446.41,
-      "loadShed": 0.0,
+      "loadShed": 0,
       "demand": 16446.41
     },
     {
       "time": "19:00",
       "generation": 16446.41,
-      "loadShed": 0.0,
+      "loadShed": 0,
       "demand": 16446.41
     },
     {
       "time": "20:00",
       "generation": 16446.41,
-      "loadShed": 0.0,
+      "loadShed": 0,
       "demand": 16446.41
     },
     {
       "time": "21:00",
       "generation": 16446.41,
-      "loadShed": 0.0,
+      "loadShed": 0,
       "demand": 16446.41
     },
     {
       "time": "22:00",
       "generation": 16446.41,
-      "loadShed": 0.0,
+      "loadShed": 0,
       "demand": 16446.41
     },
     {
       "time": "23:00",
       "generation": 14442.69,
-      "loadShed": 0.0,
+      "loadShed": 0,
       "demand": 14442.69
     }
   ],
@@ -988,14 +988,14 @@
       "company": "Tullow (Bangora)",
       "fields": 1,
       "gas": 31.6,
-      "condensate": 92.0,
+      "condensate": 92,
       "share": 1.2
     },
     {
       "company": "RPGCL (R-LNG Import / LNG Terminal)",
       "fields": 0,
       "gas": 1066.8,
-      "condensate": 0.0,
+      "condensate": 0,
       "share": 39.6
     }
   ],
@@ -1010,7 +1010,7 @@
     {
       "company": "BGDCL (Cumilla & Sylhet)",
       "power": 214.2,
-      "fertilizer": 0.0,
+      "fertilizer": 0,
       "others": 88.4,
       "total": 302.6
     },
@@ -1019,7 +1019,7 @@
       "power": 36.7,
       "fertilizer": 52.8,
       "others": 159.4,
-      "total": 249.0
+      "total": 249
     },
     {
       "company": "JGTDSL (Sylhet region)",
@@ -1031,14 +1031,14 @@
     {
       "company": "PGCL (Rajshahi & Rangpur)",
       "power": 102.7,
-      "fertilizer": 0.0,
-      "others": 32.0,
+      "fertilizer": 0,
+      "others": 32,
       "total": 134.6
     },
     {
       "company": "SGCL (Barishal & Khulna)",
       "power": 110.6,
-      "fertilizer": 0.0,
+      "fertilizer": 0,
       "others": 4.6,
       "total": 115.2
     }

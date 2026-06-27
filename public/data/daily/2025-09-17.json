@@ -6,7 +6,7 @@
     "dayPeakDemand": 13271.09,
     "eveningPeakDemand": 14700.1,
     "minGen": 11655.6,
-    "maxGen": 15000.0,
+    "maxGen": 15000,
     "totalEnergyGen": 316.37841939,
     "totalEnergyUnserved": 0.32,
     "totalEnergyDemand": 316.7,
@@ -60,9 +60,9 @@
     },
     {
       "name": "HSD (Diesel)",
-      "gen": 0.0,
+      "gen": 0,
       "cost": 0,
-      "unitCost": 0.0,
+      "unitCost": 0,
       "color": "#ef4444"
     }
   ],
@@ -70,7 +70,7 @@
     {
       "source": "HVDC Bheramara (India)",
       "energy": 21.34,
-      "peakFlow": 882.0,
+      "peakFlow": 882,
       "type": "C/B Interconnector (West)"
     },
     {
@@ -82,64 +82,64 @@
     {
       "source": "Tripura Cumilla (India)",
       "energy": 0.98,
-      "peakFlow": 46.0,
+      "peakFlow": 46,
       "type": "C/B Interconnector (East)"
     }
   ],
   "regionalDemandData": [
     {
       "zone": "Dhaka",
-      "loadShed": 0.0,
-      "demand": 5266.06,
-      "pct": 0.0
+      "loadShed": 0,
+      "demand": 5266,
+      "pct": 0
     },
     {
       "zone": "Chattogram",
-      "loadShed": 0.0,
-      "demand": 1401.6,
-      "pct": 0.0
-    },
-    {
-      "zone": "Cumilla",
-      "loadShed": 0.0,
-      "demand": 1379.78,
-      "pct": 0.0
-    },
-    {
-      "zone": "Mymensingh",
-      "loadShed": 81.0,
-      "demand": 1062.0,
-      "pct": 7.6
-    },
-    {
-      "zone": "Sylhet",
-      "loadShed": 0.0,
-      "demand": 589.0,
-      "pct": 0.0
+      "loadShed": 0,
+      "demand": 1402,
+      "pct": 0
     },
     {
       "zone": "Khulna",
-      "loadShed": 0.0,
-      "demand": 1691.0,
-      "pct": 0.0
-    },
-    {
-      "zone": "Barishal",
-      "loadShed": 0.0,
-      "demand": 410.0,
-      "pct": 0.0
+      "loadShed": 0,
+      "demand": 1691,
+      "pct": 0
     },
     {
       "zone": "Rajshahi",
-      "loadShed": 0.0,
-      "demand": 1330.6,
-      "pct": 0.0
+      "loadShed": 0,
+      "demand": 1331,
+      "pct": 0
+    },
+    {
+      "zone": "Cumilla",
+      "loadShed": 0,
+      "demand": 1380,
+      "pct": 0
+    },
+    {
+      "zone": "Mymensingh",
+      "loadShed": 81,
+      "demand": 1062,
+      "pct": 7.63
+    },
+    {
+      "zone": "Sylhet",
+      "loadShed": 0,
+      "demand": 589,
+      "pct": 0
+    },
+    {
+      "zone": "Barishal",
+      "loadShed": 0,
+      "demand": 410,
+      "pct": 0
     },
     {
       "zone": "Rangpur",
-      "loadShed": 0.0,
-      "demand": 908.0,
-      "pct": 0.0
+      "loadShed": 0,
+      "demand": 908,
+      "pct": 0
     }
   ],
   "dailyOutages": [
@@ -266,8 +266,8 @@
       "time": "16:17",
       "plant": "Bogura-Kaliakoir 400kV ckt-1 tripped showing distance relay. The line",
       "load": "HT Outage",
-      "reason": "Bogura-Kaliakoir 400kV ckt-1 tripped showing distance relay. The line was charged from Bogura end up to\u00a0Jamuna\u00a0bridge.",
-      "full_desc": "Bogura-Kaliakoir 400kV ckt-1 tripped showing distance relay. The line was charged from Bogura end up to\u00a0Jamuna\u00a0bridge."
+      "reason": "Bogura-Kaliakoir 400kV ckt-1 tripped showing distance relay. The line was charged from Bogura end up to Jamuna bridge.",
+      "full_desc": "Bogura-Kaliakoir 400kV ckt-1 tripped showing distance relay. The line was charged from Bogura end up to Jamuna bridge."
     },
     {
       "time": "16:17",
@@ -399,15 +399,15 @@
       "time": "05:52",
       "plant": "Siddhirganj 335 MW CCPP ST",
       "load": "335 MW",
-      "reason": "Siddhirganj 335 MW CCPP ST was shutdown due to\u00a0scheduled maintenance\u00a0work",
-      "full_desc": "Siddhirganj 335 MW CCPP ST was shutdown due to\u00a0scheduled maintenance\u00a0work"
+      "reason": "Siddhirganj 335 MW CCPP ST was shutdown due to scheduled maintenance work",
+      "full_desc": "Siddhirganj 335 MW CCPP ST was shutdown due to scheduled maintenance work"
     },
     {
       "time": "06:03",
       "plant": "Siddhirganj 335 MW CCPP GT",
       "load": "335 MW",
-      "reason": "Siddhirganj 335 MW CCPP GT was shutdown due to\u00a0scheduled maintenance\u00a0work",
-      "full_desc": "Siddhirganj 335 MW CCPP GT was shutdown due to\u00a0scheduled maintenance\u00a0work"
+      "reason": "Siddhirganj 335 MW CCPP GT was shutdown due to scheduled maintenance work",
+      "full_desc": "Siddhirganj 335 MW CCPP GT was shutdown due to scheduled maintenance work"
     },
     {
       "time": "06:21 - 07:49",
@@ -498,145 +498,145 @@
     {
       "time": "00:00",
       "generation": 13230.59,
-      "loadShed": 0.0,
+      "loadShed": 0,
       "demand": 13230.59
     },
     {
       "time": "01:00",
       "generation": 13230.59,
-      "loadShed": 0.0,
+      "loadShed": 0,
       "demand": 13230.59
     },
     {
       "time": "02:00",
       "generation": 13230.59,
-      "loadShed": 0.0,
+      "loadShed": 0,
       "demand": 13230.59
     },
     {
       "time": "03:00",
       "generation": 13230.59,
-      "loadShed": 0.0,
+      "loadShed": 0,
       "demand": 13230.59
     },
     {
       "time": "04:00",
       "generation": 13230.59,
-      "loadShed": 0.0,
+      "loadShed": 0,
       "demand": 13230.59
     },
     {
       "time": "05:00",
       "generation": 13230.59,
-      "loadShed": 0.0,
+      "loadShed": 0,
       "demand": 13230.59
     },
     {
       "time": "06:00",
       "generation": 13230.59,
-      "loadShed": 0.0,
+      "loadShed": 0,
       "demand": 13230.59
     },
     {
       "time": "07:00",
       "generation": 13230.59,
-      "loadShed": 0.0,
+      "loadShed": 0,
       "demand": 13230.59
     },
     {
       "time": "08:00",
       "generation": 13230.59,
-      "loadShed": 0.0,
+      "loadShed": 0,
       "demand": 13230.59
     },
     {
       "time": "09:00",
       "generation": 13230.59,
-      "loadShed": 0.0,
+      "loadShed": 0,
       "demand": 13230.59
     },
     {
       "time": "10:00",
       "generation": 13230.59,
-      "loadShed": 0.0,
+      "loadShed": 0,
       "demand": 13230.59
     },
     {
       "time": "11:00",
       "generation": 13230.59,
-      "loadShed": 0.0,
+      "loadShed": 0,
       "demand": 13230.59
     },
     {
       "time": "12:00",
       "generation": 13230.59,
-      "loadShed": 0.0,
+      "loadShed": 0,
       "demand": 13230.59
     },
     {
       "time": "13:00",
       "generation": 13230.59,
-      "loadShed": 0.0,
+      "loadShed": 0,
       "demand": 13230.59
     },
     {
       "time": "14:00",
       "generation": 13230.59,
-      "loadShed": 0.0,
+      "loadShed": 0,
       "demand": 13230.59
     },
     {
       "time": "15:00",
       "generation": 13230.59,
-      "loadShed": 0.0,
+      "loadShed": 0,
       "demand": 13230.59
     },
     {
       "time": "16:00",
       "generation": 13230.59,
-      "loadShed": 0.0,
+      "loadShed": 0,
       "demand": 13230.59
     },
     {
       "time": "17:00",
       "generation": 13230.59,
-      "loadShed": 0.0,
+      "loadShed": 0,
       "demand": 13230.59
     },
     {
       "time": "18:00",
       "generation": 14615.45,
-      "loadShed": 0.0,
+      "loadShed": 0,
       "demand": 14615.45
     },
     {
       "time": "19:00",
       "generation": 14615.45,
-      "loadShed": 0.0,
+      "loadShed": 0,
       "demand": 14615.45
     },
     {
       "time": "20:00",
       "generation": 14615.45,
-      "loadShed": 0.0,
+      "loadShed": 0,
       "demand": 14615.45
     },
     {
       "time": "21:00",
       "generation": 14615.45,
-      "loadShed": 0.0,
+      "loadShed": 0,
       "demand": 14615.45
     },
     {
       "time": "22:00",
       "generation": 14615.45,
-      "loadShed": 0.0,
+      "loadShed": 0,
       "demand": 14615.45
     },
     {
       "time": "23:00",
       "generation": 13230.59,
-      "loadShed": 0.0,
+      "loadShed": 0,
       "demand": 13230.59
     }
   ],
@@ -660,7 +660,7 @@
       "fields": 9,
       "gas": 113.1,
       "condensate": 72.1,
-      "share": 4.0
+      "share": 4
     },
     {
       "company": "Chevron (Bibiyana, Jalalabad, Moulavibazar)",
@@ -673,14 +673,14 @@
       "company": "Tullow (Bangora)",
       "fields": 1,
       "gas": 34.7,
-      "condensate": 104.0,
+      "condensate": 104,
       "share": 1.2
     },
     {
       "company": "RPGCL (R-LNG Import / LNG Terminal)",
       "fields": 0,
       "gas": 1051.6,
-      "condensate": 0.0,
+      "condensate": 0,
       "share": 37.5
     }
   ],
@@ -694,8 +694,8 @@
     },
     {
       "company": "BGDCL (Cumilla & Sylhet)",
-      "power": 213.0,
-      "fertilizer": 0.0,
+      "power": 213,
+      "fertilizer": 0,
       "others": 92.8,
       "total": 305.8
     },
@@ -711,19 +711,19 @@
       "power": 214.8,
       "fertilizer": 2.4,
       "others": 112.9,
-      "total": 330.0
+      "total": 330
     },
     {
       "company": "PGCL (Rajshahi & Rangpur)",
       "power": 160.4,
-      "fertilizer": 0.0,
-      "others": 29.0,
+      "fertilizer": 0,
+      "others": 29,
       "total": 189.4
     },
     {
       "company": "SGCL (Barishal & Khulna)",
       "power": 68.7,
-      "fertilizer": 0.0,
+      "fertilizer": 0,
       "others": 6.9,
       "total": 75.5
     }

@@ -6,7 +6,7 @@
     "dayPeakDemand": 13698.7,
     "eveningPeakDemand": 15699.9,
     "minGen": 12612.58,
-    "maxGen": 14950.0,
+    "maxGen": 14950,
     "totalEnergyGen": 328.53775042,
     "totalEnergyUnserved": 2.91,
     "totalEnergyDemand": 331.45,
@@ -60,9 +60,9 @@
     },
     {
       "name": "HSD (Diesel)",
-      "gen": 0.0,
+      "gen": 0,
       "cost": 0,
-      "unitCost": 0.0,
+      "unitCost": 0,
       "color": "#ef4444"
     }
   ],
@@ -70,76 +70,76 @@
     {
       "source": "HVDC Bheramara (India)",
       "energy": 21.33,
-      "peakFlow": 909.0,
+      "peakFlow": 909,
       "type": "C/B Interconnector (West)"
     },
     {
       "source": "Adani Godda (India)",
       "energy": 18.13,
-      "peakFlow": 757.0,
+      "peakFlow": 757,
       "type": "C/B Interconnector (North)"
     },
     {
       "source": "Tripura Cumilla (India)",
       "energy": 3.92,
-      "peakFlow": 180.0,
+      "peakFlow": 180,
       "type": "C/B Interconnector (East)"
     }
   ],
   "regionalDemandData": [
     {
       "zone": "Dhaka",
-      "loadShed": 40.0,
-      "demand": 5455.84,
-      "pct": 0.7
+      "loadShed": 40,
+      "demand": 5456,
+      "pct": 0.73
     },
     {
       "zone": "Chattogram",
-      "loadShed": 17.0,
-      "demand": 1555.0,
-      "pct": 1.1
-    },
-    {
-      "zone": "Cumilla",
-      "loadShed": 70.0,
-      "demand": 1527.0,
-      "pct": 4.6
-    },
-    {
-      "zone": "Mymensingh",
-      "loadShed": 160.0,
-      "demand": 1245.0,
-      "pct": 12.9
-    },
-    {
-      "zone": "Sylhet",
-      "loadShed": 60.0,
-      "demand": 532.0,
-      "pct": 11.3
+      "loadShed": 17,
+      "demand": 1555,
+      "pct": 1.09
     },
     {
       "zone": "Khulna",
-      "loadShed": 160.0,
-      "demand": 1915.0,
-      "pct": 8.4
-    },
-    {
-      "zone": "Barishal",
-      "loadShed": 30.0,
-      "demand": 457.13,
-      "pct": 6.6
+      "loadShed": 160,
+      "demand": 1915,
+      "pct": 8.36
     },
     {
       "zone": "Rajshahi",
-      "loadShed": 90.0,
-      "demand": 1576.0,
-      "pct": 5.7
+      "loadShed": 90,
+      "demand": 1576,
+      "pct": 5.71
+    },
+    {
+      "zone": "Cumilla",
+      "loadShed": 70,
+      "demand": 1527,
+      "pct": 4.58
+    },
+    {
+      "zone": "Mymensingh",
+      "loadShed": 160,
+      "demand": 1245,
+      "pct": 12.85
+    },
+    {
+      "zone": "Sylhet",
+      "loadShed": 60,
+      "demand": 532,
+      "pct": 11.28
+    },
+    {
+      "zone": "Barishal",
+      "loadShed": 30,
+      "demand": 457,
+      "pct": 6.56
     },
     {
       "zone": "Rangpur",
-      "loadShed": 100.0,
-      "demand": 949.0,
-      "pct": 10.5
+      "loadShed": 100,
+      "demand": 949,
+      "pct": 10.54
     }
   ],
   "dailyOutages": [
@@ -427,15 +427,15 @@
       "time": "06:48",
       "plant": "Narail 132/33kV S/S TR1 (403-T) LT Scheduled S/D",
       "load": "HT Outage",
-      "reason": "Due to Red hot maintenance work in 33KV bus section -\u09e61 ( 04 no feeder at source side)  . This shutdown taken by jpbs-2",
-      "full_desc": "Narail 132/33kV S/S TR1 (403-T) LT Scheduled S/D Due to Red hot maintenance work in 33KV bus section -\u09e61 ( 04 no feeder at source side)  . This shutdown taken by jpbs-2"
+      "reason": "Due to Red hot maintenance work in 33KV bus section -০1 ( 04 no feeder at source side)  . This shutdown taken by jpbs-2",
+      "full_desc": "Narail 132/33kV S/S TR1 (403-T) LT Scheduled S/D Due to Red hot maintenance work in 33KV bus section -০1 ( 04 no feeder at source side)  . This shutdown taken by jpbs-2"
     },
     {
       "time": "06:49",
       "plant": "Narail 132/33kV S/S TR1 (403-T) HT Scheduled S/D",
       "load": "HT Outage",
-      "reason": "Due to Red hot maintenance work in 33KV bus section -\u09e61 ( 04 no feeder at source side)  . This shutdown taken by jpbs-2",
-      "full_desc": "Narail 132/33kV S/S TR1 (403-T) HT Scheduled S/D Due to Red hot maintenance work in 33KV bus section -\u09e61 ( 04 no feeder at source side)  . This shutdown taken by jpbs-2"
+      "reason": "Due to Red hot maintenance work in 33KV bus section -০1 ( 04 no feeder at source side)  . This shutdown taken by jpbs-2",
+      "full_desc": "Narail 132/33kV S/S TR1 (403-T) HT Scheduled S/D Due to Red hot maintenance work in 33KV bus section -০1 ( 04 no feeder at source side)  . This shutdown taken by jpbs-2"
     },
     {
       "time": "07:01",
@@ -470,145 +470,145 @@
     {
       "time": "00:00",
       "generation": 13335.2,
-      "loadShed": 0.0,
+      "loadShed": 0,
       "demand": 13335.2
     },
     {
       "time": "01:00",
       "generation": 13335.2,
-      "loadShed": 0.0,
+      "loadShed": 0,
       "demand": 13335.2
     },
     {
       "time": "02:00",
       "generation": 13335.2,
-      "loadShed": 0.0,
+      "loadShed": 0,
       "demand": 13335.2
     },
     {
       "time": "03:00",
       "generation": 13335.2,
-      "loadShed": 0.0,
+      "loadShed": 0,
       "demand": 13335.2
     },
     {
       "time": "04:00",
       "generation": 13335.2,
-      "loadShed": 0.0,
+      "loadShed": 0,
       "demand": 13335.2
     },
     {
       "time": "05:00",
       "generation": 13335.2,
-      "loadShed": 0.0,
+      "loadShed": 0,
       "demand": 13335.2
     },
     {
       "time": "06:00",
       "generation": 13335.2,
-      "loadShed": 0.0,
+      "loadShed": 0,
       "demand": 13335.2
     },
     {
       "time": "07:00",
       "generation": 13335.2,
-      "loadShed": 0.0,
+      "loadShed": 0,
       "demand": 13335.2
     },
     {
       "time": "08:00",
       "generation": 13335.2,
-      "loadShed": 0.0,
+      "loadShed": 0,
       "demand": 13335.2
     },
     {
       "time": "09:00",
       "generation": 13335.2,
-      "loadShed": 0.0,
+      "loadShed": 0,
       "demand": 13335.2
     },
     {
       "time": "10:00",
       "generation": 13335.2,
-      "loadShed": 0.0,
+      "loadShed": 0,
       "demand": 13335.2
     },
     {
       "time": "11:00",
       "generation": 13335.2,
-      "loadShed": 0.0,
+      "loadShed": 0,
       "demand": 13335.2
     },
     {
       "time": "12:00",
       "generation": 13335.2,
-      "loadShed": 0.0,
+      "loadShed": 0,
       "demand": 13335.2
     },
     {
       "time": "13:00",
       "generation": 13335.2,
-      "loadShed": 0.0,
+      "loadShed": 0,
       "demand": 13335.2
     },
     {
       "time": "14:00",
       "generation": 13335.2,
-      "loadShed": 0.0,
+      "loadShed": 0,
       "demand": 13335.2
     },
     {
       "time": "15:00",
       "generation": 13335.2,
-      "loadShed": 0.0,
+      "loadShed": 0,
       "demand": 13335.2
     },
     {
       "time": "16:00",
       "generation": 13335.2,
-      "loadShed": 0.0,
+      "loadShed": 0,
       "demand": 13335.2
     },
     {
       "time": "17:00",
       "generation": 13335.2,
-      "loadShed": 0.0,
+      "loadShed": 0,
       "demand": 13335.2
     },
     {
       "time": "18:00",
       "generation": 14939.9,
-      "loadShed": 0.0,
+      "loadShed": 0,
       "demand": 14939.9
     },
     {
       "time": "19:00",
       "generation": 14939.9,
-      "loadShed": 0.0,
+      "loadShed": 0,
       "demand": 14939.9
     },
     {
       "time": "20:00",
       "generation": 14939.9,
-      "loadShed": 0.0,
+      "loadShed": 0,
       "demand": 14939.9
     },
     {
       "time": "21:00",
       "generation": 14939.9,
-      "loadShed": 0.0,
+      "loadShed": 0,
       "demand": 14939.9
     },
     {
       "time": "22:00",
       "generation": 14939.9,
-      "loadShed": 0.0,
+      "loadShed": 0,
       "demand": 14939.9
     },
     {
       "time": "23:00",
       "generation": 13335.2,
-      "loadShed": 0.0,
+      "loadShed": 0,
       "demand": 13335.2
     }
   ],
@@ -631,7 +631,7 @@
       "company": "BAPEX (Shahbazpur, Srikail, Begumganj)",
       "fields": 9,
       "gas": 85.3,
-      "condensate": 26.0,
+      "condensate": 26,
       "share": 3.3
     },
     {
@@ -639,27 +639,27 @@
       "fields": 3,
       "gas": 954.9,
       "condensate": 3190.5,
-      "share": 37.0
+      "share": 37
     },
     {
       "company": "Tullow (Bangora)",
       "fields": 1,
       "gas": 32.2,
-      "condensate": 96.0,
+      "condensate": 96,
       "share": 1.2
     },
     {
       "company": "RPGCL (R-LNG Import / LNG Terminal)",
       "fields": 0,
       "gas": 942.1,
-      "condensate": 0.0,
+      "condensate": 0,
       "share": 36.5
     }
   ],
   "gasDistributionData": [
     {
       "company": "TGTDCL (Dhaka & Mymensingh)",
-      "power": 232.0,
+      "power": 232,
       "fertilizer": 56.1,
       "others": 1165.3,
       "total": 1453.4
@@ -667,14 +667,14 @@
     {
       "company": "BGDCL (Cumilla & Sylhet)",
       "power": 192.5,
-      "fertilizer": 0.0,
+      "fertilizer": 0,
       "others": 87.1,
       "total": 279.6
     },
     {
       "company": "KGDCL (Chattogram)",
-      "power": 37.0,
-      "fertilizer": 8.0,
+      "power": 37,
+      "fertilizer": 8,
       "others": 152.8,
       "total": 197.8
     },
@@ -688,14 +688,14 @@
     {
       "company": "PGCL (Rajshahi & Rangpur)",
       "power": 128.1,
-      "fertilizer": 0.0,
+      "fertilizer": 0,
       "others": 30.4,
       "total": 158.4
     },
     {
       "company": "SGCL (Barishal & Khulna)",
       "power": 91.6,
-      "fertilizer": 0.0,
+      "fertilizer": 0,
       "others": 4.6,
       "total": 96.2
     }

@@ -6,7 +6,7 @@
     "dayPeakDemand": 13483.61,
     "eveningPeakDemand": 14700.66,
     "minGen": 11782.18,
-    "maxGen": 13400.0,
+    "maxGen": 13400,
     "totalEnergyGen": 318.44392024,
     "totalEnergyUnserved": 1.46,
     "totalEnergyDemand": 319.9,
@@ -60,9 +60,9 @@
     },
     {
       "name": "HSD (Diesel)",
-      "gen": 0.0,
+      "gen": 0,
       "cost": 0,
-      "unitCost": 0.0,
+      "unitCost": 0,
       "color": "#ef4444"
     }
   ],
@@ -70,7 +70,7 @@
     {
       "source": "HVDC Bheramara (India)",
       "energy": 21.7,
-      "peakFlow": 900.0,
+      "peakFlow": 900,
       "type": "C/B Interconnector (West)"
     },
     {
@@ -82,63 +82,63 @@
     {
       "source": "Tripura Cumilla (India)",
       "energy": 1.79,
-      "peakFlow": 86.0,
+      "peakFlow": 86,
       "type": "C/B Interconnector (East)"
     }
   ],
   "regionalDemandData": [
     {
       "zone": "Dhaka",
-      "loadShed": 70.0,
-      "demand": 5260.92,
-      "pct": 1.3
+      "loadShed": 70,
+      "demand": 5261,
+      "pct": 1.33
     },
     {
       "zone": "Chattogram",
-      "loadShed": 0.0,
-      "demand": 1531.1,
-      "pct": 0.0
-    },
-    {
-      "zone": "Cumilla",
-      "loadShed": 60.0,
-      "demand": 1393.35,
-      "pct": 4.3
-    },
-    {
-      "zone": "Mymensingh",
-      "loadShed": 100.0,
-      "demand": 1067.0,
-      "pct": 9.4
-    },
-    {
-      "zone": "Sylhet",
-      "loadShed": 20.0,
-      "demand": 593.0,
-      "pct": 3.4
+      "loadShed": 0,
+      "demand": 1531,
+      "pct": 0
     },
     {
       "zone": "Khulna",
-      "loadShed": 70.0,
-      "demand": 1606.0,
-      "pct": 4.4
-    },
-    {
-      "zone": "Barishal",
-      "loadShed": 10.0,
-      "demand": 431.0,
-      "pct": 2.3
+      "loadShed": 70,
+      "demand": 1606,
+      "pct": 4.36
     },
     {
       "zone": "Rajshahi",
-      "loadShed": 25.0,
-      "demand": 1350.0,
-      "pct": 1.9
+      "loadShed": 25,
+      "demand": 1350,
+      "pct": 1.85
+    },
+    {
+      "zone": "Cumilla",
+      "loadShed": 60,
+      "demand": 1393,
+      "pct": 4.31
+    },
+    {
+      "zone": "Mymensingh",
+      "loadShed": 100,
+      "demand": 1067,
+      "pct": 9.37
+    },
+    {
+      "zone": "Sylhet",
+      "loadShed": 20,
+      "demand": 593,
+      "pct": 3.37
+    },
+    {
+      "zone": "Barishal",
+      "loadShed": 10,
+      "demand": 431,
+      "pct": 2.32
     },
     {
       "zone": "Rangpur",
-      "loadShed": 10.0,
-      "demand": 912.0,
+      "loadShed": 10,
+      "demand": 912,
       "pct": 1.1
     }
   ],
@@ -357,15 +357,15 @@
       "time": "12:10 - 12:36",
       "plant": "Niamatpur 132/33kV S/S Transformer-3(426T) LT Tripped showing SIMENS SIPROTEC, 7SJ81 <br> Y phase <br> IDMT Earth Fault Trip relays",
       "load": "HT Outage",
-      "reason": "Due to \u09aa\u09bf\u09ac\u09bf\u098f\u09b8 \u098f\u09b0 \u09b9\u09be\u099c\u09c0\u09a8\u0997\u09b0,  \u09ab\u09bf\u09a1\u09be\u09b0\u09c7\u09b0 \u099c\u09a8\u09cd\u09af \u09e9\u09e9 \u0995\u09c7\u09ad\u09bf \u099f\u09cd\u09b0\u09bf\u09aa \u0995\u09b0\u09c7\u0964",
-      "full_desc": "Niamatpur 132/33kV S/S Transformer-3(426T) LT Tripped showing SIMENS SIPROTEC, 7SJ81 <br> Y phase <br> IDMT Earth Fault Trip relays Due to \u09aa\u09bf\u09ac\u09bf\u098f\u09b8 \u098f\u09b0 \u09b9\u09be\u099c\u09c0\u09a8\u0997\u09b0,  \u09ab\u09bf\u09a1\u09be\u09b0\u09c7\u09b0 \u099c\u09a8\u09cd\u09af \u09e9\u09e9 \u0995\u09c7\u09ad\u09bf \u099f\u09cd\u09b0\u09bf\u09aa \u0995\u09b0\u09c7\u0964"
+      "reason": "Due to পিবিএস এর হাজীনগর,  ফিডারের জন্য ৩৩ কেভি ট্রিপ করে।",
+      "full_desc": "Niamatpur 132/33kV S/S Transformer-3(426T) LT Tripped showing SIMENS SIPROTEC, 7SJ81 <br> Y phase <br> IDMT Earth Fault Trip relays Due to পিবিএস এর হাজীনগর,  ফিডারের জন্য ৩৩ কেভি ট্রিপ করে।"
     },
     {
       "time": "13:13 - 16:40",
       "plant": "Bhulta-Haripur 230 kV Ckt-1 Scheduled",
       "load": "HT Outage",
-      "reason": "Due to High temperature junction point\u00a0maintenance.",
-      "full_desc": "Bhulta-Haripur 230 kV Ckt-1 Scheduled S/D from Haripur 230/132kV end Due to High temperature junction point\u00a0maintenance."
+      "reason": "Due to High temperature junction point maintenance.",
+      "full_desc": "Bhulta-Haripur 230 kV Ckt-1 Scheduled S/D from Haripur 230/132kV end Due to High temperature junction point maintenance."
     },
     {
       "time": "13:17 - 17:40",
@@ -547,145 +547,145 @@
     {
       "time": "00:00",
       "generation": 13301.11,
-      "loadShed": 0.0,
+      "loadShed": 0,
       "demand": 13301.11
     },
     {
       "time": "01:00",
       "generation": 13301.11,
-      "loadShed": 0.0,
+      "loadShed": 0,
       "demand": 13301.11
     },
     {
       "time": "02:00",
       "generation": 13301.11,
-      "loadShed": 0.0,
+      "loadShed": 0,
       "demand": 13301.11
     },
     {
       "time": "03:00",
       "generation": 13301.11,
-      "loadShed": 0.0,
+      "loadShed": 0,
       "demand": 13301.11
     },
     {
       "time": "04:00",
       "generation": 13301.11,
-      "loadShed": 0.0,
+      "loadShed": 0,
       "demand": 13301.11
     },
     {
       "time": "05:00",
       "generation": 13301.11,
-      "loadShed": 0.0,
+      "loadShed": 0,
       "demand": 13301.11
     },
     {
       "time": "06:00",
       "generation": 13301.11,
-      "loadShed": 0.0,
+      "loadShed": 0,
       "demand": 13301.11
     },
     {
       "time": "07:00",
       "generation": 13301.11,
-      "loadShed": 0.0,
+      "loadShed": 0,
       "demand": 13301.11
     },
     {
       "time": "08:00",
       "generation": 13301.11,
-      "loadShed": 0.0,
+      "loadShed": 0,
       "demand": 13301.11
     },
     {
       "time": "09:00",
       "generation": 13301.11,
-      "loadShed": 0.0,
+      "loadShed": 0,
       "demand": 13301.11
     },
     {
       "time": "10:00",
       "generation": 13301.11,
-      "loadShed": 0.0,
+      "loadShed": 0,
       "demand": 13301.11
     },
     {
       "time": "11:00",
       "generation": 13301.11,
-      "loadShed": 0.0,
+      "loadShed": 0,
       "demand": 13301.11
     },
     {
       "time": "12:00",
       "generation": 13301.11,
-      "loadShed": 0.0,
+      "loadShed": 0,
       "demand": 13301.11
     },
     {
       "time": "13:00",
       "generation": 13301.11,
-      "loadShed": 0.0,
+      "loadShed": 0,
       "demand": 13301.11
     },
     {
       "time": "14:00",
       "generation": 13301.11,
-      "loadShed": 0.0,
+      "loadShed": 0,
       "demand": 13301.11
     },
     {
       "time": "15:00",
       "generation": 13301.11,
-      "loadShed": 0.0,
+      "loadShed": 0,
       "demand": 13301.11
     },
     {
       "time": "16:00",
       "generation": 13301.11,
-      "loadShed": 0.0,
+      "loadShed": 0,
       "demand": 13301.11
     },
     {
       "time": "17:00",
       "generation": 13301.11,
-      "loadShed": 0.0,
+      "loadShed": 0,
       "demand": 13301.11
     },
     {
       "time": "18:00",
       "generation": 14319.66,
-      "loadShed": 0.0,
+      "loadShed": 0,
       "demand": 14319.66
     },
     {
       "time": "19:00",
       "generation": 14319.66,
-      "loadShed": 0.0,
+      "loadShed": 0,
       "demand": 14319.66
     },
     {
       "time": "20:00",
       "generation": 14319.66,
-      "loadShed": 0.0,
+      "loadShed": 0,
       "demand": 14319.66
     },
     {
       "time": "21:00",
       "generation": 14319.66,
-      "loadShed": 0.0,
+      "loadShed": 0,
       "demand": 14319.66
     },
     {
       "time": "22:00",
       "generation": 14319.66,
-      "loadShed": 0.0,
+      "loadShed": 0,
       "demand": 14319.66
     },
     {
       "time": "23:00",
       "generation": 13301.11,
-      "loadShed": 0.0,
+      "loadShed": 0,
       "demand": 13301.11
     }
   ],
@@ -700,14 +700,14 @@
     {
       "company": "SGFL (Sylhet, Rashidpur, Kailashtila)",
       "fields": 5,
-      "gas": 94.0,
+      "gas": 94,
       "condensate": 305.2,
       "share": 3.5
     },
     {
       "company": "BAPEX (Shahbazpur, Srikail, Begumganj)",
       "fields": 9,
-      "gas": 111.0,
+      "gas": 111,
       "condensate": 62.8,
       "share": 4.1
     },
@@ -722,14 +722,14 @@
       "company": "Tullow (Bangora)",
       "fields": 1,
       "gas": 33.8,
-      "condensate": 102.0,
+      "condensate": 102,
       "share": 1.3
     },
     {
       "company": "RPGCL (R-LNG Import / LNG Terminal)",
       "fields": 0,
       "gas": 947.9,
-      "condensate": 0.0,
+      "condensate": 0,
       "share": 35.2
     }
   ],
@@ -744,7 +744,7 @@
     {
       "company": "BGDCL (Cumilla & Sylhet)",
       "power": 179.7,
-      "fertilizer": 0.0,
+      "fertilizer": 0,
       "others": 90.9,
       "total": 270.6
     },
@@ -765,15 +765,15 @@
     {
       "company": "PGCL (Rajshahi & Rangpur)",
       "power": 93.6,
-      "fertilizer": 0.0,
+      "fertilizer": 0,
       "others": 29.8,
       "total": 123.4
     },
     {
       "company": "SGCL (Barishal & Khulna)",
       "power": 104.7,
-      "fertilizer": 0.0,
-      "others": 6.0,
+      "fertilizer": 0,
+      "others": 6,
       "total": 110.7
     }
   ]

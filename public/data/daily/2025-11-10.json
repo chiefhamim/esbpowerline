@@ -6,7 +6,7 @@
     "dayPeakDemand": 10918.65,
     "eveningPeakDemand": 12725.43,
     "minGen": 9163.4,
-    "maxGen": 12720.0,
+    "maxGen": 12720,
     "totalEnergyGen": 259.13178205,
     "totalEnergyUnserved": 0.26,
     "totalEnergyDemand": 259.39,
@@ -60,9 +60,9 @@
     },
     {
       "name": "HSD (Diesel)",
-      "gen": 0.0,
+      "gen": 0,
       "cost": 0,
-      "unitCost": 0.0,
+      "unitCost": 0,
       "color": "#ef4444"
     }
   ],
@@ -70,76 +70,76 @@
     {
       "source": "HVDC Bheramara (India)",
       "energy": 22.01,
-      "peakFlow": 909.0,
+      "peakFlow": 909,
       "type": "C/B Interconnector (West)"
     },
     {
       "source": "Adani Godda (India)",
       "energy": 24.05,
-      "peakFlow": 1112.0,
+      "peakFlow": 1112,
       "type": "C/B Interconnector (North)"
     },
     {
       "source": "Tripura Cumilla (India)",
       "energy": 1.32,
-      "peakFlow": 64.0,
+      "peakFlow": 64,
       "type": "C/B Interconnector (East)"
     }
   ],
   "regionalDemandData": [
     {
       "zone": "Dhaka",
-      "loadShed": 0.0,
-      "demand": 4942.19,
-      "pct": 0.0
+      "loadShed": 0,
+      "demand": 4942,
+      "pct": 0
     },
     {
       "zone": "Chattogram",
-      "loadShed": 0.0,
-      "demand": 1368.4,
-      "pct": 0.0
-    },
-    {
-      "zone": "Cumilla",
-      "loadShed": 0.0,
-      "demand": 1132.91,
-      "pct": 0.0
-    },
-    {
-      "zone": "Mymensingh",
-      "loadShed": 65.0,
-      "demand": 923.0,
-      "pct": 7.0
-    },
-    {
-      "zone": "Sylhet",
-      "loadShed": 0.0,
-      "demand": 534.0,
-      "pct": 0.0
+      "loadShed": 0,
+      "demand": 1368,
+      "pct": 0
     },
     {
       "zone": "Khulna",
-      "loadShed": 0.0,
-      "demand": 1340.0,
-      "pct": 0.0
-    },
-    {
-      "zone": "Barishal",
-      "loadShed": 0.0,
-      "demand": 343.0,
-      "pct": 0.0
+      "loadShed": 0,
+      "demand": 1340,
+      "pct": 0
     },
     {
       "zone": "Rajshahi",
-      "loadShed": 0.0,
-      "demand": 1024.6,
-      "pct": 0.0
+      "loadShed": 0,
+      "demand": 1025,
+      "pct": 0
+    },
+    {
+      "zone": "Cumilla",
+      "loadShed": 0,
+      "demand": 1133,
+      "pct": 0
+    },
+    {
+      "zone": "Mymensingh",
+      "loadShed": 65,
+      "demand": 923,
+      "pct": 7.04
+    },
+    {
+      "zone": "Sylhet",
+      "loadShed": 0,
+      "demand": 534,
+      "pct": 0
+    },
+    {
+      "zone": "Barishal",
+      "loadShed": 0,
+      "demand": 343,
+      "pct": 0
     },
     {
       "zone": "Rangpur",
-      "loadShed": 0.0,
-      "demand": 786.0,
-      "pct": 0.0
+      "loadShed": 0,
+      "demand": 786,
+      "pct": 0
     }
   ],
   "dailyOutages": [
@@ -392,8 +392,8 @@
       "time": "10:00",
       "plant": "Full interruption (122 MW)",
       "load": "122 MW",
-      "reason": "due to a problem in 132kV bus of Shyampur New 230/132kV\u00a0grid\u00a0S/S.",
-      "full_desc": "Full interruption (122 MW) is occurring under Shyampur Old 132/33kV grid S/S (DPDC) from 10:00 hrs. due to a problem in 132kV bus of Shyampur New 230/132kV\u00a0grid\u00a0S/S."
+      "reason": "due to a problem in 132kV bus of Shyampur New 230/132kV grid S/S.",
+      "full_desc": "Full interruption (122 MW) is occurring under Shyampur Old 132/33kV grid S/S (DPDC) from 10:00 hrs. due to a problem in 132kV bus of Shyampur New 230/132kV grid S/S."
     },
     {
       "time": "10:00 - 19:37",
@@ -511,8 +511,8 @@
       "time": "12:46 - 13:02",
       "plant": "Full interruption (about 324MW) occurred under Mirzapur, Tangail, Ghatail, Muktagacha, Jamalpur, and Sherpur grid substations, and a partial interruption (30MW) occurred under the Mymensingh grid substation from 12:46 hrs to 13:02 hrs",
       "load": "324MW",
-      "reason": "due to the tripping of the Kaliakoir\u2013Mirzapur and Kaliakoir\u2013Tangail 132 kV circuits.",
-      "full_desc": "Full interruption (about 324MW) occurred under Mirzapur, Tangail, Ghatail, Muktagacha, Jamalpur, and Sherpur grid substations, and a partial interruption (30MW) occurred under the Mymensingh grid substation from 12:46 hrs to 13:02 hrs due to the tripping of the Kaliakoir\u2013Mirzapur and Kaliakoir\u2013Tangail 132 kV circuits."
+      "reason": "due to the tripping of the Kaliakoir–Mirzapur and Kaliakoir–Tangail 132 kV circuits.",
+      "full_desc": "Full interruption (about 324MW) occurred under Mirzapur, Tangail, Ghatail, Muktagacha, Jamalpur, and Sherpur grid substations, and a partial interruption (30MW) occurred under the Mymensingh grid substation from 12:46 hrs to 13:02 hrs due to the tripping of the Kaliakoir–Mirzapur and Kaliakoir–Tangail 132 kV circuits."
     },
     {
       "time": "13:38 - 16:52",
@@ -652,145 +652,145 @@
     {
       "time": "00:00",
       "generation": 10886.15,
-      "loadShed": 0.0,
+      "loadShed": 0,
       "demand": 10886.15
     },
     {
       "time": "01:00",
       "generation": 10886.15,
-      "loadShed": 0.0,
+      "loadShed": 0,
       "demand": 10886.15
     },
     {
       "time": "02:00",
       "generation": 10886.15,
-      "loadShed": 0.0,
+      "loadShed": 0,
       "demand": 10886.15
     },
     {
       "time": "03:00",
       "generation": 10886.15,
-      "loadShed": 0.0,
+      "loadShed": 0,
       "demand": 10886.15
     },
     {
       "time": "04:00",
       "generation": 10886.15,
-      "loadShed": 0.0,
+      "loadShed": 0,
       "demand": 10886.15
     },
     {
       "time": "05:00",
       "generation": 10886.15,
-      "loadShed": 0.0,
+      "loadShed": 0,
       "demand": 10886.15
     },
     {
       "time": "06:00",
       "generation": 10886.15,
-      "loadShed": 0.0,
+      "loadShed": 0,
       "demand": 10886.15
     },
     {
       "time": "07:00",
       "generation": 10886.15,
-      "loadShed": 0.0,
+      "loadShed": 0,
       "demand": 10886.15
     },
     {
       "time": "08:00",
       "generation": 10886.15,
-      "loadShed": 0.0,
+      "loadShed": 0,
       "demand": 10886.15
     },
     {
       "time": "09:00",
       "generation": 10886.15,
-      "loadShed": 0.0,
+      "loadShed": 0,
       "demand": 10886.15
     },
     {
       "time": "10:00",
       "generation": 10886.15,
-      "loadShed": 0.0,
+      "loadShed": 0,
       "demand": 10886.15
     },
     {
       "time": "11:00",
       "generation": 10886.15,
-      "loadShed": 0.0,
+      "loadShed": 0,
       "demand": 10886.15
     },
     {
       "time": "12:00",
       "generation": 10886.15,
-      "loadShed": 0.0,
+      "loadShed": 0,
       "demand": 10886.15
     },
     {
       "time": "13:00",
       "generation": 10886.15,
-      "loadShed": 0.0,
+      "loadShed": 0,
       "demand": 10886.15
     },
     {
       "time": "14:00",
       "generation": 10886.15,
-      "loadShed": 0.0,
+      "loadShed": 0,
       "demand": 10886.15
     },
     {
       "time": "15:00",
       "generation": 10886.15,
-      "loadShed": 0.0,
+      "loadShed": 0,
       "demand": 10886.15
     },
     {
       "time": "16:00",
       "generation": 10886.15,
-      "loadShed": 0.0,
+      "loadShed": 0,
       "demand": 10886.15
     },
     {
       "time": "17:00",
       "generation": 10886.15,
-      "loadShed": 0.0,
+      "loadShed": 0,
       "demand": 10886.15
     },
     {
       "time": "18:00",
       "generation": 12657.5,
-      "loadShed": 0.0,
+      "loadShed": 0,
       "demand": 12657.5
     },
     {
       "time": "19:00",
       "generation": 12657.5,
-      "loadShed": 0.0,
+      "loadShed": 0,
       "demand": 12657.5
     },
     {
       "time": "20:00",
       "generation": 12657.5,
-      "loadShed": 0.0,
+      "loadShed": 0,
       "demand": 12657.5
     },
     {
       "time": "21:00",
       "generation": 12657.5,
-      "loadShed": 0.0,
+      "loadShed": 0,
       "demand": 12657.5
     },
     {
       "time": "22:00",
       "generation": 12657.5,
-      "loadShed": 0.0,
+      "loadShed": 0,
       "demand": 12657.5
     },
     {
       "time": "23:00",
       "generation": 10886.15,
-      "loadShed": 0.0,
+      "loadShed": 0,
       "demand": 10886.15
     }
   ],
@@ -814,27 +814,27 @@
       "fields": 9,
       "gas": 104.2,
       "condensate": 72.8,
-      "share": 4.0
+      "share": 4
     },
     {
       "company": "Chevron (Bibiyana, Jalalabad, Moulavibazar)",
       "fields": 3,
       "gas": 1017.9,
-      "condensate": 5691.0,
+      "condensate": 5691,
       "share": 39.4
     },
     {
       "company": "Tullow (Bangora)",
       "fields": 1,
       "gas": 33.5,
-      "condensate": 103.0,
+      "condensate": 103,
       "share": 1.3
     },
     {
       "company": "RPGCL (R-LNG Import / LNG Terminal)",
       "fields": 0,
       "gas": 873.1,
-      "condensate": 0.0,
+      "condensate": 0,
       "share": 33.8
     }
   ],
@@ -843,13 +843,13 @@
       "company": "TGTDCL (Dhaka & Mymensingh)",
       "power": 196.9,
       "fertilizer": 67.9,
-      "others": 1176.0,
+      "others": 1176,
       "total": 1440.8
     },
     {
       "company": "BGDCL (Cumilla & Sylhet)",
       "power": 133.4,
-      "fertilizer": 0.0,
+      "fertilizer": 0,
       "others": 91.8,
       "total": 225.2
     },
@@ -870,14 +870,14 @@
     {
       "company": "PGCL (Rajshahi & Rangpur)",
       "power": 87.7,
-      "fertilizer": 0.0,
+      "fertilizer": 0,
       "others": 30.8,
       "total": 118.5
     },
     {
       "company": "SGCL (Barishal & Khulna)",
       "power": 102.4,
-      "fertilizer": 0.0,
+      "fertilizer": 0,
       "others": 4.4,
       "total": 106.8
     }
