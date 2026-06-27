@@ -498,7 +498,7 @@ export function PowerGridExplorer({
     const rawList = Array.isArray(availableDatesListRaw)
       ? (availableDatesListRaw as string[])
       : ((availableDatesListRaw as any)?.default as string[]) || [];
-    return rawList.filter((d: any) => /^(201[3-9]|202[0-6])-\d{2}-\d{2}$/.test(String(d))) as string[];
+    return rawList.filter((d: any) => /^(201[1-9]|202[0-6])-\d{2}-\d{2}$/.test(String(d))) as string[];
   }, []);
 
   const latestDate = availableDatesList[availableDatesList.length - 1] || '2026-06-24';
@@ -1475,13 +1475,27 @@ export function PowerGridExplorer({
 
         {activeTab === 'overview' && (
         <div className="grid-explorer-panel space-y-6">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {selectedDate < '2013-12-31' ? (
+            <div className="grid-explorer-chart-card card p-8 flex flex-col items-center justify-center text-center min-h-[400px]">
+              <div className="p-4 rounded-full bg-muted/20 text-muted-foreground mb-4">
+                <Info className="h-8 w-8 text-primary" />
+              </div>
+              <h4 className="text-base font-bold text-foreground mb-2">PGCB Grid Overview Data</h4>
+              <p className="text-xs text-muted-foreground max-w-sm">
+                No official records are available for the selected date. PGCB data tracking officially started on December 31, 2013.
+              </p>
+              <div className="mt-4 text-[10px] text-muted-foreground">
+                Official Backlog Start Date: December 31, 2013
+              </div>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Generation Pie Chart */}
           <div className="grid-explorer-chart-card card">
             <div className="grid-explorer-chart-card__head">
               <div>
                 <h3 className="grid-explorer-chart-card__title">Daily Generation Mix Snapshot<sup className="text-emerald-500 font-extrabold text-[10px] ml-2 select-none">Daily</sup></h3>
-                <p className="grid-explorer-chart-card__sub">Energy share by fuel type (Total: {totalGenMkwhr.toFixed(1)} MKWh)</p>
+                <p className="grid-explorer-chart-card__sub">Energy share by fuel type (Total: {totalGenMkwhr.toFixed(1)} MKWh) • <span className="text-primary font-semibold">Tracked since December 31, 2013</span></p>
               </div>
               <GridLiveBadge label={`Report: ${systemStats.date}`} />
             </div>
@@ -1816,20 +1830,36 @@ export function PowerGridExplorer({
             <span>Audited by: National Load Despatch Centre (NLDC) System Operators</span>
             <span className="font-medium">Reporting Period: 24-Hour SCADA Log (Date: {systemStats.date})</span>
           </div>
+          </>
+          )}
         </div>
       </div>
     )}
 
       {activeTab === 'gen' && (
         <div className="grid-explorer-panel space-y-6">
-          <div className="grid-explorer-chart-card card">
-            <div className="grid-explorer-chart-card__head grid-explorer-chart-card__head--border">
-              <Zap className="h-5 w-5 text-primary shrink-0" />
-              <div>
-                <h3 className="grid-explorer-chart-card__title">Generation &amp; Production Cost Breakdown<sup className="text-emerald-500 font-extrabold text-[10px] ml-2 select-none">Daily</sup></h3>
-                <p className="grid-explorer-chart-card__sub">System performance data logged on {systemStats.date}</p>
+          {selectedDate < '2013-12-31' ? (
+            <div className="grid-explorer-chart-card card p-8 flex flex-col items-center justify-center text-center min-h-[400px]">
+              <div className="p-4 rounded-full bg-muted/20 text-muted-foreground mb-4">
+                <Info className="h-8 w-8 text-primary" />
+              </div>
+              <h4 className="text-base font-bold text-foreground mb-2">PGCB Fuel Mix &amp; Generation Cost Data</h4>
+              <p className="text-xs text-muted-foreground max-w-sm">
+                No official records are available for the selected date. PGCB generation and cost data tracking officially started on December 31, 2013.
+              </p>
+              <div className="mt-4 text-[10px] text-muted-foreground">
+                Official Backlog Start Date: December 31, 2013
               </div>
             </div>
+          ) : (
+            <div className="grid-explorer-chart-card card">
+              <div className="grid-explorer-chart-card__head grid-explorer-chart-card__head--border">
+                <Zap className="h-5 w-5 text-primary shrink-0" />
+                <div>
+                  <h3 className="grid-explorer-chart-card__title">Generation &amp; Production Cost Breakdown<sup className="text-emerald-500 font-extrabold text-[10px] ml-2 select-none">Daily</sup></h3>
+                  <p className="grid-explorer-chart-card__sub">System performance data logged on {systemStats.date} • <span className="text-primary font-semibold">Tracked since December 31, 2013</span></p>
+                </div>
+              </div>
 
             <div className="grid-explorer-table-wrap">
               <table className="grid-explorer-table">
@@ -1931,15 +1961,30 @@ export function PowerGridExplorer({
 
       {activeTab === 'gas' && (
         <div className="grid-explorer-panel space-y-6">
-          {/* Petrobangla Production */}
-          <div className="grid-explorer-chart-card card">
-            <div className="grid-explorer-chart-card__head grid-explorer-chart-card__head--border">
-              <Droplet className="h-5 w-5 text-sky-500 shrink-0" />
-              <div>
-                <h3 className="grid-explorer-chart-card__title">Daily Gas &amp; Condensate Production<sup className="text-emerald-500 font-extrabold text-[10px] ml-2 select-none">Daily</sup></h3>
-                <p className="grid-explorer-chart-card__sub">Petrobangla Production &amp; Marketing Division Report (22-23 Jun 2026)</p>
+          {selectedDate < '2020-01-01' ? (
+            <div className="grid-explorer-chart-card card p-8 flex flex-col items-center justify-center text-center min-h-[400px]">
+              <div className="p-4 rounded-full bg-muted/20 text-muted-foreground mb-4">
+                <Info className="h-8 w-8 text-primary" />
+              </div>
+              <h4 className="text-base font-bold text-foreground mb-2">Petrobangla Gas Production &amp; Distribution Data</h4>
+              <p className="text-xs text-muted-foreground max-w-sm">
+                No official records are available for the selected date. Petrobangla gas production tracking officially started on January 1, 2020.
+              </p>
+              <div className="mt-4 text-[10px] text-muted-foreground">
+                Official Backlog Start Date: January 1, 2020
               </div>
             </div>
+          ) : (
+            <>
+              {/* Petrobangla Production */}
+              <div className="grid-explorer-chart-card card">
+                <div className="grid-explorer-chart-card__head grid-explorer-chart-card__head--border">
+                  <Droplet className="h-5 w-5 text-sky-500 shrink-0" />
+                  <div>
+                    <h3 className="grid-explorer-chart-card__title">Daily Gas &amp; Condensate Production<sup className="text-emerald-500 font-extrabold text-[10px] ml-2 select-none">Daily</sup></h3>
+                    <p className="grid-explorer-chart-card__sub">Petrobangla Production &amp; Marketing Division Report • <span className="text-sky-500 font-semibold">Tracked since January 1, 2020</span></p>
+                  </div>
+                </div>
 
             <div className="grid-explorer-table-wrap">
               <table className="grid-explorer-table">
@@ -2064,14 +2109,28 @@ export function PowerGridExplorer({
 
       {activeTab === 'imports' && (
         <div className="grid-explorer-panel space-y-6">
-          <div className="grid-explorer-chart-card card">
-            <div className="grid-explorer-chart-card__head grid-explorer-chart-card__head--border">
-              <Globe className="h-5 w-5 text-purple-500 shrink-0" />
-              <div>
-                <h3 className="grid-explorer-chart-card__title">Cross-Border Power Imports Tracker<sup className="text-emerald-500 font-extrabold text-[10px] ml-2 select-none">Daily</sup></h3>
-                <p className="grid-explorer-chart-card__sub">Real-time import allocations and daily power trade (Report: {systemStats.date})</p>
+          {selectedDate < '2013-12-31' ? (
+            <div className="grid-explorer-chart-card card p-8 flex flex-col items-center justify-center text-center min-h-[400px]">
+              <div className="p-4 rounded-full bg-muted/20 text-muted-foreground mb-4">
+                <Info className="h-8 w-8 text-primary" />
+              </div>
+              <h4 className="text-base font-bold text-foreground mb-2">Cross-Border Power Imports Data</h4>
+              <p className="text-xs text-muted-foreground max-w-sm">
+                No official records are available for the selected date. PGCB import data tracking officially started on December 31, 2013.
+              </p>
+              <div className="mt-4 text-[10px] text-muted-foreground">
+                Official Backlog Start Date: December 31, 2013
               </div>
             </div>
+          ) : (
+            <div className="grid-explorer-chart-card card">
+              <div className="grid-explorer-chart-card__head grid-explorer-chart-card__head--border">
+                <Globe className="h-5 w-5 text-purple-500 shrink-0" />
+                <div>
+                  <h3 className="grid-explorer-chart-card__title">Cross-Border Power Imports Tracker<sup className="text-emerald-500 font-extrabold text-[10px] ml-2 select-none">Daily</sup></h3>
+                  <p className="grid-explorer-chart-card__sub">Real-time import allocations and daily power trade (Report: {systemStats.date}) • <span className="text-primary font-semibold">Tracked since December 31, 2013</span></p>
+                </div>
+              </div>
 
             <div className="grid-explorer-table-wrap">
               <table className="grid-explorer-table">
@@ -2240,7 +2299,21 @@ export function PowerGridExplorer({
 
       {activeTab === 'transmission' && (
         <div className="grid-explorer-panel space-y-6">
-          <div className="grid lg:grid-cols-12 gap-8 items-start">
+          {selectedDate < '2013-12-31' ? (
+            <div className="grid-explorer-chart-card card p-8 flex flex-col items-center justify-center text-center min-h-[400px]">
+              <div className="p-4 rounded-full bg-muted/20 text-muted-foreground mb-4">
+                <Info className="h-8 w-8 text-primary" />
+              </div>
+              <h4 className="text-base font-bold text-foreground mb-2">PGCB Transmission Grid Data</h4>
+              <p className="text-xs text-muted-foreground max-w-sm">
+                No official records are available for the selected date. PGCB transmission outages and substation tracking officially started on December 31, 2013.
+              </p>
+              <div className="mt-4 text-[10px] text-muted-foreground">
+                Official Backlog Start Date: December 31, 2013
+              </div>
+            </div>
+          ) : (
+            <div className="grid lg:grid-cols-12 gap-8 items-start">
             {/* Mobile/Tablet Sub-tab Navigation */}
             <div className="lg:hidden w-full relative z-40 bg-card border border-border/60 p-3 rounded-2xl shadow-sm">
               <label className="block text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-1.5 px-1">
@@ -4192,16 +4265,30 @@ export function PowerGridExplorer({
 
       {activeTab === 'regional' && (
         <div className="grid-explorer-panel space-y-6">
-          <div className="grid lg:grid-cols-3 gap-6">
-            {/* Regional Table */}
-            <div className="grid-explorer-chart-card card lg:col-span-2">
-              <div className="grid-explorer-chart-card__head grid-explorer-chart-card__head--border">
-                <Cable className="h-5 w-5 text-primary shrink-0" />
-                <div>
-                  <h3 className="grid-explorer-chart-card__title">Zone-wise Demand &amp; Load-Shedding<sup className="text-emerald-500 font-extrabold text-[10px] ml-2 select-none">Daily</sup></h3>
-                  <p className="grid-explorer-chart-card__sub">SCADA readings recorded at evening peak hour (21:00 Hr.)</p>
-                </div>
+          {selectedDate < '2011-01-09' ? (
+            <div className="grid-explorer-chart-card card p-8 flex flex-col items-center justify-center text-center min-h-[400px]">
+              <div className="p-4 rounded-full bg-muted/20 text-muted-foreground mb-4">
+                <Info className="h-8 w-8 text-primary" />
               </div>
+              <h4 className="text-base font-bold text-foreground mb-2">Zone-wise Demand &amp; Load-Shedding Data</h4>
+              <p className="text-xs text-muted-foreground max-w-sm">
+                No official records are available for the selected date. Zone-wise demand and load-shedding tracking officially started on January 9, 2011.
+              </p>
+              <div className="mt-4 text-[10px] text-muted-foreground">
+                Official Backlog Start Date: January 9, 2011
+              </div>
+            </div>
+          ) : (
+            <div className="grid lg:grid-cols-3 gap-6">
+              {/* Regional Table */}
+              <div className="grid-explorer-chart-card card lg:col-span-2">
+                <div className="grid-explorer-chart-card__head grid-explorer-chart-card__head--border">
+                  <Cable className="h-5 w-5 text-primary shrink-0" />
+                  <div>
+                    <h3 className="grid-explorer-chart-card__title">Zone-wise Demand &amp; Load-Shedding<sup className="text-emerald-500 font-extrabold text-[10px] ml-2 select-none">Daily</sup></h3>
+                    <p className="grid-explorer-chart-card__sub">SCADA readings recorded at evening peak hour (21:00 Hr.) • <span className="text-primary font-semibold">Tracked since January 9, 2011</span></p>
+                  </div>
+                </div>
 
               <div className="grid-explorer-table-wrap">
                 <table className="grid-explorer-table">
