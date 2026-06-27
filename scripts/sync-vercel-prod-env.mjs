@@ -33,22 +33,34 @@ const vars = {
   DIRECT_URL: toPostgresqlUrl(process.env.POSTGRES_URL_NON_POOLING),
   PRISMA_SCHEMA_PROVIDER: 'postgresql',
   AUTH_SECRET: process.env.AUTH_SECRET,
+  NEXT_PUBLIC_CDN_URL: process.env.NEXT_PUBLIC_CDN_URL,
+  CPANEL_FTP_HOST: process.env.CPANEL_FTP_HOST,
+  CPANEL_FTP_USER: process.env.CPANEL_FTP_USER,
+  CPANEL_FTP_PASSWORD: process.env.CPANEL_FTP_PASSWORD,
+  CPANEL_FTP_PORT: process.env.CPANEL_FTP_PORT,
+  CPANEL_FTP_SECURE: process.env.CPANEL_FTP_SECURE,
+  CPANEL_FTP_PATH: process.env.CPANEL_FTP_PATH,
 };
 
-const missing = Object.entries(vars)
-  .filter(([, value]) => !value?.trim())
-  .map(([key]) => key);
+const requiredVars = [
+  'NEXT_PUBLIC_CDN_URL',
+  'CPANEL_FTP_HOST',
+  'CPANEL_FTP_USER',
+  'CPANEL_FTP_PASSWORD',
+];
+const missing = requiredVars
+  .filter((key) => !vars[key]?.trim());
 if (missing.length) {
-  console.error(`❌ Missing values in .env.local/.env: ${missing.join(', ')}`);
-  process.exit(1);
+  console.warn(`⚠️ Warning: Missing some cPanel vars: ${missing.join(', ')}`);
 }
 
 const vercelBin = process.platform === 'win32' ? 'npx.cmd' : 'npx';
 const targets = ['production', 'preview'];
 
 for (const target of targets) {
-  console.log(`\n▶ Syncing ${Object.keys(vars).length} vars → ${target}`);
-  for (const [name, value] of Object.entries(vars)) {
+  const varsToSync = Object.entries(vars).filter(([_, val]) => val !== undefined && val !== null && val.trim() !== '');
+  console.log(`\n▶ Syncing ${varsToSync.length} vars → ${target}`);
+  for (const [name, value] of varsToSync) {
     const result = spawnSync(
       vercelBin,
       ['vercel', 'env', 'add', name, target, '--yes', '--force'],
