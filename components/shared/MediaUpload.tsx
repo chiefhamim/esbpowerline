@@ -15,6 +15,7 @@ import { cn, formatEditorialTimestamp } from '@/lib/utils';
 import { publicArticleUrl } from '@/lib/public-site-url';
 import { deleteMedia, updateMedia, replaceMediaAndFeaturedImage, type MediaLibraryItem } from '@/lib/actions/media';
 import { optimizeImageToWebP } from '@/lib/image-optimizer';
+import { uploadImageHelper } from '@/lib/upload-helper';
 import { ModernTooltip } from '@/components/shared/ModernTooltip';
 import { heroImageStyle } from '@/lib/hero-image';
 import { getSavedSiteTheme, type SiteTheme } from '@/lib/site-theme';
@@ -137,28 +138,20 @@ function ReplaceMediaModal({
       if (!file) return;
 
       const convertToWebp = localStorage.getItem('esbpowerline_webp_optimize') !== 'false';
-      if (!convertToWebp && file.size > 4.5 * 1024 * 1024) {
+      if (!process.env.NEXT_PUBLIC_CDN_URL && !convertToWebp && file.size > 4.5 * 1024 * 1024) {
         toast.error('Raw uploads must be under 4.5 MB. Enable "Convert to WebP" to upload this file.');
         return;
       }
 
       setUploading(true);
       try {
-        const fileToUpload = convertToWebp && file.type.startsWith('image/') && file.type !== 'image/gif' && file.type !== 'image/svg+xml'
-          ? await optimizeImageToWebP(file)
-          : file;
-        const form = new FormData();
-        form.append('file', fileToUpload);
-        const res = await fetch('/api/upload', { method: 'POST', body: form });
-
-        if (!res.ok) throw new Error('Upload failed');
-        const data = await res.json();
+        const data = await uploadImageHelper(file, convertToWebp);
         setNewUrl(data.url);
-        setNewSize(fileToUpload.size);
-        setNewMimeType(fileToUpload.type);
+        setNewSize(data.size);
+        setNewMimeType(data.mimeType);
         toast.success('Replacement file uploaded successfully');
-      } catch {
-        toast.error('Replacement upload failed');
+      } catch (err: any) {
+        toast.error(err.message || 'Replacement upload failed');
       } finally {
         setUploading(false);
       }
@@ -1144,25 +1137,18 @@ export function MediaUpload({ items }: { items: MediaLibraryItem[] }) {
       const file = input.files?.[0];
       if (!file) return;
 
-      if (!convertToWebp && file.size > 4.5 * 1024 * 1024) {
+      if (!process.env.NEXT_PUBLIC_CDN_URL && !convertToWebp && file.size > 4.5 * 1024 * 1024) {
         toast.error('Raw uploads must be under 4.5 MB. Enable "Convert to WebP" to upload this file.');
         return;
       }
 
       setUploading(true);
       try {
-        const fileToUpload = convertToWebp && file.type.startsWith('image/') && file.type !== 'image/gif' && file.type !== 'image/svg+xml'
-          ? await optimizeImageToWebP(file)
-          : file;
-        const form = new FormData();
-        form.append('file', fileToUpload);
-        const res = await fetch('/api/upload', { method: 'POST', body: form });
-
-        if (!res.ok) throw new Error('Upload failed');
+        await uploadImageHelper(file, convertToWebp);
         toast.success('Uploaded');
         router.refresh();
-      } catch {
-        toast.error('Upload failed');
+      } catch (err: any) {
+        toast.error(err.message || 'Upload failed');
       } finally {
         setUploading(false);
       }

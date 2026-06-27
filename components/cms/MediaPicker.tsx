@@ -6,6 +6,7 @@ import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { cmsToast } from '@/lib/cms-toast';
 import { optimizeImageToWebP } from '@/lib/image-optimizer';
+import { uploadImageHelper } from '@/lib/upload-helper';
 
 
 export type MediaItem = {
@@ -53,27 +54,19 @@ export function MediaPicker({
       const file = input.files?.[0];
       if (!file) return;
 
-      if (!convertToWebp && file.size > 4.5 * 1024 * 1024) {
+      if (!process.env.NEXT_PUBLIC_CDN_URL && !convertToWebp && file.size > 4.5 * 1024 * 1024) {
         cmsToast.error('Upload failed', 'Raw uploads must be under 4.5 MB. Please select "Convert to WebP".');
         return;
       }
 
       setUploading(true);
       try {
-        const fileToUpload = convertToWebp && file.type.startsWith('image/') && file.type !== 'image/gif' && file.type !== 'image/svg+xml'
-          ? await optimizeImageToWebP(file)
-          : file;
-        const form = new FormData();
-        form.append('file', fileToUpload);
-        const res = await fetch('/api/upload', { method: 'POST', body: form });
-
-        if (!res.ok) throw new Error('Upload failed');
-        const data = await res.json();
-        onChange(data.url ?? data.path ?? '');
+        const data = await uploadImageHelper(file, convertToWebp);
+        onChange(data.url);
         cmsToast.success('Image uploaded', 'The file is ready to use as your featured image.');
         setOpen(false);
-      } catch {
-        cmsToast.error('Upload failed', 'Check the file type and size, then try again.');
+      } catch (err: any) {
+        cmsToast.error('Upload failed', err.message || 'Check the file type and size, then try again.');
       } finally {
         setUploading(false);
       }

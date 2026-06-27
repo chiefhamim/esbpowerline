@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { cmsToast } from '@/lib/cms-toast';
 import { optimizeImageToWebP } from '@/lib/image-optimizer';
+import { uploadImageHelper } from '@/lib/upload-helper';
 
 import { useBodyScrollLock } from '@/hooks/useBodyScrollLock';
 import type { MediaItem } from '@/components/cms/MediaPicker';
@@ -73,7 +74,7 @@ export function FeaturedImageEditor({
       const file = input.files?.[0];
       if (!file) return;
 
-      if (!convertToWebp && file.size > 4.5 * 1024 * 1024) {
+      if (!process.env.NEXT_PUBLIC_CDN_URL && !convertToWebp && file.size > 4.5 * 1024 * 1024) {
         cmsToast.error('Upload failed', 'Raw uploads must be under 4.5 MB. Please select "Convert to WebP".');
         return;
       }
@@ -85,33 +86,25 @@ export function FeaturedImageEditor({
         // 1. Simulate checking size/formatting/resolution step
         await new Promise((r) => setTimeout(r, 600));
 
-        // 2. Compress to WebP if enabled
-        let fileToUpload = file;
-        if (convertToWebp && file.type.startsWith('image/') && file.type !== 'image/gif' && file.type !== 'image/svg+xml') {
+        // 2. Upload the file using helper (it will compress if convertToWebp is enabled)
+        if (convertToWebp) {
           setUploadState('compressing');
-          fileToUpload = await optimizeImageToWebP(file, { quality: 0.8 });
+        } else {
+          setUploadState('uploading');
         }
 
-        // 3. Upload the file
-        setUploadState('uploading');
-        const form = new FormData();
-        form.append('file', fileToUpload);
+        const data = await uploadImageHelper(file, convertToWebp);
         
-        const res = await fetch('/api/upload', { method: 'POST', body: form });
-        if (!res.ok) throw new Error('Upload failed');
-        const data = await res.json();
-        
-        // 4. Done
         setUploadState('done');
-        onChange(data.url ?? data.path ?? '');
+        onChange(data.url);
         if (convertToWebp) {
           cmsToast.success('Featured image optimized & uploaded', 'Saved as WebP format.');
         } else {
           cmsToast.success('Featured image uploaded', 'Saved as raw format.');
         }
-      } catch (err) {
+      } catch (err: any) {
         console.error(err);
-        cmsToast.error('Upload failed', 'There was an issue processing the image.');
+        cmsToast.error('Upload failed', err.message || 'There was an issue processing the image.');
       } finally {
         setTimeout(() => {
           setUploading(false);

@@ -20,6 +20,25 @@ export async function POST(request: NextRequest) {
 
   try {
     const formData = await request.formData();
+    const isRegisterOnly = formData.get('registerOnly') === 'true';
+    if (isRegisterOnly) {
+      const url = formData.get('url') as string;
+      const name = formData.get('name') as string;
+      const type = formData.get('type') as string;
+      const mimeType = formData.get('mimeType') as string;
+      const size = parseInt(formData.get('size') as string, 10);
+
+      await createMedia({
+        name,
+        url,
+        type: type === 'image' ? 'image' : 'file',
+        mimeType,
+        size,
+      });
+
+      return NextResponse.json({ url, storage: 'cpanel' });
+    }
+
     const file = formData.get('file') as File | null;
 
     if (!file) return NextResponse.json({ error: 'No file provided.' }, { status: 400 });
