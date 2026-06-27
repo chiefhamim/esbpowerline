@@ -736,9 +736,12 @@ export function TipTapEditor({
       const file = input.files?.[0];
       if (!file || !editor) return;
       try {
-        const optimizedFile = await optimizeImageToWebP(file);
+        const convertToWebp = localStorage.getItem('esbpowerline_webp_optimize') !== 'false';
+        const fileToUpload = convertToWebp && file.type.startsWith('image/') && file.type !== 'image/gif' && file.type !== 'image/svg+xml'
+          ? await optimizeImageToWebP(file)
+          : file;
         const form = new FormData();
-        form.append('file', optimizedFile);
+        form.append('file', fileToUpload);
         const res = await fetch('/api/upload', { method: 'POST', body: form });
         if (!res.ok) return;
         const { url } = await res.json();

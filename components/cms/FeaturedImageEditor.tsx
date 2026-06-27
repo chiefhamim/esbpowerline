@@ -42,6 +42,7 @@ export function FeaturedImageEditor({
   const [uploading, setUploading] = useState(false);
   const [uploadState, setUploadState] = useState<'idle' | 'checking' | 'compressing' | 'uploading' | 'done'>('idle');
   const [isRepositionMode, setIsRepositionMode] = useState(false);
+  const [convertToWebp, setConvertToWebp] = useState(true);
   const images = items.filter((m) => m.type === 'image');
 
   useBodyScrollLock(open);
@@ -49,6 +50,20 @@ export function FeaturedImageEditor({
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  useEffect(() => {
+    if (open) {
+      const val = localStorage.getItem('esbpowerline_webp_optimize');
+      if (val !== null) {
+        setConvertToWebp(val === 'true');
+      }
+    }
+  }, [open]);
+
+  const handleToggleWebp = (val: boolean) => {
+    setConvertToWebp(val);
+    localStorage.setItem('esbpowerline_webp_optimize', String(val));
+  };
 
   async function handleUpload() {
     const input = document.createElement('input');
@@ -65,15 +80,17 @@ export function FeaturedImageEditor({
         // 1. Simulate checking size/formatting/resolution step
         await new Promise((r) => setTimeout(r, 600));
 
-        // 2. Compress to WebP
-        setUploadState('compressing');
-        const webpFile = await optimizeImageToWebP(file, { quality: 0.8 });
+        // 2. Compress to WebP if enabled
+        let fileToUpload = file;
+        if (convertToWebp && file.type.startsWith('image/') && file.type !== 'image/gif' && file.type !== 'image/svg+xml') {
+          setUploadState('compressing');
+          fileToUpload = await optimizeImageToWebP(file, { quality: 0.8 });
+        }
 
-
-        // 3. Upload the optimized file
+        // 3. Upload the file
         setUploadState('uploading');
         const form = new FormData();
-        form.append('file', webpFile);
+        form.append('file', fileToUpload);
         
         const res = await fetch('/api/upload', { method: 'POST', body: form });
         if (!res.ok) throw new Error('Upload failed');
@@ -82,7 +99,11 @@ export function FeaturedImageEditor({
         // 4. Done
         setUploadState('done');
         onChange(data.url ?? data.path ?? '');
-        cmsToast.success('Featured image optimized & uploaded', 'Saved as WebP format.');
+        if (convertToWebp) {
+          cmsToast.success('Featured image optimized & uploaded', 'Saved as WebP format.');
+        } else {
+          cmsToast.success('Featured image uploaded', 'Saved as raw format.');
+        }
       } catch (err) {
         console.error(err);
         cmsToast.error('Upload failed', 'There was an issue processing the image.');
@@ -141,6 +162,34 @@ export function FeaturedImageEditor({
             <p className="text-[12px] text-muted-foreground mt-0.5">Carousel, cards, and article hero</p>
           </div>
           <div className="flex items-center gap-2">
+            {/* WebP Optimizer Toggle Switch */}
+            <div className="flex items-center gap-1 bg-muted/40 border border-border/30 p-1 rounded-xl text-[10px] font-bold shadow-sm">
+              <button
+                type="button"
+                onClick={() => handleToggleWebp(true)}
+                className={cn(
+                  "px-2 py-1 rounded-lg transition-all",
+                  convertToWebp 
+                    ? "bg-sky-500/15 text-sky-600 dark:text-sky-400 font-extrabold shadow-sm border border-sky-500/10" 
+                    : "text-muted-foreground/60 hover:text-foreground"
+                )}
+              >
+                Convert to WebP
+              </button>
+              <button
+                type="button"
+                onClick={() => handleToggleWebp(false)}
+                className={cn(
+                  "px-2 py-1 rounded-lg transition-all",
+                  !convertToWebp 
+                    ? "bg-amber-500/15 text-amber-600 dark:text-amber-400 font-extrabold shadow-sm border border-amber-500/10" 
+                    : "text-muted-foreground/60 hover:text-foreground"
+                )}
+              >
+                Raw
+              </button>
+            </div>
+
             <Button type="button" size="sm" variant="outline" onClick={handleUpload} disabled={uploading}>
               <Upload className="h-3.5 w-3.5 mr-1.5" />
               {uploading ? 'Processing…' : 'Upload'}

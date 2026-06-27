@@ -137,16 +137,19 @@ function ReplaceMediaModal({
       if (!file) return;
       setUploading(true);
       try {
-        const optimizedFile = await optimizeImageToWebP(file);
+        const convertToWebp = localStorage.getItem('esbpowerline_webp_optimize') !== 'false';
+        const fileToUpload = convertToWebp && file.type.startsWith('image/') && file.type !== 'image/gif' && file.type !== 'image/svg+xml'
+          ? await optimizeImageToWebP(file)
+          : file;
         const form = new FormData();
-        form.append('file', optimizedFile);
+        form.append('file', fileToUpload);
         const res = await fetch('/api/upload', { method: 'POST', body: form });
 
         if (!res.ok) throw new Error('Upload failed');
         const data = await res.json();
         setNewUrl(data.url);
-        setNewSize(optimizedFile.size);
-        setNewMimeType(optimizedFile.type);
+        setNewSize(fileToUpload.size);
+        setNewMimeType(fileToUpload.type);
         toast.success('Replacement file uploaded successfully');
       } catch {
         toast.error('Replacement upload failed');
@@ -1113,6 +1116,19 @@ export function MediaUpload({ items }: { items: MediaLibraryItem[] }) {
     size: number | null;
   } | null>(null);
   const [usageModalItem, setUsageModalItem] = useState<MediaLibraryItem | null>(null);
+  const [convertToWebp, setConvertToWebp] = useState(true);
+
+  useEffect(() => {
+    const val = localStorage.getItem('esbpowerline_webp_optimize');
+    if (val !== null) {
+      setConvertToWebp(val === 'true');
+    }
+  }, []);
+
+  const handleToggleWebp = (val: boolean) => {
+    setConvertToWebp(val);
+    localStorage.setItem('esbpowerline_webp_optimize', String(val));
+  };
 
   async function handleUpload() {
     const input = document.createElement('input');
@@ -1123,9 +1139,11 @@ export function MediaUpload({ items }: { items: MediaLibraryItem[] }) {
       if (!file) return;
       setUploading(true);
       try {
-        const optimizedFile = await optimizeImageToWebP(file);
+        const fileToUpload = convertToWebp && file.type.startsWith('image/') && file.type !== 'image/gif' && file.type !== 'image/svg+xml'
+          ? await optimizeImageToWebP(file)
+          : file;
         const form = new FormData();
-        form.append('file', optimizedFile);
+        form.append('file', fileToUpload);
         const res = await fetch('/api/upload', { method: 'POST', body: form });
 
         if (!res.ok) throw new Error('Upload failed');
@@ -1210,10 +1228,40 @@ export function MediaUpload({ items }: { items: MediaLibraryItem[] }) {
             </p>
           </div>
         </div>
-        <Button onClick={handleUpload} disabled={uploading} size="sm" className="media-library__upload-btn">
-          <Upload className="h-3.5 w-3.5 mr-1.5" />
-          {uploading ? 'Uploading…' : 'Upload'}
-        </Button>
+        <div className="flex items-center gap-3 flex-wrap">
+          {/* WebP Optimizer Toggle Switch */}
+          <div className="flex items-center gap-1 bg-muted/40 border border-border/30 p-1 rounded-xl text-[10px] font-bold shadow-sm">
+            <button
+              type="button"
+              onClick={() => handleToggleWebp(true)}
+              className={cn(
+                "px-2.5 py-1 rounded-lg transition-all",
+                convertToWebp 
+                  ? "bg-sky-500/15 text-sky-600 dark:text-sky-400 font-extrabold shadow-sm border border-sky-500/10" 
+                  : "text-muted-foreground/60 hover:text-foreground"
+              )}
+            >
+              Convert to WebP
+            </button>
+            <button
+              type="button"
+              onClick={() => handleToggleWebp(false)}
+              className={cn(
+                "px-2.5 py-1 rounded-lg transition-all",
+                !convertToWebp 
+                  ? "bg-amber-500/15 text-amber-600 dark:text-amber-400 font-extrabold shadow-sm border border-amber-500/10" 
+                  : "text-muted-foreground/60 hover:text-foreground"
+              )}
+            >
+              Raw Upload
+            </button>
+          </div>
+
+          <Button onClick={handleUpload} disabled={uploading} size="sm" className="media-library__upload-btn">
+            <Upload className="h-3.5 w-3.5 mr-1.5" />
+            {uploading ? 'Uploading…' : 'Upload'}
+          </Button>
+        </div>
       </div>
 
       {items.length > 0 && (
