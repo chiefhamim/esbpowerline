@@ -4,6 +4,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 
 import { Search, Menu, X, Newspaper, BookOpen, BarChart3, Home } from 'lucide-react';
+import { useTheme } from 'next-themes';
 import { useMemo, useState, useEffect, useRef, type CSSProperties, type ReactNode } from 'react';
 import { usePathname } from 'next/navigation';
 import { PublicHrefProvider, usePublicHref } from '@/lib/public-href-client';
@@ -91,6 +92,7 @@ export function PublicNavbar({
 
   const [mobileOpen, setMobileOpen] = useState(false);
   const [bannerSrc, setBannerSrc] = useState('/images/banner_final.jpg');
+  const { theme } = useTheme();
   const pathname = usePathname();
   const prevPathname = useRef(pathname);
   const activeScrollIdRef = useRef<number | null>(null);
@@ -161,6 +163,17 @@ export function PublicNavbar({
   useEffect(() => {
     setMobileOpen(false);
   }, [pathname]);
+
+  // Update banner image when theme changes
+  useEffect(() => {
+    if (theme === 'dark') {
+      setBannerSrc('/images/banner_dark.jpg');
+    } else if (theme === 'midnight') {
+      setBannerSrc('/images/banner_midnight.jpg');
+    } else {
+      setBannerSrc('/images/banner_final.jpg');
+    }
+  }, [theme]);
 
   useEffect(() => {
     if (!mobileOpen) return;
