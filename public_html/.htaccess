@@ -1,0 +1,4 @@
+RewriteEngine On
+RewriteCond %{HTTP_HOST} ^cdn\.esbpowerline\.com$ [NC]
+RewriteCond %{REQUEST_URI} !^/cdn/
+RewriteRule ^(.*)$ /cdn/$1 [L]
