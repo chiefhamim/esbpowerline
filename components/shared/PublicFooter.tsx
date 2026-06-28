@@ -116,9 +116,6 @@ export function PublicFooter({ categories = [] }: { categories?: PublicCategory[
               </ContactItem>
 
               <ContactItem icon={Mail} label={t('footer.email')}>
-                <a href="mailto:news@esbpowerline.com" className="block break-words transition-colors hover:text-primary">
-                  news@esbpowerline.com
-                </a>
                 <a href="mailto:contact@esbpowerline.com" className="block break-words transition-colors hover:text-primary">
                   contact@esbpowerline.com
                 </a>

@@ -98,12 +98,6 @@ export default function ContactPage() {
                       <h5 className="font-semibold text-sm text-foreground/70 uppercase tracking-wider mb-1">
                         Email Address
                       </h5>
-                      <a
-                        href="mailto:news@esbpowerline.com"
-                        className="block text-sm text-muted-foreground hover:text-primary transition-colors"
-                      >
-                        news@esbpowerline.com
-                      </a>
                        <a
                         href="mailto:contact@esbpowerline.com"
                         className="block text-sm text-muted-foreground hover:text-primary transition-colors"
