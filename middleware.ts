@@ -54,6 +54,18 @@ function redirectWithCookies(
 }
 
 export async function middleware(request: NextRequest) {
+  const userAgent = request.headers.get('user-agent') || '';
+  
+  // Strict Bot & Headless Scraper Prevention
+  const BLOCKED_BOT_REGEX = /ahrefsbot|semrushbot|mj12bot|dotbot|rogerbot|exabot|screamingfrog|petalbot|coccocbot|yandexbot|baiduspider|sogou|adsbot-google|amazonbot|claude-web-crawler|claudebot|gptbot|chatgpt-user|perplexitybot|coherebot|blexbot|bytespider|python-requests|node-fetch|got|axios|urllib|curl|wget|headless|phantomjs|selenium|playwright|puppeteer/i;
+
+  if (!userAgent || userAgent.trim() === '' || BLOCKED_BOT_REGEX.test(userAgent)) {
+    return new NextResponse('Access Denied: Request blocked by security policy.', {
+      status: 403,
+      headers: { 'Content-Type': 'text/plain' },
+    });
+  }
+
   const { response, supabase, user } = await updateSession(request);
   const pathname = request.nextUrl.pathname;
 
@@ -84,16 +96,9 @@ export async function middleware(request: NextRequest) {
   return response;
 }
 
-// Keep API prefixes in sync with lib/api/protected-routes.ts (PROXY_PROTECTED_API_PREFIXES).
+// Intercept all routes except static files, public assets, and standard SEO configs to run bot filters
 export const config = {
   matcher: [
-    '/admin/:path*',
-    '/cms/:path*',
-    '/members/:path*',
-    '/api/analytics',
-    '/api/analytics/:path*',
-    '/api/upload',
-    '/api/upload/:path*',
-    '/api/members/grid-export',
+    '/((?!_next/static|_next/image|images|favicon.ico|robots.txt|sitemap.xml|api/cron).*)',
   ],
 };
