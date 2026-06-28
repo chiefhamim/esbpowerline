@@ -110,14 +110,17 @@ export function PublicFooter({ categories = [] }: { categories?: PublicCategory[
             <div className="space-y-4">
               <ContactItem icon={UserRound} label={t('footer.editorPublisher')}>
                 <p className="font-display font-semibold tracking-tight text-foreground">Farid Uddin Ahmed</p>
+                <a href="mailto:farid@esbpowerline.com" className="block text-xs text-muted-foreground transition-colors hover:text-primary mt-0.5">
+                  farid@esbpowerline.com
+                </a>
               </ContactItem>
 
               <ContactItem icon={Mail} label={t('footer.email')}>
                 <a href="mailto:news@esbpowerline.com" className="block break-words transition-colors hover:text-primary">
                   news@esbpowerline.com
                 </a>
-                <a href="mailto:esb.bd08@gmail.com" className="block break-words transition-colors hover:text-primary">
-                  esb.bd08@gmail.com
+                <a href="mailto:contact@esbpowerline.com" className="block break-words transition-colors hover:text-primary">
+                  contact@esbpowerline.com
                 </a>
               </ContactItem>
 
