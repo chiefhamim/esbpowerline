@@ -132,8 +132,11 @@ export function PublicFooter({ categories = [] }: { categories?: PublicCategory[
               </ContactItem>
 
               <ContactItem icon={Phone} label={t('footer.advertising')}>
-                <a href="tel:+8801711378733" className="transition-colors hover:text-primary">
+                <a href="tel:+8801711378733" className="block transition-colors hover:text-primary">
                   +8801711-378733
+                </a>
+                <a href="mailto:news@esbpowerline.com" className="block break-words transition-colors hover:text-primary text-xs mt-0.5">
+                  news@esbpowerline.com
                 </a>
               </ContactItem>
 
