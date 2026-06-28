@@ -4,7 +4,6 @@ import Link from 'next/link';
 import Image from 'next/image';
 
 import { Search, Menu, X, Newspaper, BookOpen, BarChart3, Home } from 'lucide-react';
-import { useTheme } from 'next-themes';
 import { useMemo, useState, useEffect, useRef, type CSSProperties, type ReactNode } from 'react';
 import { usePathname } from 'next/navigation';
 import { PublicHrefProvider, usePublicHref } from '@/lib/public-href-client';
@@ -91,11 +90,45 @@ export function PublicNavbar({
   }, [categories, locale]);
 
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [bannerSrc, setBannerSrc] = useState('/images/banner_final.jpg');
-  const { theme } = useTheme();
+  const [bannerSrc, setBannerSrc] = useState('/images/banner.jpg?v=5');
+  const [mounted, setMounted] = useState(false);
   const pathname = usePathname();
   const prevPathname = useRef(pathname);
   const activeScrollIdRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (!mounted) return;
+
+    const html = document.documentElement;
+    const updateBanner = () => {
+      const currentTheme = html.dataset.siteTheme;
+      if (currentTheme === 'midnight') {
+        setBannerSrc('/images/banner_midnight.jpg?v=5');
+      } else if (currentTheme === 'dark') {
+        setBannerSrc('/images/banner_dark.jpg?v=5');
+      } else {
+        setBannerSrc('/images/banner.jpg?v=5');
+      }
+    };
+    
+    updateBanner();
+
+    const observer = new MutationObserver((mutations) => {
+      for (const m of mutations) {
+        if (m.type === 'attributes' && m.attributeName === 'data-site-theme') {
+          updateBanner();
+        }
+      }
+    });
+
+    observer.observe(html, { attributes: true, attributeFilter: ['data-site-theme'] });
+
+    return () => observer.disconnect();
+  }, [mounted]);
 
   useEffect(() => {
     const targetPaths = ['/data-reports/power-grid', '/articles', '/magazine', '/about', '/contact'];
@@ -164,16 +197,7 @@ export function PublicNavbar({
     setMobileOpen(false);
   }, [pathname]);
 
-  // Update banner image when theme changes
-  useEffect(() => {
-    if (theme === 'dark') {
-      setBannerSrc('/images/banner_dark.jpg');
-    } else if (theme === 'midnight') {
-      setBannerSrc('/images/banner_midnight.jpg');
-    } else {
-      setBannerSrc('/images/banner_final.jpg');
-    }
-  }, [theme]);
+
 
   useEffect(() => {
     if (!mobileOpen) return;
@@ -201,14 +225,12 @@ export function PublicNavbar({
         <div className="container container--shell px-0">
           <div className="site-banner-frame border-l border-r border-b border-border/40 overflow-hidden">
             <PublicNavLink href="/" className="w-full block transition-opacity hover:opacity-95">
-              <Image
+              <img
                 src={bannerSrc}
                 alt="ESB PowerLine — Safe Energy Safe Nation"
                 className="site-banner__image block mx-auto"
                 width={3728}
                 height={343}
-                sizes="(max-width: 1760px) 100vw, 1760px"
-                priority
                 onError={() => {
                   if (bannerSrc !== '/images/logo.jpg') {
                     setBannerSrc('/images/logo.jpg');

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useId, useState, useRef, RefObject, useMemo } from 'react';
+import { useEffect, useId, useState, useRef, RefObject, useMemo, useCallback } from 'react';
 import Link from 'next/link';
 import {
   Zap, Activity, Cable, TrendingUp, FileText, BarChart3, MapPin, DollarSign, Database, Droplet, Globe, Sun,
@@ -505,6 +505,74 @@ export function PowerGridExplorer({
   const [selectedDate, setSelectedDate] = useState<string>(latestDate);
   const [activeData, setActiveData] = useState<GridDailyData>(powerGridArchive['24 Jun 2026']);
   const [isLoadingDaily, setIsLoadingDaily] = useState<boolean>(false);
+  const [isMethodologyOpen, setIsMethodologyOpen] = useState(false);
+  const [showMethodologyBanner, setShowMethodologyBanner] = useState(true);
+  const [activeReconciliationTopic, setActiveReconciliationTopic] = useState<'gen' | 'cost' | null>(null);
+  const [isMethodologyBannerExpanded, setIsMethodologyBannerExpanded] = useState(false);
+
+  // Helper to get color-shifting backlog badge styles (psychological timeline)
+  const getBacklogBadgeStyles = useCallback((selected: string, latest: string) => {
+    try {
+      const selDate = new Date(selected);
+      const latDate = new Date(latest);
+      const diffTime = latDate.getTime() - selDate.getTime();
+      if (diffTime <= 0) {
+        return {
+          className: "bg-primary/10 text-primary border border-primary/20",
+          text: "Latest"
+        };
+      }
+      const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
+      
+      // Calculate text representation
+      let text = '';
+      if (diffDays < 30) {
+        text = `${diffDays} ${diffDays === 1 ? 'Day' : 'Days'} Ago`;
+      } else if (diffDays < 365) {
+        const diffMonths = Math.round(diffDays / 30.4);
+        text = `${diffMonths} ${diffMonths === 1 ? 'Month' : 'Months'} Ago`;
+      } else {
+        const diffYears = (diffDays / 365).toFixed(1);
+        text = `${diffYears} Years Ago`;
+      }
+
+      // Determine subtle color classes based on age
+      if (diffDays < 90) { // < 3 months (Recent)
+        return {
+          className: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20",
+          text
+        };
+      }
+      if (diffDays < 365) { // < 1 year (Short-term)
+        return {
+          className: "bg-yellow-500/10 text-yellow-600 dark:text-yellow-400 border border-yellow-500/20",
+          text
+        };
+      }
+      if (diffDays < 1095) { // 1 - 3 years (Medium-term)
+        return {
+          className: "bg-orange-500/10 text-orange-600 dark:text-orange-400 border border-orange-500/20",
+          text
+        };
+      }
+      if (diffDays < 2555) { // 3 - 7 years (Deep)
+        return {
+          className: "bg-red-500/10 text-red-600 dark:text-red-400 border border-red-500/20",
+          text
+        };
+      }
+      // > 7 years (Deep Historical Abyss)
+      return {
+        className: "bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20 font-semibold",
+        text
+      };
+    } catch {
+      return {
+        className: "bg-muted text-muted-foreground",
+        text: "Archive"
+      };
+    }
+  }, []);
 
   const [isDailyYearDropdownOpen, setIsDailyYearDropdownOpen] = useState(false);
   const [isDailyMonthDropdownOpen, setIsDailyMonthDropdownOpen] = useState(false);
@@ -1097,8 +1165,35 @@ export function PowerGridExplorer({
             <Activity className="h-5 w-5 text-primary animate-pulse" />
             Grid Status Overview
           </h2>
-          <p className="text-xs text-muted-foreground mt-0.5">
-            Active reporting date: <span className="font-semibold text-primary">{systemStats.date}</span> <span className="text-[10px] bg-primary/10 text-primary px-1.5 py-0.5 rounded font-bold ml-1 uppercase tracking-wider">Today</span>
+          <p className="text-xs text-muted-foreground mt-0.5 inline-flex items-center flex-wrap gap-1">
+            Active reporting date: <span className="font-semibold text-primary">{systemStats.date}</span>
+            {(() => {
+              const badge = getBacklogBadgeStyles(selectedDate, latestDate);
+              return (
+                <span className={cn("text-[10px] px-1.5 py-0.5 rounded font-bold ml-1 uppercase tracking-wider transition-all duration-300 inline-block align-middle", badge.className)}>
+                  {badge.text}
+                </span>
+              );
+            })()}
+            {!showMethodologyBanner && (
+              <span className="relative group inline-flex items-center align-middle">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowMethodologyBanner(true);
+                    setIsMethodologyBannerExpanded(true);
+                  }}
+                  className="text-primary hover:text-primary-focus transition-colors ml-1.5 p-0.5 inline-flex items-center justify-center"
+                  aria-label="Restore methodology banner"
+                >
+                  <Info className="h-3.5 w-3.5" />
+                </button>
+                {/* Theme-compliant Tooltip */}
+                <span className="absolute bottom-[calc(100%+6px)] left-1/2 -translate-x-1/2 bg-popover text-popover-foreground border border-border/80 text-[10px] font-bold px-2 py-1.5 rounded-lg shadow-xl pointer-events-none opacity-0 scale-95 translate-y-1 transition-all duration-150 group-hover:opacity-100 group-hover:scale-100 group-hover:translate-y-0 z-[100] whitespace-nowrap">
+                  Restore Methodology Banner
+                </span>
+              </span>
+            )}
           </p>
         </div>
         <div className="flex flex-wrap sm:flex-nowrap items-center gap-2 w-full sm:w-auto">
@@ -1109,7 +1204,7 @@ export function PowerGridExplorer({
             className="flex items-center justify-center gap-1 px-3 py-2 text-xs md:text-sm font-bold bg-transparent border border-border/40 hover:bg-muted/10 hover:border-primary/30 rounded-xl transition-all duration-150 shadow-sm text-foreground"
           >
             <RotateCcw className="h-3.5 w-3.5 text-primary shrink-0" />
-            <span>Today</span>
+            <span>Latest</span>
           </button>
 
           <div className="w-full sm:w-28 relative z-50">
@@ -1407,7 +1502,7 @@ export function PowerGridExplorer({
             <div className="space-y-2 text-[11px] md:text-xs leading-relaxed">
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Total Daily Cost:</span>
-                <span className="font-bold text-foreground">227.07 Crore BDT</span>
+                <span className="font-bold text-foreground">{(systemStats.totalDailyCost / 10000000).toFixed(2)} Crore BDT</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Average Bulk Cost:</span>
@@ -1458,6 +1553,104 @@ export function PowerGridExplorer({
           );
         })}
       </div>
+
+      {/* Collapsible Methodology Banner */}
+      {showMethodologyBanner && (
+        <div className="mb-4 bg-muted/10 border border-border/20 rounded-xl overflow-hidden transition-all duration-300">
+          {/* Header (Always Visible) */}
+          <button
+            type="button"
+            onClick={() => setIsMethodologyBannerExpanded(!isMethodologyBannerExpanded)}
+            className="w-full flex items-center justify-between p-2 px-3 text-left transition-colors"
+          >
+            <div className="flex items-center gap-2">
+              <Info className="h-3.5 w-3.5 text-primary shrink-0" />
+              <span className="text-[11px] font-semibold text-muted-foreground hover:text-primary transition-colors leading-none">
+                {isMethodologyBannerExpanded 
+                  ? "Seeing a discrepancy? Here's the data methodology & reconciliation callout. Click to collapse."
+                  : "Seeing a discrepancy? Here's the data methodology & reconciliation callout. Click to drop down."
+                }
+              </span>
+            </div>
+            <ChevronDown className={cn("h-3.5 w-3.5 text-muted-foreground/60 transition-transform duration-200 shrink-0", isMethodologyBannerExpanded && "rotate-180")} />
+          </button>
+
+          {/* Collapsible Body Content */}
+          {isMethodologyBannerExpanded && (
+            <div className="p-4 border-t border-border/20 bg-background/50 space-y-4 animate-in slide-in-from-top-2 duration-200">
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                To maintain audited reporting standards, the system reconciles data between <strong>Gross Generation (Supplied)</strong> and <strong>Net Grid Dispatch (Delivered)</strong>. This explains the discrepancy between the top KPI cards and the detailed fuel charts below:
+              </p>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-3">
+                <div className="p-4 bg-card border border-border/30 rounded-xl space-y-2 shadow-sm">
+                  <h4 className="font-bold text-foreground text-xs flex items-center gap-1.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-primary" />
+                    1. Generation Volume Discrepancy
+                  </h4>
+                  <p className="text-[11px] text-muted-foreground leading-relaxed">
+                    The top <strong>Daily Generation</strong> KPI card shows <strong>{systemStats.totalEnergyGen.toFixed(1)} MKWh</strong> (Net grid dispatch), while the <strong>Generation Mix Snapshot</strong> chart sums up to <strong>{totalGenMkwhr.toFixed(1)} MKWh</strong> (Gross energy at plant generators).
+                  </p>
+                  <div className="bg-muted/10 p-2 rounded border border-border/20 font-mono text-[10px] text-foreground">
+                    <div>Gross Generation = {totalGenMkwhr.toFixed(1)} MKWh</div>
+                    <div>(-) Station Auxiliary Cons. (~8-10%) = {(totalGenMkwhr - systemStats.totalEnergyGen).toFixed(1)} MKWh</div>
+                    <div className="font-bold border-t border-border/30 mt-1 pt-1 text-primary">Net Grid Dispatch = {systemStats.totalEnergyGen.toFixed(1)} MKWh</div>
+                  </div>
+                </div>
+
+                <div className="p-4 bg-card border border-border/30 rounded-xl space-y-2 shadow-sm">
+                  <h4 className="font-bold text-foreground text-xs flex items-center gap-1.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                    2. Fuel &amp; Import Cost Discrepancy
+                  </h4>
+                  <p className="text-[11px] text-muted-foreground leading-relaxed">
+                    The top <strong>Est. Fuel Cost</strong> KPI card shows <strong>{(systemStats.totalDailyCost / 10000000).toFixed(2)} Cr BDT</strong> (Net system cost base), while the <strong>Daily Fuel &amp; Import Cost</strong> bar chart aggregates raw fuel costs to <strong>{(totalCostBdt / 10000000).toFixed(2)} Cr BDT</strong> (Gross plant expenditure).
+                  </p>
+                  <div className="bg-muted/10 p-2 rounded border border-border/20 font-mono text-[10px] text-foreground">
+                    <div>Gross Production Cost = {(totalCostBdt / 10000000).toFixed(2)} Cr BDT</div>
+                    <div>(-) Net system cost = {(systemStats.totalDailyCost / 10000000).toFixed(2)} Cr BDT</div>
+                    <div className="font-bold border-t border-border/30 mt-1 pt-1 text-emerald-500">Loss / Aux Cost Overhead = {((totalCostBdt - systemStats.totalDailyCost) / 10000000).toFixed(2)} Cr BDT</div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Data Flow & Reconciliation Path */}
+              <div className="p-4 bg-muted/5 border border-border/20 rounded-xl space-y-2.5 text-[11px] text-muted-foreground">
+                <h4 className="font-bold text-foreground text-[10px] uppercase tracking-wider">
+                  Reconciliation Path &amp; Operational Flow
+                </h4>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 leading-relaxed">
+                  <div className="space-y-1">
+                    <p className="font-bold text-foreground">1. Generation Source (Supplied)</p>
+                    <p>Generating stations (BPDB, IPPs, Joint Ventures) burn fuels to generate raw electricity. Total generation is measured at the plant generator terminals (busbars) as <strong>Gross Generation</strong> (as displayed in the charts).</p>
+                  </div>
+                  <div className="space-y-1 border-t md:border-t-0 md:border-l border-border/30 pt-2 md:pt-0 md:pl-4">
+                    <p className="font-bold text-foreground">2. Plant Self-Use (Auxiliary Consumption)</p>
+                    <p>Power plants consume <strong>8-10%</strong> of their gross output internally to run critical infrastructure (cooling pumps, fuel feeders, ventilation, control systems, and facility lighting). This load never enters transmission lines.</p>
+                  </div>
+                  <div className="space-y-1 border-t md:border-t-0 md:border-l border-border/30 pt-2 md:pt-0 md:pl-4">
+                    <p className="font-bold text-foreground">3. Grid Transmission &amp; Loss (PGCB &amp; Utilities)</p>
+                    <p>PGCB receives the remaining net power at step-up transformers and transmits it across the high-voltage grid, losing <strong>~3% (system loss)</strong> to heat and line resistance. The final distributed load delivered to utilities (DESCO, DPDC, etc.) is the <strong>Net Grid Dispatch</strong> (as displayed in the KPI cards).</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex flex-wrap items-center justify-between gap-4 pt-3 border-t border-border/20 text-[10px] text-muted-foreground/80 leading-relaxed">
+                <div>
+                  ※ <strong>Active Example:</strong> On the selected date of <strong>{systemStats.date}</strong>, the difference is exactly <strong>{(totalGenMkwhr - systemStats.totalEnergyGen).toFixed(2)} MKWh</strong>, which represents generating station auxiliary power overhead (~8-10%) and grid dispatch loss.
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowMethodologyBanner(false)}
+                  className="text-muted-foreground/60 hover:text-foreground hover:bg-muted/15 px-2 py-1 rounded transition-colors text-[9px] font-bold uppercase tracking-wider"
+                >
+                  Hide Banner Completely
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Tab Panels */}
       <div className="relative min-h-[400px]">
@@ -1639,7 +1832,7 @@ export function PowerGridExplorer({
             <div className="grid-explorer-chart-card__head">
               <div>
                 <h3 className="grid-explorer-chart-card__title">Daily Fuel &amp; Import Cost<sup className="text-emerald-500 font-extrabold text-[10px] ml-2 select-none">Daily</sup></h3>
-                <p className="grid-explorer-chart-card__sub">Cost in Crore BDT by fuel type (Total: {(totalCostBdt / 10000000).toFixed(1)} Cr Tk.)</p>
+                <p className="grid-explorer-chart-card__sub">Cost in Crore BDT by fuel type (Total: {(totalCostBdt / 10000000).toFixed(1)} Cr Tk.) • <span className="text-primary font-semibold">Tracked since December 31, 2013</span></p>
               </div>
               <span className="grid-explorer-chip">Cost Analysis</span>
             </div>
@@ -1746,7 +1939,7 @@ export function PowerGridExplorer({
           <div className="grid-explorer-chart-card__head">
             <div>
               <h3 className="grid-explorer-chart-card__title">24-Hour System Load Curve<sup className="text-emerald-500 font-extrabold text-[10px] ml-2 select-none">Daily</sup></h3>
-              <p className="grid-explorer-chart-card__sub">SCADA demand, actual generation, and load shedding profile (Date: {systemStats.date})</p>
+              <p className="grid-explorer-chart-card__sub">SCADA demand, actual generation, and load shedding profile (Date: {systemStats.date}) • <span className="text-primary font-semibold">Tracked since December 31, 2013</span></p>
             </div>
             <span className="grid-explorer-chip bg-destructive/10 text-destructive border-destructive/20">NLDC SCADA Curve</span>
           </div>
@@ -1960,7 +2153,7 @@ export function PowerGridExplorer({
       )}
 
       {activeTab === 'gas' && (
-        selectedDate < '2020-01-01' ? (
+        selectedDate < '2020-01-12' ? (
           <div className="grid-explorer-panel space-y-6">
             <div className="grid-explorer-chart-card card p-8 flex flex-col items-center justify-center text-center min-h-[400px]">
               <div className="p-4 rounded-full bg-muted/20 text-muted-foreground mb-4">
@@ -1968,10 +2161,10 @@ export function PowerGridExplorer({
               </div>
               <h4 className="text-base font-bold text-foreground mb-2">Petrobangla Gas Production &amp; Distribution Data</h4>
               <p className="text-xs text-muted-foreground max-w-sm">
-                No official records are available for the selected date. Petrobangla gas production tracking officially started on January 1, 2020.
+                No official records are available for the selected date. Petrobangla gas production tracking officially started on January 12, 2020.
               </p>
               <div className="mt-4 text-[10px] text-muted-foreground">
-                Official Backlog Start Date: January 1, 2020
+                Official Backlog Start Date: January 12, 2020
               </div>
             </div>
           </div>
@@ -1982,7 +2175,7 @@ export function PowerGridExplorer({
               <Droplet className="h-5 w-5 text-sky-500 shrink-0" />
               <div>
                 <h3 className="grid-explorer-chart-card__title">Daily Gas &amp; Condensate Production<sup className="text-emerald-500 font-extrabold text-[10px] ml-2 select-none">Daily</sup></h3>
-                    <p className="grid-explorer-chart-card__sub">Petrobangla Production &amp; Marketing Division Report • <span className="text-sky-500 font-semibold">Tracked since January 1, 2020</span></p>
+                    <p className="grid-explorer-chart-card__sub">Petrobangla Production &amp; Marketing Division Report • <span className="text-sky-500 font-semibold">Tracked since January 12, 2020</span></p>
               </div>
             </div>
 
@@ -2032,7 +2225,7 @@ export function PowerGridExplorer({
               <Database className="h-5 w-5 text-sky-600 shrink-0" />
               <div>
                 <h3 className="grid-explorer-chart-card__title">Sectorwise Gas Distribution<sup className="text-emerald-500 font-extrabold text-[10px] ml-2 select-none">Daily</sup></h3>
-                <p className="grid-explorer-chart-card__sub">Allocated supply (MMCFD) across regional gas distributors</p>
+                <p className="grid-explorer-chart-card__sub">Allocated supply (MMCFD) across regional gas distributors • <span className="text-sky-500 font-semibold">Tracked since January 12, 2020</span></p>
               </div>
             </div>
 
@@ -4266,7 +4459,7 @@ export function PowerGridExplorer({
       )}
 
       {activeTab === 'regional' && (
-        selectedDate < '2011-01-09' ? (
+        selectedDate < '2013-12-31' ? (
           <div className="grid-explorer-panel space-y-6">
             <div className="grid-explorer-chart-card card p-8 flex flex-col items-center justify-center text-center min-h-[400px]">
               <div className="p-4 rounded-full bg-muted/20 text-muted-foreground mb-4">
@@ -4274,10 +4467,10 @@ export function PowerGridExplorer({
               </div>
               <h4 className="text-base font-bold text-foreground mb-2">Zone-wise Demand &amp; Load-Shedding Data</h4>
               <p className="text-xs text-muted-foreground max-w-sm">
-                No official records are available for the selected date. Zone-wise demand and load-shedding tracking officially started on January 9, 2011.
+                No official records are available for the selected date. Zone-wise demand and load-shedding tracking officially started on December 31, 2013.
               </p>
               <div className="mt-4 text-[10px] text-muted-foreground">
-                Official Backlog Start Date: January 9, 2011
+                Official Backlog Start Date: December 31, 2013
               </div>
             </div>
           </div>
@@ -4289,7 +4482,7 @@ export function PowerGridExplorer({
                 <Cable className="h-5 w-5 text-primary shrink-0" />
                 <div>
                   <h3 className="grid-explorer-chart-card__title">Zone-wise Demand &amp; Load-Shedding<sup className="text-emerald-500 font-extrabold text-[10px] ml-2 select-none">Daily</sup></h3>
-                  <p className="grid-explorer-chart-card__sub">SCADA readings recorded at evening peak hour (21:00 Hr.) • <span className="text-primary font-semibold">Tracked since January 9, 2011</span></p>
+                  <p className="grid-explorer-chart-card__sub">SCADA readings recorded at evening peak hour (21:00 Hr.) • <span className="text-primary font-semibold">Tracked since December 31, 2013</span></p>
                 </div>
               </div>
 
@@ -4352,7 +4545,7 @@ export function PowerGridExplorer({
                 <FileText className="h-5 w-5 text-amber-500 shrink-0" />
                 <div>
                   <h3 className="grid-explorer-chart-card__title">NLDC Daily Outage Log<sup className="text-emerald-500 font-extrabold text-[10px] ml-2 select-none">Daily</sup></h3>
-                  <p className="grid-explorer-chart-card__sub">Major event log of yesterday's grid outages</p>
+                  <p className="grid-explorer-chart-card__sub">Major event log of yesterday's grid outages • <span className="text-primary font-semibold">Tracked since December 31, 2013</span></p>
                 </div>
               </div>
 
@@ -5066,7 +5259,7 @@ export function PowerGridExplorer({
                 <div className="grid-explorer-chart-card__head grid-explorer-chart-card__head--border flex flex-col sm:flex-row sm:items-center justify-between gap-4 sm:pr-4">
                   <div>
                     <h3 className="grid-explorer-chart-card__title">PGCB 13-Year Historical Growth Trends<sup className="text-orange-500 font-extrabold text-[10px] ml-2 select-none">Monthly</sup></h3>
-                    <p className="grid-explorer-chart-card__sub">Grid operational metrics charted monthly from 2013 to 2026</p>
+                    <p className="grid-explorer-chart-card__sub">Grid operational metrics charted monthly from 2013 to 2026 • <span className="text-primary font-semibold">Tracked since January 2013</span></p>
                   </div>
                   
                   {/* Selector Controls for Chart */}
@@ -6726,8 +6919,64 @@ export function PowerGridExplorer({
         </div>
       </div>
 
+      {/* Data Methodology & Reconciliation Guide */}
+      <div className="card mt-6 border border-border/60 bg-muted/5 rounded-2xl overflow-hidden shadow-sm">
+        <button
+          type="button"
+          onClick={() => setIsMethodologyOpen(!isMethodologyOpen)}
+          className="w-full flex items-center justify-between p-4 font-bold text-xs uppercase tracking-wider text-muted-foreground hover:bg-muted/15 transition-colors select-none"
+        >
+          <span className="flex items-center gap-2">
+            <Info className="h-4 w-4 text-primary shrink-0" />
+            Data Methodology &amp; Reconciliation Guide
+          </span>
+          <ChevronDown className={cn("h-4 w-4 transition-transform duration-200", isMethodologyOpen && "rotate-180")} />
+        </button>
 
-      
+        {isMethodologyOpen && (
+          <div className="p-4 md:p-6 border-t border-border/40 text-xs text-muted-foreground/90 space-y-4 leading-relaxed bg-card text-left">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-2.5">
+                <h4 className="font-bold text-foreground text-sm flex items-center gap-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-primary" />
+                  Estimated Net Fuel Cost (KPI Card)
+                </h4>
+                <p>
+                  The <strong>Est. Fuel Cost</strong> card at the top of the Grid Explorer displays the <strong>Net System Level Cost</strong>. This reflects the actual cost of bulk power injected and distributed to the national grid after accounting for generating station auxiliary consumption and grid transmission losses.
+                </p>
+                <div className="p-3 bg-muted/20 border border-border/30 rounded-xl space-y-1.5 font-mono text-[10px] md:text-xs text-foreground">
+                  <div className="font-bold text-[10px] uppercase text-primary/80">Calculation Formula:</div>
+                  <div>Net System Cost = Total Net Energy Generated (MKWh) × Avg Production Cost (Tk/KWh) × 10,000,000</div>
+                  <div className="text-muted-foreground mt-1 text-[9px]">※ Excludes auxiliary consumption (~8-10%) and transmission losses (~3%).</div>
+                </div>
+              </div>
+
+              <div className="space-y-2.5">
+                <h4 className="font-bold text-foreground text-sm flex items-center gap-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                  Gross Production Cost Breakdown (Charts)
+                </h4>
+                <p>
+                  The <strong>Daily Fuel &amp; Import Cost</strong> chart displays the <strong>Gross Production Cost</strong>. It aggregates the cost of fuel burned directly at the generator busbar and cross-border transactions at their individual unit rates.
+                </p>
+                <div className="p-3 bg-muted/20 border border-border/30 rounded-xl space-y-1.5 font-mono text-[10px] md:text-xs text-foreground">
+                  <div className="font-bold text-[10px] uppercase text-emerald-500/80">Calculation Formula:</div>
+                  <div>Gross Cost = Sum of [Individual Fuel Gross Generation (MKWh) × Estimated Fuel Unit Rate (Tk/KWh) × 1,000,000]</div>
+                  <div className="text-muted-foreground mt-1 text-[9px]">※ Reflected directly in the fuel/import cost breakdown bars.</div>
+                </div>
+              </div>
+            </div>
+
+            <div className="pt-3 border-t border-border/40 text-[11px] leading-relaxed space-y-1 text-muted-foreground/80">
+              <p className="font-semibold text-foreground">Why do the values differ?</p>
+              <p>
+                PGCB's daily grid reports list Net System generation separately from Gross Station generation. The difference is the <strong>Grid Dispatch Loss &amp; Aux overhead</strong>. For instance, on July 24, 2024, Gross Generation was <strong>345.90 MKWh</strong> (leading to a gross cost of 217.24 Crore Tk.), while Net Grid Dispatch was <strong>315.27 MKWh</strong> (representing a net cost of 174.2 Crore Tk. under PGCB's bulk system average tariff of 5.526 Tk/KWh).
+              </p>
+            </div>
+          </div>
+        )}
+      </div>
+
       {/* Report Footer */}
       <div className="border-t border-border/40 pt-4 text-[9px] text-muted-foreground flex justify-between">
         <span>Report Document ID: ESB-AUDIT-2026-Q2</span>

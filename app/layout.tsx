@@ -54,6 +54,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <script id="theme-init" dangerouslySetInnerHTML={{ __html: SITE_THEME_INIT_SCRIPT }} />
         <script id="locale-init" dangerouslySetInnerHTML={{ __html: SITE_LOCALE_INIT_SCRIPT }} />
 
+
         <Providers>
           {children}
           <Analytics />

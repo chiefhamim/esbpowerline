@@ -7,8 +7,6 @@ import { getSupabaseEnv } from '@/lib/supabase/env';
 import { mediaStorageBucket, storagePathFromUrl as storagePathFromUrlFor } from '@/lib/media-storage-url';
 import { assertAllowedUploadMime } from '@/lib/upload-policy';
 import { resolveSafeLocalUploadPath } from '@/lib/local-upload-path';
-import * as ftp from 'basic-ftp';
-import { Readable } from 'stream';
 
 export type MediaStorageUploadResult = {
   url: string;
@@ -37,69 +35,7 @@ function canUseSupabaseStorage() {
   return isConfigured && !!serviceRoleKey && !!createServiceRoleClient();
 }
 
-function canUseCpanelStorage() {
-  return !!process.env.CPANEL_FTP_HOST;
-}
 
-async function uploadToCpanelFtp(buffer: Buffer, storagePath: string): Promise<string> {
-  const client = new ftp.Client();
-  client.ftp.verbose = false;
-  try {
-    await client.access({
-      host: process.env.CPANEL_FTP_HOST,
-      user: process.env.CPANEL_FTP_USER,
-      password: process.env.CPANEL_FTP_PASSWORD,
-      port: process.env.CPANEL_FTP_PORT ? parseInt(process.env.CPANEL_FTP_PORT, 10) : 21,
-      secure: process.env.CPANEL_FTP_SECURE === 'true',
-    });
-
-    const baseDir = process.env.CPANEL_FTP_PATH || '/public_html/uploads';
-    const parts = storagePath.split('/');
-    const fileName = parts.pop()!;
-    const subFolder = parts.join('/');
-    
-    const targetDir = `${baseDir}/${subFolder}`;
-    await client.ensureDir(targetDir);
-
-    const stream = Readable.from(buffer);
-    await client.uploadFrom(stream, fileName);
-
-    const cdnBase = process.env.NEXT_PUBLIC_CDN_URL || `https://cdn.esbpowerline.com`;
-    return `${cdnBase}/${subFolder}/${fileName}`;
-  } catch (err: any) {
-    console.error('[cPanel FTP Error]:', err);
-    throw new Error(`cPanel FTP Upload Failed: ${err.message}`);
-  } finally {
-    client.close();
-  }
-}
-
-async function deleteFromCpanelFtp(url: string): Promise<void> {
-  const cdnBase = process.env.NEXT_PUBLIC_CDN_URL || `https://cdn.esbpowerline.com`;
-  if (!url.startsWith(cdnBase)) return;
-
-  const client = new ftp.Client();
-  client.ftp.verbose = false;
-  try {
-    await client.access({
-      host: process.env.CPANEL_FTP_HOST,
-      user: process.env.CPANEL_FTP_USER,
-      password: process.env.CPANEL_FTP_PASSWORD,
-      port: process.env.CPANEL_FTP_PORT ? parseInt(process.env.CPANEL_FTP_PORT, 10) : 21,
-      secure: process.env.CPANEL_FTP_SECURE === 'true',
-    });
-
-    const pathPart = url.replace(cdnBase, '');
-    const baseDir = process.env.CPANEL_FTP_PATH || '/public_html/uploads';
-    const fullFtpPath = `${baseDir}${pathPart}`;
-
-    await client.remove(fullFtpPath);
-  } catch (err: any) {
-    console.warn('[cPanel FTP Delete Warning]:', err.message);
-  } finally {
-    client.close();
-  }
-}
 
 export async function uploadMediaBuffer(input: {
   buffer: Buffer;
@@ -113,14 +49,7 @@ export async function uploadMediaBuffer(input: {
   const safeName = `${Date.now()}-${sanitizeFileName(input.fileName)}`;
   const storagePath = `${folder}/${safeName}`;
 
-  if (canUseCpanelStorage()) {
-    const url = await uploadToCpanelFtp(input.buffer, storagePath);
-    return {
-      url,
-      storage: 'cpanel',
-      storagePath,
-    };
-  }
+
 
   if (canUseSupabaseStorage()) {
     const admin = createServiceRoleClient()!;
@@ -153,13 +82,7 @@ export async function uploadMediaBuffer(input: {
 }
 
 export async function deleteStoredMedia(url: string): Promise<void> {
-  if (canUseCpanelStorage()) {
-    const cdnBase = process.env.NEXT_PUBLIC_CDN_URL || `https://cdn.esbpowerline.com`;
-    if (url.startsWith(cdnBase)) {
-      await deleteFromCpanelFtp(url);
-      return;
-    }
-  }
+
 
   const { url: base } = getSupabaseEnv();
   const storagePath = storagePathFromUrlFor(url, base, mediaBucket());
