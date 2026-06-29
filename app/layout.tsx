@@ -5,7 +5,7 @@ import './globals.css';
 import { Analytics } from '@vercel/analytics/next';
 import { SpeedInsights } from '@vercel/speed-insights/next';
 import { Toaster } from 'sonner';
-import { Providers } from './providers';
+import { ProvidersShell } from './ProvidersShell';
 import { SITE_THEME_CRITICAL_CSS, SITE_THEME_INIT_SCRIPT } from '@/lib/site-theme';
 import { SITE_LOCALE_INIT_SCRIPT } from '@/lib/locale';
 
@@ -55,7 +55,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <script id="locale-init" dangerouslySetInnerHTML={{ __html: SITE_LOCALE_INIT_SCRIPT }} />
 
 
-        <Providers>
+        <ProvidersShell>
           {children}
           <Analytics />
           <SpeedInsights />
@@ -74,7 +74,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               },
             }}
           />
-        </Providers>
+        </ProvidersShell>
       </body>
     </html>
   );

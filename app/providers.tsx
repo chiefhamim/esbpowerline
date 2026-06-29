@@ -3,6 +3,7 @@
 import { SupabaseAuthProvider } from '@/utils/supabase/auth-context';
 import { LocaleProvider } from '@/components/shared/LocaleProvider';
 import { SiteThemeProvider } from '@/components/shared/SiteThemeProvider';
+import type { SiteLocale } from '@/lib/locale';
 
 if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
   const origError = console.error;
@@ -17,10 +18,16 @@ if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
   };
 }
 
-export function Providers({ children }: { children: React.ReactNode }) {
+export function Providers({
+  children,
+  initialLocale = 'en',
+}: {
+  children: React.ReactNode;
+  initialLocale?: SiteLocale;
+}) {
   return (
     <SupabaseAuthProvider>
-      <LocaleProvider>
+      <LocaleProvider initialLocale={initialLocale}>
         <SiteThemeProvider>{children}</SiteThemeProvider>
       </LocaleProvider>
     </SupabaseAuthProvider>

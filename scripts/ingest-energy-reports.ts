@@ -8,6 +8,8 @@ dotenv.config({ path: path.resolve(process.cwd(), '.env.local') });
 // Running against the single PostgreSQL/Supabase database
 
 import { createScriptPrismaClient } from '../prisma/client';
+import { runSredaIngestion } from '../lib/data/sreda/ingest-sreda';
+import { gwhToAvgMw, POWER_UNIT } from '../lib/data/grid/home-snapshot-core';
 
 // Initialize Prisma lazily using a Proxy to avoid module-load evaluation side-effects
 const prisma = new Proxy({} as any, {
@@ -23,9 +25,6 @@ const prisma = new Proxy({} as any, {
     return value;
   }
 });
-
-// Bypass SSL certificate errors for government servers
-process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 
 // Configuration
 const CONFIG = {
@@ -358,12 +357,36 @@ async function runIngestionPipeline() {
         }
         if (Array.isArray(snapshot)) {
           for (const item of (snapshot as any[])) {
-            if (item.label === 'Current Demand' && powerGridData) {
-              item.value = Math.round(powerGridData.eveningPeakGen);
-            } else if (item.label === 'Gas Supply' && powerGridData) {
-              item.value = Math.round(powerGridData.gasSupply);
-            } else if (item.label === 'Peak Today' && powerGridData) {
-              item.value = Math.round(powerGridData.eveningPeakDemand);
+            if (!powerGridData) continue;
+            if (item.label === 'Current Demand') {
+              item.value = Math.round(powerGridData.eveningPeakDemand ?? powerGridData.eveningPeakGen);
+            } else if (item.label === 'Peak Generation') {
+              const dayGen = powerGridData.dayPeakGen ?? 0;
+              const eveGen = powerGridData.eveningPeakGen ?? 0;
+              item.value = Math.round(Math.max(dayGen, eveGen));
+            } else if (item.label === 'Peak Today') {
+              const dayPeak = powerGridData.dayPeakDemand ?? 0;
+              const evePeak = powerGridData.eveningPeakDemand ?? 0;
+              item.value = Math.round(Math.max(dayPeak, evePeak));
+            } else if (item.label === 'Daily Generation' && powerGridData.totalEnergyGen != null) {
+              item.value = gwhToAvgMw(Number(powerGridData.totalEnergyGen));
+              item.unit = POWER_UNIT;
+            } else if (item.label === 'Energy Unserved' && powerGridData.totalEnergyUnserved != null) {
+              item.value = gwhToAvgMw(Number(powerGridData.totalEnergyUnserved));
+              item.unit = POWER_UNIT;
+            } else if (item.label === 'Fuel Cost' && powerGridData.avgProductionCost != null) {
+              item.value = parseFloat(Number(powerGridData.avgProductionCost).toFixed(2));
+            } else if (item.label === 'Gas Supply' && gasData) {
+              item.value = Math.round(gasData.totalGasProduction);
+            } else if (item.label === 'Coal Generation' && powerGridData.fuels?.coal) {
+              item.value = gwhToAvgMw(Number(powerGridData.fuels.coal.generation ?? 0));
+              item.unit = POWER_UNIT;
+            } else if (item.label === 'Grid Import' && powerGridData.importPeakMw != null) {
+              item.value = Math.round(powerGridData.importPeakMw);
+            } else if (item.label === 'Load Shedding') {
+              item.value = 0;
+            } else if (item.label === 'RE Installed' || item.label === 'RE Grid Share') {
+              // SREDA tiles are synced from public/data/sreda/daily via homepage server loader.
             }
           }
           await prisma.siteSetting.update({
@@ -417,6 +440,16 @@ async function runIngestionPipeline() {
     } catch (dbError) {
       console.error('[Ingest] DB update failed:', dbError);
     }
+  }
+
+  // 4. SREDA daily backlog (renewable capacity + generation mix)
+  try {
+    const sredaResult = await runSredaIngestion();
+    if (!sredaResult.ok) {
+      console.warn(`[Ingest] SREDA ingest skipped: ${sredaResult.error ?? 'unknown error'}`);
+    }
+  } catch (sredaError) {
+    console.error('[Ingest] SREDA ingest failed:', sredaError);
   }
 
   console.log('[Ingest] Pipeline iteration complete.');

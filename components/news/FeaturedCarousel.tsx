@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { ArrowRight, ChevronLeft, ChevronRight, Play, Pause } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Play, Pause } from 'lucide-react';
 import { ArticlePlacementBadge } from '@/components/shared/ArticlePlacementBadge';
 import type { TickerItem } from '@/components/news/LiveMarketTicker';
 import { CategoryLabel } from '@/components/i18n/CategoryLabel';
@@ -12,6 +12,7 @@ import { ModernTooltip } from '@/components/shared/ModernTooltip';
 import { NoImage } from '@/components/shared/NoImage';
 import { hasArticleImage } from '@/lib/article-image';
 import { heroImageStyle } from '@/lib/hero-image';
+import { FeaturedCarouselFooter, type FeaturedCarouselFooterLabels } from '@/components/news/FeaturedCarouselFooter';
 
 interface FeaturedItem {
   slug: string;
@@ -31,10 +32,12 @@ export function FeaturedCarousel({
   items,
   tickerItems,
   inBand = false,
+  footerLabels,
 }: {
   items?: FeaturedItem[];
   tickerItems?: TickerItem[];
   inBand?: boolean;
+  footerLabels?: Pick<FeaturedCarouselFooterLabels, 'readStory' | 'browseAll'>;
 }) {
   const { t } = useLocale();
   const featured: FeaturedItem[] = items ?? [];
@@ -212,65 +215,61 @@ export function FeaturedCarousel({
                   </p>
                 </div>
 
-                <div className="featured-hero__actions flex items-center gap-3 overflow-hidden">
-                  <Link href={`/articles/${currentItem.slug}`} className="btn btn-primary gap-2 px-7 py-3 text-[15px]">
-                    {t('carousel.readStory')} <ArrowRight className="h-4 w-4" />
-                  </Link>
-                  <Link href="/articles" className="btn btn-secondary gap-2 px-6 py-3 text-[15px]">
-                    {t('carousel.browseAll')}
-                  </Link>
-                </div>
-
-                <div className="featured-hero__byline flex items-center justify-between gap-3 overflow-hidden">
-                  <p className="featured-hero__byline-text min-w-0 truncate text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                    {t('carousel.minRead', { minutes: currentItem.readTime })}
-                  </p>
-                  <div className="featured-hero__transport flex shrink-0 items-center">
-                    <div className="featured-hero__transport-controls group/transport flex min-w-0 items-center gap-1 opacity-45 transition-opacity duration-150 hover:opacity-100 focus-within:opacity-100">
-                      <button
-                        type="button"
-                        onClick={(e) => { e.preventDefault(); prev(); }}
-                        className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground"
-                        aria-label={t('carousel.previous')}
-                      >
-                        <ChevronLeft className="h-3.5 w-3.5" />
-                      </button>
-                      <div className="featured-hero__progress-track flex min-w-[3.5rem] max-w-[5.5rem] flex-1 items-center">
-                        {storyProgress}
+                <FeaturedCarouselFooter
+                  slug={currentItem.slug}
+                  labels={{
+                    readStory: footerLabels?.readStory ?? t('carousel.readStory'),
+                    browseAll: footerLabels?.browseAll ?? t('carousel.browseAll'),
+                    minRead: t('carousel.minRead', { minutes: currentItem.readTime }),
+                  }}
+                  transport={
+                    <div className="featured-hero__transport flex shrink-0 items-center ms-auto">
+                      <div className="featured-hero__transport-controls group/transport flex min-w-0 items-center gap-1 opacity-45 transition-opacity duration-150 hover:opacity-100 focus-within:opacity-100">
+                        <button
+                          type="button"
+                          onClick={(e) => { e.preventDefault(); prev(); }}
+                          className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground"
+                          aria-label={t('carousel.previous')}
+                        >
+                          <ChevronLeft className="h-3.5 w-3.5" />
+                        </button>
+                        <div className="featured-hero__progress-track flex min-w-[3.5rem] max-w-[5.5rem] flex-1 items-center">
+                          {storyProgress}
+                        </div>
+                        <button
+                          type="button"
+                          onClick={(e) => { e.preventDefault(); next(); }}
+                          className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground"
+                          aria-label={t('carousel.next')}
+                        >
+                          <ChevronRight className="h-3.5 w-3.5" />
+                        </button>
                       </div>
-                      <button
-                        type="button"
-                        onClick={(e) => { e.preventDefault(); next(); }}
-                        className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground"
-                        aria-label={t('carousel.next')}
+                      <span className="featured-hero__counter shrink-0 font-mono font-medium tabular-nums text-muted-foreground">
+                        {current + 1}/{featured.length}
+                      </span>
+                      <ModernTooltip
+                        label={isPlaying ? t('carousel.pause') : t('carousel.play')}
+                        hint={t('carousel.storiesMarkets')}
+                        side="top"
+                        fast
                       >
-                        <ChevronRight className="h-3.5 w-3.5" />
-                      </button>
+                        <button
+                          type="button"
+                          onClick={(e) => { e.preventDefault(); setIsPlaying(!isPlaying); }}
+                          className="featured-hero__play-btn flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-muted-foreground opacity-45 transition-all duration-150 hover:bg-muted/50 hover:text-foreground hover:opacity-100 focus-visible:opacity-100"
+                          aria-label={isPlaying ? t('carousel.pause') : t('carousel.play')}
+                        >
+                          {isPlaying ? <Pause className="h-3 w-3" /> : <Play className="h-3 w-3" />}
+                        </button>
+                      </ModernTooltip>
                     </div>
-                    <span className="featured-hero__counter shrink-0 font-mono font-medium tabular-nums text-muted-foreground">
-                      {current + 1}/{featured.length}
-                    </span>
-                    <ModernTooltip
-                      label={isPlaying ? t('carousel.pause') : t('carousel.play')}
-                      hint={t('carousel.storiesMarkets')}
-                      side="top"
-                      fast
-                    >
-                      <button
-                        type="button"
-                        onClick={(e) => { e.preventDefault(); setIsPlaying(!isPlaying); }}
-                        className="featured-hero__play-btn flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-muted-foreground opacity-45 transition-all duration-150 hover:bg-muted/50 hover:text-foreground hover:opacity-100 focus-visible:opacity-100"
-                        aria-label={isPlaying ? t('carousel.pause') : t('carousel.play')}
-                      >
-                        {isPlaying ? <Pause className="h-3 w-3" /> : <Play className="h-3 w-3" />}
-                      </button>
-                    </ModernTooltip>
-                  </div>
-                </div>
+                  }
+                />
               </div>
 
               <div className="featured-hero__image-wrap relative">
-                <div className="featured-hero__image relative w-full overflow-hidden rounded-2xl border border-border/60 bg-muted/20 shadow-lg">
+                <div className="featured-hero__image relative w-full overflow-hidden rounded-xl">
                   {featured.map((item, idx) =>
                     hasArticleImage(item.imageUrl) ? (
                       <Image
@@ -282,7 +281,7 @@ export function FeaturedCarousel({
                         className={`absolute inset-0 h-full w-full transition-opacity duration-700 ease-in-out ${
                           idx === current ? 'opacity-100 z-10' : 'opacity-0 pointer-events-none z-0'
                         }`}
-                        style={heroImageStyle(item.heroMeta || undefined)}
+                        style={heroImageStyle({ fitMode: 'fill', ...(item.heroMeta ?? {}) })}
                         sizes="(max-width: 768px) 100vw, 50vw"
                       />
                     ) : (
@@ -296,7 +295,6 @@ export function FeaturedCarousel({
                       </div>
                     ),
                   )}
-                  <div className="pointer-events-none absolute inset-0 rounded-2xl border border-white/5" />
                 </div>
               </div>
             </div>

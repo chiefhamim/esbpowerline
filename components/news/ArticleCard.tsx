@@ -10,6 +10,7 @@ import { NoImage } from '@/components/shared/NoImage';
 import { hasArticleImage } from '@/lib/article-image';
 import { useLocale } from '@/components/shared/LocaleProvider';
 import { heroImageStyle } from '@/lib/hero-image';
+import { resolveDisplayTitle } from '@/lib/editorial-limits';
 
 interface ArticleCardProps {
   id: string;
@@ -48,7 +49,7 @@ export function ArticleCard({
 }: ArticleCardProps) {
   const { locale, t } = useLocale();
   const timeAgo = date ? formatExactDate(date) : '';
-  const displayTitle = (title.length > 100 && shortTitle) ? shortTitle : title;
+  const displayTitle = resolveDisplayTitle(title, shortTitle);
 
   return (
     <Link href={`/articles/${id}`} className="article-card group block">

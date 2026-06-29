@@ -6,7 +6,7 @@ import {
   Zap, Activity, Cable, TrendingUp, FileText, BarChart3, MapPin, DollarSign, Database, Droplet, Globe, Sun,
   Search, ChevronLeft, ChevronRight, ChevronDown, Check, Info, Map, Network, CheckSquare, Calendar, RotateCcw
 } from 'lucide-react';
-import { substationsData } from '@/lib/substations-data';
+import { substationsData } from '@/lib/data/infrastructure/substations';
 import {
   ResponsiveContainer, PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis,
   Tooltip, Line, CartesianGrid, Area, ComposedChart, Legend
@@ -18,493 +18,60 @@ import {
   GridStatusBadge,
   mixColor,
 } from '@/components/news/PowerGridChartUI';
-import { powerGridArchive, GridDailyData } from '@/lib/power-grid-archive';
-import availableDatesListRaw from '@/lib/available-dates.json';
-import pgcbMonthlyData from '@/lib/pgcb-monthly-data.json';
-import { ongoingProjectsData } from '@/lib/ongoing-projects-data';
-import { upcomingProjectsData } from '@/lib/upcoming-projects-data';
-import { completedProjectsData } from '@/lib/completed-projects-data';
+import { getArchiveFallback } from '@/lib/data/grid/archive-fallback';
+import type { GridDailyData } from '@/lib/data/grid/types';
+import { availableDates, getLatestAvailableDate } from '@/lib/data/grid/available-dates';
+import { fetchDailyReport } from '@/lib/data/grid/daily-loader.client';
+import { isoDateToLegacy } from '@/lib/data/grid/date-utils';
+import { pgcbMonthlyData, getLatestMonthlyDateKey } from '@/lib/data/companies/pgcb';
+import { bpdbAuditedFinancials } from '@/lib/data/companies/bpdb';
+import { sredaRenewablesData, totalCapacityRenewables } from '@/lib/data/companies/sreda';
+import { ongoingProjectsData } from '@/lib/data/infrastructure/projects-ongoing';
+import { upcomingProjectsData } from '@/lib/data/infrastructure/projects-upcoming';
+import { completedProjectsData } from '@/lib/data/infrastructure/projects-completed';
+import { macroTariffData } from '@/lib/data/macro/tariff';
+import { macroGasData } from '@/lib/data/macro/gas';
+import { macroEconomicData, petrobanglaAuditedFinancials } from '@/lib/data/macro/economics';
+import { globalVsDomesticData, historicalExchangeRates } from '@/lib/data/macro/fuel-prices';
+import { reservesDepletionData } from '@/lib/data/macro/reserves';
+import { CustomDropdown, TakaIcon, getUpcomingProjectStatusInfo, renderProjectCost } from '@/components/news/power-grid/shared';
+import { GasTab } from '@/components/news/power-grid/GasTab';
+import { sredaItemsWithIcons } from '@/components/news/power-grid/sreda-icons';
 
-// --- DATA STRUCTURES (REAL HISTORICAL SCRAPED DATA 22-23 JUNE 2026) ---
+const sredaRenewablesWithIcons = sredaItemsWithIcons(sredaRenewablesData);
 
-const systemStats = {
-  date: '22 Jun 2026',
-  dayPeakGen: 14171.86,
-  eveningPeakGen: 16154.41,
-  dayPeakDemand: 14610.86,
-  eveningPeakDemand: 16854.11,
-  minGen: 12623.38,
-  maxGen: 16154.41,
-  totalEnergyGen: 343.27, // MKWHr
-  totalEnergyUnserved: 7.26, // MKWHr
-  totalEnergyDemand: 350.52, // MKWHr
-  maxTemp: 32.8, // °C
-  totalGasSuppliedPower: 907.35, // MMCFD
-  avgProductionCost: 6.615, // BDT/KWHr
-  totalDailyCost: 2270732586, // BDT
-};
-
-const generationData = [
-  { name: 'Gas', gen: 126.76, cost: 437084202, unitCost: 3.45, color: '#0ea5e9' },
-  { name: 'Coal', gen: 123.30, cost: 816663902, unitCost: 6.62, color: '#64748b' },
-  { name: 'HFO', gen: 35.03, cost: 632836198, unitCost: 18.06, color: '#f97316' },
-  { name: 'Hydro', gen: 2.27, cost: 227438, unitCost: 0.10, color: '#06b6d4' },
-  { name: 'Solar', gen: 2.99, cost: 47087759, unitCost: 15.77, color: '#eab308' },
-  { name: 'Wind', gen: 0.19, cost: 2789016, unitCost: 14.71, color: '#10b981' },
-  { name: 'Imports', gen: 52.72, cost: 334044072, unitCost: 6.34, color: '#a855f7' },
-  { name: 'HSD (Diesel)', gen: 0.00, cost: 0, unitCost: 0.00, color: '#ef4444' },
-];
-
-const gasProductionData = [
-  { company: 'BGFCL (Titas, Habiganj, Bakhrabad)', fields: 5, gas: 478.6, condensate: 371.8, share: 18.1 },
-  { company: 'SGFL (Sylhet, Rashidpur, Kailashtila)', fields: 5, gas: 139.8, condensate: 638.0, share: 5.3 },
-  { company: 'BAPEX (Shahbazpur, Srikail, Begumganj)', fields: 9, gas: 92.4, condensate: 59.3, share: 3.5 },
-  { company: 'Chevron (Bibiyana, Jalalabad, Moulavibazar)', fields: 3, gas: 928.7, condensate: 4795.5, share: 35.1 },
-  { company: 'Tullow (Bangora)', fields: 1, gas: 31.2, condensate: 93.0, share: 1.2 },
-  { company: 'RPGCL (R-LNG Import / LNG Terminal)', fields: 0, gas: 1008.0, condensate: 0.0, share: 38.1 },
-];
-
-const gasDistributionData = [
-  { company: 'TGTDCL (Dhaka & Mymensingh)', power: 267.4, fertilizer: 73.1, others: 1069.8, total: 1410.3 },
-  { company: 'BGDCL (Cumilla & Sylhet)', power: 206.7, fertilizer: 0.0, others: 87.4, total: 294.1 },
-  { company: 'KGDCL (Chattogram)', power: 37.6, fertilizer: 38.5, others: 170.0, total: 246.1 },
-  { company: 'JGTDSL (Sylhet region)', power: 224.5, fertilizer: 40.1, others: 114.4, total: 379.0 },
-  { company: 'PGCL (Rajshahi & Rangpur)', power: 126.9, fertilizer: 0.0, others: 29.2, total: 156.0 },
-  { company: 'SGCL (Barishal & Khulna)', power: 54.2, fertilizer: 0.0, others: 4.3, total: 58.5 },
-];
-
-const borderImportsData = [
-  { source: 'HVDC Bheramara (India)', energy: 14.18, peakFlow: 930.0, type: 'C/B Interconnector (West)' },
-  { source: 'Adani Godda (India)', energy: 34.05, peakFlow: 1485.6, type: 'C/B Interconnector (North)' },
-  { source: 'Tripura Cumilla (India)', energy: 3.58, peakFlow: 168.0, type: 'C/B Interconnector (East)' },
-];
-
-const sredaRenewablesData = [
-  { tech: 'Solar PV', capacity: 1511.7, share: 83.76, icon: Sun },
-  { tech: 'Hydroelectric', capacity: 230.0, share: 12.74, icon: Droplet },
-  { tech: 'Wind Energy', capacity: 62.0, share: 3.44, icon: Globe },
-  { tech: 'Biogas Power', capacity: 0.69, share: 0.04, icon: Activity },
-  { tech: 'Biomass Energy', capacity: 0.40, share: 0.02, icon: Database },
-];
-
-const regionalDemandData = [
-  { zone: 'Dhaka', loadShed: 88, demand: 5861, pct: 1.5 },
-  { zone: 'Chattogram', loadShed: 0, demand: 1526, pct: 0.0 },
-  { zone: 'Cumilla', loadShed: 110, demand: 1579, pct: 7.0 },
-  { zone: 'Mymensingh', loadShed: 241, demand: 1380, pct: 17.5 },
-  { zone: 'Sylhet', loadShed: 0, demand: 627, pct: 0.0 },
-  { zone: 'Khulna', loadShed: 31, demand: 1897, pct: 1.6 },
-  { zone: 'Barishal', loadShed: 0, demand: 528, pct: 0.0 },
-  { zone: 'Rajshahi', loadShed: 0, demand: 1641, pct: 0.0 },
-  { zone: 'Rangpur', loadShed: 26, demand: 1002, pct: 2.6 },
-];
-
-const dailyOutages = [
-  { time: '08:09 - Restore', plant: 'Dhamrai 132/33kV S/S Tr-1', load: 'HT Restored', reason: 'Dhamrai Transformer-1 HT restored successfully.' },
-  { time: '08:10 - Restore', plant: 'Dhamrai 132/33kV S/S Tr-1', load: 'LT Restored', reason: 'Dhamrai Transformer-1 LT restored successfully.' },
-  { time: '08:39 - Restore', plant: 'Barishal(N)-Madaripur 132kV', load: 'Ckt-2 Restored', reason: 'Backbone line Ckt-2 grid synchronization complete.' },
-  { time: '08:48 - Restore', plant: 'Hathazari 230/132kV S/S', load: 'MT-03 HT Restored', reason: 'Substation transformer MT-03 HT grid synchronization.' },
-  { time: '08:49 - Restore', plant: 'Narail 132/33kV S/S', load: 'TR2 LT Restored', reason: 'Substation Transformer 2 LT grid synchronization.' },
-  { time: '09:07 - 10:26', plant: 'Srinagar 132/33kV S/S Tr-1', load: '20.0 MW Outage', reason: 'Scheduled shutdown for PBS Red-Hot Maintenance.' },
-  { time: '09:08 - 10:24', plant: 'Srinagar 132/33kV S/S Tr-1 HT', load: '20.0 MW Outage', reason: 'Scheduled shutdown for PBS Red-Hot Maintenance.' },
-  { time: '09:19 - 10:17', plant: 'Srinagar 132/33kV S/S 33kV Bus', load: '20.0 MW Outage', reason: 'Scheduled shutdown for PBS Red-Hot Maintenance.' },
-  { time: '09:20 - 09:59', plant: 'Shahjadpur 132/33kV S/S T-2', load: '9.0 MW Outage', reason: 'Forced outage for urgent substation maintenance.' },
-  { time: '09:20 - 14:58', plant: 'Shyampur-Shyampur(N) 132kV', load: 'Ckt-1 Outage', reason: 'Scheduled shutdown for opening short-span jumper.' },
-  { time: '09:33 - Forced', plant: 'Fatullah-Shyampur(N) 132kV', load: 'Ckt-1 Outage', reason: 'Forced outage by NLDC command.' },
-  { time: '10:22 - 12:34', plant: 'Chhatak 132/33kV S/S T-1', load: '12.0 MW Outage', reason: 'Scheduled shutdown for Red-Hot Maintenance on Bus section.' },
-  { time: '10:23 - 14:26', plant: 'Khulna(S)-PDB 330MW Ckt-1', load: 'Plant Ckt-1 Outage', reason: 'Scheduled shutdown for maintenance at power plant end.' },
-  { time: '11:20 - 11:30', plant: 'Hathazari 230/132kV S/S', load: 'MT-03 HT Outage', reason: 'Scheduled shutdown for Transformer Bushing Measurement.' },
-  { time: '14:44 - Restore', plant: 'Brahmanbaria-Narsinghdi 132kV', load: 'Ckt-1 & 2 Restored', reason: 'Brahmanbaria-Narsinghdi line 132kV Ckt-1 & 2 fully restored.' },
-  { time: '15:47 - 17:30', plant: 'Daganbhuiyan 132/33kV S/S', load: '14.0 MW Outage', reason: 'Forced outage for Red-Hot Maintenance on Transformer-1.' },
-  { time: '16:06 - 17:07', plant: 'Fenchuganj 230/132kV S/S', load: '11.0 MW Outage', reason: 'Scheduled shutdown for PDB feeder line maintenance.' },
-  { time: '16:23 - 16:45', plant: 'Chapai 132/33kV S/S T-4', load: '8.0 MW Outage', reason: 'Forced outage for bird nest removal.' },
-  { time: '19:02 - Synch', plant: 'Satiya 64 MW Solar 132kV', load: '64 MW Connected', reason: 'Solar plant connected to grid via 132kV Ckt-2.' },
-  { time: '06:26 - Outage', plant: 'Dhamrai 132/33kV S/S Tr-1', load: 'Transformer-1 Outage', reason: 'Scheduled shutdown for Red-Hot Maintenance.' }
-];
-
-const macroTariffData = [
-  { year: 'FY 2020', cost: 5.91, tariff: 5.02 },
-  { year: 'FY 2021', cost: 6.61, tariff: 5.02 },
-  { year: 'FY 2022', cost: 8.50, tariff: 5.02 },
-  { year: 'FY 2023', cost: 11.33, tariff: 6.70 },
-  { year: 'FY 2024', cost: 12.10, tariff: 7.04 },
-  { year: 'FY 2026', cost: 12.91, tariff: 8.39 },
-];
-
-const macroGasData = [
-  { year: '2018', domestic: 2750, lng: 0 },
-  { year: '2020', domestic: 2350, lng: 550 },
-  { year: '2022', domestic: 2100, lng: 800 },
-  { year: '2024', domestic: 1850, lng: 950 },
-  { year: '2026', domestic: 1639, lng: 1008 },
-];
-
-const hourlyLoadData = [
-  { time: '00:00', generation: 14867.66, loadShed: 174, demand: 15049.49 },
-  { time: '01:00', generation: 14369.99, loadShed: 197, demand: 14575.86 },
-  { time: '02:00', generation: 13886.39, loadShed: 213, demand: 14108.98 },
-  { time: '03:00', generation: 13620.49, loadShed: 192, demand: 13821.13 },
-  { time: '04:00', generation: 13114.79, loadShed: 186, demand: 13309.16 },
-  { time: '05:00', generation: 12781.57, loadShed: 176, demand: 12965.49 },
-  { time: '06:00', generation: 12623.38, loadShed: 171, demand: 12802.08 },
-  { time: '07:00', generation: 12774.42, loadShed: 223, demand: 13007.42 },
-  { time: '08:00', generation: 12806.47, loadShed: 197, demand: 13012.47 },
-  { time: '09:00', generation: 13134.56, loadShed: 201, demand: 13344.56 },
-  { time: '10:00', generation: 13367.80, loadShed: 278, demand: 13658.80 },
-  { time: '11:00', generation: 13676.68, loadShed: 346, demand: 14038.68 },
-  { time: '12:00', generation: 14171.86, loadShed: 420, demand: 14610.86 },
-  { time: '13:00', generation: 14415.72, loadShed: 405, demand: 14838.72 },
-  { time: '14:00', generation: 14587.64, loadShed: 236, demand: 14834.64 },
-  { time: '15:00', generation: 14723.27, loadShed: 221, demand: 14954.27 },
-  { time: '16:00', generation: 14579.40, loadShed: 148, demand: 14734.40 },
-  { time: '17:00', generation: 14220.97, loadShed: 138, demand: 14364.97 },
-  { time: '18:00', generation: 14179.01, loadShed: 140, demand: 14325.01 },
-  { time: '19:00', generation: 15354.07, loadShed: 213, demand: 15577.07 },
-  { time: '19:30', generation: 15723.11, loadShed: 1082, demand: 16854.11 },
-  { time: '20:00', generation: 15846.44, loadShed: 414, demand: 16279.44 },
-  { time: '21:00', generation: 16154.41, loadShed: 496, demand: 16672.41 },
-  { time: '22:00', generation: 15718.99, loadShed: 636, demand: 16383.61 },
-  { time: '23:00', generation: 15554.84, loadShed: 1236, demand: 16846.46 }
-];
-
-const macroEconomicData = [
-  { year: '2010', exchangeRate: 69.50, inflation: 8.13, spotLng: 0.0, importCoal: 0.0, retailDiesel: 44.0, retailOctane: 77.0 },
-  { year: '2012', exchangeRate: 81.80, inflation: 8.69, spotLng: 0.0, importCoal: 0.0, retailDiesel: 61.0, retailOctane: 94.0 },
-  { year: '2014', exchangeRate: 77.60, inflation: 7.35, spotLng: 0.0, importCoal: 0.0, retailDiesel: 68.0, retailOctane: 99.0 },
-  { year: '2016', exchangeRate: 78.40, inflation: 5.92, spotLng: 0.0, importCoal: 0.0, retailDiesel: 65.0, retailOctane: 89.0 },
-  { year: '2018', exchangeRate: 83.90, inflation: 5.78, spotLng: 8.2, importCoal: 85.0, retailDiesel: 65.0, retailOctane: 89.0 },
-  { year: '2020', exchangeRate: 84.90, inflation: 5.65, spotLng: 6.4, importCoal: 70.0, retailDiesel: 65.0, retailOctane: 89.0 },
-  { year: '2021', exchangeRate: 84.80, inflation: 5.56, spotLng: 10.2, importCoal: 90.0, retailDiesel: 65.0, retailOctane: 89.0 },
-  { year: '2022', exchangeRate: 93.50, inflation: 6.15, spotLng: 35.4, importCoal: 280.0, retailDiesel: 80.0, retailOctane: 130.0 },
-  { year: '2023', exchangeRate: 109.20, inflation: 9.02, spotLng: 14.5, importCoal: 140.0, retailDiesel: 109.0, retailOctane: 130.0 },
-  { year: '2024', exchangeRate: 117.50, inflation: 9.73, spotLng: 12.5, importCoal: 115.0, retailDiesel: 106.75, retailOctane: 131.0 },
-  { year: '2026', exchangeRate: 122.00, inflation: 10.45, spotLng: 11.8, importCoal: 105.0, retailDiesel: 105.50, retailOctane: 125.0 }
-];
-
-const bpdbAuditedFinancials = [
-  { year: 'FY 10', revenue: 8500, cost: 9200, subsidy: 900, loss: -150 },
-  { year: 'FY 12', revenue: 13400, cost: 20200, subsidy: 6300, loss: -500 },
-  { year: 'FY 14', revenue: 18900, cost: 25200, subsidy: 6100, loss: -200 },
-  { year: 'FY 16', revenue: 24500, cost: 28400, subsidy: 3800, loss: -100 },
-  { year: 'FY 18', revenue: 29800, cost: 34500, subsidy: 4500, loss: -200 },
-  { year: 'FY 20', revenue: 36200, cost: 44400, subsidy: 7440, loss: -920 },
-  { year: 'FY 21', revenue: 39100, cost: 50200, subsidy: 11700, loss: -1890 },
-  { year: 'FY 22', revenue: 42300, cost: 71900, subsidy: 29700, loss: -2300 },
-  { year: 'FY 23', revenue: 50900, cost: 98600, subsidy: 39500, loss: -4500 },
-  { year: 'FY 24', revenue: 58200, cost: 110800, subsidy: 38300, loss: -6200 },
-  { year: 'FY 26', revenue: 64800, cost: 121500, subsidy: 39000, loss: -8000 }
-];
-
-const petrobanglaAuditedFinancials = [
-  { year: 'FY 10', revenue: 6200, lngCost: 0, netProfit: 350 },
-  { year: 'FY 12', revenue: 8400, lngCost: 0, netProfit: 450 },
-  { year: 'FY 14', revenue: 12500, lngCost: 0, netProfit: 600 },
-  { year: 'FY 16', revenue: 16400, lngCost: 0, netProfit: 800 },
-  { year: 'FY 18', revenue: 19200, lngCost: 400, netProfit: 1100 },
-  { year: 'FY 20', revenue: 23400, lngCost: 14800, netProfit: 850 },
-  { year: 'FY 21', revenue: 25600, lngCost: 17200, netProfit: 600 },
-  { year: 'FY 22', revenue: 28100, lngCost: 32800, netProfit: -1900 },
-  { year: 'FY 23', revenue: 34500, lngCost: 41200, netProfit: -3400 },
-  { year: 'FY 24', revenue: 38900, lngCost: 45500, netProfit: -2800 },
-  { year: 'FY 26', revenue: 44200, lngCost: 48900, netProfit: -1200 }
-];
-
-const reservesDepletionData = [
-  { year: '2026', bau: 7.63, lowGrowth: 7.63, highGrowth: 7.63 },
-  { year: '2028', bau: 5.63, lowGrowth: 5.83, highGrowth: 5.43 },
-  { year: '2030', bau: 3.83, lowGrowth: 4.13, highGrowth: 3.53 },
-  { year: '2032', bau: 2.23, lowGrowth: 2.63, highGrowth: 1.83 },
-  { year: '2034', bau: 0.83, lowGrowth: 1.33, highGrowth: 0.33 },
-  { year: '2036', bau: 0.00, lowGrowth: 0.23, highGrowth: 0.00 },
-  { year: '2038', bau: 0.00, lowGrowth: 0.00, highGrowth: 0.00 }
-];
-
-const globalVsDomesticRaw = [
-  { year: '1975', globalOil: 11.5, bdDiesel: 1.5, globalCoal: 25.0, bdCoal: 0.0, globalGas: 0.5, bdGas: 0.2, globalSolar: 100.0, bdSolar: 0.0 },
-  { year: '1980', globalOil: 36.8, bdDiesel: 4.5, globalCoal: 35.0, bdCoal: 0.0, globalGas: 1.5, bdGas: 0.5, globalSolar: 80.0, bdSolar: 0.0 },
-  { year: '1985', globalOil: 27.5, bdDiesel: 8.0, globalCoal: 40.0, bdCoal: 0.0, globalGas: 2.0, bdGas: 0.8, globalSolar: 55.0, bdSolar: 0.0 },
-  { year: '1990', globalOil: 23.7, bdDiesel: 11.0, globalCoal: 38.0, bdCoal: 0.0, globalGas: 1.8, bdGas: 1.2, globalSolar: 35.0, bdSolar: 0.0 },
-  { year: '1995', globalOil: 17.0, bdDiesel: 12.5, globalCoal: 35.0, bdCoal: 0.0, globalGas: 1.5, bdGas: 1.5, globalSolar: 22.0, bdSolar: 0.0 },
-  { year: '2000', globalOil: 28.5, bdDiesel: 15.5, globalCoal: 30.0, bdCoal: 18.0, globalGas: 3.5, bdGas: 2.1, globalSolar: 15.0, bdSolar: 0.0 },
-  { year: '2005', globalOil: 54.5, bdDiesel: 28.0, globalCoal: 50.0, bdCoal: 35.0, globalGas: 6.0, bdGas: 3.4, globalSolar: 9.5, bdSolar: 0.0 },
-  { year: '2010', globalOil: 79.5, bdDiesel: 44.0, globalCoal: 95.0, bdCoal: 75.0, globalGas: 4.5, bdGas: 4.8, globalSolar: 26.0, bdSolar: 0.0 },
-  { year: '2015', globalOil: 52.3, bdDiesel: 65.0, globalCoal: 60.0, bdCoal: 68.0, globalGas: 2.6, bdGas: 6.2, globalSolar: 9.6, bdSolar: 16.0 },
-  { year: '2020', globalOil: 41.8, bdDiesel: 65.0, globalCoal: 70.0, bdCoal: 82.0, globalGas: 2.1, bdGas: 9.7, globalSolar: 4.8, bdSolar: 12.0 },
-  { year: '2022', globalOil: 99.0, bdDiesel: 80.0, globalCoal: 280.0, bdCoal: 220.0, globalGas: 34.0, bdGas: 11.9, globalSolar: 4.3, bdSolar: 15.0 },
-  { year: '2024', globalOil: 82.5, bdDiesel: 106.75, globalCoal: 115.0, bdCoal: 110.0, globalGas: 12.5, bdGas: 14.5, globalSolar: 3.6, bdSolar: 15.77 },
-  { year: '2026', globalOil: 78.0, bdDiesel: 105.50, globalCoal: 105.0, bdCoal: 100.0, globalGas: 11.8, bdGas: 16.8, globalSolar: 3.1, bdSolar: 15.77 }
-];
-
-const historicalExchangeRates: Record<string, number> = {
-  '1975': 12.50,
-  '1980': 16.50,
-  '1985': 28.00,
-  '1990': 35.00,
-  '1995': 40.20,
-  '2000': 52.10,
-  '2005': 64.30,
-  '2010': 69.50,
-  '2012': 81.80,
-  '2014': 77.60,
-  '2015': 78.00,
-  '2016': 78.40,
-  '2018': 83.90,
-  '2020': 84.90,
-  '2021': 84.80,
-  '2022': 93.50,
-  '2023': 109.20,
-  '2024': 117.50,
-  '2026': 122.00
-};
-
-const globalVsDomesticData = globalVsDomesticRaw.map(d => {
-  const exRate = historicalExchangeRates[d.year] || 122.0;
-  return {
-    ...d,
-    globalSolarBdt: (d.globalSolar * exRate) / 100,
-    globalGasBdt: (d.globalGas * exRate) / 28.3,
-    globalOilBdt: (d.globalOil * exRate) / 158.987
-  };
-});
-
-const totalCapacityRenewables = 1804.79;
-
-// --- CUSTOM TAKA ICON ---
-function TakaIcon({ className }: { className?: string }) {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2.5"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className={className}
-    >
-      <circle cx="16.5" cy="15.5" r="1.25" fill="currentColor" />
-      <path d="M7 7a2 2 0 1 1 4 0v9a3 3 0 0 0 6 0v-.5" />
-      <path d="M8 11h6" />
-    </svg>
-  );
-}
-
-interface CustomDropdownProps {
-  value: string;
-  onChange: (val: string) => void;
-  options: { label: string; value: string }[];
-  placeholder: string;
-  isOpen: boolean;
-  setIsOpen: (open: boolean) => void;
-  dropdownRef: RefObject<HTMLDivElement | null>;
-  icon?: React.ReactNode;
-  prefixLabel?: string;
-  layout?: 'list' | 'grid';
-  gridColumns?: number;
-  menuWidth?: string;
-  noBackground?: boolean;
-  hideDecorationsOnSelect?: boolean;
-  align?: 'left' | 'right';
-}
-
-function CustomDropdown({
-  value,
-  onChange,
-  options,
-  placeholder,
-  isOpen,
-  setIsOpen,
-  dropdownRef,
-  icon,
-  prefixLabel,
-  layout = 'list',
-  gridColumns = 3,
-  menuWidth,
-  noBackground = false,
-  hideDecorationsOnSelect = false,
-  align = 'left'
-}: CustomDropdownProps) {
-  const selectedOption = options.find((opt) => opt.value === value) || { label: placeholder, value };
-  const hasValue = value && value !== '';
-  const showDecorations = !hideDecorationsOnSelect || !hasValue;
-
-  return (
-    <div className="relative w-full text-left" ref={dropdownRef}>
-      <button
-        type="button"
-        onClick={() => setIsOpen(!isOpen)}
-        className={cn(
-          "w-full relative flex items-center justify-center gap-2 px-3.5 py-2 text-xs md:text-sm border border-border/40 rounded-xl text-foreground focus:outline-none focus:border-primary/50 transition-all duration-150 font-medium shadow-sm pr-8",
-          noBackground
-            ? "bg-transparent hover:bg-muted/10 hover:border-primary/30"
-            : "bg-muted/20 hover:bg-muted/30 hover:border-primary/30"
-        )}
-      >
-        <span className="flex items-center justify-center gap-1.5 font-bold min-w-0 w-full text-center">
-          {showDecorations && icon}
-          {showDecorations && prefixLabel && <span className="text-muted-foreground font-medium mr-0.5 shrink-0">{prefixLabel}</span>}
-          <span className="truncate whitespace-nowrap text-center">{selectedOption.label}</span>
-        </span>
-        <ChevronDown className={cn("absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground shrink-0 transition-transform duration-150", isOpen && "rotate-180")} />
-      </button>
-
-      {isOpen && (
-        <div 
-          style={menuWidth ? { width: menuWidth } : undefined}
-          className={cn(
-            "absolute mt-2.5 max-h-60 overflow-y-auto rounded-2xl border border-border bg-card/95 backdrop-blur-xl shadow-2xl p-1.5 z-[100] animate-in fade-in slide-in-from-top-1 duration-150 scrollbar-thin",
-            align === 'right' ? "right-0" : "left-0",
-            layout === 'grid' ? "grid gap-1" : "flex flex-col",
-            layout === 'grid' && gridColumns === 3 && "grid-cols-3",
-            layout === 'grid' && gridColumns === 4 && "grid-cols-4",
-            layout === 'grid' && gridColumns === 6 && "grid-cols-6",
-            layout !== 'grid' && "w-full"
-          )}
-        >
-          {options.map((opt) => {
-            const active = opt.value === value;
-            return (
-              <button
-                key={opt.value}
-                type="button"
-                onClick={() => {
-                  onChange(opt.value);
-                  setIsOpen(false);
-                }}
-                className={cn(
-                  "flex items-center rounded-xl text-xs md:text-sm font-semibold transition-all select-none text-left",
-                  layout === 'grid' 
-                    ? "justify-center p-2" 
-                    : "w-full justify-between px-3.5 py-2.5",
-                  active
-                    ? "bg-primary/10 text-primary font-bold"
-                    : "text-muted-foreground hover:text-foreground hover:bg-muted/40"
-                )}
-              >
-                <span className={cn(layout === 'grid' ? "whitespace-nowrap text-center w-full" : "truncate")}>{opt.label}</span>
-                {active && layout !== 'grid' && <Check className="h-3.5 w-3.5 shrink-0" />}
-              </button>
-            );
-          })}
-        </div>
-      )}
-    </div>
-  );
-}
-
-function getUpcomingProjectStatusInfo(statusStr: string) {
-  const lowercase = statusStr.toLowerCase();
-  if (lowercase.includes('approved')) {
-    return {
-      label: 'PDPP Approved',
-      bgColor: 'bg-emerald-500/10',
-      textColor: 'text-emerald-500 border-emerald-500/20',
-      icon: Check
-    };
-  } else if (lowercase.includes('sent') || lowercase.includes('recast')) {
-    return {
-      label: 'PDPP Submitted',
-      bgColor: 'bg-blue-500/10',
-      textColor: 'text-blue-400 border-blue-500/20',
-      icon: FileText
-    };
-  } else if (lowercase.includes('feasibility')) {
-    return {
-      label: 'Feasibility Study',
-      bgColor: 'bg-cyan-500/10',
-      textColor: 'text-cyan-400 border-cyan-500/20',
-      icon: Activity
-    };
-  } else {
-    return {
-      label: 'Pipeline',
-      bgColor: 'bg-purple-500/10',
-      textColor: 'text-purple-400 border-purple-500/20',
-      icon: TrendingUp
-    };
-  }
-}
-
-function renderProjectCost(costStr: string | undefined | null) {
-  if (!costStr || costStr.trim() === '' || costStr.toLowerCase().includes('n/a') || costStr === '-') {
-    return <div className="font-bold text-foreground">N/A</div>;
-  }
-
-  const isLakh = costStr.toLowerCase().includes('lakh');
-  if (isLakh) {
-    // Extract the number part, handling commas and decimal points
-    const cleanStr = costStr.replace(/,/g, '');
-    const match = cleanStr.match(/\b[0-9.]+\b/);
-    if (match) {
-      const numVal = parseFloat(match[0]);
-      if (!isNaN(numVal)) {
-        const croreVal = numVal / 100;
-        
-        let formattedCrore = '';
-        if (croreVal >= 1000) {
-          const kCroreVal = croreVal / 1000;
-          formattedCrore = kCroreVal.toLocaleString('en-US', {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2,
-          }) + 'K';
-        } else {
-          formattedCrore = croreVal.toLocaleString('en-US', {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2,
-          });
-        }
-        
-        // Find if BDT or Tk is in the original string, default to BDT
-        let currencySuffix = 'BDT';
-        if (costStr.toLowerCase().includes('tk')) {
-          currencySuffix = 'Tk';
-        }
-
-        return (
-          <div className="space-y-0.5">
-            <div className="font-bold text-foreground text-sm">{costStr}</div>
-            <div className="text-[10px] text-muted-foreground font-semibold">
-              (~{formattedCrore} Crore {currencySuffix})
-            </div>
-          </div>
-        );
-      }
-    }
-  }
-
-  // Default: Return the raw string exactly as it is in the data file
-  return <div className="font-bold text-foreground">{costStr}</div>;
+interface GridLineItem {
+  name: string;
+  status: string;
+  capacity: string;
+  owner: string;
+  load: number;
 }
 
 interface PowerGridExplorerProps {
-  initialMix?: any;
-  initialLines?: any;
-  initialProjects?: any;
-  dbNodes?: any[];
-  dbEdges?: any[];
+  initialLines?: GridLineItem[];
 }
 
-export function PowerGridExplorer({ 
-  initialMix, 
-  initialLines, 
-  initialProjects,
-  dbNodes = [],
-  dbEdges = []
+export function PowerGridExplorer({
+  initialLines,
 }: PowerGridExplorerProps = {}) {
   const chartTheme = useChartTheme();
   
   // Date Selection States
   const availableDatesList = useMemo<string[]>(() => {
-    const rawList = Array.isArray(availableDatesListRaw)
-      ? (availableDatesListRaw as string[])
-      : ((availableDatesListRaw as any)?.default as string[]) || [];
-    return rawList.filter((d: any) => /^(201[1-9]|202[0-6])-\d{2}-\d{2}$/.test(String(d))) as string[];
+    return availableDates.filter((d) => /^(201[1-9]|202[0-6])-\d{2}-\d{2}$/.test(String(d)));
   }, []);
 
-  const latestDate = availableDatesList[availableDatesList.length - 1] || '2026-06-24';
+  const latestDate = getLatestAvailableDate() ?? availableDatesList[availableDatesList.length - 1] ?? '2026-06-29';
+  const latestFallbackData = useMemo(
+    () => getArchiveFallback(latestDate),
+    [latestDate],
+  );
   const [selectedDate, setSelectedDate] = useState<string>(latestDate);
-  const [activeData, setActiveData] = useState<GridDailyData>(powerGridArchive['24 Jun 2026']);
-  const [isLoadingDaily, setIsLoadingDaily] = useState<boolean>(false);
+  const [activeData, setActiveData] = useState<GridDailyData>(
+    () => getArchiveFallback(latestDate) ?? getArchiveFallback('2026-06-22')!,
+  );
+  const [isLoadingDaily, setIsLoadingDaily] = useState<boolean>(true);
   const [isDataMissing, setIsDataMissing] = useState<boolean>(false);
   const [isMethodologyOpen, setIsMethodologyOpen] = useState(false);
   const [showMethodologyBanner, setShowMethodologyBanner] = useState(true);
@@ -675,43 +242,27 @@ export function PowerGridExplorer({
     if (!selectedDate) return;
 
     setIsLoadingDaily(true);
-    fetch(`/data/daily/${selectedDate}.json`)
-      .then((res) => {
-        if (!res.ok) {
-          throw new Error(`Failed to fetch daily data: ${res.statusText}`);
-        }
-        return res.json();
-      })
-      .then((data) => {
-        if (isMounted) {
-          setActiveData(data);
-          setIsLoadingDaily(false);
+    fetchDailyReport(selectedDate)
+      .then((result) => {
+        if (!isMounted) return;
+        if (result.ok) {
+          setActiveData(result.data);
           setIsDataMissing(false);
+        } else {
+          const fallback = getArchiveFallback(selectedDate) ?? latestFallbackData;
+          if (fallback) setActiveData(fallback);
+          setIsDataMissing(true);
+          console.error(result.error);
         }
       })
-      .catch((err) => {
-        console.error(err);
-        if (isMounted) {
-          const formattedKeys: Record<string, string> = {
-            '2026-06-22': '22 Jun 2026',
-            '2026-06-24': '24 Jun 2026',
-          };
-          const legacyKey = formattedKeys[selectedDate];
-          if (legacyKey && powerGridArchive[legacyKey]) {
-            setActiveData(powerGridArchive[legacyKey]);
-            setIsDataMissing(false);
-          } else {
-            setActiveData(powerGridArchive['24 Jun 2026']);
-            setIsDataMissing(true);
-          }
-          setIsLoadingDaily(false);
-        }
+      .finally(() => {
+        if (isMounted) setIsLoadingDaily(false);
       });
 
     return () => {
       isMounted = false;
     };
-  }, [selectedDate]);
+  }, [selectedDate, latestFallbackData]);
 
   const [activeKpiTooltip, setActiveKpiTooltip] = useState<string | null>(null);
   const kpiStripRef = useRef<HTMLDivElement>(null);
@@ -752,12 +303,12 @@ export function PowerGridExplorer({
   const {
     systemStats,
     generationData,
-    gasProductionData,
-    gasDistributionData,
-    borderImportsData,
-    regionalDemandData,
-    dailyOutages,
-    hourlyLoadData
+    gasProductionData = [],
+    gasDistributionData = [],
+    borderImportsData = [],
+    regionalDemandData = [],
+    dailyOutages = [],
+    hourlyLoadData = [],
   } = activeData;
 
   // Dynamic Gas Production & Supply calculations
@@ -930,9 +481,8 @@ export function PowerGridExplorer({
 
   // PGCB Monthly Archives States
   const [selectedMonthlyKey, setSelectedMonthlyKey] = useState<string>(
-    pgcbMonthlyData && pgcbMonthlyData.length > 0
-      ? pgcbMonthlyData[pgcbMonthlyData.length - 1].date_key
-      : '2026-02'
+    getLatestMonthlyDateKey() ??
+      (pgcbMonthlyData.length > 0 ? pgcbMonthlyData[pgcbMonthlyData.length - 1].date_key : '2026-06'),
   );
   const [monthlyTrendMetric, setMonthlyTrendMetric] = useState<'peaks' | 'energy' | 'fuels'>('peaks');
   const [selectedFuelTrend, setSelectedFuelTrend] = useState<'gas' | 'coal' | 'hfo' | 'import'>('gas');
@@ -1717,17 +1267,23 @@ export function PowerGridExplorer({
               <div className="p-4 rounded-full bg-muted/20 text-muted-foreground mb-4 animate-pulse">
                 <Info className="h-8 w-8 text-amber-500" />
               </div>
-              <h4 className="text-base font-bold text-foreground mb-2">Report haven't released for the day yet</h4>
+              <h4 className="text-base font-bold text-foreground mb-2">Report has not been released for this day yet.</h4>
               <p className="text-xs text-muted-foreground max-w-sm mb-4">
                 The daily grid status report and Petrobangla production telemetry for {selectedDate} have not been finalized or published by PGCB/NLDC.
               </p>
-              <div className="bg-muted/10 p-4 rounded-xl border border-border/20 font-sans text-xs text-foreground max-w-md w-full text-left">
-                <div className="font-bold text-amber-500 uppercase tracking-wider text-[10px] mb-2">Latest Available Report:</div>
-                <div className="font-semibold text-foreground mb-1">Date: 24 Jun 2026</div>
-                <div className="text-[11px] text-muted-foreground mt-2 pt-2 border-t border-border/10 leading-relaxed">
-                  latest report is &gt; Peak Gen: 15,700.0 MW / Demand: 17,565.0 MW / Energy: 347.1 MKWh and date 24 Jun 2026
+              {latestFallbackData?.systemStats && (
+                <div className="bg-muted/10 p-4 rounded-xl border border-border/20 font-sans text-xs text-foreground max-w-md w-full text-left">
+                  <div className="font-bold text-amber-500 uppercase tracking-wider text-[10px] mb-2">Latest Available Report:</div>
+                  <div className="font-semibold text-foreground mb-1">
+                    Date: {latestFallbackData.systemStats.date || isoDateToLegacy(latestDate) || latestDate}
+                  </div>
+                  <div className="text-[11px] text-muted-foreground mt-2 pt-2 border-t border-border/10 leading-relaxed">
+                    Peak Gen: {formatNumber(latestFallbackData.systemStats.eveningPeakGen, 1)} MW / Demand:{' '}
+                    {formatNumber(latestFallbackData.systemStats.eveningPeakDemand, 1)} MW / Energy:{' '}
+                    {formatNumber(latestFallbackData.systemStats.totalEnergyGen, 1)} MKWh
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
           </div>
         )}
@@ -2219,151 +1775,14 @@ export function PowerGridExplorer({
       )}
 
       {!isDataMissing && activeTab === 'gas' && (
-        selectedDate < '2020-01-12' ? (
-          <div className="grid-explorer-panel space-y-6">
-            <div className="grid-explorer-chart-card card p-8 flex flex-col items-center justify-center text-center min-h-[400px]">
-              <div className="p-4 rounded-full bg-muted/20 text-muted-foreground mb-4">
-                <Info className="h-8 w-8 text-primary animate-pulse" />
-              </div>
-              <h4 className="text-base font-bold text-foreground mb-2">Petrobangla Gas Production &amp; Distribution Data</h4>
-              <p className="text-xs text-muted-foreground max-w-sm">
-                No official records are available for the selected date. Petrobangla gas production tracking officially started on January 12, 2020.
-              </p>
-              <div className="mt-4 text-[10px] text-muted-foreground">
-                Official Backlog Start Date: January 12, 2020
-              </div>
-            </div>
-          </div>
-        ) : <div className="grid-explorer-panel space-y-6">
-          {/* Petrobangla Production */}
-          <div className="grid-explorer-chart-card card">
-            <div className="grid-explorer-chart-card__head grid-explorer-chart-card__head--border">
-              <Droplet className="h-5 w-5 text-sky-500 shrink-0" />
-              <div>
-                <h3 className="grid-explorer-chart-card__title">Daily Gas &amp; Condensate Production<sup className="text-emerald-500 font-extrabold text-[10px] ml-2 select-none">Daily</sup></h3>
-                    <p className="grid-explorer-chart-card__sub">Petrobangla Production &amp; Marketing Division Report • <span className="text-sky-500 font-semibold">Tracked since January 12, 2020</span></p>
-              </div>
-            </div>
-
-            <div className="grid-explorer-table-wrap">
-              <table className="grid-explorer-table">
-                <thead>
-                  <tr>
-                    <th>Field / Company Operator</th>
-                    <th className="text-left">Active Fields/Wells</th>
-                    <th className="text-left">Gas Produced (MMCFD)</th>
-                    <th className="text-left">Condensate Produced (BBL)</th>
-                    <th className="text-left">National Gas Share</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {gasProductionData.map((gp, idx) => (
-                    <tr key={idx}>
-                      <td className="font-semibold">{gp.company}</td>
-                      <td className="text-left tabular-nums text-muted-foreground">{gp.fields || '—'}</td>
-                      <td className="text-left tabular-nums font-medium">{gp.gas.toFixed(1)}</td>
-                      <td className="text-left tabular-nums">{formatNumber(Math.round(gp.condensate))}</td>
-                      <td className="text-left tabular-nums text-muted-foreground">{gp.share.toFixed(1)}%</td>
-                    </tr>
-                  ))}
-                  <tr className="border-t border-border/80 font-bold bg-muted/20">
-                    <td>Grand Total Production</td>
-                    <td className="text-left">23 Fields</td>
-                    <td className="text-left text-primary">{formatNumber(totalGasSupply, 1)}</td>
-                    <td className="text-left">{formatNumber(totalCondensate, 1)}</td>
-                    <td className="text-left">100.0%</td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-
-            {/* Card Metadata Footer */}
-            <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1.5 mt-4 pt-3 border-t border-border/40 text-[10px] text-muted-foreground/80 px-4 pb-4">
-              <span>Source: <a href="https://www.petrobangla.org.bd/" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline font-semibold">Petrobangla Production Reports</a></span>
-              <span>Audited by: Petrobangla Production &amp; Marketing Division</span>
-              <span className="font-medium">Reporting Period: Daily Field Snapshot (Date: 22-23 Jun 2026)</span>
-            </div>
-          </div>
-
-          {/* Gas Distribution */}
-          <div className="grid-explorer-chart-card card">
-            <div className="grid-explorer-chart-card__head grid-explorer-chart-card__head--border">
-              <Database className="h-5 w-5 text-sky-600 shrink-0" />
-              <div>
-                <h3 className="grid-explorer-chart-card__title">Sectorwise Gas Distribution<sup className="text-emerald-500 font-extrabold text-[10px] ml-2 select-none">Daily</sup></h3>
-                <p className="grid-explorer-chart-card__sub">Allocated supply (MMCFD) across regional gas distributors • <span className="text-sky-500 font-semibold">Tracked since January 12, 2020</span></p>
-              </div>
-            </div>
-
-            <div className="grid-explorer-table-wrap">
-              <table className="grid-explorer-table">
-                <thead>
-                  <tr>
-                    <th>Distributor</th>
-                    <th className="text-left">Power Grid Supply</th>
-                    <th className="text-left">Fertilizer Supply</th>
-                    <th className="text-left">Industrial / Others</th>
-                    <th className="text-left">Total Gas Distributed</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {gasDistributionData.map((gd, idx) => (
-                    <tr key={idx}>
-                      <td className="font-semibold">{gd.company}</td>
-                      <td className="text-left tabular-nums">{gd.power.toFixed(1)}</td>
-                      <td className="text-left tabular-nums">{gd.fertilizer.toFixed(1)}</td>
-                      <td className="text-left tabular-nums text-muted-foreground">{gd.others.toFixed(1)}</td>
-                      <td className="text-left tabular-nums font-semibold">{gd.total.toFixed(1)}</td>
-                    </tr>
-                  ))}
-                  <tr className="border-t border-border/80 font-bold bg-muted/20">
-                    <td>National Total Supply</td>
-                    <td className="text-left tabular-nums text-primary">917.3</td>
-                    <td className="text-left tabular-nums">151.6</td>
-                    <td className="text-left tabular-nums">1,475.1</td>
-                    <td className="text-left tabular-nums text-primary">2,544.1</td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-
-            {/* Technical Glossary Footnote */}
-            <div className="mt-6 p-4 rounded-2xl bg-muted/5 border border-border/30 space-y-2.5">
-              <div className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
-                <Info className="h-3.5 w-3.5 text-sky-500" /> Gas Sector Acronyms &amp; Units Footnote
-              </div>
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4 text-[10px] text-muted-foreground leading-relaxed">
-                <div>
-                  <strong className="text-foreground block font-bold mb-0.5">MMCFD</strong>
-                  Million Standard Cubic Feet per Day. Standard unit of gas volume flow rate.
-                </div>
-                <div>
-                  <strong className="text-foreground block font-bold mb-0.5">LNG (Liquefied Natural Gas)</strong>
-                  Natural gas cooled to liquid state (-162°C) for shipping, then regasified back into the grid.
-                </div>
-                <div>
-                  <strong className="text-foreground block font-bold mb-0.5">BGFCL / SGFL / BAPEX</strong>
-                  National gas production state companies (Bangladesh Gas Fields, Sylhet Gas Fields, and BAPEX exploration).
-                </div>
-                <div>
-                  <strong className="text-foreground block font-bold mb-0.5">TGTDCL / BGDCL / KGDCL</strong>
-                  Gas distribution companies (Titas Gas, Bakhrabad Gas, and Karnaphuli Gas Distribution).
-                </div>
-                <div>
-                  <strong className="text-foreground block font-bold mb-0.5">RPGCL</strong>
-                  Rupantarita Prakritik Gas Company Limited, responsible for gas imports and LNG terminal operations.
-                </div>
-              </div>
-            </div>
-
-            {/* Card Metadata Footer */}
-            <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1.5 mt-4 pt-3 border-t border-border/40 text-[10px] text-muted-foreground/80 px-4 pb-4">
-              <span>Source: <a href="https://www.petrobangla.org.bd/" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline font-semibold">Petrobangla Distribution Reports</a></span>
-              <span>Audited by: Distributor Billing Audits (TGTDCL, KGDCL, JGTDSL)</span>
-              <span className="font-medium">Reporting Period: Daily Distribution Allocation (Date: 22-23 Jun 2026)</span>
-            </div>
-          </div>
-        </div>
+        <GasTab
+          selectedDate={selectedDate}
+          systemStatsDate={systemStats?.date || 'Jun 2026'}
+          gasProductionData={safeGasProductionData}
+          gasDistributionData={gasDistributionData || []}
+          totalGasSupply={totalGasSupply}
+          totalCondensate={totalCondensate}
+        />
       )}
 
       {!isDataMissing && activeTab === 'imports' && (
@@ -2468,7 +1887,7 @@ export function PowerGridExplorer({
                   </tr>
                 </thead>
                 <tbody>
-                  {sredaRenewablesData.map((sr, idx) => (
+                  {sredaRenewablesWithIcons.map((sr, idx) => (
                     <tr key={idx}>
                       <td className="font-semibold flex items-center gap-2">
                         <sr.icon className="h-4 w-4 text-primary shrink-0" />

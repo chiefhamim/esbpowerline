@@ -14,9 +14,14 @@ const ENERGY_STAT_LABELS_BN: Record<string, string> = {
   'Generation Capacity': 'উৎপাদন ক্ষমতা',
   'Current Demand': 'বর্তমান চাহিদা',
   'Renewable Share': 'নবায়নযোগ্য অংশ',
+  'RE Installed': 'নবায়নযোগ্য স্থাপিত',
+  'RE Grid Share': 'নবায়নযোগ্য গ্রিড অংশ',
   'System Loss': 'সিস্টেম লস',
   'Gas Supply': 'গ্যাস সরবরাহ',
   'Peak Today': 'আজকের পিক',
+  'Peak Generation': 'পিক উৎপাদন',
+  'Energy Unserved': 'অপূরণীয় বিদ্যুৎ',
+  'Grid Import': 'গ্রিড আমদানি',
   'India Grid Import': 'ভারত থেকে আমদানি',
   'Solar Installed': 'সোলার স্থাপিত',
   'Daily Generation': 'দৈনিক উৎপাদন',
@@ -49,6 +54,30 @@ export function localizeTickerItem(item: TickerItem, locale: SiteLocale): Ticker
 export function localizeEnergyStatLabel(label: string, locale: SiteLocale): string {
   if (locale === 'en') return label;
   return ENERGY_STAT_LABELS_BN[label] ?? label;
+}
+
+/** Stable snapshot header date — format on the server to avoid hydration drift. */
+export function formatSnapshotHeaderDate(isoDate: string | undefined, locale: SiteLocale): string {
+  let dateObj = new Date();
+  if (isoDate) {
+    const cleanDate = isoDate.replace(/^"|"$/g, '');
+    const match = cleanDate.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    if (match) {
+      const [, y, m, d] = match;
+      dateObj = new Date(Number(y), Number(m) - 1, Number(d));
+    } else {
+      const parsed = new Date(cleanDate);
+      if (!isNaN(parsed.getTime())) {
+        dateObj = parsed;
+      }
+    }
+  }
+
+  return dateObj.toLocaleDateString(locale === 'bn' ? 'bn-BD' : 'en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  });
 }
 
 export function localizeSnapshotLabel(label: string, locale: SiteLocale): string {

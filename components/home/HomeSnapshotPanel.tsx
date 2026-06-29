@@ -1,21 +1,21 @@
 'use client';
 
-import { BarChart3 } from 'lucide-react';
-import { SnapshotSourcesLine } from '@/components/home/SnapshotSourcesLine';
+import Link from 'next/link';
+import { ArrowUpRight, BarChart3 } from 'lucide-react';
 import { EnergyDashboard } from '@/components/news/EnergyDashboard';
 import { useLocale } from '@/components/shared/LocaleProvider';
-import { localizeSnapshotLabel } from '@/lib/i18n/homepage-copy';
+import { formatSnapshotHeaderDate, localizeSnapshotLabel } from '@/lib/i18n/homepage-copy';
 
-export function HomeSnapshotPanel({
+function SnapshotSegment({
   snapshotStats,
   snapshotLabel,
   snapshotDate,
-  layout = 'rail',
+  headerDate,
 }: {
   snapshotStats?: unknown;
   snapshotLabel: string;
   snapshotDate?: string;
-  layout?: 'rail' | 'hero-rail';
+  headerDate: string;
 }) {
   const { locale, t } = useLocale();
   const localizedSnapshotLabel = localizeSnapshotLabel(snapshotLabel, locale);
@@ -25,73 +25,95 @@ export function HomeSnapshotPanel({
     .filter(Boolean);
   const [liveWord, ...agencies] = parts;
   const sourcesText = agencies.join(' • ');
-  const isHeroRail = layout === 'hero-rail';
 
-  let dateObj = new Date();
-  if (snapshotDate) {
-    const cleanDate = snapshotDate.replace(/^"|"$/g, '');
-    const match = cleanDate.match(/^(\d{4})-(\d{2})-(\d{2})$/);
-    if (match) {
-      const [_, y, m, d] = match;
-      dateObj = new Date(Number(y), Number(m) - 1, Number(d));
-    } else {
-      const parsed = new Date(cleanDate);
-      if (!isNaN(parsed.getTime())) {
-        dateObj = parsed;
-      }
-    }
-  }
-
-  const headerDate = dateObj.toLocaleDateString(locale === 'bn' ? 'bn-BD' : 'en-US', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-  });
-
-  if (isHeroRail) {
-    return (
-      <section
-        className="home-snapshot-hero-shell flex flex-col h-full bg-transparent lg:min-h-[var(--home-hero-band-card-h)] lg:h-[var(--home-hero-band-card-h)] lg:max-h-[var(--home-hero-band-card-h)] overflow-hidden relative"
-        aria-labelledby="home-snapshot-title"
-      >
-        <div className="flex flex-col h-full justify-between relative z-10">
-          <div className="flex-shrink-0 pb-3 border-b border-border/10 dark:border-border/20 mb-2">
-            <div className="flex items-center justify-between gap-2 w-full">
-              <div className="flex items-center gap-1.5 min-w-0">
-                <BarChart3 className="h-6 w-6 text-primary shrink-0 animate-pulse" style={{ animationDuration: '3s' }} aria-hidden />
-                <h2 id="home-snapshot-title" className="m-0 p-0 py-0.5 text-lg md:text-xl font-display font-extrabold tracking-tight text-foreground truncate leading-tight">
-                  {t('home.systemSnapshot')}
-                </h2>
-              </div>
-              <div className="flex flex-col items-end gap-1 shrink-0">
-                <span className="text-[9px] md:text-[10px] font-mono font-bold uppercase tracking-wider text-muted-foreground/60 dark:text-muted-foreground/50 select-none leading-none">
-                  {locale === 'bn' ? 'আপডেট: ' : 'UPDATED: '}{headerDate}
-                </span>
-                <span className="inline-flex items-center gap-1 rounded border border-rose-500/20 bg-rose-500/10 px-1.5 py-0.5 text-[9px] md:text-[9.5px] font-display font-extrabold uppercase tracking-widest text-rose-600 dark:text-rose-400 select-none transition-colors duration-300 shadow-[0_1px_2px_rgba(244,63,94,0.03)] leading-none mt-1.5">
-                  <span className="relative flex h-1 w-1 mx-0.5 shrink-0">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75" />
-                    <span className="relative inline-flex rounded-full h-1 w-1 bg-rose-500" />
-                  </span>
-                  {liveWord}
-                </span>
-              </div>
-            </div>
+  return (
+    <section className="home-snapshot-segment" aria-labelledby="home-snapshot-title">
+      <div className="home-snapshot-segment__card">
+        <header className="home-snapshot-segment__head">
+          <div className="home-snapshot-segment__title-block">
+            <Link href="/data-reports/power-grid" className="home-snapshot-segment__title-link group">
+              <BarChart3 className="home-snapshot-segment__icon" aria-hidden />
+              <h2 id="home-snapshot-title" className="home-snapshot-segment__title">
+                {t('home.systemSnapshot')}
+              </h2>
+              <ArrowUpRight
+                className="home-snapshot-segment__title-arrow opacity-0 transition-opacity duration-200 group-hover:opacity-70"
+                aria-hidden
+              />
+            </Link>
+            <p className="home-snapshot-segment__kicker">
+              {locale === 'bn' ? 'দৈনিক গ্রিড পরিসংখ্যান' : 'Daily grid telemetry'}
+            </p>
           </div>
-          <div className="flex-grow min-h-0 flex flex-col justify-center">
-            <EnergyDashboard initialStats={snapshotStats as never} compact fillHeight />
+          <div className="home-snapshot-segment__meta">
+            <span className="home-snapshot-segment__updated">
+              {locale === 'bn' ? 'আপডেট ' : 'Updated '}
+              <time dateTime={snapshotDate ?? headerDate}>{headerDate}</time>
+            </span>
+            <span className="home-snapshot-segment__live">
+              <span className="home-snapshot-segment__live-dot" aria-hidden>
+                <span className="home-snapshot-segment__live-ping" />
+                <span className="home-snapshot-segment__live-core" />
+              </span>
+              {liveWord}
+            </span>
           </div>
-          {sourcesText && (
-            <div className="flex-shrink-0 pt-3 border-t border-border/10 dark:border-border/20 mt-2">
-              <div className="flex flex-col items-end w-full gap-0.5 text-[9px] xs:text-[10px] md:text-[11px] text-muted-foreground font-mono font-medium italic opacity-75 text-right">
-                <div className="flex items-center justify-end gap-1 w-full whitespace-nowrap">
-                  <span className="font-semibold text-foreground/50 tracking-wider not-italic">{locale === 'bn' ? 'তথ্য সূত্র:' : 'DATA:'}</span>
-                  <span>{sourcesText}</span>
-                </div>
-              </div>
-            </div>
-          )}
+        </header>
+
+        <div className="home-snapshot-segment__body">
+          <EnergyDashboard
+            initialStats={snapshotStats as never}
+            compact
+            fillHeight
+            variant="segment"
+          />
         </div>
-      </section>
+
+        {sourcesText ? (
+          <footer className="home-snapshot-segment__foot">
+            <span className="home-snapshot-segment__sources-label">
+              {locale === 'bn' ? 'সূত্র' : 'Sources'}
+            </span>
+            <span className="home-snapshot-segment__sources-text">{sourcesText}</span>
+          </footer>
+        ) : null}
+      </div>
+    </section>
+  );
+}
+
+export function HomeSnapshotPanel({
+  snapshotStats,
+  snapshotLabel,
+  snapshotDate,
+  snapshotHeaderDate,
+  layout = 'rail',
+}: {
+  snapshotStats?: unknown;
+  snapshotLabel: string;
+  snapshotDate?: string;
+  snapshotHeaderDate?: string;
+  layout?: 'rail' | 'segment';
+}) {
+  const { locale, t } = useLocale();
+  const localizedSnapshotLabel = localizeSnapshotLabel(snapshotLabel, locale);
+  const parts = localizedSnapshotLabel
+    .split(/\s*•\s*/)
+    .map((part) => part.trim())
+    .filter(Boolean);
+  const [liveWord, ...agencies] = parts;
+  const sourcesText = agencies.join(' • ');
+  const headerDate =
+    snapshotHeaderDate ?? formatSnapshotHeaderDate(snapshotDate, locale);
+
+  if (layout === 'segment') {
+    return (
+      <SnapshotSegment
+        snapshotStats={snapshotStats}
+        snapshotLabel={snapshotLabel}
+        snapshotDate={snapshotDate}
+        headerDate={headerDate}
+      />
     );
   }
 
@@ -120,7 +142,7 @@ export function HomeSnapshotPanel({
           </span>
         </div>
       </div>
-      
+
       <div className="relative z-10 flex-grow my-3">
         <EnergyDashboard initialStats={snapshotStats as never} compact fillHeight={false} />
       </div>

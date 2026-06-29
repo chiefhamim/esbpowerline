@@ -1,6 +1,10 @@
 import type { Role } from '@/lib/constants';
 import { ROLES } from '@/lib/constants';
 
+/**
+ * Role naming: Prisma `User.role` and Supabase `profiles.role` use SUBSCRIBER.
+ * UI copy may say "Member" (see ROLES.SUBSCRIBER.name). Never compare to 'MEMBER'.
+ */
 export type AccountKind = 'member' | 'admin' | 'editor';
 
 export function getAccountKind(role: Role | undefined): AccountKind | null {

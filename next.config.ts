@@ -33,8 +33,12 @@ const nextConfig: NextConfig = {
   },
 
   images: {
-    // Allow images from any HTTPS host; CDN-hosted images are served optimized
-    remotePatterns: [{ protocol: 'https', hostname: '**' }],
+    remotePatterns: [
+      { protocol: 'https', hostname: '**.supabase.co' },
+      { protocol: 'https', hostname: 'esbpowerline.com' },
+      { protocol: 'https', hostname: 'www.esbpowerline.com' },
+      { protocol: 'https', hostname: '**.esbpowerline.com' },
+    ],
     formats: ['image/avif', 'image/webp'],
     deviceSizes: [360, 480, 640, 750, 828, 1080, 1200, 1920],
     imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
@@ -62,6 +66,20 @@ const nextConfig: NextConfig = {
         // Short cache for public images (can be purged by CDN)
         source: '/images/(.*)',
         headers: [{ key: 'Cache-Control', value: 'public, max-age=86400, stale-while-revalidate=604800' }],
+      },
+      {
+        source: '/data/daily/(.*)',
+        headers: [
+          { key: 'Cache-Control', value: 'private, no-store' },
+          { key: 'X-Content-Type-Options', value: 'nosniff' },
+        ],
+      },
+      {
+        source: '/data/(.*)',
+        headers: [
+          { key: 'X-Content-Type-Options', value: 'nosniff' },
+          { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
+        ],
       },
     ];
   },

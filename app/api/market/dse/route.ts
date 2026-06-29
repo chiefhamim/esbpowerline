@@ -1,19 +1,26 @@
+import { NextRequest, NextResponse } from 'next/server';
 import { DEFAULT_DSE_TICKER, jitterDseSnapshot, type DseTickerItem } from '@/lib/bd-stock-market';
 import { isSimulatedTelemetryEnabled } from '@/lib/telemetry-mode';
+import { checkRateLimitResponse, withPrivateNoStore } from '@/lib/security';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
-export async function GET() {
+export async function GET(request: NextRequest) {
+  const limited = checkRateLimitResponse(request, 'api-market-dse', 60, 60_000);
+  if (limited) return limited;
+
   let items: DseTickerItem[] = DEFAULT_DSE_TICKER;
 
   if (isSimulatedTelemetryEnabled()) {
     items = jitterDseSnapshot(DEFAULT_DSE_TICKER);
   }
 
-  return Response.json({
-    market: 'DSE',
-    updatedAt: new Date().toISOString(),
-    items,
-  });
+  return withPrivateNoStore(
+    NextResponse.json({
+      market: 'DSE',
+      updatedAt: new Date().toISOString(),
+      items,
+    }),
+  );
 }

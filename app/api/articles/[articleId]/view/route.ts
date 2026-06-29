@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import {
   VISITOR_COOKIE,
@@ -6,11 +6,15 @@ import {
   recordArticleView,
   resolveVisitorKey,
 } from '@/lib/article-view-tracking';
+import { checkRateLimitResponse, withPrivateNoStore } from '@/lib/security';
 
 export async function POST(
-  request: Request,
+  request: NextRequest,
   { params }: { params: Promise<{ articleId: string }> },
 ) {
+  const limited = checkRateLimitResponse(request, 'api-article-view', 120, 60_000);
+  if (limited) return limited;
+
   try {
     const { articleId } = await params;
     if (!articleId?.trim()) {
@@ -26,7 +30,9 @@ export async function POST(
     const visitorKey = resolveVisitorKey(token);
     const result = await recordArticleView(articleId, visitorKey, referrer);
 
-    const response = NextResponse.json({ ok: true, recorded: result.recorded });
+    const response = withPrivateNoStore(
+      NextResponse.json({ ok: true, recorded: result.recorded }),
+    );
     if (isNewVisitor && token) {
       response.cookies.set(VISITOR_COOKIE, token, {
         httpOnly: true,

@@ -61,7 +61,7 @@ import { LiveArticleLink } from '@/components/shared/LiveArticleLink';
 import { ArticleAuthorSticky } from '@/components/shared/ArticleAuthorSticky';
 import { EditorCollaborators } from '@/components/editor/EditorCollaborators';
 import { getStaffForCollaboration } from '@/lib/actions/users';
-import { HEADLINE_BUDGET, EXCERPT_BUDGET, SLUG_BUDGET } from '@/lib/editorial-limits';
+import { HEADLINE_BUDGET, EXCERPT_BUDGET, SLUG_BUDGET, needsShortTitle } from '@/lib/editorial-limits';
 import {
   formatPublishBlockerMessage,
   getPublishBlockers,
@@ -282,7 +282,7 @@ export function ArticleForm({
   const buildSavePayload = useCallback(
     (saveStatus: string) => ({
       title,
-      shortTitle: title.length > 100 ? (shortTitle || undefined) : undefined,
+      shortTitle: needsShortTitle(title) ? (shortTitle || undefined) : undefined,
       slug: slug || slugify(title),
       excerpt,
       content,
@@ -511,7 +511,9 @@ export function ArticleForm({
             <FileText className="h-4 w-4 text-sky-500" />
             <div>
               <h2 className="cms-editor-panel__title">Headline &amp; deck</h2>
-              <p className="cms-editor-panel__desc">Sized for hero carousel, cards, and social</p>
+              <p className="cms-editor-panel__desc">
+                Hero: 4 lines · ideal ≤{HEADLINE_BUDGET.ideal} chars · max {HEADLINE_BUDGET.max}
+              </p>
             </div>
           </div>
           <div className="cms-editor-panel__body cms-editor-panel__body--stack">
@@ -634,18 +636,19 @@ export function ArticleForm({
                 onChange={(e) => handleTitleChange(e.target.value)}
                 className="cms-field__input cms-field__input--headline"
                 placeholder={!showGuidanceHints ? "Headline" : "Write a compelling headline…"}
-                maxLength={HEADLINE_BUDGET.max + 20}
-                rows={2}
+                rows={4}
               />
-              <span className="cms-field__hint">Drag corner to expand — keep within ideal length for carousel</span>
+              <span className="cms-field__hint">
+                Ideal ≤{HEADLINE_BUDGET.ideal} chars · hero clamps at 4 lines (max {HEADLINE_BUDGET.max} before overflow)
+              </span>
             </div>
 
-            {title.length > 100 && (
+            {needsShortTitle(title) && (
               <div className="cms-field border-l-4 border-amber-500 pl-4 bg-amber-500/5 py-3 pr-3 rounded-r-xl space-y-2">
                 <div className="cms-field__label-row">
                   <label htmlFor="shortTitle" className="cms-field__label text-amber-600 dark:text-amber-400 font-semibold flex items-center gap-1.5">
                     <Info className="h-4 w-4 shrink-0" />
-                    Headline Exceeds 100-char Limit ({title.length} chars)
+                    Headline exceeds {HEADLINE_BUDGET.max}-char hero limit ({title.length} chars)
                   </label>
                   <CharBudgetHint length={shortTitle.length} budget={HEADLINE_BUDGET} />
                 </div>
@@ -654,11 +657,11 @@ export function ArticleForm({
                   value={shortTitle}
                   onChange={(e) => setShortTitle(e.target.value)}
                   className="cms-field__input border-amber-300 dark:border-amber-700 focus-visible:ring-amber-500 font-medium"
-                  placeholder="Specify the shortened headline for card grids & carousels..."
-                  maxLength={100}
+                  placeholder="Short headline for cards, trending, and grids…"
+                  maxLength={HEADLINE_BUDGET.max}
                 />
                 <span className="cms-field__hint text-amber-600/80 dark:text-amber-400/80 leading-normal block">
-                  This shortened version will be shown everywhere on the website except in the full article reading view (which will display the full {title.length}-char headline).
+                  The hero carousel still shows the full headline (4-line clamp). Cards and trending use this shortened version when provided.
                 </span>
               </div>
             )}

@@ -13,6 +13,7 @@ export function validateProdEnv(): void {
       'NEXT_PUBLIC_SUPABASE_URL',
       'NEXT_PUBLIC_SUPABASE_ANON_KEY',
       'CSRF_SECRET',
+      'NEXT_PUBLIC_SITE_URL',
     ];
     required.forEach(assertEnvVar);
   }

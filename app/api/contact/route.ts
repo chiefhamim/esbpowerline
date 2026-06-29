@@ -1,8 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { checkRateLimit, clientIpFromForwarded } from '@/lib/rate-limit';
+import { checkCsrf } from '@/lib/security';
 
 export async function POST(request: NextRequest) {
+  const csrfDenied = checkCsrf(request);
+  if (csrfDenied) return csrfDenied;
+
   // Rate limit: 5 submissions per minute per IP
   const ip = clientIpFromForwarded(
     request.headers.get('x-forwarded-for'),

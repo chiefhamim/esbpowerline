@@ -4,8 +4,6 @@ import { PowerGridExportControls } from '@/components/members/PowerGridExportCon
 import { PowerGridExplorerClient } from '@/components/news/PowerGridExplorerClient';
 import { RefreshGridDataButton } from '@/components/members/RefreshGridDataButton';
 import { MemberToolsPanel } from '@/components/members/MemberToolsPanel';
-import prisma from '@/lib/prisma';
-
 export const revalidate = 60;
 
 export const metadata = {
@@ -16,12 +14,6 @@ export const metadata = {
 export default async function PowerGridExplorerPage() {
   const settings = await getGridSettingsMap();
   const grid = normalizeGridSettings(settings);
-
-  // Fetch nodes and edges from database
-  const dbNodes = await prisma.node.findMany({
-    orderBy: { label: 'asc' },
-  });
-  const dbEdges = await prisma.edge.findMany();
 
   return (
     <div id="power-grid-page-container" className="container container--shell py-8 md:py-10">
@@ -41,13 +33,7 @@ export default async function PowerGridExplorerPage() {
         </div>
       </div>
 
-      <PowerGridExplorerClient
-        initialMix={grid.gridMix}
-        initialLines={grid.gridLines}
-        initialProjects={grid.gridProjects}
-        dbNodes={dbNodes}
-        dbEdges={dbEdges}
-      />
+      <PowerGridExplorerClient initialLines={grid.gridLines} />
 
       <MemberToolsPanel />
 

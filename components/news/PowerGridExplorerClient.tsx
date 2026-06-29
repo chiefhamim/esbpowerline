@@ -1,7 +1,6 @@
 'use client';
 
 import dynamic from 'next/dynamic';
-import type { ComponentProps } from 'react';
 
 const PowerGridExplorer = dynamic(
   () => import('@/components/news/PowerGridExplorer').then((mod) => mod.PowerGridExplorer),
@@ -14,11 +13,7 @@ const PowerGridExplorer = dynamic(
 );
 
 export function PowerGridExplorerClient(props: {
-  initialMix?: any;
-  initialLines?: any;
-  initialProjects?: any;
-  dbNodes?: any[];
-  dbEdges?: any[];
+  initialLines?: Array<{ name: string; status: string; capacity: string; owner: string; load: number }>;
 }) {
-  return <PowerGridExplorer {...props} />;
+  return <PowerGridExplorer initialLines={props.initialLines} />;
 }

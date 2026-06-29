@@ -31,12 +31,18 @@ function readDocumentLocale(): SiteLocale {
  * Client locale state — initialized from the beforeInteractive script / localStorage.
  * Avoids server cookie reads so public ISR pages can stay static.
  */
-export function LocaleProvider({ children }: { children: ReactNode }) {
-  const [locale, setLocaleState] = useState<SiteLocale>('en');
+export function LocaleProvider({
+  children,
+  initialLocale = 'en',
+}: {
+  children: ReactNode;
+  initialLocale?: SiteLocale;
+}) {
+  const [locale, setLocaleState] = useState<SiteLocale>(initialLocale);
 
   useLayoutEffect(() => {
     const saved = readDocumentLocale();
-    setLocaleState(saved);
+    setLocaleState((prev) => (prev === saved ? prev : saved));
     applySiteLocale(saved);
   }, []);
 

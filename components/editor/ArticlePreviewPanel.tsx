@@ -426,8 +426,10 @@ export function ArticlePreviewPanel({
       )}
 
       {placement === 'carousel' && (
-        <div className="cms-preview-home-section">
-          <FeaturedCarousel items={carouselItems} />
+        <div className="cms-preview-home-section container container--shell home-hero-band">
+          <div className="home-hero-band__grid">
+            <FeaturedCarousel items={carouselItems} inBand />
+          </div>
         </div>
       )}
 

@@ -13,6 +13,7 @@ export default function robots(): MetadataRoute.Robots {
           '/members',
           '/api',
           '/search',
+          '/data/daily/',
         ],
       },
       {

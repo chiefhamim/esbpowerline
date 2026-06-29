@@ -10,6 +10,50 @@ import { isCronAuthorized } from '@/lib/api/cron-auth';
 import { isProxyProtectedApi } from '@/lib/api/protected-routes';
 import { resolveEdgeSession } from '@/lib/supabase/edge-session-gate';
 import { can, type Role } from '@/lib/constants';
+import { checkRateLimit, clientIpFromForwarded, edgeRateLimitKey } from '@/lib/rate-limit';
+import {
+  isBlockedBotUserAgent,
+  isSameOriginDailyAccess,
+} from '@/lib/data/grid/daily-access';
+
+const dailyFetchTimestamps = new Map<string, number[]>();
+const DAILY_BURST_WINDOW_MS = 60_000;
+const DAILY_BURST_LIMIT = 30;
+const DAILY_SEQ_WINDOW_MS = 10_000;
+const DAILY_SEQ_LIMIT = 8;
+
+function isDailyJsonPath(pathname: string): boolean {
+  return /^\/data\/daily\/\d{4}-\d{2}-\d{2}\.json$/.test(pathname);
+}
+
+function dailyScrapeBlocked(request: NextRequest, ip: string): boolean {
+  const burstKey = edgeRateLimitKey('daily-json-burst', ip);
+  const burst = checkRateLimit(burstKey, DAILY_BURST_LIMIT, DAILY_BURST_WINDOW_MS);
+  if (!burst.allowed) return true;
+
+  const match = request.nextUrl.pathname.match(/\/data\/daily\/(\d{4}-\d{2}-\d{2})\.json$/);
+  if (!match) return false;
+
+  const now = Date.now();
+  const seqKey = ip;
+  const history = (dailyFetchTimestamps.get(seqKey) ?? []).filter((t) => now - t < DAILY_SEQ_WINDOW_MS);
+  history.push(now);
+  dailyFetchTimestamps.set(seqKey, history);
+  if (dailyFetchTimestamps.size > 5_000) {
+    dailyFetchTimestamps.clear();
+  }
+  return history.length > DAILY_SEQ_LIMIT;
+}
+
+function denyDailyJson(message: string, status = 403): NextResponse {
+  return new NextResponse(message, {
+    status,
+    headers: {
+      'Content-Type': 'text/plain',
+      'Cache-Control': 'private, no-store',
+    },
+  });
+}
 
 function apiRoleAllowed(pathname: string, role: Role): boolean {
   if (pathname === '/api/members/grid-export' || pathname.startsWith('/api/members/grid-export/')) {
@@ -54,12 +98,41 @@ function redirectWithCookies(
 }
 
 export async function middleware(request: NextRequest) {
-  const userAgent = request.headers.get('user-agent') || '';
-  
-  // Strict Bot & Headless Scraper Prevention
-  const BLOCKED_BOT_REGEX = /ahrefsbot|semrushbot|mj12bot|dotbot|rogerbot|exabot|screamingfrog|petalbot|coccocbot|yandexbot|baiduspider|sogou|adsbot-google|amazonbot|claude-web-crawler|claudebot|gptbot|chatgpt-user|perplexitybot|coherebot|blexbot|bytespider|python-requests|node-fetch|got|axios|urllib|curl|wget|headless|phantomjs|selenium|playwright|puppeteer/i;
+  const pathname = request.nextUrl.pathname;
 
-  if (!userAgent || userAgent.trim() === '' || BLOCKED_BOT_REGEX.test(userAgent)) {
+  if (isDailyJsonPath(pathname)) {
+    const ip = clientIpFromForwarded(
+      request.headers.get('x-forwarded-for'),
+      request.headers.get('x-real-ip'),
+    );
+
+    if (dailyScrapeBlocked(request, ip)) {
+      return denyDailyJson('Too many requests. Please slow down.', 429);
+    }
+
+    const userAgent = request.headers.get('user-agent');
+    if (isBlockedBotUserAgent(userAgent)) {
+      return denyDailyJson('Access Denied: Request blocked by security policy.');
+    }
+
+    if (
+      !isSameOriginDailyAccess(
+        request.headers.get('referer'),
+        request.headers.get('origin'),
+        request.headers.get('host'),
+      )
+    ) {
+      return denyDailyJson('Access Denied: Direct data access is restricted.');
+    }
+
+    const response = NextResponse.next();
+    response.headers.set('Cache-Control', 'private, no-store');
+    return response;
+  }
+
+  const userAgent = request.headers.get('user-agent') || '';
+
+  if (isBlockedBotUserAgent(userAgent)) {
     return new NextResponse('Access Denied: Request blocked by security policy.', {
       status: 403,
       headers: { 'Content-Type': 'text/plain' },
@@ -67,7 +140,6 @@ export async function middleware(request: NextRequest) {
   }
 
   const { response, supabase, user } = await updateSession(request);
-  const pathname = request.nextUrl.pathname;
 
   if (isProxyProtectedApi(pathname)) {
     if (isCronAuthorized(request)) return response;
@@ -96,9 +168,9 @@ export async function middleware(request: NextRequest) {
   return response;
 }
 
-// Intercept all routes except static files, public assets, and standard SEO configs to run bot filters
 export const config = {
   matcher: [
+    '/data/daily/:path*.json',
     '/((?!_next/static|_next/image|images|favicon.ico|robots.txt|sitemap.xml|api/cron).*)',
   ],
 };

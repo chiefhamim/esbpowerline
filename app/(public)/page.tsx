@@ -25,6 +25,9 @@ import {
   getFeaturedArticles,
 } from '@/lib/category-content';
 import { getLatestYoutubeInterviews } from '@/lib/youtube-channel';
+import { getLatestHomeSnapshot } from '@/lib/data/grid/home-snapshot.server';
+import { createTranslator } from '@/lib/i18n/messages';
+import { formatSnapshotHeaderDate } from '@/lib/i18n/homepage-copy';
 
 export const revalidate = 60;
 
@@ -80,24 +83,37 @@ export default async function Home() {
     : 'Latest';
   const snapshotLabel = getSnapshotLabel(settings);
   const professionalsCta = getProfessionalsCta(settings);
-  const snapshotDate = settings.snapshotDate as string | undefined;
+  const dailySnapshot = await getLatestHomeSnapshot();
+  const snapshotStats = dailySnapshot?.stats ?? settings.snapshot;
+  const snapshotDate = (dailySnapshot?.date ?? settings.snapshotDate) as string | undefined;
+  const snapshotHeaderDate = formatSnapshotHeaderDate(snapshotDate, locale);
+  const tr = createTranslator(locale);
+  const carouselFooterLabels = {
+    readStory: tr('carousel.readStory'),
+    browseAll: tr('carousel.browseAll'),
+  };
 
   return (
     <div className="min-h-screen flex flex-col">
       <main className="flex-1 home-page">
         <div className="container container--shell home-hero-band">
           <div className="home-hero-band__grid">
-            <FeaturedCarousel
-              items={carouselItems}
-              tickerItems={settings.ticker as TickerItem[] | undefined}
-              inBand
-            />
-            <HomeSnapshotPanel
-              snapshotStats={settings.snapshot}
-              snapshotLabel={snapshotLabel}
-              snapshotDate={snapshotDate}
-              layout="hero-rail"
-            />
+            <div className="home-hero-band__hero">
+              <FeaturedCarousel
+                items={carouselItems}
+                tickerItems={settings.ticker as TickerItem[] | undefined}
+                inBand
+                footerLabels={carouselFooterLabels}
+              />
+            </div>
+            <aside className="home-hero-band__snapshot">
+              <HomeSnapshotPanel
+                snapshotStats={snapshotStats}
+                snapshotLabel={snapshotLabel}
+                snapshotHeaderDate={snapshotHeaderDate}
+                layout="segment"
+              />
+            </aside>
           </div>
         </div>
 

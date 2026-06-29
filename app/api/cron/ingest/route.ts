@@ -5,13 +5,13 @@ export const dynamic = 'force-dynamic';
 
 export async function GET(request: Request) {
   const cronSecret = process.env.CRON_SECRET?.trim();
-  
-  // For development ease, if CRON_SECRET is not configured in local env, allow execution
-  if (cronSecret) {
-    const auth = request.headers.get('authorization');
-    if (auth !== `Bearer ${cronSecret}`) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+  if (!cronSecret) {
+    return NextResponse.json({ error: 'CRON_SECRET is not configured' }, { status: 503 });
+  }
+
+  const auth = request.headers.get('authorization');
+  if (auth !== `Bearer ${cronSecret}`) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
   try {
@@ -21,11 +21,12 @@ export async function GET(request: Request) {
       ok: true,
       message: 'Ingestion pipeline executed successfully',
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : String(error);
     console.error('[API Cron] Ingestion failed:', error);
     return NextResponse.json({
       ok: false,
-      error: error.message || String(error),
+      error: message,
     }, { status: 500 });
   }
 }

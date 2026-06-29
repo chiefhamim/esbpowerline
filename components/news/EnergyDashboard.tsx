@@ -7,6 +7,11 @@ import { isSimulatedTelemetryEnabled } from '@/lib/telemetry-mode';
 import { useLocale } from '@/components/shared/LocaleProvider';
 import { localizeEnergyStatLabel } from '@/lib/i18n/homepage-copy';
 import { ModernTooltip } from '@/components/shared/ModernTooltip';
+import {
+  DAILY_SNAPSHOT_LABELS,
+  POWER_UNIT,
+  type DailySnapshotLabel,
+} from '@/lib/data/grid/home-snapshot-core';
 
 const IconMap: Record<string, any> = {
   Zap,
@@ -86,40 +91,33 @@ const ICON_STYLES: Record<
 };
 
 const initial: Stat[] = [
-  { label: 'Generation Capacity', value: 28420, unit: 'MW', icon: 'Zap' },
-  { label: 'Current Demand', value: 16154, unit: 'MW', icon: 'Activity' },
-  { label: 'Peak Today', value: 16854, unit: 'MW', icon: 'TrendingUp' },
-  { label: 'Daily Generation', value: 312.4, unit: 'MKWh', isDecimal: true, icon: 'TrendingUp' },
-  { label: 'Load Shedding', value: 1250, unit: 'MW', icon: 'Activity' },
-  { label: 'Coal Generation', value: 3820, unit: 'MW', icon: 'Flame' },
-  { label: 'Gas Supply', value: 907, unit: 'MMcfd', icon: 'Flame' },
-  { label: 'India Grid Import', value: 2584, unit: 'MW', icon: 'Cable' },
-  { label: 'Liquid Fuel Gen', value: 2450, unit: 'MW', icon: 'Flame' },
-  { label: 'Hydro Power', value: 150, unit: 'MW', icon: 'Leaf' },
-  { label: 'Fuel Cost', value: 6.25, unit: 'Tk/kWh', isDecimal: true, icon: 'Gauge' },
-  { label: 'Grid Frequency', value: 50.02, unit: 'Hz', isDecimal: true, icon: 'Gauge' },
+  { label: 'Current Demand', value: 16740, unit: POWER_UNIT, icon: 'Activity' },
+  { label: 'Peak Generation', value: 16181, unit: POWER_UNIT, icon: 'Zap' },
+  { label: 'Peak Today', value: 16741, unit: POWER_UNIT, icon: 'TrendingUp' },
+  { label: 'Daily Generation', value: 14788, unit: POWER_UNIT, icon: 'TrendingUp' },
+  { label: 'Load Shedding', value: 0, unit: POWER_UNIT, icon: 'Activity' },
+  { label: 'Energy Unserved', value: 89, unit: POWER_UNIT, icon: 'Gauge' },
+  { label: 'Fuel Cost', value: 6.5, unit: 'Tk/kWh', isDecimal: true, icon: 'Gauge' },
+  { label: 'Gas Supply', value: 2610, unit: 'MMcfd', icon: 'Flame' },
+  { label: 'Coal Generation', value: 5383, unit: POWER_UNIT, icon: 'Flame' },
+  { label: 'Grid Import', value: 2570, unit: POWER_UNIT, icon: 'Cable' },
+  { label: 'RE Installed', value: 1806, unit: POWER_UNIT, icon: 'Sun' },
+  { label: 'RE Grid Share', value: 5.56, unit: '%', isDecimal: true, icon: 'Leaf' },
 ];
 
-const TARGET_ORDER: Record<string, number> = {
-  'Generation Capacity': 0,
-  'Current Demand': 1,
-  'Peak Today': 2,
-  'Daily Generation': 3,
-  'Load Shedding': 4,
-  'Coal Generation': 5,
-  'Gas Supply': 6,
-  'India Grid Import': 7,
-  'Liquid Fuel Gen': 8,
-  'Hydro Power': 9,
-  'Fuel Cost': 10,
-  'Grid Frequency': 11,
-};
+const TARGET_ORDER: Record<DailySnapshotLabel, number> = Object.fromEntries(
+  DAILY_SNAPSHOT_LABELS.map((label, index) => [label, index]),
+) as Record<DailySnapshotLabel, number>;
+
+function snapshotLabelOrder(label: string): number {
+  return (TARGET_ORDER as Record<string, number>)[label] ?? 99;
+}
 
 function mergeSnapshotStats(incoming?: Stat[]): Stat[] {
   const incomingMap = new Map<string, Stat>();
   if (incoming && incoming.length > 0) {
     for (const s of incoming) {
-      if (s && s.label && TARGET_ORDER[s.label] !== undefined) {
+      if (s && s.label && s.label in TARGET_ORDER) {
         incomingMap.set(s.label, s);
       }
     }
@@ -144,8 +142,8 @@ function mergeSnapshotStats(incoming?: Stat[]): Stat[] {
 
 function sortStats(stats: Stat[]): Stat[] {
   return [...stats].sort((a, b) => {
-    const orderA = TARGET_ORDER[a.label] ?? 99;
-    const orderB = TARGET_ORDER[b.label] ?? 99;
+    const orderA = snapshotLabelOrder(a.label);
+    const orderB = snapshotLabelOrder(b.label);
     return orderA - orderB;
   });
 }
@@ -180,10 +178,12 @@ export function EnergyDashboard({
   initialStats,
   compact = false,
   fillHeight = false,
+  variant = 'default',
 }: {
   initialStats?: Stat[];
   compact?: boolean;
   fillHeight?: boolean;
+  variant?: 'default' | 'segment';
 }) {
   const { locale, t } = useLocale();
   const [stats, setStats] = useState<Stat[]>(() => {
@@ -210,29 +210,15 @@ export function EnergyDashboard({
 
     const interval = setInterval(() => {
       setStats(prev => prev.map((s) => {
-        if (s.label === 'Current Demand') {
-          const variation = (Math.random() - 0.5) * 160;
-          const next = Math.max(100, s.value + variation);
-          return {
-            ...s,
-            value: Math.round(next),
-          };
+        if (s.label === 'Current Demand' || s.label === 'Peak Today' || s.label === 'Peak Generation') {
+          const variation = (Math.random() - 0.5) * 120;
+          const next = Math.max(12000, s.value + variation);
+          return { ...s, value: Math.round(next) };
         }
         if (s.label === 'Fuel Cost') {
-          const variation = (Math.random() - 0.5) * 0.05;
-          const next = Math.max(5.0, Math.min(8.0, s.value + variation));
-          return {
-            ...s,
-            value: parseFloat(next.toFixed(2)),
-          };
-        }
-        if (s.label === 'Grid Frequency') {
-          const variation = (Math.random() - 0.5) * 0.02;
-          const next = Math.max(49.95, Math.min(50.05, s.value + variation));
-          return {
-            ...s,
-            value: parseFloat(next.toFixed(2)),
-          };
+          const variation = (Math.random() - 0.5) * 0.04;
+          const next = Math.max(5.5, Math.min(7.5, s.value + variation));
+          return { ...s, value: parseFloat(next.toFixed(2)) };
         }
         return s;
       }));
@@ -244,8 +230,10 @@ export function EnergyDashboard({
     <div
       className={
         compact
-          ? `grid grid-cols-2 gap-2 sm:gap-2.5 w-full min-w-0 ${fillHeight ? 'h-full' : ''}`
-          : 'grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3'
+          ? `energy-dashboard energy-dashboard--compact grid grid-cols-2 gap-2 sm:gap-2.5 w-full min-w-0 ${
+              variant === 'segment' ? 'energy-dashboard--segment ' : ''
+            }${fillHeight ? 'energy-dashboard--fill h-full auto-rows-fr' : 'auto-rows-fr'}`
+          : 'energy-dashboard grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3'
       }
     >
       {stats.map((s, i) => {
@@ -253,12 +241,10 @@ export function EnergyDashboard({
         return (
           <div
             key={i}
-            className={`group relative overflow-hidden flex transition-all duration-250 ${
+            className={`energy-dashboard__stat group relative overflow-hidden flex transition-all duration-250 ${
               compact
-                ? `flex-col justify-between text-left rounded-xl border border-border/30 bg-card hover:bg-muted/5 dark:hover:bg-white/[0.01] hover:border-primary/20 hover:shadow-sm min-w-0 ${
-                    fillHeight
-                      ? 'px-2 py-2 sm:py-2.5 xl:py-2.5 2xl:py-3 h-full'
-                      : 'px-2.5 py-2.5'
+                ? `flex-col justify-center text-left rounded-xl border border-border/30 bg-card hover:bg-muted/5 dark:hover:bg-white/[0.01] hover:border-primary/20 hover:shadow-sm min-w-0 min-h-[3.75rem] ${
+                    fillHeight ? 'px-2.5 py-2 h-full' : 'px-2.5 py-2.5'
                   }`
                 : 'stat flex-col items-center justify-center text-center px-3 pt-6 pb-5'
             }`}
@@ -272,7 +258,7 @@ export function EnergyDashboard({
                 side="top"
               >
                 <span className="relative flex h-1.5 w-1.5 cursor-help">
-                  {simulateLive && (s.label === 'Current Demand' || s.label === 'Fuel Cost' || s.label === 'Grid Frequency') ? (
+                  {simulateLive && (s.label === 'Current Demand' || s.label === 'Peak Today' || s.label === 'Peak Generation' || s.label === 'Fuel Cost') ? (
                     <>
                       <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75" />
                       <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-rose-500" />
@@ -285,24 +271,22 @@ export function EnergyDashboard({
             </span>
 
             {compact ? (
-              <div className={`flex flex-row items-center w-full min-w-0 h-full ${
-                fillHeight
-                  ? 'gap-2 sm:gap-2.5'
-                  : 'gap-2.5'
-              }`}>
-                <Icon className={`h-3.5 w-3.5 sm:h-4 sm:w-4 lg:h-3.5 lg:w-3.5 xl:h-4 xl:w-4 2xl:h-4.5 2xl:w-4.5 shrink-0 transition-transform duration-200 group-hover:scale-110 ${s.iconClass ?? 'text-primary'}`} />
-                <div className={`flex flex-col flex-grow min-w-0 ${
-                  fillHeight
-                    ? 'gap-2 sm:gap-2.5 xl:gap-2.5 2xl:gap-3'
-                    : 'gap-2.5'
-                }`}>
-                  <div className="font-semibold uppercase tracking-wider text-muted-foreground/75 group-hover:text-foreground transition-colors duration-150 select-none text-[2.2vw] xs:text-[2vw] sm:text-[9.5px] lg:text-[8px] xl:text-[9px] 2xl:text-[9.5px] leading-none whitespace-nowrap overflow-hidden text-ellipsis w-full">
+              <div className="energy-dashboard__stat-body flex flex-row items-center w-full min-w-0 h-full gap-2">
+                <Icon
+                  className={`energy-dashboard__stat-icon h-4 w-4 shrink-0 transition-transform duration-200 group-hover:scale-110 ${s.iconClass ?? 'text-primary'}`}
+                />
+                <div className="energy-dashboard__stat-copy flex min-w-0 flex-1 flex-col justify-center gap-1">
+                  <div className="energy-dashboard__stat-label font-semibold uppercase tracking-wider text-muted-foreground/75 group-hover:text-foreground transition-colors duration-150 select-none leading-none truncate w-full">
                     {getLabelElements(s.label, locale)}
                   </div>
-                  <div className="font-bold font-sans tabular-nums text-foreground/95 group-hover:text-primary transition-colors duration-150 leading-none text-[3.2vw] xs:text-[3vw] sm:text-[13px] lg:text-[11.5px] xl:text-xs 2xl:text-[14.5px] whitespace-nowrap">
-                    {s.isDecimal ? s.value.toFixed(1) : formatNumber(Math.round(s.value))}
+                  <div className="energy-dashboard__stat-value font-bold font-sans tabular-nums text-foreground/95 group-hover:text-primary transition-colors duration-150 leading-none whitespace-nowrap">
+                    {s.isDecimal
+                      ? s.value.toFixed(
+                          s.label === 'Fuel Cost' ? 2 : s.label === 'Energy Unserved' ? 2 : 1,
+                        )
+                      : formatNumber(Math.round(s.value))}
                     {' '}
-                    <span className="font-bold text-muted-foreground/50 uppercase tracking-wider text-[2.2vw] xs:text-[2vw] sm:text-[9.5px] lg:text-[8.5px] xl:text-[9px] 2xl:text-[9.5px] inline-block scale-90 origin-left">
+                    <span className="energy-dashboard__stat-unit font-bold text-muted-foreground/50 uppercase tracking-wider">
                       {s.unit}
                     </span>
                   </div>

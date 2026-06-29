@@ -16,7 +16,9 @@ export type RateLimitResult =
   | { allowed: false; retryAfterMs: number };
 
 /**
- * Simple in-process rate limiter (best-effort on serverless; prefer edge/WAF for production scale).
+ * Simple in-process rate limiter.
+ * Limitation: buckets are per serverless instance — use WAF/edge for production scale.
+ * On Vercel, combine with `clientIpFromForwarded` using x-forwarded-for / x-real-ip.
  */
 export function checkRateLimit(key: string, limit: number, windowMs: number): RateLimitResult {
   const now = Date.now();
@@ -36,7 +38,16 @@ export function checkRateLimit(key: string, limit: number, windowMs: number): Ra
   return { allowed: true };
 }
 
+/** Resolve client IP from Vercel/proxy headers (x-forwarded-for, x-real-ip). */
 export function clientIpFromForwarded(forwardedFor: string | null, realIp: string | null): string {
   const fromForwarded = forwardedFor?.split(',')[0]?.trim();
   return fromForwarded || realIp?.trim() || 'unknown';
 }
+
+/** Build a rate-limit key scoped by route prefix and client IP. */
+export function edgeRateLimitKey(routePrefix: string, ip: string): string {
+  return `${routePrefix}:${ip}`;
+}
+
+/** Standard Cache-Control for sensitive API responses. */
+export const PRIVATE_NO_STORE = 'private, no-store' as const;
