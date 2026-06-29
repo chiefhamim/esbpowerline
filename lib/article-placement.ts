@@ -9,7 +9,7 @@ export const PLACEMENT_FLAGS = {
     id: 'featured',
     label: 'Featured story',
     shortLabel: 'Featured',
-    hint: 'Hero carousel rotation (5 stories)',
+    hint: 'Featured news section (max 8 stories, not hero)',
     accent: 'amber',
     /** Gold — international “editor’s pick / top story” convention */
     color: '38 92% 50%',

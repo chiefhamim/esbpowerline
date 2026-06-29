@@ -21,6 +21,8 @@ import {
   getPublishedArticlesForPublic,
   getTrendingPublishedArticles,
   getLatestMagazineIssue,
+  getPublishedArticlesByCategory,
+  getFeaturedArticles,
 } from '@/lib/category-content';
 import { getLatestYoutubeInterviews } from '@/lib/youtube-channel';
 
@@ -40,13 +42,13 @@ export const metadata = {
 export default async function Home() {
   const locale = await getServerSiteLocale();
   const settingsPromise = getPublicSettingsMap();
-  const [settings, trending, magazineRow, categories, sectorArticles, carouselItems, coverageSlots, pinnedArticles, interviews] =
+  const [settings, trending, magazineRow, categories, featuredArticles, carouselItems, coverageSlots, pinnedArticles, interviews] =
     await Promise.all([
       settingsPromise,
       getTrendingPublishedArticles(5, locale),
       getLatestMagazineIssue(),
       getPublicCategories(),
-      getPublishedArticlesForPublic(24, locale),
+      getFeaturedArticles(8, locale),
       settingsPromise.then((map) => getCarouselItems(map, locale)),
       settingsPromise.then(async (map) => {
         const slots = getCoverageSlotsFromSettings(map);
@@ -56,6 +58,16 @@ export default async function Home() {
       getPinnedCoverageArticles(locale),
       getLatestYoutubeInterviews(4),
     ]);
+
+  const categoriesWithArticles = await Promise.all(
+    categories.map(async (cat) => {
+      const articles = await getPublishedArticlesByCategory(cat.name, locale);
+      return {
+        ...cat,
+        articles: articles.slice(0, 3),
+      };
+    })
+  );
 
   const magazine = magazineRow ?? {
     title: 'ESB PowerLine Monthly',
@@ -97,10 +109,10 @@ export default async function Home() {
                 initialInterviews={normalizeInterviews(interviews)}
               />
               <HomePowerSector
-                categories={categories}
-                sectorArticles={sectorArticles}
+                categoriesWithArticles={categoriesWithArticles}
                 coverageSlots={coverageSlots}
                 pinnedArticles={pinnedArticles}
+                featuredArticles={featuredArticles}
               />
             </div>
 

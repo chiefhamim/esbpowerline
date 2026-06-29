@@ -41,16 +41,36 @@ export function FeaturedCarousel({
 
   const getCategoryBadgeClasses = (cat: string): string => {
     const lower = cat.toLowerCase();
-    if (lower.includes('generation')) return 'border-blue-500/25 text-blue-600 dark:text-blue-400 bg-blue-500/5';
-    if (lower.includes('renewable')) return 'border-emerald-500/25 text-emerald-600 dark:text-emerald-400 bg-emerald-500/5';
-    if (lower.includes('lng') || lower.includes('gas') || lower.includes('fossil') || lower.includes('commodit')) return 'border-amber-500/25 text-amber-600 dark:text-amber-400 bg-amber-500/5';
-    if (lower.includes('nuclear')) return 'border-violet-500/25 text-violet-600 dark:text-violet-400 bg-violet-500/5';
-    if (lower.includes('grid') || lower.includes('transmission')) return 'border-cyan-500/25 text-cyan-600 dark:text-cyan-400 bg-cyan-500/5';
-    if (lower.includes('policy')) return 'border-indigo-500/25 text-indigo-600 dark:text-indigo-400 bg-indigo-500/5';
-    if (lower.includes('rural') || lower.includes('distribution') || lower.includes('utilit')) return 'border-lime-500/25 text-lime-600 dark:text-lime-400 bg-lime-500/5';
-    if (lower.includes('efficiency')) return 'border-teal-500/25 text-teal-600 dark:text-teal-400 bg-teal-500/5';
-    if (lower.includes('international')) return 'border-sky-500/25 text-sky-600 dark:text-sky-400 bg-sky-500/5';
-    if (lower.includes('market') || lower.includes('finance')) return 'border-rose-500/25 text-rose-600 dark:text-rose-400 bg-rose-500/5';
+    if (lower.includes('policy') || lower.includes('regulator')) {
+      return 'border-indigo-500/25 text-indigo-600 dark:text-indigo-400 bg-indigo-500/5';
+    }
+    if (lower.includes('generation')) {
+      return 'border-blue-500/25 text-blue-600 dark:text-blue-400 bg-blue-500/5';
+    }
+    if (lower.includes('fossil') || lower.includes('commodit') || lower.includes('gas') || lower.includes('lng')) {
+      return 'border-amber-500/25 text-amber-600 dark:text-amber-400 bg-amber-500/5';
+    }
+    if (lower.includes('renewable') || lower.includes('nuclear')) {
+      return 'border-emerald-500/25 text-emerald-600 dark:text-emerald-400 bg-emerald-500/5';
+    }
+    if (lower.includes('grid') || lower.includes('transmission')) {
+      return 'border-cyan-500/25 text-cyan-600 dark:text-cyan-400 bg-cyan-500/5';
+    }
+    if (lower.includes('distribution') || lower.includes('utilit')) {
+      return 'border-teal-500/25 text-teal-600 dark:text-teal-400 bg-teal-500/5';
+    }
+    if (lower.includes('consumer') || lower.includes('tariff')) {
+      return 'border-red-500/25 text-red-600 dark:text-red-400 bg-red-500/5';
+    }
+    if (lower.includes('market') || lower.includes('finance') || lower.includes('subsid')) {
+      return 'border-pink-500/25 text-pink-600 dark:text-pink-400 bg-pink-500/5';
+    }
+    if (lower.includes('international') || lower.includes('cross-border')) {
+      return 'border-indigo-500/25 text-indigo-600 dark:text-indigo-400 bg-indigo-500/5';
+    }
+    if (lower.includes('environment') || lower.includes('efficiency')) {
+      return 'border-teal-500/25 text-teal-600 dark:text-teal-400 bg-teal-500/5';
+    }
     return 'border-border text-muted-foreground bg-muted/5';
   };
 

@@ -31,21 +31,12 @@ export function SectorCoverage({
   const sectionLabel = t('coverage.allCoverage');
   const sectionDescription = t('coverage.allDescription', { count: categoryCount });
 
-  const pinnedIds = useMemo(
-    () => new Set(pinnedArticles.map((a) => a.id)),
-    [pinnedArticles],
+  const filteredArticles = useMemo(
+    () => [...articles]
+      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+      .slice(0, 8),
+    [articles]
   );
-
-  const coverageArticles: PublicArticleCard[] = coverageSlots
-    .map((slot) => slot.article)
-    .filter((article): article is PublicArticleCard => article !== null && !pinnedIds.has(article.id));
-
-  const filteredArticles =
-    coverageArticles.length > 0
-      ? coverageArticles.slice(0, 8)
-      : [...articles]
-          .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-          .slice(0, 8);
 
   return (
     <div>
@@ -68,27 +59,6 @@ export function SectorCoverage({
         <div className="mb-3 text-sm text-muted-foreground">{sectionDescription}</div>
       ) : null}
 
-      {pinnedArticles.length > 0 ? (
-        <div className="home-article-grid home-article-grid--pinned mb-4">
-          {pinnedArticles.map((a) => (
-            <ArticleCard
-              key={a.id}
-              id={a.slug}
-              title={a.title}
-              shortTitle={a.shortTitle}
-              excerpt={a.excerpt}
-              category={a.category}
-              imageUrl={a.imageUrl}
-              author={a.author}
-              date={a.date}
-              readTime={a.readTime}
-              views={a.views}
-              isPinned
-            />
-          ))}
-        </div>
-      ) : null}
-
       <div className="home-article-grid">
         {filteredArticles.length > 0 ? (
           filteredArticles.map((a) => (
@@ -107,6 +77,7 @@ export function SectorCoverage({
               isFeatured={a.isFeatured}
               isBreaking={a.isBreaking}
               isPinned={a.isPinned}
+              hideCategory={true}
             />
           ))
         ) : (

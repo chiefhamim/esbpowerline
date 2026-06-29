@@ -37,7 +37,7 @@ function CategoryPill({ category }: { category: string }) {
 }
 
 function HeroLayout({ article }: { article: PublicArticleCard }) {
-  const displayTitle = (article.title.length > 90 && article.shortTitle) ? article.shortTitle : article.title;
+  const displayTitle = (article.title.length > 100 && article.shortTitle) ? article.shortTitle : article.title;
   return (
     <Link href={`/articles/${article.slug}`} className="coverage-card coverage-card--hero group block h-full">
       <div className="relative overflow-hidden rounded-t-2xl">
@@ -68,7 +68,7 @@ function HeroLayout({ article }: { article: PublicArticleCard }) {
 }
 
 function HorizontalLayout({ article }: { article: PublicArticleCard }) {
-  const displayTitle = (article.title.length > 90 && article.shortTitle) ? article.shortTitle : article.title;
+  const displayTitle = (article.title.length > 100 && article.shortTitle) ? article.shortTitle : article.title;
   return (
     <Link href={`/articles/${article.slug}`} className="coverage-card coverage-card--horizontal group flex h-full gap-4 p-4">
       <div className="relative shrink-0 overflow-hidden rounded-xl" style={{ width: 120, height: 88 }}>
@@ -91,7 +91,7 @@ function HorizontalLayout({ article }: { article: PublicArticleCard }) {
 }
 
 function CompactLayout({ article }: { article: PublicArticleCard }) {
-  const displayTitle = (article.title.length > 90 && article.shortTitle) ? article.shortTitle : article.title;
+  const displayTitle = (article.title.length > 100 && article.shortTitle) ? article.shortTitle : article.title;
   return (
     <Link href={`/articles/${article.slug}`} className="coverage-card coverage-card--compact group block h-full p-4">
       <div className="relative overflow-hidden rounded-xl" style={{ width: '100%', height: 200 }}>
@@ -110,7 +110,7 @@ function CompactLayout({ article }: { article: PublicArticleCard }) {
 }
 
 function OverlayLayout({ article }: { article: PublicArticleCard }) {
-  const displayTitle = (article.title.length > 90 && article.shortTitle) ? article.shortTitle : article.title;
+  const displayTitle = (article.title.length > 100 && article.shortTitle) ? article.shortTitle : article.title;
   return (
     <Link href={`/articles/${article.slug}`} className="coverage-card coverage-card--overlay group relative block h-full min-h-[220px] overflow-hidden rounded-2xl">
       <Image
@@ -132,7 +132,7 @@ function OverlayLayout({ article }: { article: PublicArticleCard }) {
 }
 
 function HeadlineLayout({ article }: { article: PublicArticleCard }) {
-  const displayTitle = (article.title.length > 90 && article.shortTitle) ? article.shortTitle : article.title;
+  const displayTitle = (article.title.length > 100 && article.shortTitle) ? article.shortTitle : article.title;
   return (
     <Link href={`/articles/${article.slug}`} className="coverage-card coverage-card--headline group flex h-full gap-3 p-4">
       <div className="min-w-0 flex-1">
@@ -154,7 +154,7 @@ function HeadlineLayout({ article }: { article: PublicArticleCard }) {
 }
 
 function SplitLayout({ article }: { article: PublicArticleCard }) {
-  const displayTitle = (article.title.length > 90 && article.shortTitle) ? article.shortTitle : article.title;
+  const displayTitle = (article.title.length > 100 && article.shortTitle) ? article.shortTitle : article.title;
   return (
     <Link href={`/articles/${article.slug}`} className="coverage-card coverage-card--split group grid h-full gap-0 overflow-hidden sm:grid-cols-2">
       <div className="relative h-full min-h-[180px] w-full">
@@ -180,7 +180,7 @@ function SplitLayout({ article }: { article: PublicArticleCard }) {
 }
 
 function EditorialLayout({ article }: { article: PublicArticleCard }) {
-  const displayTitle = (article.title.length > 90 && article.shortTitle) ? article.shortTitle : article.title;
+  const displayTitle = (article.title.length > 100 && article.shortTitle) ? article.shortTitle : article.title;
   return (
     <Link href={`/articles/${article.slug}`} className="coverage-card coverage-card--editorial group flex h-full gap-3 border-l-4 border-primary p-4 pl-5">
       <div className="min-w-0 flex-1">
@@ -194,7 +194,7 @@ function EditorialLayout({ article }: { article: PublicArticleCard }) {
 }
 
 function BannerLayout({ article }: { article: PublicArticleCard }) {
-  const displayTitle = (article.title.length > 90 && article.shortTitle) ? article.shortTitle : article.title;
+  const displayTitle = (article.title.length > 100 && article.shortTitle) ? article.shortTitle : article.title;
   return (
     <Link href={`/articles/${article.slug}`} className="coverage-card coverage-card--banner group relative block h-full min-h-[160px] overflow-hidden rounded-2xl">
       <Image

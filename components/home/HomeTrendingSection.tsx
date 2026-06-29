@@ -49,7 +49,7 @@ function TrendingListItem({
             compact ? 'text-[13px] home-trending-item__title--compact' : 'text-sm'
           }`}
         >
-          {(article.title.length > 90 && article.shortTitle) ? article.shortTitle : article.title}
+          {(article.title.length > 100 && article.shortTitle) ? article.shortTitle : article.title}
         </h3>
         <p className="home-trending-item__meta text-xs text-muted-foreground mt-0.5 truncate">
           <CategoryLabel name={article.category} />
@@ -215,7 +215,7 @@ function TrendingHeroRailWave({ trending }: { trending: PublicArticleCard[] }) {
 
               {/* Title, Excerpt, Meta */}
               <h3 className="home-trending-wave__title group-hover:text-primary transition-colors">
-                {(article.title.length > 90 && article.shortTitle) ? article.shortTitle : article.title}
+                {(article.title.length > 100 && article.shortTitle) ? article.shortTitle : article.title}
               </h3>
               <p
                 className="home-trending-wave__excerpt"
@@ -262,7 +262,7 @@ function TrendingHeroRailWave({ trending }: { trending: PublicArticleCard[] }) {
                 onClick={() => selectStory(index)}
               >
                 <span className="home-trending-wave__queue-rank">{String(index + 1).padStart(2, '0')}</span>
-                <span className="home-trending-wave__queue-title">{(item.title.length > 90 && item.shortTitle) ? item.shortTitle : item.title}</span>
+                <span className="home-trending-wave__queue-title">{(item.title.length > 100 && item.shortTitle) ? item.shortTitle : item.title}</span>
               </button>
             ))}
           </div>
@@ -294,7 +294,7 @@ function ArticlesTrendingRailItem({
         </span>
         <span className="articles-trending-rail__copy">
           <span className="articles-trending-rail__title group-hover:text-primary transition-colors">
-            {(article.title.length > 90 && article.shortTitle) ? article.shortTitle : article.title}
+            {(article.title.length > 100 && article.shortTitle) ? article.shortTitle : article.title}
           </span>
           <span className="articles-trending-rail__meta">
             <CategoryLabel name={article.category} />
@@ -512,7 +512,7 @@ export function HomeTrendingSection({
               className="section-category-label text-muted-foreground mb-1"
             />
             <h3 className="font-display font-bold text-base md:text-lg leading-snug tracking-tight group-hover:text-primary transition-colors">
-              {(lead.title.length > 90 && lead.shortTitle) ? lead.shortTitle : lead.title}
+              {(lead.title.length > 100 && lead.shortTitle) ? lead.shortTitle : lead.title}
             </h3>
             <p className="text-xs text-muted-foreground mt-1.5">
               {leadTimeAgo} · {lead.views.toLocaleString()} {t('common.views')}

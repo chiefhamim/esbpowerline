@@ -70,42 +70,19 @@ function mapCarouselArticle(
 async function fetchManagedCarouselItems(locale?: string): Promise<CarouselItem[]> {
   const include = { author: { select: { name: true } } } as const;
 
-  const prioritized = await prisma.article.findMany({
+  const articles = await prisma.article.findMany({
     where: {
       status: 'PUBLISHED',
       isPinned: false,
-      OR: [{ isFeatured: true }, { isBreaking: true }],
-    },
-    include,
-    orderBy: [{ isBreaking: 'desc' }, { isFeatured: 'desc' }, { publishedAt: 'desc' }],
-    take: MAX_CAROUSEL_ITEMS * 2,
-  });
-
-  const filteredPrioritized = prioritized.filter((a) => {
-    if (locale === 'bn') {
-      return !!a.titleBn || /[\u0980-\u09FF]/.test(a.title);
-    } else {
-      return !/[\u0980-\u09FF]/.test(a.title);
-    }
-  });
-
-  if (filteredPrioritized.length >= MAX_CAROUSEL_ITEMS) {
-    return filteredPrioritized.slice(0, MAX_CAROUSEL_ITEMS).map((a) => mapCarouselArticle(a, locale));
-  }
-
-  const usedIds = new Set(filteredPrioritized.map((a) => a.id));
-  const backfill = await prisma.article.findMany({
-    where: {
-      status: 'PUBLISHED',
-      isPinned: false,
-      id: { notIn: [...usedIds] },
+      isTrending: false,
+      isBreaking: true,
     },
     include,
     orderBy: { publishedAt: 'desc' },
-    take: MAX_CAROUSEL_ITEMS * 3,
+    take: MAX_CAROUSEL_ITEMS * 2,
   });
 
-  const filteredBackfill = backfill.filter((a) => {
+  const filtered = articles.filter((a) => {
     if (locale === 'bn') {
       return !!a.titleBn || /[\u0980-\u09FF]/.test(a.title);
     } else {
@@ -113,7 +90,7 @@ async function fetchManagedCarouselItems(locale?: string): Promise<CarouselItem[
     }
   });
 
-  return [...filteredPrioritized, ...filteredBackfill].slice(0, MAX_CAROUSEL_ITEMS).map((a) => mapCarouselArticle(a, locale));
+  return filtered.slice(0, MAX_CAROUSEL_ITEMS).map((a) => mapCarouselArticle(a, locale));
 }
 
 export const getCarouselItems = cache(async (_settings: Record<string, unknown>, locale?: string): Promise<CarouselItem[]> => {

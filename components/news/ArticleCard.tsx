@@ -26,6 +26,7 @@ interface ArticleCardProps {
   isBreaking?: boolean;
   isPinned?: boolean;
   heroMeta?: any;
+  hideCategory?: boolean;
 }
 
 export function ArticleCard({
@@ -43,10 +44,11 @@ export function ArticleCard({
   isBreaking,
   isPinned,
   heroMeta,
+  hideCategory = false,
 }: ArticleCardProps) {
   const { locale, t } = useLocale();
   const timeAgo = date ? formatExactDate(date) : '';
-  const displayTitle = (title.length > 90 && shortTitle) ? shortTitle : title;
+  const displayTitle = (title.length > 100 && shortTitle) ? shortTitle : title;
 
   return (
     <Link href={`/articles/${id}`} className="article-card group block">
@@ -64,7 +66,7 @@ export function ArticleCard({
           <NoImage className="article-card__image h-48 w-full" compact />
         )}
         <div className="absolute top-2.5 left-2.5 flex flex-wrap items-center gap-1">
-          <CategoryLabel name={category} className="category-pill" />
+          {!hideCategory && <CategoryLabel name={category} className="category-pill" />}
           {isPinned ? <ArticlePlacementBadge type="pin" compact /> : null}
           {!isPinned && isFeatured ? <ArticlePlacementBadge type="featured" compact /> : null}
           {isBreaking ? <ArticlePlacementBadge type="breaking" compact /> : null}

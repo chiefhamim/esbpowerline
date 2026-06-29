@@ -282,7 +282,7 @@ export function ArticleForm({
   const buildSavePayload = useCallback(
     (saveStatus: string) => ({
       title,
-      shortTitle: title.length > 90 ? (shortTitle || undefined) : undefined,
+      shortTitle: title.length > 100 ? (shortTitle || undefined) : undefined,
       slug: slug || slugify(title),
       excerpt,
       content,
@@ -520,7 +520,7 @@ export function ArticleForm({
                 <div className="cms-placement-strip__head">
                   <Sparkles className="h-3.5 w-3.5 text-sky-500 shrink-0" />
                   <span className="cms-placement-strip__title">Placement</span>
-                  <span className="cms-placement-strip__desc">Carousel (featured/breaking) or Homepage placements</span>
+                  <span className="cms-placement-strip__desc">Hero (breaking) or Homepage placements</span>
                 </div>
                 <div className="cms-placement-strip__grid">
                   {canFeature && (
@@ -536,7 +536,11 @@ export function ArticleForm({
                         checked={isFeatured}
                         onCheckedChange={(v) => {
                           setIsFeatured(v);
-                          if (v) setIsPinned(false);
+                          if (v) {
+                            setIsPinned(false);
+                            setIsBreaking(false);
+                            setIsTrending(false);
+                          }
                         }}
                         accent="amber"
                         aria-label={PLACEMENT_FLAGS.featured.label}
@@ -554,7 +558,14 @@ export function ArticleForm({
                       </div>
                       <CmsPlacementSwitch
                         checked={isBreaking}
-                        onCheckedChange={setIsBreaking}
+                        onCheckedChange={(v) => {
+                          setIsBreaking(v);
+                          if (v) {
+                            setIsFeatured(false);
+                            setIsPinned(false);
+                            setIsTrending(false);
+                          }
+                        }}
                         accent="red"
                         aria-label={PLACEMENT_FLAGS.breaking.label}
                       />
@@ -573,7 +584,11 @@ export function ArticleForm({
                         checked={isPinned}
                         onCheckedChange={(v) => {
                           setIsPinned(v);
-                          if (v) setIsFeatured(false);
+                          if (v) {
+                            setIsFeatured(false);
+                            setIsBreaking(false);
+                            setIsTrending(false);
+                          }
                         }}
                         accent="violet"
                         aria-label={PLACEMENT_FLAGS.pin.label}
@@ -591,7 +606,14 @@ export function ArticleForm({
                       </div>
                       <CmsPlacementSwitch
                         checked={isTrending}
-                        onCheckedChange={setIsTrending}
+                        onCheckedChange={(v) => {
+                          setIsTrending(v);
+                          if (v) {
+                            setIsFeatured(false);
+                            setIsBreaking(false);
+                            setIsPinned(false);
+                          }
+                        }}
                         accent="sky"
                         aria-label={PLACEMENT_FLAGS.trending.label}
                       />
@@ -618,12 +640,12 @@ export function ArticleForm({
               <span className="cms-field__hint">Drag corner to expand — keep within ideal length for carousel</span>
             </div>
 
-            {title.length > 90 && (
+            {title.length > 100 && (
               <div className="cms-field border-l-4 border-amber-500 pl-4 bg-amber-500/5 py-3 pr-3 rounded-r-xl space-y-2">
                 <div className="cms-field__label-row">
                   <label htmlFor="shortTitle" className="cms-field__label text-amber-600 dark:text-amber-400 font-semibold flex items-center gap-1.5">
                     <Info className="h-4 w-4 shrink-0" />
-                    Headline Exceeds 90-char Limit ({title.length} chars)
+                    Headline Exceeds 100-char Limit ({title.length} chars)
                   </label>
                   <CharBudgetHint length={shortTitle.length} budget={HEADLINE_BUDGET} />
                 </div>
@@ -633,7 +655,7 @@ export function ArticleForm({
                   onChange={(e) => setShortTitle(e.target.value)}
                   className="cms-field__input border-amber-300 dark:border-amber-700 focus-visible:ring-amber-500 font-medium"
                   placeholder="Specify the shortened headline for card grids & carousels..."
-                  maxLength={90}
+                  maxLength={100}
                 />
                 <span className="cms-field__hint text-amber-600/80 dark:text-amber-400/80 leading-normal block">
                   This shortened version will be shown everywhere on the website except in the full article reading view (which will display the full {title.length}-char headline).

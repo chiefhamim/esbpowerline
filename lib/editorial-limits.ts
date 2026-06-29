@@ -8,7 +8,7 @@ export type CharBudget = {
 
 export const HEADLINE_BUDGET: CharBudget = {
   ideal: 72,
-  max: 90,
+  max: 100,
   label: 'Hero carousel (4-line slot)',
 };
 

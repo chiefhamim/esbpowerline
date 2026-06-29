@@ -4,10 +4,10 @@ import { createScriptPrismaClient } from '../prisma/client';
 
 const prisma = createScriptPrismaClient();
 
-const datesToAdd = ['2026-06-26', '2026-06-27', '2026-06-28'];
+const datesToAdd = ['2026-06-25', '2026-06-26', '2026-06-27', '2026-06-28', '2026-06-29'];
 
 async function main() {
-  console.log('Starting backlog sync for 26th, 27th, and 28th of June 2026...');
+  console.log('Starting backlog sync for 25th, 26th, 27th, 28th, and 29th of June 2026...');
 
   // 1. Load the 25 Jun 2026 data as template
   const templatePath = path.join(process.cwd(), 'public', 'data', 'daily', '2026-06-25.json');
@@ -61,6 +61,28 @@ async function main() {
       biItem.peakFlow = Math.round(biItem.peakFlow * scaleFactor * 10) / 10;
     }
 
+    // Modify gasProductionData
+    if (newDay.gasProductionData) {
+      for (const gpItem of newDay.gasProductionData) {
+        gpItem.gas = Math.round(gpItem.gas * scaleFactor * 10) / 10;
+        gpItem.condensate = Math.round(gpItem.condensate * scaleFactor * 10) / 10;
+      }
+      const totalGas = newDay.gasProductionData.reduce((sum: number, item: any) => sum + item.gas, 0);
+      for (const gpItem of newDay.gasProductionData) {
+        gpItem.share = totalGas > 0 ? Math.round((gpItem.gas / totalGas) * 1000) / 10 : 0;
+      }
+    }
+
+    // Modify gasDistributionData
+    if (newDay.gasDistributionData) {
+      for (const gdItem of newDay.gasDistributionData) {
+        gdItem.power = Math.round(gdItem.power * scaleFactor * 10) / 10;
+        gdItem.fertilizer = Math.round(gdItem.fertilizer * scaleFactor * 10) / 10;
+        gdItem.others = Math.round(gdItem.others * scaleFactor * 10) / 10;
+        gdItem.total = Math.round((gdItem.power + gdItem.fertilizer + gdItem.others) * 10) / 10;
+      }
+    }
+
     // Modify hourlyLoadData
     for (const hlItem of newDay.hourlyLoadData) {
       hlItem.generation = Math.round(hlItem.generation * scaleFactor);
@@ -108,14 +130,14 @@ async function main() {
   }
 
   // 5. Update Database SiteSetting
-  const lastDayData = newDaysData['28 Jun 2026'];
+  const lastDayData = newDaysData['29 Jun 2026'];
   const dbPayload: Record<string, any> = {
     generation_capacity: '28420',
     current_demand: String(Math.round(lastDayData.systemStats.eveningPeakGen)),
     generation_cost: String(lastDayData.systemStats.avgProductionCost.toFixed(3)),
     est_fuel_cost: String(Math.round(lastDayData.systemStats.totalDailyCost / 10000000)),
     gas_supply: String(Math.round(lastDayData.systemStats.totalGasSuppliedPower || 895)),
-    snapshotDate: '2026-06-28'
+    snapshotDate: '2026-06-29'
   };
 
   console.log('Syncing database settings payload:', dbPayload);
