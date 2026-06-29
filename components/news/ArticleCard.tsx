@@ -14,6 +14,7 @@ import { heroImageStyle } from '@/lib/hero-image';
 interface ArticleCardProps {
   id: string;
   title: string;
+  shortTitle?: string | null;
   excerpt?: string | null;
   category: string;
   imageUrl?: string | null;
@@ -30,6 +31,7 @@ interface ArticleCardProps {
 export function ArticleCard({
   id,
   title,
+  shortTitle,
   excerpt,
   category,
   imageUrl,
@@ -44,6 +46,7 @@ export function ArticleCard({
 }: ArticleCardProps) {
   const { locale, t } = useLocale();
   const timeAgo = date ? formatExactDate(date) : '';
+  const displayTitle = (title.length > 90 && shortTitle) ? shortTitle : title;
 
   return (
     <Link href={`/articles/${id}`} className="article-card group block">
@@ -69,7 +72,7 @@ export function ArticleCard({
       </div>
       <div className="p-5 flex-1 flex flex-col justify-between">
         <div>
-          <h3 className="font-semibold tracking-[-0.015em] leading-tight line-clamp-2 group-hover:text-primary transition-colors">{title}</h3>
+          <h3 className="font-semibold tracking-[-0.015em] leading-tight group-hover:text-primary transition-colors">{displayTitle}</h3>
           {excerpt && <p className="mt-2.5 text-[13px] text-muted-foreground line-clamp-3 leading-snug">{excerpt.replace(/\[&hellip;\]/g, '...').replace(/&hellip;/g, '...')}</p>}
         </div>
         <div className="mt-4 flex items-center justify-between text-ui-xs text-muted-foreground pt-1">

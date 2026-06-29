@@ -111,6 +111,7 @@ export default async function ArticlesPage({ searchParams }: ArticlesPageProps) 
                   key={article.id}
                   id={article.slug}
                   title={article.title}
+                  shortTitle={article.shortTitle}
                   excerpt={article.excerpt}
                   category={article.category}
                   imageUrl={article.imageUrl}

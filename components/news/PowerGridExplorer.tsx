@@ -505,6 +505,7 @@ export function PowerGridExplorer({
   const [selectedDate, setSelectedDate] = useState<string>(latestDate);
   const [activeData, setActiveData] = useState<GridDailyData>(powerGridArchive['24 Jun 2026']);
   const [isLoadingDaily, setIsLoadingDaily] = useState<boolean>(false);
+  const [isDataMissing, setIsDataMissing] = useState<boolean>(false);
   const [isMethodologyOpen, setIsMethodologyOpen] = useState(false);
   const [showMethodologyBanner, setShowMethodologyBanner] = useState(true);
   const [activeReconciliationTopic, setActiveReconciliationTopic] = useState<'gen' | 'cost' | null>(null);
@@ -685,6 +686,7 @@ export function PowerGridExplorer({
         if (isMounted) {
           setActiveData(data);
           setIsLoadingDaily(false);
+          setIsDataMissing(false);
         }
       })
       .catch((err) => {
@@ -697,6 +699,10 @@ export function PowerGridExplorer({
           const legacyKey = formattedKeys[selectedDate];
           if (legacyKey && powerGridArchive[legacyKey]) {
             setActiveData(powerGridArchive[legacyKey]);
+            setIsDataMissing(false);
+          } else {
+            setActiveData(powerGridArchive['24 Jun 2026']);
+            setIsDataMissing(true);
           }
           setIsLoadingDaily(false);
         }
@@ -753,6 +759,39 @@ export function PowerGridExplorer({
     dailyOutages,
     hourlyLoadData
   } = activeData;
+
+  // Dynamic Gas Production & Supply calculations
+  const safeGasProductionData = gasProductionData || [];
+  const totalGasSupply = safeGasProductionData.reduce((sum, item) => sum + item.gas, 0);
+  const totalCondensate = safeGasProductionData.reduce((sum, item) => sum + item.condensate, 0);
+
+  // Chevron IOC Supply
+  const chevronItem = safeGasProductionData.find(item => item.company.toLowerCase().includes('chevron'));
+  const chevronGas = chevronItem ? chevronItem.gas : 0;
+  const chevronPct = totalGasSupply > 0 ? (chevronGas / totalGasSupply) * 100 : 0;
+
+  // Tullow IOC Supply
+  const tullowItem = safeGasProductionData.find(item => item.company.toLowerCase().includes('tullow'));
+  const tullowGas = tullowItem ? tullowItem.gas : 0;
+  const tullowPct = totalGasSupply > 0 ? (tullowGas / totalGasSupply) * 100 : 0;
+
+  // Imported LNG (RPGCL)
+  const rpgclItem = safeGasProductionData.find(item => item.company.toLowerCase().includes('rpgcl') || item.company.toLowerCase().includes('lng'));
+  const importedLngGas = rpgclItem ? rpgclItem.gas : 0;
+  const importedLngPct = totalGasSupply > 0 ? (importedLngGas / totalGasSupply) * 100 : 0;
+
+  // State Field Output (BGFCL + SGFL + BAPEX)
+  const stateFields = safeGasProductionData.filter(item => 
+    item.company.toLowerCase().includes('bgfcl') || 
+    item.company.toLowerCase().includes('sgfl') || 
+    item.company.toLowerCase().includes('bapex')
+  );
+  const stateFieldsGas = stateFields.reduce((sum, item) => sum + item.gas, 0);
+  const stateFieldsPct = totalGasSupply > 0 ? (stateFieldsGas / totalGasSupply) * 100 : 0;
+
+  const tooltipDate = systemStats?.date && systemStats.date.split(' ').length === 3
+    ? systemStats.date.split(' ').slice(1).join(' ')
+    : (systemStats?.date || 'Jun 2026');
 
   // Ongoing & Upcoming Projects states & filters
   const [projectType, setProjectType] = useState<'ongoing' | 'upcoming'>('ongoing');
@@ -1376,7 +1415,7 @@ export function PowerGridExplorer({
           <Droplet className="grid-explorer-kpi__icon text-sky-500" />
           <div className="min-w-0">
             <div className="grid-explorer-kpi__label">Gas Production<sup className="text-emerald-500 font-extrabold text-[10px] ml-2 select-none">Daily</sup></div>
-            <div className="grid-explorer-kpi__value">2,647.5 MMCFD</div>
+            <div className="grid-explorer-kpi__value">{formatNumber(totalGasSupply, 1)} MMCFD</div>
           </div>
           {/* Custom Tooltip */}
           <div 
@@ -1394,30 +1433,36 @@ export function PowerGridExplorer({
             <div className="space-y-2 text-[11px] md:text-xs leading-relaxed">
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Total Gas Supply:</span>
-                <span className="font-bold text-foreground">2,647.5 MMCFD</span>
+                <span className="font-bold text-foreground">{formatNumber(totalGasSupply, 1)} MMCFD</span>
               </div>
               <div className="flex justify-between gap-4">
                 <span className="text-muted-foreground">Imported LNG:</span>
-                <span className="font-bold text-foreground">1,008.0 MMCFD (38.1%)</span>
+                <span className="font-bold text-foreground">{formatNumber(importedLngGas, 1)} MMCFD ({importedLngPct.toFixed(1)}%)</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Chevron IOC Supply:</span>
-                <span className="font-bold text-foreground">928.7 MMCFD (35.1%)</span>
+                <span className="font-bold text-foreground">{formatNumber(chevronGas, 1)} MMCFD ({chevronPct.toFixed(1)}%)</span>
               </div>
+              {tullowGas > 0 && (
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Tullow IOC Supply:</span>
+                  <span className="font-bold text-foreground">{formatNumber(tullowGas, 1)} MMCFD ({tullowPct.toFixed(1)}%)</span>
+                </div>
+              )}
               <div className="flex justify-between">
                 <span className="text-muted-foreground">State Field Output:</span>
-                <span className="font-bold text-foreground">710.8 MMCFD (26.8%)</span>
+                <span className="font-bold text-foreground">{formatNumber(stateFieldsGas, 1)} MMCFD ({stateFieldsPct.toFixed(1)}%)</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Total Condensate:</span>
-                <span className="font-bold text-foreground">5,864.6 BBL</span>
+                <span className="font-bold text-foreground">{formatNumber(totalCondensate, 1)} BBL</span>
               </div>
               <div className="pt-1.5 border-t border-border/40 text-[9px] text-muted-foreground font-semibold">
                 Audited by: MABS &amp; J Partners / CAG
               </div>
               <div className="pt-1 flex justify-between text-[9px] text-muted-foreground border-t border-border/20">
                 <span>Ref: <a href="https://www.petrobangla.org.bd/" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">Petrobangla Report</a></span>
-                <span>Date: Jun 2026</span>
+                <span>Date: {tooltipDate}</span>
               </div>
             </div>
           </div>
@@ -1666,7 +1711,28 @@ export function PowerGridExplorer({
           </div>
         )}
 
-        {activeTab === 'overview' && (
+        {isDataMissing && (
+          <div className="grid-explorer-panel space-y-6">
+            <div className="grid-explorer-chart-card card p-8 flex flex-col items-center justify-center text-center min-h-[400px]">
+              <div className="p-4 rounded-full bg-muted/20 text-muted-foreground mb-4 animate-pulse">
+                <Info className="h-8 w-8 text-amber-500" />
+              </div>
+              <h4 className="text-base font-bold text-foreground mb-2">Report haven't released for the day yet</h4>
+              <p className="text-xs text-muted-foreground max-w-sm mb-4">
+                The daily grid status report and Petrobangla production telemetry for {selectedDate} have not been finalized or published by PGCB/NLDC.
+              </p>
+              <div className="bg-muted/10 p-4 rounded-xl border border-border/20 font-sans text-xs text-foreground max-w-md w-full text-left">
+                <div className="font-bold text-amber-500 uppercase tracking-wider text-[10px] mb-2">Latest Available Report:</div>
+                <div className="font-semibold text-foreground mb-1">Date: 24 Jun 2026</div>
+                <div className="text-[11px] text-muted-foreground mt-2 pt-2 border-t border-border/10 leading-relaxed">
+                  latest report is &gt; Peak Gen: 15,700.0 MW / Demand: 17,565.0 MW / Energy: 347.1 MKWh and date 24 Jun 2026
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {!isDataMissing && activeTab === 'overview' && (
         selectedDate < '2013-12-31' ? (
           <div className="grid-explorer-panel space-y-6">
             <div className="grid-explorer-chart-card card p-8 flex flex-col items-center justify-center text-center min-h-[400px]">
@@ -2028,7 +2094,7 @@ export function PowerGridExplorer({
       </div>
     )}
 
-      {activeTab === 'gen' && (
+      {!isDataMissing && activeTab === 'gen' && (
         selectedDate < '2013-12-31' ? (
           <div className="grid-explorer-panel space-y-6">
             <div className="grid-explorer-chart-card card p-8 flex flex-col items-center justify-center text-center min-h-[400px]">
@@ -2152,7 +2218,7 @@ export function PowerGridExplorer({
         </div>
       )}
 
-      {activeTab === 'gas' && (
+      {!isDataMissing && activeTab === 'gas' && (
         selectedDate < '2020-01-12' ? (
           <div className="grid-explorer-panel space-y-6">
             <div className="grid-explorer-chart-card card p-8 flex flex-col items-center justify-center text-center min-h-[400px]">
@@ -2203,8 +2269,8 @@ export function PowerGridExplorer({
                   <tr className="border-t border-border/80 font-bold bg-muted/20">
                     <td>Grand Total Production</td>
                     <td className="text-left">23 Fields</td>
-                    <td className="text-left text-primary">2,647.5</td>
-                    <td className="text-left">5,864.6</td>
+                    <td className="text-left text-primary">{formatNumber(totalGasSupply, 1)}</td>
+                    <td className="text-left">{formatNumber(totalCondensate, 1)}</td>
                     <td className="text-left">100.0%</td>
                   </tr>
                 </tbody>
@@ -2300,7 +2366,7 @@ export function PowerGridExplorer({
         </div>
       )}
 
-      {activeTab === 'imports' && (
+      {!isDataMissing && activeTab === 'imports' && (
         selectedDate < '2013-12-31' ? (
           <div className="grid-explorer-panel space-y-6">
             <div className="grid-explorer-chart-card card p-8 flex flex-col items-center justify-center text-center min-h-[400px]">
@@ -2380,7 +2446,7 @@ export function PowerGridExplorer({
         </div>
       )}
 
-      {activeTab === 'renewables' && (
+      {!isDataMissing && activeTab === 'renewables' && (
         <div className="grid-explorer-panel grid lg:grid-cols-2 gap-6">
           {/* Renewables Table */}
           <div className="grid-explorer-chart-card card">
@@ -2491,7 +2557,7 @@ export function PowerGridExplorer({
         </div>
       )}
 
-      {activeTab === 'transmission' && (
+      {!isDataMissing && activeTab === 'transmission' && (
         selectedDate < '2013-12-31' ? (
           <div className="grid-explorer-panel space-y-6">
             <div className="grid-explorer-chart-card card p-8 flex flex-col items-center justify-center text-center min-h-[400px]">
@@ -4458,7 +4524,7 @@ export function PowerGridExplorer({
         </div>
       )}
 
-      {activeTab === 'regional' && (
+      {!isDataMissing && activeTab === 'regional' && (
         selectedDate < '2013-12-31' ? (
           <div className="grid-explorer-panel space-y-6">
             <div className="grid-explorer-chart-card card p-8 flex flex-col items-center justify-center text-center min-h-[400px]">
@@ -4633,7 +4699,7 @@ export function PowerGridExplorer({
         </div>
       )}
 
-      {activeTab === 'macro' && (
+      {!isDataMissing && activeTab === 'macro' && (
         <div className="grid-explorer-panel space-y-6">
           {/* Sub-tab Navigation */}
           <div id="macro-subtabs-nav" className="flex flex-wrap gap-1.5 border-b border-border/40 pb-3">

@@ -75,6 +75,7 @@ export function SectorCoverage({
               key={a.id}
               id={a.slug}
               title={a.title}
+              shortTitle={a.shortTitle}
               excerpt={a.excerpt}
               category={a.category}
               imageUrl={a.imageUrl}
@@ -95,6 +96,7 @@ export function SectorCoverage({
               key={a.id}
               id={a.slug}
               title={a.title}
+              shortTitle={a.shortTitle}
               excerpt={a.excerpt}
               category={a.category}
               imageUrl={a.imageUrl}

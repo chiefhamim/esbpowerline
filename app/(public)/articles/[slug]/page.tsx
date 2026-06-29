@@ -239,6 +239,7 @@ export default async function ArticlePage({ params }: { params: Promise<{ slug: 
               key={r.id}
               id={r.slug}
               title={r.title}
+              shortTitle={r.shortTitle}
               excerpt={r.excerpt}
               category={r.category}
               imageUrl={r.imageUrl}

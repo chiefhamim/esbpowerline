@@ -408,7 +408,7 @@ svg.icon-xs {
 
 /* Refined prose / body text */
 .prose { @apply max-w-none; }
-.prose p { @apply text-muted-foreground leading-relaxed; }
+.prose p, .prose li { @apply text-foreground leading-relaxed; }
 
 /* Public canvas — never horizontal scroll (clip preserves position:sticky) */
 html,
@@ -5866,15 +5866,15 @@ button.grid-explorer-link {
 }
 
 .article-body { @apply text-[15px] leading-relaxed text-foreground; }
-.article-body p { @apply mb-4 text-muted-foreground; }
+.article-body p { @apply mb-4 text-foreground; }
 .article-body h1 { @apply text-2xl font-semibold tracking-tight mb-4 text-foreground; }
 .article-body h2 { @apply text-xl font-semibold tracking-tight mb-3 mt-5 text-foreground; }
 .article-body h3 { @apply text-lg font-semibold tracking-tight mb-2 mt-4 text-foreground; }
 .article-body ul, .article-body ol { @apply pl-6 mb-4 space-y-1 list-outside; }
 .article-body ul { @apply list-disc; }
 .article-body ol { @apply list-decimal; }
-.article-body li { @apply text-muted-foreground; }
-.article-body blockquote { @apply border-l-4 border-primary/60 pl-5 italic text-muted-foreground my-4; }
+.article-body li { @apply text-foreground; }
+.article-body blockquote { @apply border-l-4 border-primary/60 pl-5 italic text-foreground my-4; }
 .article-body img { @apply max-w-full rounded-xl my-4 shadow-sm; }
 .article-body a { @apply text-primary underline underline-offset-2; }
 .article-body table { @apply w-full border-collapse my-4 text-sm; }

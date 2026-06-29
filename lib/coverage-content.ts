@@ -12,6 +12,7 @@ function mapArticle(
     id: string;
     slug: string;
     title: string;
+    shortTitle?: string | null;
     excerpt: string | null;
     category: string;
     readTime: number;
@@ -36,6 +37,7 @@ function mapArticle(
     id: a.id,
     slug: a.slug,
     title: displayTitle,
+    shortTitle: a.shortTitle,
     excerpt: displayExcerpt,
     category: a.category,
     author: a.author?.name ?? 'ESB PowerLine',

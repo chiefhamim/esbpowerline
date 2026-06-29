@@ -60,6 +60,7 @@ enum UserStatus {
 model Article {
   id          String          @id @default(cuid())
   title       String
+  shortTitle  String?
   slug        String          @unique
   excerpt     String?
   content     String          // TipTap JSON or sanitized HTML

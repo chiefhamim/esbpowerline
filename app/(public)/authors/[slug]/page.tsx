@@ -147,6 +147,7 @@ export default async function AuthorPage({ params }: { params: Promise<{ slug: s
                 key={a.id}
                 id={a.slug}
                 title={a.title}
+                shortTitle={a.shortTitle}
                 excerpt={a.excerpt}
                 category={a.category}
                 imageUrl={a.imageUrl}

@@ -4,6 +4,7 @@ const articleStatusEnum = z.enum(['DRAFT', 'IN_REVIEW', 'PUBLISHED', 'SCHEDULED'
 
 const articleFields = {
   title: z.string(),
+  shortTitle: z.string().optional().nullable(),
   slug: z.string().optional(),
   excerpt: z.string().optional(),
   content: z.string(),

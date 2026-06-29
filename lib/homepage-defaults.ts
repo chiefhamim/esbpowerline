@@ -18,6 +18,7 @@ export const HOMEPAGE_DEFAULTS = {
 export type CarouselItem = {
   slug: string;
   title: string;
+  shortTitle?: string | null;
   excerpt: string;
   imageUrl: string;
   author: string;

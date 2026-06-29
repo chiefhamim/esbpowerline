@@ -14,6 +14,7 @@ export type PublicArticleCard = {
   id: string;
   slug: string;
   title: string;
+  shortTitle?: string | null;
   excerpt: string;
   category: string;
   author: string;

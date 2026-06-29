@@ -31,6 +31,7 @@ export default async function MemberSavedPage() {
                 key={article.id}
                 id={article.slug}
                 title={article.title}
+                shortTitle={article.shortTitle}
                 excerpt={article.excerpt}
                 category={article.category}
                 imageUrl={article.imageUrl}

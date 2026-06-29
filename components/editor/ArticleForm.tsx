@@ -75,7 +75,7 @@ import {
   Eye, Save, Send, Clock, History, Sparkles, Tag, Layers, Globe, FileText,
   FolderOpen, Archive, Link2, PenLine, ShieldCheck, Camera, Focus, X,
   Settings, Pin, LayoutGrid, Star, Flame, Facebook, Newspaper, Monitor,
-  Tablet, Smartphone,
+  Tablet, Smartphone, Info,
 } from 'lucide-react';
 
 type ArticleFormPermissions = {
@@ -188,6 +188,7 @@ export function ArticleForm({
 
 
   const [title, setTitle] = useState(article?.title ?? '');
+  const [shortTitle, setShortTitle] = useState(article?.shortTitle ?? '');
   const [slug, setSlug] = useState(article?.slug ?? '');
   const [excerpt, setExcerpt] = useState(article?.excerpt ?? '');
   const [content, setContent] = useState(article?.content ?? '<p></p>');
@@ -280,6 +281,7 @@ export function ArticleForm({
   const buildSavePayload = useCallback(
     (saveStatus: string) => ({
       title,
+      shortTitle: title.length > 90 ? (shortTitle || undefined) : undefined,
       slug: slug || slugify(title),
       excerpt,
       content,
@@ -300,7 +302,7 @@ export function ArticleForm({
       seo: { metaTitle, metaDescription, focusKeyword, heroImage: heroMeta },
     }),
     [
-      title, slug, excerpt, content, category, imageUrl, imageCredit, tagsList, collaboratorIds,
+      title, shortTitle, slug, excerpt, content, category, imageUrl, imageCredit, tagsList, collaboratorIds,
       isFeatured, isBreaking, isPinned, isTrending, postAsNewsDesk, resolvedPublishedAt, metaTitle, metaDescription,
       focusKeyword, heroMeta,
     ],
@@ -614,6 +616,29 @@ export function ArticleForm({
               />
               <span className="cms-field__hint">Drag corner to expand — keep within ideal length for carousel</span>
             </div>
+
+            {title.length > 90 && (
+              <div className="cms-field border-l-4 border-amber-500 pl-4 bg-amber-500/5 py-3 pr-3 rounded-r-xl space-y-2">
+                <div className="cms-field__label-row">
+                  <label htmlFor="shortTitle" className="cms-field__label text-amber-600 dark:text-amber-400 font-semibold flex items-center gap-1.5">
+                    <Info className="h-4 w-4 shrink-0" />
+                    Headline Exceeds 90-char Limit ({title.length} chars)
+                  </label>
+                  <CharBudgetHint length={shortTitle.length} budget={{ min: 3, max: 90 }} />
+                </div>
+                <Input
+                  id="shortTitle"
+                  value={shortTitle}
+                  onChange={(e) => setShortTitle(e.target.value)}
+                  className="cms-field__input border-amber-300 dark:border-amber-700 focus-visible:ring-amber-500 font-medium"
+                  placeholder="Specify the shortened headline for card grids & carousels..."
+                  maxLength={90}
+                />
+                <span className="cms-field__hint text-amber-600/80 dark:text-amber-400/80 leading-normal block">
+                  This shortened version will be shown everywhere on the website except in the full article reading view (which will display the full {title.length}-char headline).
+                </span>
+              </div>
+            )}
             <div className="cms-field">
               <div className="cms-field__label-row">
                 <label htmlFor="excerpt" className="cms-field__label">Deck / excerpt</label>
@@ -813,6 +838,7 @@ export function ArticleForm({
                 theme={previewTheme}
                 onThemeChange={setPreviewTheme}
                 title={title}
+                shortTitle={shortTitle}
                 excerpt={excerpt}
                 content={content}
                 imageUrl={imageUrl}

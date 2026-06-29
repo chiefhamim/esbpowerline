@@ -526,6 +526,7 @@ export async function createArticle(data: ArticleInput) {
   const article = await prisma.article.create({
     data: {
       title: parsed.title,
+      shortTitle: parsed.shortTitle,
       slug,
       excerpt: parsed.excerpt,
       content: parsed.content,
@@ -599,6 +600,7 @@ export async function updateArticle(id: string, data: ArticleInput) {
     where: { id },
     data: {
       title: parsed.title,
+      shortTitle: parsed.shortTitle,
       slug: resolveArticleSlug(parsed.title, parsed.slug, existing.slug),
       excerpt: parsed.excerpt,
       content: parsed.content,

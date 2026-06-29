@@ -43,6 +43,7 @@ type PreviewContext = {
 type ArticlePreviewPanelProps = {
   active: boolean;
   title: string;
+  shortTitle?: string | null;
   excerpt: string;
   content: string;
   imageUrl: string;
@@ -198,6 +199,7 @@ function PreviewIframe({
 export function ArticlePreviewPanel({
   active,
   title,
+  shortTitle,
   excerpt,
   content,
   imageUrl,
@@ -346,6 +348,7 @@ export function ArticlePreviewPanel({
   const draft: DraftPreviewInput = useMemo(() => ({
     slug,
     title: title || 'Untitled',
+    shortTitle,
     excerpt,
     imageUrl,
     category,
@@ -356,7 +359,7 @@ export function ArticlePreviewPanel({
     isBreaking,
     isTrending,
     heroMeta,
-  }), [slug, title, excerpt, imageUrl, category, authorName, readTime, isFeatured, isPinned, isBreaking, isTrending, heroMeta]);
+  }), [slug, title, shortTitle, excerpt, imageUrl, category, authorName, readTime, isFeatured, isPinned, isBreaking, isTrending, heroMeta]);
 
   const categoryColor = useMemo(
     () => findCategoryColor(context?.categories ?? [], category),
@@ -444,6 +447,7 @@ export function ArticlePreviewPanel({
                   <ArticleCard
                     id={a.slug}
                     title={a.title}
+                    shortTitle={a.shortTitle}
                     excerpt={a.excerpt}
                     category={a.category}
                     imageUrl={a.imageUrl}
@@ -468,6 +472,7 @@ export function ArticlePreviewPanel({
                 <ArticleCard
                   id={a.slug}
                   title={a.title}
+                  shortTitle={a.shortTitle}
                   excerpt={a.excerpt}
                   category={a.category}
                   imageUrl={a.imageUrl}
@@ -500,6 +505,7 @@ export function ArticlePreviewPanel({
                 <ArticleCard
                   id={a.slug}
                   title={a.title}
+                  shortTitle={a.shortTitle}
                   excerpt={a.excerpt}
                   category={a.category}
                   imageUrl={a.imageUrl}

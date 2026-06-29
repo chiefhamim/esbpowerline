@@ -6,6 +6,7 @@ import { MAX_PINNED_COVERAGE } from '@/lib/placement-rules';
 export type DraftPreviewInput = {
   slug: string;
   title: string;
+  shortTitle?: string | null;
   excerpt: string;
   imageUrl: string;
   heroMeta?: any;
@@ -23,6 +24,7 @@ function toCard(draft: DraftPreviewInput, id = 'preview-draft'): PublicArticleCa
     id,
     slug: draft.slug || 'preview',
     title: draft.title || 'Untitled',
+    shortTitle: draft.shortTitle,
     excerpt: draft.excerpt || '',
     category: draft.category,
     author: draft.author,
@@ -42,6 +44,7 @@ function toCarouselItem(draft: DraftPreviewInput): CarouselItem {
   return {
     slug: draft.slug || 'preview',
     title: draft.title || 'Untitled',
+    shortTitle: draft.shortTitle,
     excerpt: draft.excerpt || '',
     imageUrl: draft.imageUrl?.trim() || '',
     author: draft.author,

@@ -221,6 +221,7 @@ export async function getMemberSavedArticles(): Promise<PublicArticleCard[]> {
       id: a.id,
       slug: a.slug,
       title: a.title,
+      shortTitle: a.shortTitle,
       excerpt: a.excerpt ?? '',
       category: a.category,
       author: a.author?.name ?? 'ESB PowerLine',
