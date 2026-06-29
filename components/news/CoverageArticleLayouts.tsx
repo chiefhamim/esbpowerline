@@ -37,6 +37,7 @@ function CategoryPill({ category }: { category: string }) {
 }
 
 function HeroLayout({ article }: { article: PublicArticleCard }) {
+  const displayTitle = (article.title.length > 90 && article.shortTitle) ? article.shortTitle : article.title;
   return (
     <Link href={`/articles/${article.slug}`} className="coverage-card coverage-card--hero group block h-full">
       <div className="relative overflow-hidden rounded-t-2xl">
@@ -54,8 +55,8 @@ function HeroLayout({ article }: { article: PublicArticleCard }) {
         </span>
       </div>
       <div className="p-5 sm:p-6">
-        <h3 className="font-display text-xl font-semibold leading-tight tracking-tight line-clamp-3 group-hover:text-primary transition-colors sm:text-2xl">
-          {article.title}
+        <h3 className="font-display text-xl font-semibold leading-tight tracking-tight group-hover:text-primary transition-colors sm:text-2xl">
+          {displayTitle}
         </h3>
         {article.excerpt && (
           <p className="mt-3 text-sm leading-relaxed text-muted-foreground line-clamp-4">{article.excerpt}</p>
@@ -67,6 +68,7 @@ function HeroLayout({ article }: { article: PublicArticleCard }) {
 }
 
 function HorizontalLayout({ article }: { article: PublicArticleCard }) {
+  const displayTitle = (article.title.length > 90 && article.shortTitle) ? article.shortTitle : article.title;
   return (
     <Link href={`/articles/${article.slug}`} className="coverage-card coverage-card--horizontal group flex h-full gap-4 p-4">
       <div className="relative shrink-0 overflow-hidden rounded-xl" style={{ width: 120, height: 88 }}>
@@ -80,7 +82,7 @@ function HorizontalLayout({ article }: { article: PublicArticleCard }) {
       </div>
       <div className="min-w-0 flex flex-1 flex-col justify-center">
         <CategoryPill category={article.category} />
-        <h3 className="mt-2 font-semibold leading-snug line-clamp-3 group-hover:text-primary transition-colors">{article.title}</h3>
+        <h3 className="mt-2 font-semibold leading-snug group-hover:text-primary transition-colors">{displayTitle}</h3>
         {article.excerpt && <p className="mt-2 text-[13px] text-muted-foreground line-clamp-2">{article.excerpt}</p>}
         <MetaRow article={article} />
       </div>
@@ -89,6 +91,7 @@ function HorizontalLayout({ article }: { article: PublicArticleCard }) {
 }
 
 function CompactLayout({ article }: { article: PublicArticleCard }) {
+  const displayTitle = (article.title.length > 90 && article.shortTitle) ? article.shortTitle : article.title;
   return (
     <Link href={`/articles/${article.slug}`} className="coverage-card coverage-card--compact group block h-full p-4">
       <div className="relative overflow-hidden rounded-xl" style={{ width: '100%', height: 200 }}>
@@ -100,13 +103,14 @@ function CompactLayout({ article }: { article: PublicArticleCard }) {
           style={heroImageStyle(article.heroMeta)}
         />
       </div>
-      <h3 className="mt-3 text-sm font-semibold leading-snug line-clamp-3 group-hover:text-primary transition-colors">{article.title}</h3>
+      <h3 className="mt-3 text-sm font-semibold leading-snug group-hover:text-primary transition-colors">{displayTitle}</h3>
       <MetaRow article={article} />
     </Link>
   );
 }
 
 function OverlayLayout({ article }: { article: PublicArticleCard }) {
+  const displayTitle = (article.title.length > 90 && article.shortTitle) ? article.shortTitle : article.title;
   return (
     <Link href={`/articles/${article.slug}`} className="coverage-card coverage-card--overlay group relative block h-full min-h-[220px] overflow-hidden rounded-2xl">
       <Image
@@ -120,7 +124,7 @@ function OverlayLayout({ article }: { article: PublicArticleCard }) {
       <div className="absolute inset-0 bg-gradient-to-t from-background via-background/70 to-transparent" />
       <div className="relative flex h-full flex-col justify-end p-4">
         <CategoryPill category={article.category} />
-        <h3 className="mt-2 font-semibold leading-snug line-clamp-3 group-hover:text-primary transition-colors">{article.title}</h3>
+        <h3 className="mt-2 font-semibold leading-snug group-hover:text-primary transition-colors">{displayTitle}</h3>
         <MetaRow article={article} />
       </div>
     </Link>
@@ -128,11 +132,12 @@ function OverlayLayout({ article }: { article: PublicArticleCard }) {
 }
 
 function HeadlineLayout({ article }: { article: PublicArticleCard }) {
+  const displayTitle = (article.title.length > 90 && article.shortTitle) ? article.shortTitle : article.title;
   return (
     <Link href={`/articles/${article.slug}`} className="coverage-card coverage-card--headline group flex h-full gap-3 p-4">
       <div className="min-w-0 flex-1">
         <CategoryPill category={article.category} />
-        <h3 className="mt-2 text-sm font-semibold leading-snug line-clamp-4 group-hover:text-primary transition-colors">{article.title}</h3>
+        <h3 className="mt-2 text-sm font-semibold leading-snug group-hover:text-primary transition-colors">{displayTitle}</h3>
         <MetaRow article={article} />
       </div>
       <div className="relative shrink-0 overflow-hidden rounded-lg" style={{ width: 88, height: 88 }}>
@@ -149,6 +154,7 @@ function HeadlineLayout({ article }: { article: PublicArticleCard }) {
 }
 
 function SplitLayout({ article }: { article: PublicArticleCard }) {
+  const displayTitle = (article.title.length > 90 && article.shortTitle) ? article.shortTitle : article.title;
   return (
     <Link href={`/articles/${article.slug}`} className="coverage-card coverage-card--split group grid h-full gap-0 overflow-hidden sm:grid-cols-2">
       <div className="relative h-full min-h-[180px] w-full">
@@ -163,8 +169,8 @@ function SplitLayout({ article }: { article: PublicArticleCard }) {
       </div>
       <div className="flex flex-col justify-center p-5">
         <CategoryPill category={article.category} />
-        <h3 className="mt-2 font-display text-lg font-semibold leading-tight line-clamp-3 group-hover:text-primary transition-colors">
-          {article.title}
+        <h3 className="mt-2 font-display text-lg font-semibold leading-tight group-hover:text-primary transition-colors">
+          {displayTitle}
         </h3>
         {article.excerpt && <p className="mt-2 text-[13px] text-muted-foreground line-clamp-3">{article.excerpt}</p>}
         <MetaRow article={article} />
@@ -174,11 +180,12 @@ function SplitLayout({ article }: { article: PublicArticleCard }) {
 }
 
 function EditorialLayout({ article }: { article: PublicArticleCard }) {
+  const displayTitle = (article.title.length > 90 && article.shortTitle) ? article.shortTitle : article.title;
   return (
     <Link href={`/articles/${article.slug}`} className="coverage-card coverage-card--editorial group flex h-full gap-3 border-l-4 border-primary p-4 pl-5">
       <div className="min-w-0 flex-1">
         <p className="section-category-label text-primary/80">{article.category}</p>
-        <h3 className="mt-2 font-semibold leading-snug line-clamp-4 group-hover:text-primary transition-colors">{article.title}</h3>
+        <h3 className="mt-2 font-semibold leading-snug group-hover:text-primary transition-colors">{displayTitle}</h3>
         {article.excerpt && <p className="mt-2 text-[13px] italic leading-relaxed text-muted-foreground line-clamp-3">{article.excerpt}</p>}
         <MetaRow article={article} />
       </div>
@@ -187,6 +194,7 @@ function EditorialLayout({ article }: { article: PublicArticleCard }) {
 }
 
 function BannerLayout({ article }: { article: PublicArticleCard }) {
+  const displayTitle = (article.title.length > 90 && article.shortTitle) ? article.shortTitle : article.title;
   return (
     <Link href={`/articles/${article.slug}`} className="coverage-card coverage-card--banner group relative block h-full min-h-[160px] overflow-hidden rounded-2xl">
       <Image
@@ -199,7 +207,7 @@ function BannerLayout({ article }: { article: PublicArticleCard }) {
       />
       <div className="relative flex h-full flex-col justify-center bg-background/75 p-4 backdrop-blur-[2px]">
         <CategoryPill category={article.category} />
-        <h3 className="mt-2 text-sm font-semibold leading-snug line-clamp-3 group-hover:text-primary transition-colors">{article.title}</h3>
+        <h3 className="mt-2 text-sm font-semibold leading-snug group-hover:text-primary transition-colors">{displayTitle}</h3>
         <span className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-primary">
           Read story <ArrowRight className="h-3.5 w-3.5" />
         </span>

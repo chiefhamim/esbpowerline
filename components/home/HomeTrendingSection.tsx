@@ -45,7 +45,7 @@ function TrendingListItem({
       </span>
       <div className="min-w-0 flex-1">
         <h3
-          className={`home-trending-item__title font-medium leading-snug line-clamp-2 group-hover:text-primary transition-colors ${
+          className={`home-trending-item__title font-medium leading-snug group-hover:text-primary transition-colors ${
             compact ? 'text-[13px] home-trending-item__title--compact' : 'text-sm'
           }`}
         >
@@ -511,7 +511,7 @@ export function HomeTrendingSection({
               name={lead.category}
               className="section-category-label text-muted-foreground mb-1"
             />
-            <h3 className="font-display font-bold text-base md:text-lg leading-snug tracking-tight line-clamp-3 group-hover:text-primary transition-colors">
+            <h3 className="font-display font-bold text-base md:text-lg leading-snug tracking-tight group-hover:text-primary transition-colors">
               {(lead.title.length > 90 && lead.shortTitle) ? lead.shortTitle : lead.title}
             </h3>
             <p className="text-xs text-muted-foreground mt-1.5">
