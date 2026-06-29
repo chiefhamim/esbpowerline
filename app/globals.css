@@ -691,24 +691,23 @@ body {
     display: grid;
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
     gap: var(--hero-split-inset);
-    align-items: start;
-    height: var(--hero-content-h);
+    align-items: center;
+    height: auto;
     min-height: var(--hero-content-h);
-    max-height: var(--hero-content-h);
   }
 
   .featured-hero__image-wrap {
     display: block;
     min-width: 0;
-    height: var(--hero-content-h);
-    min-height: var(--hero-content-h);
-    max-height: var(--hero-content-h);
+    aspect-ratio: 16 / 9;
+    height: auto;
   }
 
   .featured-hero__image-wrap .featured-hero__image {
-    height: var(--hero-content-h);
-    min-height: var(--hero-content-h);
-    max-height: var(--hero-content-h);
+    aspect-ratio: 16 / 9;
+    height: auto;
+    min-height: 0;
+    max-height: none;
   }
 }
 
