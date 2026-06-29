@@ -689,9 +689,9 @@ body {
 @media (min-width: 768px) {
   .featured-hero__split {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1.25fr) minmax(0, 0.75fr);
     gap: var(--hero-split-inset);
-    align-items: center;
+    align-items: start;
     height: auto;
     min-height: var(--hero-content-h);
   }
