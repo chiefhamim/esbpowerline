@@ -91,6 +91,7 @@ export default async function AuthorPage({ params }: { params: Promise<{ slug: s
         id: a.id,
         slug: a.slug,
         title: title,
+        shortTitle: a.shortTitle,
         excerpt: excerpt,
         category: a.category,
         author: a.postAsNewsDesk ? 'ESB News Desk' : (a.author?.name ?? 'ESB PowerLine'),

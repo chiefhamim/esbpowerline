@@ -101,6 +101,7 @@ interface ArticleFormProps {
     id: string;
     authorId?: string;
     title: string;
+    shortTitle?: string | null;
     slug: string;
     excerpt?: string | null;
     content: string;
@@ -624,7 +625,7 @@ export function ArticleForm({
                     <Info className="h-4 w-4 shrink-0" />
                     Headline Exceeds 90-char Limit ({title.length} chars)
                   </label>
-                  <CharBudgetHint length={shortTitle.length} budget={{ min: 3, max: 90 }} />
+                  <CharBudgetHint length={shortTitle.length} budget={HEADLINE_BUDGET} />
                 </div>
                 <Input
                   id="shortTitle"
