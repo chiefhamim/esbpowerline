@@ -2690,8 +2690,7 @@ html.locale-bn .market-ticker-label {
   justify-content: space-between;
   gap: 0.75rem;
   min-height: var(--snapshot-head-h, 3rem);
-  padding-bottom: calc(var(--hero-slot-gap) * 0.65);
-  border-bottom: 1px solid hsl(var(--border) / 0.14);
+  padding-bottom: 0.75rem;
 }
 
 .home-snapshot-segment__title-block {
@@ -2830,10 +2829,9 @@ html.locale-bn .market-ticker-label {
   justify-content: flex-end;
   gap: 0.4rem;
   min-height: var(--snapshot-foot-h, 2rem);
-  padding-top: calc(var(--hero-slot-gap) * 0.65);
-  border-top: 1px solid hsl(var(--border) / 0.14);
+  padding-top: 0.75rem;
   font-family: var(--font-mono);
-  font-size: var(--snapshot-sources-size, var(--text-ui-2xs));
+  font-size: calc(var(--snapshot-sources-size, var(--text-ui-2xs)) - 2px);
   line-height: 1.25;
   color: hsl(var(--muted-foreground) / 0.8);
   white-space: nowrap;
@@ -2911,17 +2909,22 @@ html.locale-bn .home-snapshot-segment__kicker {
 
 /* Compact energy dashboard — default scale outside hero shell */
 .energy-dashboard--compact .energy-dashboard__stat-label {
-  font-size: var(--text-ui-2xs);
+  font-size: clamp(0.55rem, 1vw + 0.3rem, 0.75rem);
   line-height: var(--text-ui-leading-compact);
 }
 
 .energy-dashboard--compact .energy-dashboard__stat-value {
-  font-size: var(--text-ui-sm);
+  font-size: clamp(0.875rem, 1.5vw + 0.4rem, 1.125rem);
   line-height: 1.1;
 }
 
 .energy-dashboard--compact .energy-dashboard__stat-unit {
-  font-size: var(--text-ui-2xs);
+  font-size: clamp(0.5rem, 0.8vw + 0.2rem, 0.65rem);
+}
+
+.energy-dashboard--compact .energy-dashboard__stat-icon {
+  width: clamp(1rem, 1.5vw + 0.5rem, 1.25rem);
+  height: clamp(1rem, 1.5vw + 0.5rem, 1.25rem);
 }
 
 .energy-dashboard--compact.energy-dashboard--fill {
@@ -6454,7 +6457,7 @@ button.grid-explorer-link {
 /* Professional moving ticker / marquee */
 @keyframes marquee {
   0% { transform: translateX(0); }
-  100% { transform: translateX(-25%); }
+  100% { transform: translateX(-50%); }
 }
 .animate-marquee {
   animation: marquee 28s linear infinite;

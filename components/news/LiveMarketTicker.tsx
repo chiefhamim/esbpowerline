@@ -17,12 +17,12 @@ export interface TickerItem {
 }
 
 const defaultItems: TickerItem[] = [
-  { id: 'lng', name: 'LNG (Spot)', value: 11.85, unit: '/mmbtu', change: 1.4, prefix: '$' },
-  { id: 'coal', name: 'Coal (API2)', value: 102.5, unit: '/t', change: -0.8, prefix: '$' },
-  { id: 'fx', name: 'USD/BDT', value: 117.65, unit: '', change: 0.12, prefix: '৳' },
-  { id: 'solar', name: 'Solar Module', value: 0.118, unit: '/W', change: -2.1, prefix: '$' },
+  { id: 'lng', name: 'LNG (Spot)', value: 15.82, unit: '/mmbtu', change: 0.8, prefix: '$' },
+  { id: 'coal', name: 'Coal (API2)', value: 116.7, unit: '/t', change: 1.2, prefix: '$' },
+  { id: 'fx', name: 'USD/BDT', value: 123.50, unit: '', change: 0.05, prefix: '৳' },
+  { id: 'solar', name: 'Solar Module', value: 0.10, unit: '/W', change: -0.5, prefix: '$' },
   { id: 'tariff', name: 'Bulk Tariff', value: 8.95, unit: 'Tk/kWh', change: 0.0, prefix: '' },
-  { id: 'gas', name: 'Petrobangla Gas', value: 1380, unit: 'MMcfd', change: -3.2, prefix: '' },
+  { id: 'gas', name: 'Petrobangla Gas', value: 1350, unit: 'MMcfd', change: -1.2, prefix: '' },
 ];
 
 export function LiveMarketTicker({
@@ -49,6 +49,7 @@ export function LiveMarketTicker({
 
   const [items, setItems] = useState<TickerItem[]>(localizedSeed);
   const [mounted, setMounted] = useState(false);
+  const [marketOpen, setMarketOpen] = useState(false);
 
   const simulateLive = isSimulatedTelemetryEnabled();
 
@@ -58,13 +59,35 @@ export function LiveMarketTicker({
 
   useEffect(() => {
     setMounted(true);
+    
+    const checkMarketStatus = () => {
+      const now = new Date();
+      const dhakaTime = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Dhaka' }));
+      const day = dhakaTime.getDay();
+      const hours = dhakaTime.getHours();
+      const minutes = dhakaTime.getMinutes();
+      
+      const isOpenDay = day >= 0 && day <= 4; // Sun-Thu
+      const timeInMins = hours * 60 + minutes;
+      const isOpenTime = timeInMins >= 10 * 60 && timeInMins <= 14 * 60 + 30; // 10:00 to 14:30
+      
+      return isOpenDay && isOpenTime;
+    };
+    
+    setMarketOpen(checkMarketStatus());
+
     if (!simulateLive) return;
 
     const interval = setInterval(() => {
       if (document.hidden) return;
+      
+      const isOpen = checkMarketStatus();
+      setMarketOpen(isOpen);
+      if (!isOpen) return;
+
       setItems((prev) =>
         prev.map((item) => {
-          if (Math.random() > 0.6) {
+          if (Math.random() > 0.4) {
             const delta =
               (Math.random() - 0.5) *
               (item.id === 'fx' || item.id === 'tariff' ? 0.15 : item.value > 50 ? 1.2 : 0.008);
@@ -77,7 +100,7 @@ export function LiveMarketTicker({
           return item;
         }),
       );
-    }, 25000);
+    }, 30 * 60 * 1000);
 
     return () => clearInterval(interval);
   }, [simulateLive]);
@@ -168,21 +191,27 @@ export function LiveMarketTicker({
   );
 
   const label = labelClassName ? (
-    <div className={cn('shrink-0 flex items-center gap-2', labelClassName)}>
+    <div className={cn('shrink-0 flex items-center gap-2 relative z-10 bg-[var(--bg)] pr-2', labelClassName)}>
       <Zap className="h-3.5 w-3.5 shrink-0 text-amber-500 fill-amber-500/10" />
       <span className="market-ticker-label__text">
         <span className="md:hidden">COMMODITIES</span>
         <span className="hidden md:inline">{t('ticker.commodities')}</span>
       </span>
       <span className="relative flex h-1.5 w-1.5 shrink-0">
-        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-        <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500"></span>
+        {marketOpen ? (
+          <>
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-full w-full bg-emerald-500"></span>
+          </>
+        ) : (
+          <span className="relative inline-flex rounded-full h-full w-full bg-rose-500"></span>
+        )}
       </span>
     </div>
   ) : (
     <div
       className={cn(
-        'flex shrink-0 items-center gap-1.5 text-muted-foreground',
+        'flex shrink-0 items-center gap-1.5 text-muted-foreground relative z-10 bg-[var(--bg)]',
         compact ? 'pr-2.5' : 'border-r border-border/60 pr-3',
       )}
     >
@@ -190,13 +219,23 @@ export function LiveMarketTicker({
       <span className={cn('font-semibold uppercase tracking-[0.1em]', labelSize)}>
         {t('ticker.commodities')}
       </span>
+      <span className="relative flex h-1.5 w-1.5 shrink-0">
+        {marketOpen ? (
+          <>
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-full w-full bg-emerald-500"></span>
+          </>
+        ) : (
+          <span className="relative inline-flex rounded-full h-full w-full bg-rose-500"></span>
+        )}
+      </span>
     </div>
   );
 
   const marqueeRow = (
     <div
       className={cn(
-        'market-ticker__row flex w-full min-w-0 items-center',
+        'market-ticker__row flex w-full min-w-0 items-center group/ticker relative',
         compact ? 'h-8' : 'h-9 md:h-10',
         textSize,
       )}
@@ -204,7 +243,7 @@ export function LiveMarketTicker({
       onMouseLeave={handleMouseLeave}
     >
       {label}
-      <div className={cn('market-ticker__viewport mask-fade', compact ? 'pl-2 -mr-3' : 'pl-3 -mr-3')}>{track}</div>
+      <div className={cn('market-ticker__viewport mask-fade w-full overflow-hidden', compact ? 'pl-2 -mr-3' : 'pl-3 -mr-3')}>{track}</div>
     </div>
   );
 

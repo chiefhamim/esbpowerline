@@ -119,10 +119,10 @@ export function HomeSnapshotPanel({
 
   return (
     <section
-      className="home-rail-panel home-block home-editorial__snapshot relative overflow-hidden bg-transparent flex flex-col gap-3"
+      className="home-rail-panel home-block home-editorial__snapshot relative overflow-hidden bg-transparent flex flex-col gap-3 sm:gap-4"
       aria-labelledby="home-snapshot-title"
     >
-      <div className="home-editorial__section-head flex items-center justify-between pb-3 border-b border-border/10 dark:border-border/20 shrink-0 relative z-10">
+      <div className="home-editorial__section-head flex items-center justify-between shrink-0 relative z-10">
         <div className="flex items-center gap-2.5 min-w-0">
           <BarChart3 className="h-8 w-8 text-primary shrink-0" aria-hidden />
           <h2 id="home-snapshot-title" className="py-0.5 text-2xl md:text-3xl font-display font-extrabold tracking-tight text-foreground truncate leading-tight">
@@ -143,13 +143,13 @@ export function HomeSnapshotPanel({
         </div>
       </div>
 
-      <div className="relative z-10 flex-grow my-3">
+      <div className="relative z-10 flex-grow">
         <EnergyDashboard initialStats={snapshotStats as never} compact fillHeight={false} />
       </div>
 
       {sourcesText && (
-        <div className="flex-shrink-0 pt-3 border-t border-border/10 dark:border-border/20 relative z-10">
-          <div className="flex flex-col items-end w-full gap-0.5 text-[10px] md:text-xs text-muted-foreground font-mono font-medium italic opacity-75 text-right">
+        <div className="flex-shrink-0 relative z-10">
+          <div className="flex flex-col items-end w-full gap-0.5 text-[8px] md:text-[10px] text-muted-foreground font-mono font-medium italic opacity-75 text-right">
             <div className="flex items-center justify-end gap-1 w-full whitespace-nowrap">
               <span className="font-semibold text-foreground/50 tracking-wider not-italic">{locale === 'bn' ? 'তথ্য সূত্র:' : 'DATA:'}</span>
               <span>{sourcesText}</span>

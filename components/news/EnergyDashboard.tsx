@@ -230,10 +230,10 @@ export function EnergyDashboard({
     <div
       className={
         compact
-          ? `energy-dashboard energy-dashboard--compact grid grid-cols-2 gap-2 sm:gap-2.5 w-full min-w-0 ${
+          ? `energy-dashboard energy-dashboard--compact grid grid-cols-2 gap-3 sm:gap-4 w-full min-w-0 ${
               variant === 'segment' ? 'energy-dashboard--segment ' : ''
             }${fillHeight ? 'energy-dashboard--fill h-full auto-rows-fr' : 'auto-rows-fr'}`
-          : 'energy-dashboard grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3'
+          : 'energy-dashboard grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 sm:gap-5'
       }
     >
       {stats.map((s, i) => {
@@ -243,8 +243,8 @@ export function EnergyDashboard({
             key={i}
             className={`energy-dashboard__stat group relative overflow-hidden flex transition-all duration-250 ${
               compact
-                ? `flex-col justify-center text-left rounded-xl border border-border/30 bg-card hover:bg-muted/5 dark:hover:bg-white/[0.01] hover:border-primary/20 hover:shadow-sm min-w-0 min-h-[3.75rem] ${
-                    fillHeight ? 'px-2.5 py-2 h-full' : 'px-2.5 py-2.5'
+                ? `flex-col justify-center text-left rounded-xl border border-border/30 bg-card hover:bg-muted/5 dark:hover:bg-white/[0.01] hover:border-primary/20 hover:shadow-sm min-w-0 min-h-[clamp(3.875rem,8vw+1rem,4.5rem)] ${
+                    fillHeight ? 'px-2.5 py-2 h-full' : 'px-[clamp(0.5rem,2vw,1rem)] py-[clamp(0.6rem,2vw,1rem)]'
                   }`
                 : 'stat flex-col items-center justify-center text-center px-3 pt-6 pb-5'
             }`}
@@ -271,11 +271,11 @@ export function EnergyDashboard({
             </span>
 
             {compact ? (
-              <div className="energy-dashboard__stat-body flex flex-row items-center w-full min-w-0 h-full gap-2">
+              <div className="energy-dashboard__stat-body flex flex-row items-center w-full min-w-0 h-full gap-[clamp(0.35rem,1.5vw,0.6rem)]">
                 <Icon
-                  className={`energy-dashboard__stat-icon h-4 w-4 shrink-0 transition-transform duration-200 group-hover:scale-110 ${s.iconClass ?? 'text-primary'}`}
+                  className={`energy-dashboard__stat-icon shrink-0 transition-transform duration-200 group-hover:scale-110 ${s.iconClass ?? 'text-primary'}`}
                 />
-                <div className="energy-dashboard__stat-copy flex min-w-0 flex-1 flex-col justify-center gap-1">
+                <div className="energy-dashboard__stat-copy flex min-w-0 flex-1 flex-col justify-center gap-[clamp(0.1rem,1vw,0.3rem)]">
                   <div className="energy-dashboard__stat-label font-semibold uppercase tracking-wider text-muted-foreground/75 group-hover:text-foreground transition-colors duration-150 select-none leading-none truncate w-full">
                     {getLabelElements(s.label, locale)}
                   </div>

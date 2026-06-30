@@ -18,11 +18,32 @@ export function BdStockTicker({
   const [items, setItems] = useState<DseTickerItem[]>(DEFAULT_DSE_TICKER);
   const [mounted, setMounted] = useState(false);
 
+  const [marketOpen, setMarketOpen] = useState(false);
+
   useEffect(() => {
     setMounted(true);
     let cancelled = false;
 
+    const checkMarketStatus = () => {
+      const now = new Date();
+      const dhakaTime = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Dhaka' }));
+      const day = dhakaTime.getDay();
+      const hours = dhakaTime.getHours();
+      const minutes = dhakaTime.getMinutes();
+      
+      const isOpenDay = day >= 0 && day <= 4; // Sun-Thu
+      const timeInMins = hours * 60 + minutes;
+      const isOpenTime = timeInMins >= 10 * 60 && timeInMins <= 14 * 60 + 30; // 10:00 to 14:30
+      
+      return isOpenDay && isOpenTime;
+    };
+
     async function load() {
+      const isOpen = checkMarketStatus();
+      if (!cancelled) setMarketOpen(isOpen);
+      
+      if (!isOpen) return;
+
       try {
         const res = await fetch('/api/market/dse', { cache: 'no-store' });
         if (!res.ok) return;
@@ -34,21 +55,12 @@ export function BdStockTicker({
     }
 
     void load();
-    const interval = setInterval(load, 60_000);
+    const interval = setInterval(load, 30 * 60 * 1000);
     return () => {
       cancelled = true;
       clearInterval(interval);
     };
   }, []);
-
-  const displayItems = useMemo(
-    () =>
-      items.map((item) => ({
-        ...item,
-        label: locale === 'bn' ? item.nameBn : item.name,
-      })),
-    [items, locale],
-  );
 
   const trackRef = useRef<HTMLDivElement>(null);
   const animationRef = useRef<Animation | null>(null);
@@ -73,7 +85,7 @@ export function BdStockTicker({
     return () => {
       anim.cancel();
     };
-  }, [mounted, displayItems, locale]);
+  }, [mounted, items, locale]);
 
   const handleMouseEnter = () => {
     if (animationRef.current) {
@@ -87,6 +99,15 @@ export function BdStockTicker({
     }
   };
 
+  const displayItems = useMemo(
+    () =>
+      items.map((item) => ({
+        ...item,
+        label: locale === 'bn' ? item.nameBn : item.name,
+      })),
+    [items, locale],
+  );
+
   if (!mounted) {
     return <div className={cn('h-8', className)} aria-hidden />;
   }
@@ -94,33 +115,49 @@ export function BdStockTicker({
   return (
     <div
       className={cn(
-        'market-ticker__row flex w-full min-w-0 items-center h-full min-h-8 text-[12px] md:text-[13px]',
+        'market-ticker__row flex w-full min-w-0 items-center h-full min-h-8 text-[12px] md:text-[13px] group/ticker relative',
         className,
       )}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
     >
       {labelClassName ? (
-        <div className={cn('shrink-0 flex items-center gap-2', labelClassName)}>
+        <div className={cn('shrink-0 flex items-center gap-2 relative z-10 bg-[var(--bg)] pr-2', labelClassName)}>
           <LineChart className="h-3.5 w-3.5 shrink-0 text-sky-500" />
           <span className="market-ticker-label__text">
             <span className="md:hidden">DSE</span>
             <span className="hidden md:inline">{t('ticker.dse')}</span>
           </span>
           <span className="relative flex h-1.5 w-1.5 shrink-0">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-            <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500"></span>
+            {marketOpen ? (
+              <>
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-full w-full bg-emerald-500"></span>
+              </>
+            ) : (
+              <span className="relative inline-flex rounded-full h-full w-full bg-rose-500"></span>
+            )}
           </span>
         </div>
       ) : (
-        <div className="flex shrink-0 items-center gap-1.5 border-r border-border/60 pr-3 text-muted-foreground">
+        <div className="flex shrink-0 items-center gap-1.5 border-r border-border/60 pr-3 text-muted-foreground relative z-10 bg-[var(--bg)]">
           <LineChart className="h-3.5 w-3.5 shrink-0 text-sky-500" />
           <span className="text-[10px] font-semibold uppercase tracking-[0.1em] md:text-[11px]">
             {t('ticker.dse')}
           </span>
+          <span className="relative flex h-1.5 w-1.5 shrink-0">
+            {marketOpen ? (
+              <>
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-full w-full bg-emerald-500"></span>
+              </>
+            ) : (
+              <span className="relative inline-flex rounded-full h-full w-full bg-rose-500"></span>
+            )}
+          </span>
         </div>
       )}
-      <div className="market-ticker__viewport mask-fade pl-2 md:pl-3 -mr-3">
+      <div className="market-ticker__viewport mask-fade pl-2 md:pl-3 -mr-3 w-full overflow-hidden">
         <div
           ref={trackRef}
           className="market-ticker__track flex w-max items-center gap-6 pr-6 whitespace-nowrap"
