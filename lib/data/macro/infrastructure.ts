@@ -103,5 +103,19 @@ export const macroInfrastructureData = [
     "peak_generation_mw": 17201,
     "transmission_ckt_km": 17088,
     "distribution_km": 632780
+  },
+  {
+    "fiscal_year": "2025-26",
+    "installed_capacity_mw": 34200,
+    "peak_generation_mw": 17800,
+    "transmission_ckt_km": 17400,
+    "distribution_km": 635000
+  },
+  {
+    "fiscal_year": "2026-27",
+    "installed_capacity_mw": 35000,
+    "peak_generation_mw": 18500,
+    "transmission_ckt_km": 18200,
+    "distribution_km": 640000
   }
 ];

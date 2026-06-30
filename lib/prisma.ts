@@ -22,7 +22,13 @@ function createPrismaClient() {
 
 /** Dev hot-reload can keep an old client after schema changes — recreate if models are missing */
 function isPrismaClientCurrent(client: PrismaClient): boolean {
-  return 'savedItem' in client && 'memberDownload' in client && 'user' in client && 'contactMessage' in client;
+  return (
+    'savedItem' in client &&
+    'memberDownload' in client &&
+    'user' in client &&
+    'contactMessage' in client &&
+    'memberGridSubscription' in client
+  );
 }
 
 function getPrismaClient(): PrismaClient {

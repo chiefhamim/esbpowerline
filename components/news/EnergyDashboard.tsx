@@ -232,7 +232,7 @@ export function EnergyDashboard({
         compact
           ? `energy-dashboard energy-dashboard--compact grid grid-cols-2 gap-3 sm:gap-4 w-full min-w-0 ${
               variant === 'segment' ? 'energy-dashboard--segment ' : ''
-            }${fillHeight ? 'energy-dashboard--fill h-full auto-rows-fr' : 'auto-rows-fr'}`
+            }${fillHeight ? 'energy-dashboard--fill h-full auto-rows-fr flex-grow' : 'auto-rows-fr'}`
           : 'energy-dashboard grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 sm:gap-5'
       }
     >

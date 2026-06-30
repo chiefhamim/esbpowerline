@@ -14,6 +14,22 @@ export async function GET(request: NextRequest) {
   }
 
   try {
+    const parsedUrl = new URL(url);
+    if (parsedUrl.protocol !== 'http:' && parsedUrl.protocol !== 'https:') {
+      return NextResponse.json({ error: 'Invalid protocol' }, { status: 400 });
+    }
+
+    const allowedHosts = [
+      'sxgokpmrbgdndstygapc.supabase.co',
+      'localhost',
+      '127.0.0.1',
+    ];
+    const host = parsedUrl.hostname;
+    const isAllowed = allowedHosts.some((allowed) => host === allowed || host.endsWith('.' + allowed));
+    if (!isAllowed) {
+      return NextResponse.json({ error: 'Forbidden domain' }, { status: 403 });
+    }
+
     const res = await fetch(url);
     if (!res.ok) {
       return NextResponse.json({ error: 'Failed to fetch remote image' }, { status: res.status });

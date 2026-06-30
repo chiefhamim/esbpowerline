@@ -1519,8 +1519,39 @@ export function PowerGridExplorer({
               })}
             </div>
 
+            {/* Card Explanation Block */}
+            {(() => {
+              const gasItem = generationData.find(d => d.name === 'Gas');
+              const coalItem = generationData.find(d => d.name === 'Coal');
+              const solarItem = generationData.find(d => d.name === 'Solar');
+              const hydroItem = generationData.find(d => d.name === 'Hydro');
+              
+              const gasShare = totalGenMkwhr > 0 ? ((gasItem?.gen || 0) / totalGenMkwhr) * 100 : 0;
+              const coalShare = totalGenMkwhr > 0 ? ((coalItem?.gen || 0) / totalGenMkwhr) * 100 : 0;
+              const fossilShare = gasShare + coalShare;
+              
+              const solarGen = solarItem?.gen || 0;
+              const hydroGen = hydroItem?.gen || 0;
+              const reShare = totalGenMkwhr > 0 ? ((solarGen + hydroGen) / totalGenMkwhr) * 100 : 0;
+
+              return (
+                <div className="bg-muted/10 p-4 border-t border-border/40 text-xs text-muted-foreground space-y-2">
+                  <p><strong>What is being shown?</strong></p>
+                  <p className="leading-relaxed">This pie chart shows the real-time share of generation by different fuel types for the selected day, breaking down output into: 
+                    {' '}<span className="text-amber-600 dark:text-amber-400 font-bold">Natural Gas</span>, 
+                    {' '}<span className="text-slate-600 dark:text-slate-400 font-bold">Coal</span>, 
+                    {' '}<span className="text-violet-500 font-bold">Cross-Border Imports</span>, 
+                    {' '}<span className="text-rose-500 font-bold">Heavy Fuel Oil (HFO)</span>, 
+                    {' '}<span className="text-sky-500 font-bold">Hydroelectric</span>, and 
+                    {' '}<span className="text-emerald-500 font-bold">Solar PV</span>.
+                  </p>
+                  <p className="leading-relaxed"><strong>Analytical Insight:</strong> <span className="text-amber-600 dark:text-amber-400 font-semibold">Natural Gas</span> ({gasShare.toFixed(1)}%) and imported <span className="text-slate-600 dark:text-slate-400 font-semibold">Coal</span> ({coalShare.toFixed(1)}%) dominate the daily fuel mix, representing <span className="font-bold text-foreground">{fossilShare.toFixed(1)}%</span> of the total system generation. Renewables and local <span className="text-emerald-500 font-bold">Solar/Hydro</span> remain low at <span className="font-bold text-foreground">{reShare.toFixed(2)}%</span>, highlighting a critical dependency on fossil fuels and vulnerable import markets.</p>
+                </div>
+              );
+            })()}
+
             {/* Card Metadata Footer */}
-            <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1.5 mt-4 pt-3 border-t border-border/40 text-[10px] text-muted-foreground/80">
+            <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1.5 mt-2 pt-3 border-t border-border/40 text-[10px] text-muted-foreground/80">
               <span>Source: <a href="https://www.pgcb.gov.bd/" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline font-semibold">PGCB Daily Progress Report</a></span>
               <span>Audited by: PGCB Network Operations Division</span>
               <span className="font-medium">Reporting Date: {systemStats.date}</span>
@@ -1625,9 +1656,58 @@ export function PowerGridExplorer({
               </div>
             </div>
 
+            {/* Card Explanation Block */}
+            {(() => {
+              const activeCosts = generationData.filter(d => d.gen > 0 && d.unitCost > 0);
+              const mostExpensive = activeCosts.length > 0 ? [...activeCosts].sort((a, b) => b.unitCost - a.unitCost)[0] : null;
+              const cheapest = activeCosts.length > 0 ? [...activeCosts].sort((a, b) => a.unitCost - b.unitCost)[0] : null;
+
+              const getFuelColorClass = (name: string) => {
+                if (name === 'Gas') return 'text-amber-600 dark:text-amber-400 font-bold';
+                if (name === 'Coal') return 'text-slate-600 dark:text-slate-400 font-bold';
+                if (name === 'HFO') return 'text-rose-500 font-bold';
+                if (name === 'Hydro') return 'text-sky-500 font-bold';
+                if (name === 'Solar') return 'text-emerald-500 font-bold';
+                if (name === 'Imports') return 'text-violet-500 font-bold';
+                if (name === 'HSD (Diesel)') return 'text-red-500 font-bold';
+                return 'text-primary font-bold';
+              };
+
+              const getOperationalType = (name: string) => {
+                if (name === 'Gas' || name === 'Coal') return 'base load source';
+                if (name === 'Hydro') return 'seasonal renewable source';
+                if (name === 'Solar') return 'intermittent renewable source';
+                return 'generation source';
+              };
+
+              return (
+                <div className="bg-muted/10 p-4 border-t border-border/40 text-xs text-muted-foreground space-y-2">
+                  <p><strong>What is being shown?</strong></p>
+                  <p className="leading-relaxed">This bar chart displays the daily operational cost in Crore BDT by fuel/import source. The cost is calculated from fuel consumption rates, weighted import prices, and current bulk procurement contracts.</p>
+                  <p className="leading-relaxed"><strong>Analytical Insight:</strong> 
+                    {mostExpensive ? (
+                      <>
+                        {' '}Cross-border power imports and imported liquid fuels (<span className={getFuelColorClass(mostExpensive.name)}>{mostExpensive.name}</span>) represent the highest per-unit cost segments on this day, peaking at <span className="font-bold text-foreground">{mostExpensive.unitCost.toFixed(2)} Tk/KWh</span>.
+                      </>
+                    ) : (
+                      ' Cross-border power imports and imported liquid fuels represent the highest per-unit cost segments.'
+                    )}
+                    {cheapest ? (
+                      <>
+                        {' '}Conversely, <span className={getFuelColorClass(cheapest.name)}>{cheapest.name}</span> remains the most cost-effective {getOperationalType(cheapest.name)} at <span className="font-bold text-foreground">{cheapest.unitCost.toFixed(2)} Tk/KWh</span>.
+                      </>
+                    ) : (
+                      ' Coal and local natural gas remain the most cost-effective base load fuels.'
+                    )}
+                    {' '}Shifting away from expensive liquid fuel plants will lower the average production cost.
+                  </p>
+                </div>
+              );
+            })()}
+
             {/* Card Metadata Footer */}
-            <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1.5 mt-4 pt-3 border-t border-border/40 text-[10px] text-muted-foreground/80">
-              <span>Source: <a href="https://bpdb.gov.bd/" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline font-semibold">BPDB Daily Reports</a> &amp; <a href="https://bpc.gov.bd/" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline font-semibold">BPC Fuel Gazettes</a></span>
+            <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1.5 mt-2 pt-3 border-t border-border/40 text-[10px] text-muted-foreground/80">
+              <span>Source: <a href="https://www.bpdb.gov.bd/" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline font-semibold">BPDB Daily Reports</a> &amp; <a href="https://bpc.gov.bd/" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline font-semibold">BPC Fuel Gazettes</a></span>
               <span>Audited by: BPDB Audits / CAG Audit Team</span>
               <span className="font-medium">Reporting Date: {systemStats.date}</span>
             </div>
@@ -1648,16 +1728,6 @@ export function PowerGridExplorer({
             {chartsReady ? (
               <ResponsiveContainer width="100%" height="100%">
                 <ComposedChart data={hourlyLoadData} margin={{ top: 10, right: 10, left: 10, bottom: 0 }}>
-                  <defs>
-                    <linearGradient id="loadShed-grad" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="hsl(var(--destructive))" stopOpacity={0.25} />
-                      <stop offset="95%" stopColor="hsl(var(--destructive))" stopOpacity={0.0} />
-                    </linearGradient>
-                    <linearGradient id="gen-grad" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#0ea5e9" stopOpacity={0.2} />
-                      <stop offset="95%" stopColor="#0ea5e9" stopOpacity={0.0} />
-                    </linearGradient>
-                  </defs>
                   <CartesianGrid strokeDasharray="3 6" stroke={chartTheme.gridStroke} opacity={0.3} vertical={false} />
                   <XAxis dataKey="time" tick={{ fontSize: 10, fill: chartTheme.axisTick }} axisLine={false} tickLine={false} />
                   <YAxis tick={{ fontSize: 10, fill: chartTheme.axisTick }} axisLine={false} tickLine={false} tickFormatter={(v) => `${v} MW`} />
@@ -1704,9 +1774,9 @@ export function PowerGridExplorer({
                     iconSize={8}
                     wrapperStyle={{ fontSize: '11px', paddingBottom: '10px' }}
                   />
-                  <Area type="monotone" dataKey="generation" name="Actual Generation" stroke="#0ea5e9" fill="url(#gen-grad)" strokeWidth={2.5} />
+                  <Area type="monotone" dataKey="generation" name="Actual Generation" stroke="#0ea5e9" fill="#0ea5e9" fillOpacity={0.15} strokeWidth={2.5} />
                   <Line type="monotone" dataKey="demand" name="Total Demand" stroke="#eab308" strokeWidth={2} dot={false} strokeDasharray="4 4" />
-                  <Bar dataKey="loadShed" name="Load Shedding Deficit" fill="url(#loadShed-grad)" stroke="hsl(var(--destructive))" strokeWidth={1} radius={[2, 2, 0, 0]} maxBarSize={15} />
+                  <Bar dataKey="loadShed" name="Load Shedding Deficit" fill="hsl(var(--destructive))" fillOpacity={0.2} stroke="hsl(var(--destructive))" strokeWidth={1} radius={[2, 2, 0, 0]} maxBarSize={15} />
                 </ComposedChart>
               </ResponsiveContainer>
             ) : (
@@ -1714,9 +1784,35 @@ export function PowerGridExplorer({
             )}
           </div>
           
-          <div className="p-4 bg-muted/20 border border-border/40 rounded-xl text-xs text-muted-foreground leading-relaxed mt-4">
-            <strong>Operational Insights:</strong> The load curve illustrates a typical peak demand shape with two major peaks: a daytime peak at 12:00 Hr (14,610 MW) driven by commercial cooling, and an evening peak at 19:30 Hr (16,854 MW) driven by domestic residential lighting. Load-shedding peaks at 23:00 Hr (1,236 MW) when generation reserves are exhausted relative to nighttime domestic loads.
-          </div>
+          {/* Card Explanation Block */}
+          {(() => {
+            const maxDemandRow = hourlyLoadData.length > 0 ? [...hourlyLoadData].sort((a, b) => b.demand - a.demand)[0] : null;
+            const maxLoadShedRow = hourlyLoadData.length > 0 ? [...hourlyLoadData].sort((a, b) => b.loadShed - a.loadShed)[0] : null;
+
+            return (
+              <div className="bg-muted/10 p-4 border border-border/40 rounded-xl text-xs text-muted-foreground space-y-2 mt-4">
+                <p><strong>What is being shown?</strong></p>
+                <p className="leading-relaxed">This chart displays the 24-hour daily load curve, comparing real-time <span className="text-amber-500 font-semibold">Total Demand</span>, <span className="text-sky-500 font-semibold">Actual Generation</span>, and the <span className="text-destructive font-semibold">Load Shedding Deficit</span> across all hourly SCADA logs.</p>
+                <p className="leading-relaxed">
+                  <strong>Operational Insights:</strong> The load curve illustrates peak demand profiles on this day. 
+                  {maxDemandRow ? (
+                    <>
+                      {' '}The daily peak demand reached a maximum of <span className="font-bold text-foreground">{formatNumber(Math.round(maxDemandRow.demand))} MW</span> at <span className="font-semibold text-primary">{maxDemandRow.time} Hr</span>.
+                    </>
+                  ) : (
+                    ' The daily peak demand typically manifests as commercial daytime cooling and evening domestic lighting peaks.'
+                  )}
+                  {maxLoadShedRow && maxLoadShedRow.loadShed > 0 ? (
+                    <>
+                      {' '}Load-shedding deficit peaked at <span className="font-bold text-destructive">{formatNumber(Math.round(maxLoadShedRow.loadShed))} MW</span> at <span className="font-semibold text-primary">{maxLoadShedRow.time} Hr</span> when generation reserves were exhausted relative to the grid load.
+                    </>
+                  ) : (
+                    ' Zero or minimal load-shedding was recorded throughout the day, indicating that generation reserves successfully met all peak requirements.'
+                  )}
+                </p>
+              </div>
+            );
+          })()}
 
           {/* Card Metadata Footer */}
           <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1.5 mt-4 pt-3 border-t border-border/40 text-[10px] text-muted-foreground/80">
@@ -1798,57 +1894,65 @@ export function PowerGridExplorer({
 
             {/* Card Metadata Footer */}
             <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1.5 mt-4 pt-3 border-t border-border/40 text-[10px] text-muted-foreground/80 px-4 pb-4">
-              <span>Source: <a href="https://bpdb.gov.bd/" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline font-semibold">BPDB Daily Reports</a> &amp; <a href="https://www.pgcb.gov.bd/" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline font-semibold">PGCB Logs</a></span>
+              <span>Source: <a href="https://www.bpdb.gov.bd/" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline font-semibold">BPDB Daily Reports</a> &amp; <a href="https://www.pgcb.gov.bd/" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline font-semibold">PGCB Logs</a></span>
               <span>Audited by: BPDB Finance &amp; Commercial Operations / CAG Audit Team</span>
               <span className="font-medium">Reporting Date: {systemStats.date}</span>
             </div>
           </div>
 
           {/* Daily Milestones */}
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            <div className="card p-5 space-y-3">
-              <div className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Load-Shedding &amp; Demand</div>
-              <div className="grid grid-cols-2 gap-y-2 text-xs leading-relaxed">
-                <span>Peak Demand:</span>
-                <span className="font-bold text-foreground text-left">{systemStats.eveningPeakDemand.toFixed(1)} MW</span>
-                <span>Peak Generation:</span>
-                <span className="font-bold text-foreground text-left">{systemStats.eveningPeakGen.toFixed(1)} MW</span>
-                <span>Unserved Energy:</span>
-                <span className="font-semibold text-destructive text-left">{systemStats.totalEnergyUnserved.toFixed(2)} MKWh</span>
+          <div className="grid-explorer-chart-card card p-4 space-y-4">
+            <div className="grid-explorer-chart-card__head">
+              <div>
+                <h3 className="grid-explorer-chart-card__title">Daily Operational Milestones<sup className="text-emerald-500 font-extrabold text-[10px] ml-2 select-none">Daily</sup></h3>
+                <p className="grid-explorer-chart-card__sub">Key metrics on system margin, load shedding demand, and gas-to-power allocations</p>
               </div>
             </div>
 
-            <div className="card p-5 space-y-3">
-              <div className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Daily System Margins</div>
-              <div className="grid grid-cols-2 gap-y-2 text-xs leading-relaxed">
-                <span>Max Generation:</span>
-                <span className="font-bold text-foreground text-left">{systemStats.maxGen.toFixed(1)} MW</span>
-                <span>Min Generation:</span>
-                <span className="font-bold text-foreground text-left">{systemStats.minGen.toFixed(1)} MW</span>
-                <span>Max Temp Yesterday:</span>
-                <span className="font-semibold text-foreground text-left">{systemStats.maxTemp.toFixed(1)} °C</span>
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="p-4 rounded-xl border border-border/30 bg-muted/5 space-y-3">
+                <div className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Load-Shedding &amp; Demand</div>
+                <div className="grid grid-cols-2 gap-y-2 text-xs leading-relaxed">
+                  <span>Peak Demand:</span>
+                  <span className="font-bold text-foreground text-left">{systemStats.eveningPeakDemand.toFixed(1)} MW</span>
+                  <span>Peak Generation:</span>
+                  <span className="font-bold text-foreground text-left">{systemStats.eveningPeakGen.toFixed(1)} MW</span>
+                  <span>Unserved Energy:</span>
+                  <span className="font-semibold text-destructive text-left">{systemStats.totalEnergyUnserved.toFixed(2)} MKWh</span>
+                </div>
+              </div>
+
+              <div className="p-4 rounded-xl border border-border/30 bg-muted/5 space-y-3">
+                <div className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Daily System Margins</div>
+                <div className="grid grid-cols-2 gap-y-2 text-xs leading-relaxed">
+                  <span>Max Generation:</span>
+                  <span className="font-bold text-foreground text-left">{systemStats.maxGen.toFixed(1)} MW</span>
+                  <span>Min Generation:</span>
+                  <span className="font-bold text-foreground text-left">{systemStats.minGen.toFixed(1)} MW</span>
+                  <span>Max Temp Yesterday:</span>
+                  <span className="font-semibold text-foreground text-left">{systemStats.maxTemp.toFixed(1)} °C</span>
+                </div>
+              </div>
+
+              <div className="p-4 rounded-xl border border-border/30 bg-muted/5 space-y-3">
+                <div className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Gas-to-Power</div>
+                <div className="grid grid-cols-2 gap-y-2 text-xs leading-relaxed">
+                  <span>Gas Supplied:</span>
+                  <span className="font-bold text-foreground text-left">{systemStats.totalGasSuppliedPower.toFixed(1)} MMCFD</span>
+                  <span>Gas Cost:</span>
+                  <span className="font-bold text-foreground text-left">43.71 Crore Tk</span>
+                  <span>Gas Unit Cost:</span>
+                  <span className="font-semibold text-primary text-left">3.45 Tk/KWh</span>
+                </div>
               </div>
             </div>
 
-            <div className="card p-5 space-y-3">
-              <div className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Gas-to-Power</div>
-              <div className="grid grid-cols-2 gap-y-2 text-xs leading-relaxed">
-                <span>Gas Supplied:</span>
-                <span className="font-bold text-foreground text-left">{systemStats.totalGasSuppliedPower.toFixed(1)} MMCFD</span>
-                <span>Gas Cost:</span>
-                <span className="font-bold text-foreground text-left">43.71 Crore Tk</span>
-                <span>Gas Unit Cost:</span>
-                <span className="font-semibold text-primary text-left">3.45 Tk/KWh</span>
-              </div>
+            {/* Card Metadata Footer */}
+            <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1.5 mt-2 pt-3 border-t border-border/40 text-[10px] text-muted-foreground/80 px-4 pb-4">
+              <span>Source: <a href="https://www.pgcb.gov.bd/" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline font-semibold">PGCB Operations</a> &amp; <a href="https://www.petrobangla.org.bd/" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline font-semibold">Petrobangla Production Division</a></span>
+              <span>Audited by: NLDC Operators &amp; Petrobangla Billing</span>
+              <span className="font-medium">Reporting Period: System Summary (Date: {systemStats.date})</span>
             </div>
-          </div>
-
-
-          {/* Section Metadata Footer */}
-          <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1.5 mt-2 text-[10px] text-muted-foreground/75 px-1">
-            <span>Source: <a href="https://www.pgcb.gov.bd/" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline font-medium">PGCB Operations</a> &amp; <a href="https://www.petrobangla.org.bd/" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline font-medium">Petrobangla Production Division</a></span>
-            <span>Audited by: NLDC Operators &amp; Petrobangla Billing</span>
-            <span>Reporting Period: System Summary (Date: {systemStats.date})</span>
           </div>
         </div>
       )}
@@ -4244,13 +4348,22 @@ export function PowerGridExplorer({
                     <h3 className="grid-explorer-chart-card__title">National Budget &amp; Grid Expansion</h3>
                     <p className="grid-explorer-chart-card__sub">Ministry of Finance power sector budget allocations vs physical grid expansion</p>
                   </div>
-                  <span className="grid-explorer-chip bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20">FY 2011 - 2025</span>
+                  <span className="grid-explorer-chip bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20 ml-auto">FY 2011 - 2027</span>
                 </div>
 
                 <div className="grid-explorer-chart-area grid-explorer-chart-area--lg mt-4 px-4 pb-4">
                   {chartsReady ? (
                     <ResponsiveContainer width="100%" height={300}>
-                      <ComposedChart data={nationalBudgetData.map((b, i) => ({ ...b, ...macroInfrastructureData[i] }))} margin={{ top: 20, right: 10, left: -10, bottom: 0 }}>
+                      <ComposedChart
+                        data={nationalBudgetData.map((b, i) => ({ ...b, ...macroInfrastructureData[i] }))}
+                        margin={{ top: 20, right: 10, left: -10, bottom: 0 }}
+                      >
+                        <defs>
+                          <linearGradient id="budget-grad" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stopColor="#a855f7" stopOpacity={0.85} />
+                            <stop offset="100%" stopColor="#7c3aed" stopOpacity={0.5} />
+                          </linearGradient>
+                        </defs>
                         <CartesianGrid strokeDasharray="3 6" stroke={chartTheme.gridStroke} opacity={0.3} vertical={false} />
                         <XAxis dataKey="fiscal_year" tick={{ fontSize: 11, fill: chartTheme.axisTick }} axisLine={false} tickLine={false} />
                         <YAxis yAxisId="left" tick={{ fontSize: 11, fill: chartTheme.axisTick }} axisLine={false} tickLine={false} tickFormatter={(v) => `${v/1000}k`} />
@@ -4270,8 +4383,8 @@ export function PowerGridExplorer({
                                   <div>
                                     <div className="text-[10px] uppercase font-bold text-muted-foreground mb-1">Fiscal Allocation</div>
                                     <div className="flex justify-between items-center text-xs">
-                                      <span>Power &amp; Energy Budget:</span>
-                                      <span className="font-bold text-emerald-500">{d.power_energy_allocation_crore_tk} Cr Tk</span>
+                                      <span className="text-[#a855f7]">Power &amp; Energy Budget:</span>
+                                      <span className="font-bold text-[#a855f7]">{d.power_energy_allocation_crore_tk} Cr Tk</span>
                                     </div>
                                     <div className="flex justify-between items-center text-xs mt-1">
                                       <span>Total National Budget:</span>
@@ -4282,11 +4395,11 @@ export function PowerGridExplorer({
                                     <div className="text-[10px] uppercase font-bold text-muted-foreground mb-1">Grid Infrastructure</div>
                                     <div className="flex justify-between items-center text-xs">
                                       <span>Installed Capacity:</span>
-                                      <span className="font-bold text-primary">{d.installed_capacity_mw} MW</span>
+                                      <span className="font-bold text-[#06b6d4]">{d.installed_capacity_mw} MW</span>
                                     </div>
                                     <div className="flex justify-between items-center text-xs mt-1">
                                       <span>Peak Generation:</span>
-                                      <span className="font-bold text-orange-500">{d.peak_generation_mw} MW</span>
+                                      <span className="font-bold text-[#f97316]">{d.peak_generation_mw} MW</span>
                                     </div>
                                   </div>
                                 </div>
@@ -4294,10 +4407,19 @@ export function PowerGridExplorer({
                             );
                           }}
                         />
-                        <Legend wrapperStyle={{ fontSize: '11px', paddingTop: '10px' }} />
-                        <Bar yAxisId="left" dataKey="power_energy_allocation_crore_tk" name="Power Sector Budget (Crore Tk)" fill="#10b981" radius={[4, 4, 0, 0]} opacity={0.8} maxBarSize={40} />
-                        <Line yAxisId="right" type="monotone" dataKey="installed_capacity_mw" name="Installed Capacity (MW)" stroke="hsl(var(--primary))" strokeWidth={3} dot={{ fill: 'hsl(var(--primary))', r: 4 }} activeDot={{ r: 6 }} />
-                        <Line yAxisId="right" type="monotone" dataKey="peak_generation_mw" name="Peak Generation (MW)" stroke="hsl(var(--orange-500))" strokeWidth={2} strokeDasharray="5 5" dot={{ fill: 'hsl(var(--orange-500))', r: 3 }} />
+                        <Legend 
+                          wrapperStyle={{ fontSize: '11px', paddingTop: '10px' }} 
+                          formatter={(value, entry: any) => {
+                            let color = entry.color || 'inherit';
+                            if (entry.dataKey === 'power_energy_allocation_crore_tk' || (typeof value === 'string' && value.includes('Power Sector Budget'))) {
+                              color = '#a855f7';
+                            }
+                            return <span style={{ color, fontWeight: 600 }}>{value}</span>;
+                          }}
+                        />
+                        <Bar yAxisId="left" dataKey="power_energy_allocation_crore_tk" name="Power Sector Budget (Crore Tk)" fill="url(#budget-grad)" radius={[4, 4, 0, 0]} maxBarSize={40} />
+                        <Line yAxisId="right" type="linear" dataKey="installed_capacity_mw" name="Installed Capacity (MW)" stroke="#06b6d4" strokeWidth={3} dot={{ stroke: '#06b6d4', strokeWidth: 2.5, fill: '#ffffff', r: 4.5 }} activeDot={{ r: 6 }} />
+                        <Line yAxisId="right" type="linear" dataKey="peak_generation_mw" name="Peak Generation (MW)" stroke="#f97316" strokeWidth={2.5} dot={{ stroke: '#f97316', strokeWidth: 2.5, fill: '#ffffff', r: 4.5 }} activeDot={{ r: 6 }} />
                       </ComposedChart>
                     </ResponsiveContainer>
                   ) : (
@@ -4308,16 +4430,20 @@ export function PowerGridExplorer({
                 <div className="bg-muted/10 p-4 border-t border-border/40 text-xs text-muted-foreground space-y-2">
                   <p><strong>What is being shown?</strong></p>
                   <ul className="list-disc pl-4 space-y-1">
-                    <li><strong>Power Sector Budget (Crore Tk):</strong> The total fiscal allocation dedicated specifically to the Ministry of Power, Energy and Mineral Resources each fiscal year.</li>
-                    <li><strong>Installed Capacity vs Peak Generation (MW):</strong> The physical manifestation of those budgets—showing how much total capacity was built versus how much was actually utilized during peak hours.</li>
+                    <li><strong className="text-[#a855f7]">Power Sector Budget (Crore Tk):</strong> The total fiscal allocation dedicated specifically to the Ministry of Power, Energy and Mineral Resources each fiscal year.</li>
+                    <li><strong className="text-[#06b6d4]">Installed Capacity</strong> vs <strong className="text-[#f97316]">Peak Generation (MW)</strong>: The physical manifestation of those budgets—showing how much total capacity was built versus how much was actually utilized during peak hours.</li>
                   </ul>
+                  <p className="mt-2 pt-2 border-t border-border/30">
+                    <strong>Analytical Insight:</strong> While fiscal allocation to the power sector has historically risen, the proposed FY2026-27 budget allocation dropped sharply to 17,345 Crore Tk (~1.85% of total national budget). This contraction signals a major policy pivot: the government is shifting focus away from massive capacity expansions to reviewing existing power purchase agreements (PPAs), reducing subsidies, and eliminating high capacity payments for underutilized plants.
+                  </p>
                 </div>
-              </div>
 
-              {/* Section Metadata Footer for National Budget */}
-              <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1.5 mt-2 mb-6 text-[10px] text-muted-foreground/75 px-1">
-                <span>Source: <a href="https://mof.gov.bd/" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline font-medium">Ministry of Finance</a> &amp; <a href="https://bpdb.gov.bd/" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline font-medium">BPDB Annual Reports</a></span>
-                <span>Data compiled from FY 2010-11 to FY 2024-25</span>
+                {/* Card Metadata Footer */}
+                <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1.5 mt-2 pt-3 border-t border-border/40 text-[10px] text-muted-foreground/80 px-4 pb-4">
+                  <span>Source: <a href="https://www.mof.gov.bd/" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline font-semibold">Ministry of Finance</a> &amp; <a href="https://www.bpdb.gov.bd/" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline font-semibold">BPDB Annual Reports</a></span>
+                  <span>Audited by: Ministry of Finance Budget Audits &amp; CAG</span>
+                  <span className="font-medium">Data compiled from FY 2010-11 to FY 2026-27</span>
+                </div>
               </div>
 
               {/* Historical Pricing Analysis Section (Moved from Gen tab) */}
@@ -4334,15 +4460,15 @@ export function PowerGridExplorer({
                   {[
                     {
                       Icon: Zap,
-                      iconColor: "text-emerald-500",
+                      iconColor: "text-primary",
                       label: "Current Bulk:",
                       value: `${macroTariffData[macroTariffData.length - 1].tariff.toFixed(2)} Tk/KWh`,
-                      valueColor: "text-emerald-600 dark:text-emerald-400",
+                      valueColor: "text-primary",
                       tooltipTitle: "BERC Approved",
                       tooltipDesc: "The latest official wholesale bulk tariff set by the Bangladesh Energy Regulatory Commission (BERC) for utility distribution.",
                       highlightLabel: "Official Rate",
                       highlightValue: `${macroTariffData[macroTariffData.length - 1].tariff.toFixed(2)} Tk/KWh`,
-                      highlightStyles: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20",
+                      highlightStyles: "bg-primary/10 text-primary border-primary/20",
                       roundedClasses: "rounded-t-xl sm:rounded-l-xl sm:rounded-tr-none"
                     },
                     {
@@ -4438,7 +4564,13 @@ export function PowerGridExplorer({
                             );
                           }}
                         />
-                        <Legend wrapperStyle={{ fontSize: '11px', paddingTop: '10px' }} />
+                        <Legend 
+                          wrapperStyle={{ fontSize: '11px', paddingTop: '10px' }} 
+                          formatter={(value, entry) => {
+                            const color = entry.color || 'inherit';
+                            return <span style={{ color, fontWeight: 600 }}>{value}</span>;
+                          }}
+                        />
                         <Bar dataKey="tariff" name="Weighted Avg Bulk Tariff (Tk/kWh)" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} maxBarSize={30} />
                         <Line dataKey="cost" name="BPDB Generation & Procurement Cost (Tk/kWh)" stroke="hsl(var(--destructive))" strokeWidth={3} dot={{ fill: 'hsl(var(--destructive))', r: 4 }} activeDot={{ r: 6 }} />
                       </ComposedChart>
@@ -4450,18 +4582,20 @@ export function PowerGridExplorer({
                 <div className="bg-muted/10 p-4 border-t border-border/40 text-xs text-muted-foreground space-y-2">
                   <p><strong>What is being shown?</strong></p>
                   <ul className="list-disc pl-4 space-y-1">
-                    <li><strong>BPDB Generation & Procurement Cost:</strong> The actual per-unit (kWh) cost incurred by BPDB. This includes the cost of fuel (gas, coal, HFO, LNG), cross-border electricity imports, operational/maintenance costs, and <strong>capacity charges</strong> paid to Independent Power Producers (IPPs) and Rental plants.</li>
-                    <li><strong>Weighted Avg Bulk Tariff:</strong> The BERC-approved wholesale rate at which BPDB sells this electricity to distribution companies like DPDC, DESCO, REB, NESCO, and WZPDCL.</li>
-                    <li><strong>The Deficit:</strong> The gap between the cost and the tariff. BPDB sells power at a loss, and this per-unit deficit is directly subsidized by the Ministry of Finance to keep retail electricity prices lower for consumers.</li>
+                    <li><strong className="text-destructive">BPDB Generation &amp; Procurement Cost:</strong> The actual per-unit (kWh) cost incurred by BPDB. This includes the cost of fuel (gas, coal, HFO, LNG), cross-border electricity imports, operational/maintenance costs, and <strong>capacity charges</strong> paid to Independent Power Producers (IPPs) and Rental plants.</li>
+                    <li><strong className="text-primary">Weighted Avg Bulk Tariff:</strong> The BERC-approved wholesale rate at which BPDB sells this electricity to distribution companies like DPDC, DESCO, REB, NESCO, and WZPDCL.</li>
                   </ul>
+                  <p className="mt-2 pt-2 border-t border-border/30 font-medium">
+                    <strong>Analytical Insight:</strong> The gap between the average generation cost and the bulk wholesale tariff represents a structural deficit. Because BPDB sells power at a wholesale loss, this per-unit deficit must be directly subsidized by the Ministry of Finance to keep retail consumer prices lower. This widening deficit is unsustainable, placing a massive subsidy burden (estimated at 35k-40k Crore BDT annually) on the national treasury, highlighting that wholesale tariffs must either rise or the grid must phase out expensive IPP capacity charges to regain financial viability.
+                  </p>
                 </div>
-              </div>
 
-              {/* Section Metadata Footer for Historical Pricing */}
-              <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1.5 mt-2 text-[10px] text-muted-foreground/75 px-1">
-                <span>Source: <a href="https://berc.org.bd/" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline font-medium">BERC Tariff Orders</a> &amp; <a href="https://bpdb.gov.bd/" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline font-medium">BPDB Annual Reports</a></span>
-                <span>Audited by: Office of the Comptroller &amp; Auditor General (CAG)</span>
-                <span>Reporting Period: FY 2010 - FY 2024</span>
+                {/* Card Metadata Footer */}
+                <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1.5 mt-2 pt-3 border-t border-border/40 text-[10px] text-muted-foreground/80 px-4 pb-4">
+                  <span>Source: <a href="https://www.berc.org.bd/" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline font-semibold">BERC Tariff Orders</a> &amp; <a href="https://www.bpdb.gov.bd/" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline font-semibold">BPDB Annual Reports</a></span>
+                  <span>Audited by: Office of the Comptroller &amp; Auditor General (CAG)</span>
+                  <span className="font-medium">Reporting Period: FY 2010 - FY 2024</span>
+                </div>
               </div>
 
               {/* Comprehensive Macro-Economic Study 15-Chart Gallery */}
@@ -4528,6 +4662,13 @@ export function PowerGridExplorer({
                               );
                             }}
                           />
+                          <Legend 
+                            wrapperStyle={{ fontSize: '11px', paddingTop: '10px' }} 
+                            formatter={(value, entry) => {
+                              const color = entry.color || 'inherit';
+                              return <span style={{ color, fontWeight: 600 }}>{value}</span>;
+                            }}
+                          />
                           <Bar dataKey="tariff" name="Bulk Wholesale Tariff" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} maxBarSize={30} />
                           <Line dataKey="cost" name="Average Generation Cost" stroke="hsl(var(--destructive))" strokeWidth={3} dot={{ fill: 'hsl(var(--destructive))', r: 4 }} activeDot={{ r: 6 }} />
                         </ComposedChart>
@@ -4537,9 +4678,21 @@ export function PowerGridExplorer({
                     )}
                   </div>
 
+                  {/* Card Explanation Block */}
+                  <div className="bg-muted/10 p-4 border-t border-border/40 text-xs text-muted-foreground space-y-2">
+                    <p><strong>What is being shown?</strong></p>
+                    <ul className="list-disc pl-4 space-y-1">
+                      <li><strong className="text-primary">Bulk Wholesale Tariff:</strong> The BERC-approved rate at which BPDB sells power to distribution utilities (DESCO, DPDC, etc.).</li>
+                      <li><strong className="text-destructive">Average Generation Cost:</strong> The total blended per-unit generation and procurement cost, including capacity charges.</li>
+                    </ul>
+                    <p className="mt-2 pt-2 border-t border-border/30">
+                      <strong>Analytical Insight:</strong> The widening gap between bulk tariff and actual production cost has resulted in massive structural deficits for BPDB. This trend is highly unsustainable and highlights the critical need to either rationalize power purchase costs (by phasing out liquid fuel plants) or adjust wholesale tariffs to reduce the fiscal subsidy burden on the government.
+                    </p>
+                  </div>
+
                   {/* Card Metadata Footer */}
-                  <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1.5 mt-4 pt-3 border-t border-border/40 text-[10px] text-muted-foreground/80 px-4 pb-4">
-                    <span>Source: <a href="https://bpdb.gov.bd/" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline font-semibold">BPDB Annual Accounts &amp; Audit Reports</a></span>
+                  <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1.5 mt-2 pt-3 border-t border-border/40 text-[10px] text-muted-foreground/80 px-4 pb-4">
+                    <span>Source: <a href="https://www.bpdb.gov.bd/" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline font-semibold">BPDB Annual Accounts &amp; Audit Reports</a></span>
                     <span>Audited by: Hoda Vasi Chowdhury &amp; Co. / Office of the Comptroller &amp; Auditor General (CAG)</span>
                     <span className="font-medium">Reporting Period: FY 2020 - FY 2026 Financial Audits</span>
                   </div>
@@ -4559,16 +4712,6 @@ export function PowerGridExplorer({
                     {chartsReady ? (
                       <ResponsiveContainer width="100%" height="100%">
                         <ComposedChart data={macroGasData} margin={{ top: 10, right: 10, left: 10, bottom: 0 }}>
-                          <defs>
-                            <linearGradient id="domestic-grad" x1="0" y1="0" x2="0" y2="1">
-                              <stop offset="5%" stopColor="#0ea5e9" stopOpacity={0.4} />
-                              <stop offset="95%" stopColor="#0ea5e9" stopOpacity={0.05} />
-                            </linearGradient>
-                            <linearGradient id="lng-grad" x1="0" y1="0" x2="0" y2="1">
-                              <stop offset="5%" stopColor="#a855f7" stopOpacity={0.4} />
-                              <stop offset="95%" stopColor="#a855f7" stopOpacity={0.05} />
-                            </linearGradient>
-                          </defs>
                           <CartesianGrid strokeDasharray="3 6" stroke={chartTheme.gridStroke} opacity={0.3} vertical={false} />
                           <XAxis dataKey="year" tick={{ fontSize: 11, fill: chartTheme.axisTick }} axisLine={false} tickLine={false} />
                           <YAxis tick={{ fontSize: 11, fill: chartTheme.axisTick }} axisLine={false} tickLine={false} tickFormatter={(v) => `${v} M`} />
@@ -4610,8 +4753,8 @@ export function PowerGridExplorer({
                               );
                             }}
                           />
-                          <Area type="monotone" dataKey="domestic" stackId="1" stroke="#0ea5e9" fill="url(#domestic-grad)" strokeWidth={2} />
-                          <Area type="monotone" dataKey="lng" stackId="1" stroke="#a855f7" fill="url(#lng-grad)" strokeWidth={2} />
+                          <Area type="monotone" dataKey="domestic" stackId="1" stroke="#0ea5e9" fill="#0ea5e9" fillOpacity={0.15} strokeWidth={2} />
+                          <Area type="monotone" dataKey="lng" stackId="1" stroke="#a855f7" fill="#a855f7" fillOpacity={0.2} strokeWidth={2} />
                         </ComposedChart>
                       </ResponsiveContainer>
                     ) : (
@@ -4619,8 +4762,15 @@ export function PowerGridExplorer({
                     )}
                   </div>
 
+                  {/* Card Explanation Block */}
+                  <div className="bg-muted/10 p-4 border-t border-border/40 text-xs text-muted-foreground space-y-2">
+                    <p><strong>What is being shown?</strong></p>
+                    <p className="leading-relaxed">This chart shows the volume (MMCFD) of natural gas supplied to the grid from local fields versus imported Liquefied Natural Gas (LNG) since 2018.</p>
+                    <p className="leading-relaxed"><strong>Analytical Insight:</strong> The visual depicts a major structural dependency shift: domestic gas production is stagnant or declining, while imported LNG share is rising to meet energy demand. Because imported LNG is purchased at volatile global spot prices (linked to Brent oil and Platts JKM), this shift directly exposes Bangladesh's power generation costs to global commodity shocks and foreign exchange reserves pressure.</p>
+                  </div>
+
                   {/* Card Metadata Footer */}
-                  <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1.5 mt-4 pt-3 border-t border-border/40 text-[10px] text-muted-foreground/80 px-4 pb-4">
+                  <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1.5 mt-2 pt-3 border-t border-border/40 text-[10px] text-muted-foreground/80 px-4 pb-4">
                     <span>Source: <a href="https://www.petrobangla.org.bd/" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline font-semibold">Petrobangla Audited Balance Sheets &amp; Daily MIS Reports</a></span>
                     <span>Audited by: MABS &amp; J Partners Chartered Accountants / CAG Bangladesh</span>
                     <span className="font-medium">Reporting Period: Historical Reserves Log (2018 - 2026)</span>
@@ -4663,7 +4813,7 @@ export function PowerGridExplorer({
 
               {/* Section Metadata Footer */}
               <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1.5 mt-2 text-[10px] text-muted-foreground/75 px-1">
-                <span>Source: <a href="https://www.petrobangla.org.bd/" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline font-medium">Petrobangla Hydrocarbon Unit</a> &amp; <a href="https://bpdb.gov.bd/" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline font-medium">BPDB Annual Financials</a></span>
+                <span>Source: <a href="https://www.petrobangla.org.bd/" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline font-medium">Petrobangla Hydrocarbon Unit</a> &amp; <a href="https://www.bpdb.gov.bd/" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline font-medium">BPDB Annual Financials</a></span>
                 <span>Audited by: CAG Audit Reports &amp; Ministry of Finance (MoF) Gazettes</span>
                 <span>Reporting Period: Macro Analysis (2026 Audit Reports)</span>
               </div>
@@ -4673,12 +4823,6 @@ export function PowerGridExplorer({
           {/* Sub-tab: PGCB Monthly Archives */}
           {macroSubTab === 'monthly' && (
             <div className="space-y-6 animate-in fade-in duration-200">
-              <div className="p-4 bg-primary/5 border border-primary/20 rounded-xl text-xs text-muted-foreground flex flex-col gap-2">
-                <div>
-                  <strong className="text-primary font-bold">PGCB Monthly Operating Data:</strong> This archive contains official, authenticated monthly reports from the Power Grid Company of Bangladesh (PGCB) from 2013 to 2026. Explore peak generation records, demand curves, fuel mix metrics, and regional maximum power flows.
-                </div>
-              </div>
-
               {/* Month/Year Selection Control Panel */}
               {(() => {
                 const currentMonthlyData = pgcbMonthlyData.find(d => d.date_key === selectedMonthlyKey) || pgcbMonthlyData[pgcbMonthlyData.length - 1];
@@ -4690,9 +4834,11 @@ export function PowerGridExplorer({
                 return (
                   <>
                     <div className="card p-4 flex flex-col md:flex-row md:items-center justify-between gap-4 bg-card border border-border/60 rounded-2xl shadow-sm relative z-50">
-                      <div>
+                      <div className="max-w-2xl">
                         <h4 className="text-sm font-bold text-foreground">Select Operating Period</h4>
-                        <p className="text-[11px] text-muted-foreground mt-0.5">Browse 157 historical monthly records parsed directly from PGCB archives</p>
+                        <p className="text-[11px] text-muted-foreground mt-1 leading-relaxed">
+                          <strong className="text-primary font-bold">PGCB Monthly Operating Data:</strong> This archive contains official, authenticated monthly reports from the Power Grid Company of Bangladesh (PGCB) from 2013 to 2026. Explore peak generation records, demand curves, fuel mix metrics, and regional maximum power flows.
+                        </p>
                       </div>
                       
                       <div className="flex items-center gap-3 self-start md:self-center">
@@ -5498,9 +5644,16 @@ export function PowerGridExplorer({
                     )}
                   </div>
 
+                  {/* Card Explanation Block */}
+                  <div className="bg-muted/10 p-4 border-t border-border/40 text-xs text-muted-foreground space-y-2">
+                    <p><strong>What is being shown?</strong></p>
+                    <p className="leading-relaxed">This chart shows the year-on-year weighted average interbank exchange rate (BDT per USD) plotted against the national CPI inflation rate since 2021.</p>
+                    <p className="leading-relaxed"><strong>Analytical Insight:</strong> The rapid rise in the exchange rate (from ~85 Tk in 2021 to 122 Tk in 2026) shows a severe depreciation (~43%) of the BDT. This currency devaluation acts as a direct multiplier on imported fuel costs, triggering high domestic inflation. It signals that energy security in Bangladesh is heavily coupled with foreign exchange reserve stability.</p>
+                  </div>
+
                   {/* Card Metadata Footer */}
-                  <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1.5 mt-4 pt-3 border-t border-border/40 text-[10px] text-muted-foreground/80 px-4 pb-4">
-                    <span>Source: <a href="https://www.bb.org.bd/" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline font-semibold">Bangladesh Bank Interbank Weighted Average Statistics</a> &amp; BBS Inflation Database</span>
+                  <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1.5 mt-2 pt-3 border-t border-border/40 text-[10px] text-muted-foreground/80 px-4 pb-4">
+                    <span>Source: <a href="https://www.bb.org.bd/" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline font-semibold">Bangladesh Bank Interbank Weighted Average Statistics</a> &amp; <a href="http://bbs.gov.bd/" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline font-semibold">BBS Inflation Database</a></span>
                     <span>Audited by: Bangladesh Bank Monetary Policy Division / BBS Census Bureau</span>
                     <span className="font-medium">Reporting Period: Macro-Economic Tracker (2010 - 2026)</span>
                   </div>
@@ -5565,9 +5718,16 @@ export function PowerGridExplorer({
                     )}
                   </div>
 
+                  {/* Card Explanation Block */}
+                  <div className="bg-muted/10 p-4 border-t border-border/40 text-xs text-muted-foreground space-y-2">
+                    <p><strong>What is being shown?</strong></p>
+                    <p className="leading-relaxed">This chart compares global Spot LNG prices (USD/MMBtu, left axis) against Newcastle imported coal prices (USD/Ton, right axis) from 2021 to 2026.</p>
+                    <p className="leading-relaxed"><strong>Analytical Insight:</strong> The charts capture the extreme volatility of spot LNG compared to imported coal. The massive price spike in 2022 highlights the vulnerability of relying on global energy spot markets, whereas coal offers relatively more stable pricing, though still high. This shows the necessity of transitioning towards longer-term contracts rather than relying on spot imports.</p>
+                  </div>
+
                   {/* Card Metadata Footer */}
-                  <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1.5 mt-4 pt-3 border-t border-border/40 text-[10px] text-muted-foreground/80 px-4 pb-4">
-                    <span>Source: OPEC Bulletin Daily Spot Prices &amp; Platts JKM LNG Assessments / BPC Accounts</span>
+                  <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1.5 mt-2 pt-3 border-t border-border/40 text-[10px] text-muted-foreground/80 px-4 pb-4">
+                    <span>Source: <a href="https://www.opec.org/" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline font-semibold">OPEC Bulletin Daily Spot Prices</a> &amp; <a href="https://www.spglobal.com/commodityinsights/en" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline font-semibold">Platts JKM LNG Assessments</a> / BPC Accounts</span>
                     <span>Audited by: World Bank Commodity Division / BPC Price Auditing Committee</span>
                     <span className="font-medium">Reporting Period: Global Indexes (2010 - 2026)</span>
                   </div>
@@ -5727,7 +5887,7 @@ export function PowerGridExplorer({
 
                     {/* Card Metadata Footer */}
                     <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1.5 mt-4 pt-3 border-t border-border/40 text-[10px] text-muted-foreground/80 px-4 pb-4">
-                      <span>Source: <a href="https://bpdb.gov.bd/" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline font-semibold">BPDB Annual Financial Reports</a></span>
+                      <span>Source: <a href="https://www.bpdb.gov.bd/" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline font-semibold">BPDB Annual Financial Reports</a></span>
                       <span>Audited by: SF Ahmed &amp; Co. Chartered Accountants / Office of the CAG Bangladesh</span>
                       <span className="font-medium">Reporting Period: Audited Accounts (FY 2010 - FY 2026)</span>
                     </div>
@@ -5762,7 +5922,7 @@ export function PowerGridExplorer({
 
                     {/* Card Metadata Footer */}
                     <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1.5 mt-4 pt-3 border-t border-border/40 text-[10px] text-muted-foreground/80 px-4 pb-4">
-                      <span>Source: <a href="https://bpdb.gov.bd/" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline font-semibold">BPDB Annual Financial Reports</a></span>
+                      <span>Source: <a href="https://www.bpdb.gov.bd/" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline font-semibold">BPDB Annual Financial Reports</a></span>
                       <span>Audited by: SF Ahmed &amp; Co. Chartered Accountants / Office of the CAG Bangladesh</span>
                       <span className="font-medium">Reporting Period: Audited Financial Statements (FY 2010 - FY 2026)</span>
                     </div>
@@ -6208,10 +6368,6 @@ export function PowerGridExplorer({
                                   <div className="mt-2 pt-2 border-t border-border/30 text-[9px] md:text-[10px] text-muted-foreground leading-normal italic font-medium">
                                     Baseline: 7.63 Tcf remaining recoverable reserves out of 29.74 Tcf initial reserves
                                   </div>
-                                  <div className="mt-2 pt-1.5 border-t border-border/20 text-[8px] md:text-[9px] text-muted-foreground flex flex-col gap-0.5">
-                                    <div><strong>Source:</strong> <a href="https://www.petrobangla.org.bd/" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">Petrobangla Reservoir Study &amp; CAG audits</a></div>
-                                    <div><strong>Analysis:</strong> Hydrocarbon Unit Bangladesh / Petrobangla planning division</div>
-                                  </div>
                                 </div>
                               );
                             }}
@@ -6227,11 +6383,30 @@ export function PowerGridExplorer({
                     )}
                   </div>
 
+                  {/* Card Explanation Block */}
+                  <div className="bg-muted/10 p-4 border-t border-border/40 text-xs text-muted-foreground space-y-2">
+                    <p><strong>What is being shown?</strong></p>
+                    <ul className="list-disc pl-4 space-y-1.5 leading-relaxed">
+                      <li>
+                        <strong className="text-emerald-600 dark:text-emerald-400 font-semibold">Low Demand Growth Scenario (Exhaustion: 2037):</strong> Assumes aggressive integration of utility-scale solar and industrial efficiency measures, extending the life of the remaining 7.63 Tcf reserves by 2 years.
+                      </li>
+                      <li>
+                        <strong className="text-amber-600 dark:text-amber-400 font-semibold">Business-As-Usual Scenario (Exhaustion: 2035):</strong> The baseline pathway showing complete domestic reservoir depletion in 9 years under standard consumption growth.
+                      </li>
+                      <li>
+                        <strong className="text-destructive font-semibold">High Growth Demand Scenario (Exhaustion: 2033):</strong> A rapid depletion pathway where industrial expansion and unchecked gas-to-power generation exhaust reservoirs in just 7 years.
+                      </li>
+                    </ul>
+                    <p className="leading-relaxed pt-1">
+                      <strong>Analytical Insight:</strong> Bangladesh's heavy reliance on domestic gas (which fuels over 55% of power generation) creates a major structural vulnerability. As reservoirs deplete between 2033 and 2037, the country faces an inevitable pivot toward expensive, volatile global LNG markets. This creates a multi-billion dollar fiscal threat, making it urgent to scale up solar/renewables, expand grid storage, and secure long-term LNG contracts rather than relying on spot imports.
+                    </p>
+                  </div>
+
                   {/* Card Metadata Footer */}
-                  <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1.5 mt-4 pt-3 border-t border-border/40 text-[10px] text-muted-foreground/80 px-4 pb-4">
-                    <span>Source: <a href="https://www.petrobangla.org.bd/" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline font-semibold">Petrobangla Hydrocarbon Unit Reports</a></span>
-                    <span>Audited by: Petrobangla Reservoir &amp; Planning Division</span>
-                    <span className="font-medium">Reporting Period: Reservoir Depletion Projections (2026 - 2038)</span>
+                  <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1.5 mt-2 pt-3 border-t border-border/40 text-[10px] text-muted-foreground/80 px-4 pb-4">
+                    <span>Source: <a href="https://www.petrobangla.org.bd/" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline font-semibold">Petrobangla Reservoir Studies &amp; Hydrocarbon Unit Bangladesh</a></span>
+                    <span>Audited by: Ministry of Power, Energy &amp; Mineral Resources (MPEMR)</span>
+                    <span className="font-medium">Reporting Period: Multi-Scenario Exhaustion Forecasts (2026)</span>
                   </div>
                 </div>
 
@@ -6261,13 +6436,6 @@ export function PowerGridExplorer({
                     </p>
                   </div>
                 </div>
-              </div>
-
-              {/* Section Metadata Footer */}
-              <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1.5 mt-2 text-[10px] text-muted-foreground/75 px-1">
-                <span>Source: <a href="https://www.petrobangla.org.bd/" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline font-medium">Petrobangla Reservoir Studies</a> &amp; Hydrocarbon Unit Bangladesh</span>
-                <span>Audited by: Ministry of Power, Energy &amp; Mineral Resources (MPEMR)</span>
-                <span>Reporting Period: Multi-Scenario Exhaustion Forecasts (2026)</span>
               </div>
             </div>
           )}
@@ -6307,7 +6475,7 @@ export function PowerGridExplorer({
                     </p>
                   </div>
                   <div className="pt-2.5 border-t border-border/20 text-[10px] text-muted-foreground/80 flex flex-wrap justify-between gap-x-2 gap-y-1">
-                    <span>Source: <a href="https://bpdb.gov.bd/" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline font-semibold">BPDB Finance Reports</a></span>
+                    <span>Source: <a href="https://www.bpdb.gov.bd/" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline font-semibold">BPDB Finance Reports</a></span>
                     <span>Audited by: SF Ahmed &amp; Co / CAG Bangladesh</span>
                     <span className="font-medium">Reporting Date: Jun 2026</span>
                   </div>
@@ -6403,7 +6571,7 @@ export function PowerGridExplorer({
                     </p>
                   </div>
                   <div className="pt-2.5 border-t border-border/20 text-[10px] text-muted-foreground/80 flex flex-wrap justify-between gap-x-2 gap-y-1">
-                    <span>Source: <a href="https://bpdb.gov.bd/" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline font-semibold">BPDB Annual Financials</a></span>
+                    <span>Source: <a href="https://www.bpdb.gov.bd/" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline font-semibold">BPDB Annual Financials</a></span>
                     <span>Audited by: CAG Bangladesh Audit Teams</span>
                     <span className="font-medium">Reporting Date: Jun 2026</span>
                   </div>

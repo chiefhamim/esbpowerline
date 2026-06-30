@@ -88,5 +88,17 @@ export const nationalBudgetData = [
     total_budget_crore_tk: 797000,
     power_energy_allocation_crore_tk: 30317,
     percentage: 3.80
+  },
+  {
+    fiscal_year: "2025-26",
+    total_budget_crore_tk: 790000,
+    power_energy_allocation_crore_tk: 22520,
+    percentage: 2.85
+  },
+  {
+    fiscal_year: "2026-27",
+    total_budget_crore_tk: 938000,
+    power_energy_allocation_crore_tk: 17345,
+    percentage: 1.85
   }
 ];

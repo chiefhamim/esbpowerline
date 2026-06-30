@@ -93,7 +93,14 @@ export function GasTab({
           </table>
         </div>
 
-        <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1.5 mt-4 pt-3 border-t border-border/40 text-[10px] text-muted-foreground/80 px-4 pb-4">
+        {/* Card Explanation Block */}
+        <div className="bg-muted/10 p-4 border-t border-border/40 text-xs text-muted-foreground space-y-2">
+          <p><strong>What is being shown?</strong></p>
+          <p className="leading-relaxed">This table displays the daily gas volume (MMCFD) and associated condensate liquids (BBL) produced by local gas fields and foreign operators (Chevron, Tullow), alongside imported liquefied natural gas (LNG) regasified into the grid.</p>
+          <p className="leading-relaxed"><strong>Analytical Insight:</strong> Chevron (operating the Bibiyana field) remains the dominant producer of natural gas in Bangladesh, supplying over 50% of domestic gas. The high dependency on a single field and company exposes the entire gas-to-power supply chain to operational vulnerability and highlights the urgency of expanding national exploration or gas import capacity.</p>
+        </div>
+
+        <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1.5 mt-2 pt-3 border-t border-border/40 text-[10px] text-muted-foreground/80 px-4 pb-4">
           <span>
             Source:{' '}
             <a href="https://www.petrobangla.org.bd/" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline font-semibold">
@@ -150,6 +157,13 @@ export function GasTab({
               </tr>
             </tbody>
           </table>
+        </div>
+
+        {/* Card Explanation Block */}
+        <div className="bg-muted/10 p-4 border-t border-border/40 text-xs text-muted-foreground space-y-2">
+          <p><strong>What is being shown?</strong></p>
+          <p className="leading-relaxed">This table tracks the distribution of natural gas across different sectors (power grid generators, fertilizer plants, and industrial/domestic consumers) by regional distribution utilities.</p>
+          <p className="leading-relaxed"><strong>Analytical Insight:</strong> Natural gas distribution is heavily skewed toward the power sector and industrial customers. Titas Gas (TGTDCL) remains the largest distributor by volume. Under gas supply shortages, fertilizer plants and industries are often rationed to prioritize power generation, illustrating the competing demands for limited gas supply.</p>
         </div>
 
         <div className="mt-6 p-4 rounded-2xl bg-muted/5 border border-border/30 space-y-2.5">

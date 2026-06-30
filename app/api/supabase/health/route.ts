@@ -10,7 +10,7 @@ export async function GET(request: Request) {
   const cronAuthorized = isCronAuthorized(request);
   const session = cronAuthorized ? null : await auth();
   const adminSession =
-    session?.user?.role && canAccessAdminPanel(session.user.role) ? session : null;
+    session?.user?.id && session?.user?.role && canAccessAdminPanel(session.user.role) ? session : null;
 
   if (!cronAuthorized && !adminSession) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
