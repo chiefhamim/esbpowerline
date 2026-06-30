@@ -4,7 +4,7 @@ import { useEffect, useId, useState, useRef, RefObject, useMemo, useCallback } f
 import Link from 'next/link';
 import {
   Zap, Activity, Cable, TrendingUp, FileText, BarChart3, MapPin, DollarSign, Database, Droplet, Globe, Sun,
-  Search, ChevronLeft, ChevronRight, ChevronDown, Check, Info, Map, Network, CheckSquare, Calendar, RotateCcw, History
+  Search, ChevronLeft, ChevronRight, ChevronDown, Check, Info, Map, Network, CheckSquare, Calendar, RotateCcw, History, Landmark
 } from 'lucide-react';
 import { substationsData } from '@/lib/data/infrastructure/substations';
 import {
@@ -34,6 +34,8 @@ import { macroGasData } from '@/lib/data/macro/gas';
 import { macroEconomicData, petrobanglaAuditedFinancials } from '@/lib/data/macro/economics';
 import { globalVsDomesticData, historicalExchangeRates } from '@/lib/data/macro/fuel-prices';
 import { reservesDepletionData } from '@/lib/data/macro/reserves';
+import { macroInfrastructureData } from '@/lib/data/macro/infrastructure';
+import { nationalBudgetData } from '@/lib/data/macro/budget';
 import { CustomDropdown, TakaIcon, getUpcomingProjectStatusInfo, renderProjectCost } from '@/components/news/power-grid/shared';
 import { GasTab } from '@/components/news/power-grid/GasTab';
 import { GridAccessBanner } from '@/components/news/power-grid/GridAccessBanner';
@@ -527,7 +529,7 @@ export function PowerGridExplorer({
     }
   }, [activeTab]);
 
-  const [macroSubTab, setMacroSubTab] = useState<'overview' | 'monthly' | 'pricing' | 'global' | 'reports' | 'reserves' | 'insights'>('overview');
+  const [macroSubTab, setMacroSubTab] = useState<'overview' | 'budget' | 'monthly' | 'pricing' | 'global' | 'reports' | 'reserves' | 'insights'>('overview');
   
   const handleSubTabClick = (subTabId: any) => {
     setMacroSubTab(subTabId);
@@ -1840,142 +1842,6 @@ export function PowerGridExplorer({
             </div>
           </div>
 
-          {/* Historical Pricing Analysis Section */}
-          <div className="grid-explorer-chart-card card mt-6">
-            <div className="grid-explorer-chart-card__head grid-explorer-chart-card__head--border">
-              <BarChart3 className="h-5 w-5 text-primary shrink-0" />
-              <div>
-                <h3 className="grid-explorer-chart-card__title">Historical Pricing &amp; Tariff Comparison</h3>
-                <p className="grid-explorer-chart-card__sub">Analyze the exact BPDB weighted average bulk tariff vs average generation &amp; procurement cost</p>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-border/60 text-xs bg-muted/10 border border-border/40 mx-4 mt-4 mb-2 rounded-xl shadow-sm overflow-visible">
-              {[
-                {
-                  Icon: Zap,
-                  iconColor: "text-emerald-500",
-                  label: "Current Bulk:",
-                  value: `${macroTariffData[macroTariffData.length - 1].tariff.toFixed(2)} Tk/KWh`,
-                  valueColor: "text-emerald-600 dark:text-emerald-400",
-                  tooltipTitle: "BERC Approved",
-                  tooltipDesc: "The latest official wholesale bulk tariff set by the Bangladesh Energy Regulatory Commission (BERC) for utility distribution.",
-                  highlightLabel: "Official Rate",
-                  highlightValue: `${macroTariffData[macroTariffData.length - 1].tariff.toFixed(2)} Tk/KWh`,
-                  highlightStyles: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20",
-                  roundedClasses: "rounded-t-xl sm:rounded-l-xl sm:rounded-tr-none"
-                },
-                {
-                  Icon: History,
-                  iconColor: "text-orange-500",
-                  label: "2010 Baseline:",
-                  value: `${macroTariffData[0].tariff.toFixed(2)} Tk/KWh`,
-                  valueColor: "text-orange-600 dark:text-orange-400",
-                  tooltipTitle: "Historical Anchor",
-                  tooltipDesc: "The earliest recorded BERC bulk tariff in our dataset, establishing the historical cost baseline from March 2010.",
-                  highlightLabel: "Initial Rate",
-                  highlightValue: `${macroTariffData[0].tariff.toFixed(2)} Tk/KWh`,
-                  highlightStyles: "bg-orange-500/10 text-orange-600 dark:text-orange-400 border-orange-500/20",
-                  roundedClasses: ""
-                },
-                {
-                  Icon: TrendingUp,
-                  iconColor: "text-destructive",
-                  label: "True Gen Cost:",
-                  value: `${systemStats.avgProductionCost.toFixed(2)} Tk/KWh`,
-                  valueColor: "text-foreground",
-                  tooltipTitle: "Real Production Cost",
-                  tooltipDesc: "BPDB's current blended per-unit generation and procurement cost, factoring in fuel prices and IPP capacity payments.",
-                  highlightLabel: "Tariff Deficit",
-                  highlightValue: `${(systemStats.avgProductionCost - macroTariffData[macroTariffData.length - 1].tariff).toFixed(2)} Tk Gap`,
-                  highlightStyles: "bg-destructive/10 text-destructive border-destructive/20",
-                  roundedClasses: "rounded-b-xl sm:rounded-r-xl sm:rounded-bl-none"
-                }
-              ].map((stat, idx) => (
-                <div key={idx} className={`flex items-center justify-center gap-2 cursor-help group relative px-4 py-3.5 hover:bg-muted/20 transition-colors ${stat.roundedClasses}`}>
-                  <stat.Icon className={`h-4 w-4 ${stat.iconColor}`} />
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground group-hover:text-foreground transition-colors border-b border-dashed border-transparent group-hover:border-foreground/30 leading-none mt-0.5">
-                    {stat.label}
-                  </span>
-                  <span className={`font-bold leading-none mt-0.5 ${stat.valueColor}`}>
-                    {stat.value}
-                  </span>
-                  
-                  {/* Custom Tooltip */}
-                  <div 
-                    className="absolute text-card-foreground border border-border/80 p-4 md:p-5 rounded-2xl shadow-2xl z-[110] w-[17.5rem] md:w-80 left-1/2 -translate-x-1/2 top-[calc(100%+4px)] pointer-events-none bg-card transition-all duration-200 ease-out opacity-0 scale-95 translate-y-2 group-hover:opacity-100 group-hover:scale-100 group-hover:translate-y-0 group-hover:pointer-events-auto"
-                    style={{ backgroundColor: 'hsl(var(--card))' }}
-                  >
-                    <div className="absolute -top-1.5 left-1/2 -translate-x-1/2 w-3 h-3 rotate-45 border-t border-l border-border/80 z-[-1]" style={{ backgroundColor: 'hsl(var(--card))' }} />
-                    <div className={`font-bold text-xs uppercase tracking-wider ${stat.iconColor} border-b border-border/60 pb-1.5 mb-2 flex items-center gap-1.5 text-left`}>
-                      <stat.Icon className="h-3.5 w-3.5" /> {stat.tooltipTitle}
-                    </div>
-                    <div className="text-[11px] leading-relaxed text-muted-foreground font-medium whitespace-normal text-left">
-                      {stat.tooltipDesc}
-                      <div className={`mt-3 p-2.5 rounded-lg font-semibold border flex justify-between items-center ${stat.highlightStyles}`}>
-                        <span>{stat.highlightLabel}</span>
-                        <span className="text-xs">{stat.highlightValue}</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            <div className="grid-explorer-chart-area grid-explorer-chart-area--lg mt-4 px-4 pb-4">
-              {chartsReady ? (
-                <ResponsiveContainer width="100%" height={300}>
-                  <ComposedChart data={macroTariffData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                    <CartesianGrid strokeDasharray="3 6" stroke={chartTheme.gridStroke} opacity={0.3} vertical={false} />
-                    <XAxis dataKey="year" tick={{ fontSize: 11, fill: chartTheme.axisTick }} axisLine={false} tickLine={false} />
-                    <YAxis tick={{ fontSize: 11, fill: chartTheme.axisTick }} axisLine={false} tickLine={false} tickFormatter={(v) => `${v} Tk`} />
-                    <Tooltip
-                      content={({ active, payload }) => {
-                        if (!active || !payload?.length) return null;
-                        const d = payload[0].payload;
-                        const deficit = (d.cost - d.tariff).toFixed(2);
-                        return (
-                          <div className="p-4 md:p-5 text-card-foreground border border-border/80 rounded-2xl shadow-2xl text-xs md:text-sm leading-relaxed w-80 select-none bg-card">
-                            <div className="font-bold text-foreground border-b border-border/40 pb-1.5 mb-2 flex items-center justify-between gap-2">
-                              <span>{d.year} Financials</span>
-                              <span className="text-[10px] uppercase font-bold text-primary tracking-wider">Deficit Gap</span>
-                            </div>
-                            <div className="space-y-2 text-xs">
-                              <div className="flex justify-between flex-col mb-2">
-                                <span className="text-muted-foreground font-semibold">Approved Bulk Tariff (BPDB to Utilities):</span>
-                                <span className="font-bold text-foreground mt-0.5">{d.tariff.toFixed(2)} Tk/KWh</span>
-                              </div>
-                              <div className="flex justify-between flex-col mb-2">
-                                <span className="text-muted-foreground font-semibold">Total Generation &amp; Procurement Cost:</span>
-                                <span className="font-bold text-foreground mt-0.5">{d.cost.toFixed(2)} Tk/KWh</span>
-                              </div>
-                              <div className="flex justify-between border-t border-border/30 pt-2 mt-2">
-                                <span className="text-destructive font-semibold">BPDB Unit Deficit / Subsidy Reqd:</span>
-                                <span className="font-bold text-destructive">{deficit} Tk/KWh</span>
-                              </div>
-                            </div>
-                          </div>
-                        );
-                      }}
-                    />
-                    <Legend wrapperStyle={{ fontSize: '11px', paddingTop: '10px' }} />
-                    <Bar dataKey="tariff" name="Weighted Avg Bulk Tariff (Tk/kWh)" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} maxBarSize={30} />
-                    <Line dataKey="cost" name="BPDB Generation & Procurement Cost (Tk/kWh)" stroke="hsl(var(--destructive))" strokeWidth={3} dot={{ fill: 'hsl(var(--destructive))', r: 4 }} activeDot={{ r: 6 }} />
-                  </ComposedChart>
-                </ResponsiveContainer>
-              ) : (
-                <div className="grid-explorer-skeleton h-[300px]" />
-              )}
-            </div>
-            <div className="bg-muted/10 p-4 border-t border-border/40 text-xs text-muted-foreground space-y-2">
-              <p><strong>What is being shown?</strong></p>
-              <ul className="list-disc pl-4 space-y-1">
-                <li><strong>BPDB Generation & Procurement Cost:</strong> The actual per-unit (kWh) cost incurred by BPDB. This includes the cost of fuel (gas, coal, HFO, LNG), cross-border electricity imports, operational/maintenance costs, and <strong>capacity charges</strong> paid to Independent Power Producers (IPPs) and Rental plants.</li>
-                <li><strong>Weighted Avg Bulk Tariff:</strong> The BERC-approved wholesale rate at which BPDB sells this electricity to distribution companies like DPDC, DESCO, REB, NESCO, and WZPDCL.</li>
-                <li><strong>The Deficit:</strong> The gap between the cost and the tariff. BPDB sells power at a loss, and this per-unit deficit is directly subsidized by the Ministry of Finance to keep retail electricity prices lower for consumers.</li>
-              </ul>
-            </div>
-          </div>
 
           {/* Section Metadata Footer */}
           <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1.5 mt-2 text-[10px] text-muted-foreground/75 px-1">
@@ -4336,6 +4202,7 @@ export function PowerGridExplorer({
           <div id="macro-subtabs-nav" className="flex flex-wrap gap-1.5 border-b border-border/40 pb-3">
             {[
               { id: 'overview', label: 'Macro Overview', icon: BarChart3 },
+              { id: 'budget', label: 'National Budget & Infra', icon: Landmark },
               { id: 'monthly', label: 'PGCB Monthly Archives', icon: FileText },
               { id: 'pricing', label: 'Pricing & Drivers', icon: TrendingUp },
               { id: 'global', label: 'Global vs. Domestic', icon: Globe },
@@ -4363,6 +4230,240 @@ export function PowerGridExplorer({
               );
             })}
           </div>
+
+          {/* Sub-tab: National Budget */}
+          {macroSubTab === 'budget' && (
+            <div className="space-y-6 animate-in fade-in duration-200">
+              
+              {/* National Budget & Infrastructure Growth */}
+              <div className="grid-explorer-chart-card card">
+                <div className="grid-explorer-chart-card__head grid-explorer-chart-card__head--border">
+                  <Landmark className="h-5 w-5 text-emerald-500 shrink-0" />
+                  <div>
+                    <h3 className="grid-explorer-chart-card__title">National Budget &amp; Grid Expansion</h3>
+                    <p className="grid-explorer-chart-card__sub">Ministry of Finance power sector budget allocations vs physical grid expansion</p>
+                  </div>
+                  <span className="grid-explorer-chip bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20">FY 2011 - 2025</span>
+                </div>
+
+                <div className="grid-explorer-chart-area grid-explorer-chart-area--lg mt-4 px-4 pb-4">
+                  {chartsReady ? (
+                    <ResponsiveContainer width="100%" height={300}>
+                      <ComposedChart data={nationalBudgetData.map((b, i) => ({ ...b, ...macroInfrastructureData[i] }))} margin={{ top: 20, right: 10, left: -10, bottom: 0 }}>
+                        <CartesianGrid strokeDasharray="3 6" stroke={chartTheme.gridStroke} opacity={0.3} vertical={false} />
+                        <XAxis dataKey="fiscal_year" tick={{ fontSize: 11, fill: chartTheme.axisTick }} axisLine={false} tickLine={false} />
+                        <YAxis yAxisId="left" tick={{ fontSize: 11, fill: chartTheme.axisTick }} axisLine={false} tickLine={false} tickFormatter={(v) => `${v/1000}k`} />
+                        <YAxis yAxisId="right" orientation="right" tick={{ fontSize: 11, fill: chartTheme.axisTick }} axisLine={false} tickLine={false} tickFormatter={(v) => `${v/1000}k`} />
+                        
+                        <Tooltip
+                          content={({ active, payload }) => {
+                            if (!active || !payload?.length) return null;
+                            const d = payload[0].payload;
+                            return (
+                              <div className="p-4 md:p-5 text-card-foreground border border-border/80 rounded-2xl shadow-2xl text-xs md:text-sm leading-relaxed w-72 md:w-80 select-none bg-card">
+                                <div className="font-bold text-foreground border-b border-border/40 pb-1.5 mb-3 flex items-center justify-between gap-2">
+                                  <span>{d.fiscal_year} Financials</span>
+                                  <span className="text-[10px] uppercase font-bold text-primary tracking-wider">{d.percentage}% of Budget</span>
+                                </div>
+                                <div className="space-y-3">
+                                  <div>
+                                    <div className="text-[10px] uppercase font-bold text-muted-foreground mb-1">Fiscal Allocation</div>
+                                    <div className="flex justify-between items-center text-xs">
+                                      <span>Power &amp; Energy Budget:</span>
+                                      <span className="font-bold text-emerald-500">{d.power_energy_allocation_crore_tk} Cr Tk</span>
+                                    </div>
+                                    <div className="flex justify-between items-center text-xs mt-1">
+                                      <span>Total National Budget:</span>
+                                      <span className="font-bold text-foreground">{d.total_budget_crore_tk} Cr Tk</span>
+                                    </div>
+                                  </div>
+                                  <div className="border-t border-border/40 pt-3">
+                                    <div className="text-[10px] uppercase font-bold text-muted-foreground mb-1">Grid Infrastructure</div>
+                                    <div className="flex justify-between items-center text-xs">
+                                      <span>Installed Capacity:</span>
+                                      <span className="font-bold text-primary">{d.installed_capacity_mw} MW</span>
+                                    </div>
+                                    <div className="flex justify-between items-center text-xs mt-1">
+                                      <span>Peak Generation:</span>
+                                      <span className="font-bold text-orange-500">{d.peak_generation_mw} MW</span>
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            );
+                          }}
+                        />
+                        <Legend wrapperStyle={{ fontSize: '11px', paddingTop: '10px' }} />
+                        <Bar yAxisId="left" dataKey="power_energy_allocation_crore_tk" name="Power Sector Budget (Crore Tk)" fill="#10b981" radius={[4, 4, 0, 0]} opacity={0.8} maxBarSize={40} />
+                        <Line yAxisId="right" type="monotone" dataKey="installed_capacity_mw" name="Installed Capacity (MW)" stroke="hsl(var(--primary))" strokeWidth={3} dot={{ fill: 'hsl(var(--primary))', r: 4 }} activeDot={{ r: 6 }} />
+                        <Line yAxisId="right" type="monotone" dataKey="peak_generation_mw" name="Peak Generation (MW)" stroke="hsl(var(--orange-500))" strokeWidth={2} strokeDasharray="5 5" dot={{ fill: 'hsl(var(--orange-500))', r: 3 }} />
+                      </ComposedChart>
+                    </ResponsiveContainer>
+                  ) : (
+                    <div className="grid-explorer-skeleton h-[300px]" />
+                  )}
+                </div>
+                
+                <div className="bg-muted/10 p-4 border-t border-border/40 text-xs text-muted-foreground space-y-2">
+                  <p><strong>What is being shown?</strong></p>
+                  <ul className="list-disc pl-4 space-y-1">
+                    <li><strong>Power Sector Budget (Crore Tk):</strong> The total fiscal allocation dedicated specifically to the Ministry of Power, Energy and Mineral Resources each fiscal year.</li>
+                    <li><strong>Installed Capacity vs Peak Generation (MW):</strong> The physical manifestation of those budgets—showing how much total capacity was built versus how much was actually utilized during peak hours.</li>
+                  </ul>
+                </div>
+              </div>
+
+              {/* Section Metadata Footer for National Budget */}
+              <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1.5 mt-2 mb-6 text-[10px] text-muted-foreground/75 px-1">
+                <span>Source: <a href="https://mof.gov.bd/" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline font-medium">Ministry of Finance</a> &amp; <a href="https://bpdb.gov.bd/" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline font-medium">BPDB Annual Reports</a></span>
+                <span>Data compiled from FY 2010-11 to FY 2024-25</span>
+              </div>
+
+              {/* Historical Pricing Analysis Section (Moved from Gen tab) */}
+              <div className="grid-explorer-chart-card card">
+                <div className="grid-explorer-chart-card__head grid-explorer-chart-card__head--border">
+                  <BarChart3 className="h-5 w-5 text-primary shrink-0" />
+                  <div>
+                    <h3 className="grid-explorer-chart-card__title">Historical Pricing &amp; Tariff Comparison</h3>
+                    <p className="grid-explorer-chart-card__sub">Analyze the exact BPDB weighted average bulk tariff vs average generation &amp; procurement cost</p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-border/60 text-xs bg-muted/10 border border-border/40 mx-4 mt-4 mb-2 rounded-xl shadow-sm overflow-visible">
+                  {[
+                    {
+                      Icon: Zap,
+                      iconColor: "text-emerald-500",
+                      label: "Current Bulk:",
+                      value: `${macroTariffData[macroTariffData.length - 1].tariff.toFixed(2)} Tk/KWh`,
+                      valueColor: "text-emerald-600 dark:text-emerald-400",
+                      tooltipTitle: "BERC Approved",
+                      tooltipDesc: "The latest official wholesale bulk tariff set by the Bangladesh Energy Regulatory Commission (BERC) for utility distribution.",
+                      highlightLabel: "Official Rate",
+                      highlightValue: `${macroTariffData[macroTariffData.length - 1].tariff.toFixed(2)} Tk/KWh`,
+                      highlightStyles: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20",
+                      roundedClasses: "rounded-t-xl sm:rounded-l-xl sm:rounded-tr-none"
+                    },
+                    {
+                      Icon: History,
+                      iconColor: "text-orange-500",
+                      label: "2010 Baseline:",
+                      value: `${macroTariffData[0].tariff.toFixed(2)} Tk/KWh`,
+                      valueColor: "text-orange-600 dark:text-orange-400",
+                      tooltipTitle: "Historical Anchor",
+                      tooltipDesc: "The earliest recorded BERC bulk tariff in our dataset, establishing the historical cost baseline from March 2010.",
+                      highlightLabel: "Initial Rate",
+                      highlightValue: `${macroTariffData[0].tariff.toFixed(2)} Tk/KWh`,
+                      highlightStyles: "bg-orange-500/10 text-orange-600 dark:text-orange-400 border-orange-500/20",
+                      roundedClasses: ""
+                    },
+                    {
+                      Icon: TrendingUp,
+                      iconColor: "text-destructive",
+                      label: "True Gen Cost:",
+                      value: `${systemStats.avgProductionCost.toFixed(2)} Tk/KWh`,
+                      valueColor: "text-foreground",
+                      tooltipTitle: "Real Production Cost",
+                      tooltipDesc: "BPDB's current blended per-unit generation and procurement cost, factoring in fuel prices and IPP capacity payments.",
+                      highlightLabel: "Tariff Deficit",
+                      highlightValue: `${(systemStats.avgProductionCost - macroTariffData[macroTariffData.length - 1].tariff).toFixed(2)} Tk Gap`,
+                      highlightStyles: "bg-destructive/10 text-destructive border-destructive/20",
+                      roundedClasses: "rounded-b-xl sm:rounded-r-xl sm:rounded-bl-none"
+                    }
+                  ].map((stat, idx) => (
+                    <div key={idx} className={`flex items-center justify-center gap-2 cursor-help group relative px-4 py-3.5 hover:bg-muted/20 transition-colors ${stat.roundedClasses}`}>
+                      <stat.Icon className={`h-4 w-4 ${stat.iconColor}`} />
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground group-hover:text-foreground transition-colors border-b border-dashed border-transparent group-hover:border-foreground/30 leading-none mt-0.5">
+                        {stat.label}
+                      </span>
+                      <span className={`font-bold leading-none mt-0.5 ${stat.valueColor}`}>
+                        {stat.value}
+                      </span>
+                      
+                      {/* Custom Tooltip */}
+                      <div 
+                        className="absolute text-card-foreground border border-border/80 p-4 md:p-5 rounded-2xl shadow-2xl z-[110] w-[17.5rem] md:w-80 left-1/2 -translate-x-1/2 top-[calc(100%+4px)] pointer-events-none bg-card transition-all duration-200 ease-out opacity-0 scale-95 translate-y-2 group-hover:opacity-100 group-hover:scale-100 group-hover:translate-y-0 group-hover:pointer-events-auto"
+                        style={{ backgroundColor: 'hsl(var(--card))' }}
+                      >
+                        <div className="absolute -top-1.5 left-1/2 -translate-x-1/2 w-3 h-3 rotate-45 border-t border-l border-border/80 z-[-1]" style={{ backgroundColor: 'hsl(var(--card))' }} />
+                        <div className={`font-bold text-xs uppercase tracking-wider ${stat.iconColor} border-b border-border/60 pb-1.5 mb-2 flex items-center gap-1.5 text-left`}>
+                          <stat.Icon className="h-3.5 w-3.5" /> {stat.tooltipTitle}
+                        </div>
+                        <div className="text-[11px] leading-relaxed text-muted-foreground font-medium whitespace-normal text-left">
+                          {stat.tooltipDesc}
+                          <div className={`mt-3 p-2.5 rounded-lg font-semibold border flex justify-between items-center ${stat.highlightStyles}`}>
+                            <span>{stat.highlightLabel}</span>
+                            <span className="text-xs">{stat.highlightValue}</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="grid-explorer-chart-area grid-explorer-chart-area--lg mt-4 px-4 pb-4">
+                  {chartsReady ? (
+                    <ResponsiveContainer width="100%" height={300}>
+                      <ComposedChart data={macroTariffData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                        <CartesianGrid strokeDasharray="3 6" stroke={chartTheme.gridStroke} opacity={0.3} vertical={false} />
+                        <XAxis dataKey="year" tick={{ fontSize: 11, fill: chartTheme.axisTick }} axisLine={false} tickLine={false} />
+                        <YAxis tick={{ fontSize: 11, fill: chartTheme.axisTick }} axisLine={false} tickLine={false} tickFormatter={(v) => `${v} Tk`} />
+                        <Tooltip
+                          content={({ active, payload }) => {
+                            if (!active || !payload?.length) return null;
+                            const d = payload[0].payload;
+                            const deficit = (d.cost - d.tariff).toFixed(2);
+                            return (
+                              <div className="p-4 md:p-5 text-card-foreground border border-border/80 rounded-2xl shadow-2xl text-xs md:text-sm leading-relaxed w-80 select-none bg-card">
+                                <div className="font-bold text-foreground border-b border-border/40 pb-1.5 mb-2 flex items-center justify-between gap-2">
+                                  <span>{d.year} Financials</span>
+                                  <span className="text-[10px] uppercase font-bold text-primary tracking-wider">Deficit Gap</span>
+                                </div>
+                                <div className="space-y-2 text-xs">
+                                  <div className="flex justify-between flex-col mb-2">
+                                    <span className="text-muted-foreground font-semibold">Approved Bulk Tariff (BPDB to Utilities):</span>
+                                    <span className="font-bold text-foreground mt-0.5">{d.tariff.toFixed(2)} Tk/KWh</span>
+                                  </div>
+                                  <div className="flex justify-between flex-col mb-2">
+                                    <span className="text-muted-foreground font-semibold">Total Generation &amp; Procurement Cost:</span>
+                                    <span className="font-bold text-foreground mt-0.5">{d.cost.toFixed(2)} Tk/KWh</span>
+                                  </div>
+                                  <div className="flex justify-between border-t border-border/30 pt-2 mt-2">
+                                    <span className="text-destructive font-semibold">BPDB Unit Deficit / Subsidy Reqd:</span>
+                                    <span className="font-bold text-destructive">{deficit} Tk/KWh</span>
+                                  </div>
+                                </div>
+                              </div>
+                            );
+                          }}
+                        />
+                        <Legend wrapperStyle={{ fontSize: '11px', paddingTop: '10px' }} />
+                        <Bar dataKey="tariff" name="Weighted Avg Bulk Tariff (Tk/kWh)" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} maxBarSize={30} />
+                        <Line dataKey="cost" name="BPDB Generation & Procurement Cost (Tk/kWh)" stroke="hsl(var(--destructive))" strokeWidth={3} dot={{ fill: 'hsl(var(--destructive))', r: 4 }} activeDot={{ r: 6 }} />
+                      </ComposedChart>
+                    </ResponsiveContainer>
+                  ) : (
+                    <div className="grid-explorer-skeleton h-[300px]" />
+                  )}
+                </div>
+                <div className="bg-muted/10 p-4 border-t border-border/40 text-xs text-muted-foreground space-y-2">
+                  <p><strong>What is being shown?</strong></p>
+                  <ul className="list-disc pl-4 space-y-1">
+                    <li><strong>BPDB Generation & Procurement Cost:</strong> The actual per-unit (kWh) cost incurred by BPDB. This includes the cost of fuel (gas, coal, HFO, LNG), cross-border electricity imports, operational/maintenance costs, and <strong>capacity charges</strong> paid to Independent Power Producers (IPPs) and Rental plants.</li>
+                    <li><strong>Weighted Avg Bulk Tariff:</strong> The BERC-approved wholesale rate at which BPDB sells this electricity to distribution companies like DPDC, DESCO, REB, NESCO, and WZPDCL.</li>
+                    <li><strong>The Deficit:</strong> The gap between the cost and the tariff. BPDB sells power at a loss, and this per-unit deficit is directly subsidized by the Ministry of Finance to keep retail electricity prices lower for consumers.</li>
+                  </ul>
+                </div>
+              </div>
+
+              {/* Section Metadata Footer for Historical Pricing */}
+              <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1.5 mt-2 text-[10px] text-muted-foreground/75 px-1">
+                <span>Source: <a href="https://berc.org.bd/" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline font-medium">BERC Tariff Orders</a> &amp; <a href="https://bpdb.gov.bd/" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline font-medium">BPDB Annual Reports</a></span>
+                <span>Audited by: Office of the Comptroller &amp; Auditor General (CAG)</span>
+                <span>Reporting Period: FY 2010 - FY 2024</span>
+              </div>
+            </div>
+          )}
 
           {/* Sub-tab 1: Macro Overview */}
           {macroSubTab === 'overview' && (
