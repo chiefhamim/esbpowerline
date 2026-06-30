@@ -44,6 +44,7 @@ import { GridLockedContent } from '@/components/news/power-grid/GridLockedConten
 import { subtractDaysFromIso } from '@/lib/data/grid/grid-tier-access';
 import { sredaItemsWithIcons } from '@/components/news/power-grid/sreda-icons';
 import { useGridTierAccess } from '@/hooks/useGridTierAccess';
+import { LongitudinalStudyCharts } from '@/components/news/power-grid/LongitudinalStudy';
 
 const sredaRenewablesWithIcons = sredaItemsWithIcons(sredaRenewablesData);
 
@@ -4461,6 +4462,11 @@ export function PowerGridExplorer({
                 <span>Source: <a href="https://berc.org.bd/" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline font-medium">BERC Tariff Orders</a> &amp; <a href="https://bpdb.gov.bd/" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline font-medium">BPDB Annual Reports</a></span>
                 <span>Audited by: Office of the Comptroller &amp; Auditor General (CAG)</span>
                 <span>Reporting Period: FY 2010 - FY 2024</span>
+              </div>
+
+              {/* Comprehensive Macro-Economic Study 15-Chart Gallery */}
+              <div className="mt-8">
+                <LongitudinalStudyCharts chartTheme={chartTheme} />
               </div>
             </div>
           )}
