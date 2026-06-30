@@ -92,13 +92,21 @@ export function MemberLoginScreen() {
     if (!handoffMessage || !pendingRedirect.current) return;
 
     const destination = pendingRedirect.current;
-    const frame = requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        window.location.assign(destination);
-      });
-    });
 
-    return () => cancelAnimationFrame(frame);
+    const redirectTimer = window.setTimeout(() => {
+      window.location.assign(destination);
+    }, 100);
+
+    const failTimer = window.setTimeout(() => {
+      setHandoffMessage(null);
+      pendingRedirect.current = null;
+      setError('Redirect is taking longer than expected. Try opening your library manually.');
+    }, 12_000);
+
+    return () => {
+      window.clearTimeout(redirectTimer);
+      window.clearTimeout(failTimer);
+    };
   }, [handoffMessage]);
 
   function switchMode(next: AuthMode) {

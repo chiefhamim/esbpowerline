@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { Bookmark, BookOpen, Download, MessageSquare, ArrowRight } from 'lucide-react';
+import { Bookmark, BookOpen, Download, MessageSquare, ArrowRight, BarChart3 } from 'lucide-react';
 import { requireMemberSession } from '@/lib/member-auth';
 import { getMemberOverview } from '@/lib/actions/members';
 import { MEMBER_NAV } from '@/lib/member-nav';
@@ -61,6 +61,20 @@ export default async function MemberOverviewPage() {
             );
           })}
         </div>
+      </section>
+
+      <section className="member-section">
+        <h2 className="member-section__title">Grid data access</h2>
+        <Link href="/members/subscription" className="member-quick-card">
+          <BarChart3 className="h-4 w-4 text-emerald-500" />
+          <div className="min-w-0 flex-1">
+            <p className="font-medium text-foreground">Extend your archive</p>
+            <p className="text-xs text-muted-foreground">
+              Free members get 2 weeks · ৳499 for 5 years · ৳999 for full backlog
+            </p>
+          </div>
+          <ArrowRight className="h-4 w-4 text-muted-foreground" />
+        </Link>
       </section>
 
       <section className="member-section">

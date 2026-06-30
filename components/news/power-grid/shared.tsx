@@ -23,10 +23,16 @@ export function TakaIcon({ className }: { className?: string }) {
   );
 }
 
+export type CustomDropdownOption = {
+  label: string;
+  value: string;
+  locked?: boolean;
+};
+
 export interface CustomDropdownProps {
   value: string;
   onChange: (val: string) => void;
-  options: { label: string; value: string }[];
+  options: CustomDropdownOption[];
   placeholder: string;
   isOpen: boolean;
   setIsOpen: (open: boolean) => void;
@@ -79,7 +85,14 @@ export function CustomDropdown({
           {showDecorations && prefixLabel && (
             <span className="text-muted-foreground font-medium mr-0.5 shrink-0">{prefixLabel}</span>
           )}
-          <span className="truncate whitespace-nowrap text-center">{selectedOption.label}</span>
+          <span
+            className={cn(
+              'truncate whitespace-nowrap text-center',
+              selectedOption.locked && 'text-muted-foreground/60 font-semibold',
+            )}
+          >
+            {selectedOption.label}
+          </span>
         </span>
         <ChevronDown
           className={cn(
@@ -104,6 +117,7 @@ export function CustomDropdown({
         >
           {options.map((opt) => {
             const active = opt.value === value;
+            const locked = Boolean(opt.locked);
             return (
               <button
                 key={opt.value}
@@ -115,15 +129,25 @@ export function CustomDropdown({
                 className={cn(
                   'flex items-center rounded-xl text-xs md:text-sm font-semibold transition-all select-none text-left',
                   layout === 'grid' ? 'justify-center p-2' : 'w-full justify-between px-3.5 py-2.5',
-                  active
-                    ? 'bg-primary/10 text-primary font-bold'
-                    : 'text-muted-foreground hover:text-foreground hover:bg-muted/40',
+                  locked
+                    ? cn(
+                        active
+                          ? 'bg-muted/25 text-muted-foreground/50 font-medium'
+                          : 'text-muted-foreground/30 hover:text-muted-foreground/45 hover:bg-muted/15',
+                      )
+                    : cn(
+                        active
+                          ? 'bg-primary/10 text-primary font-bold'
+                          : 'text-foreground hover:text-foreground hover:bg-muted/40',
+                      ),
                 )}
               >
                 <span className={cn(layout === 'grid' ? 'whitespace-nowrap text-center w-full' : 'truncate')}>
                   {opt.label}
                 </span>
-                {active && layout !== 'grid' && <Check className="h-3.5 w-3.5 shrink-0" />}
+                {active && layout !== 'grid' && (
+                  <Check className={cn('h-3.5 w-3.5 shrink-0', locked && 'opacity-40')} />
+                )}
               </button>
             );
           })}

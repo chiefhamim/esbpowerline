@@ -6,6 +6,7 @@ import {
   invalidateAuthSessionWithClient,
   syncAuthUserMetadataWithClient,
   syncAuthUserStatusWithClient,
+  syncGridPlanMetadataWithClient,
   upsertAuthUserWithClient,
   type AuthMetadataSyncInput,
   type AuthUserSyncInput,
@@ -32,6 +33,13 @@ export async function syncSupabaseAuthUserMetadata(input: AuthMetadataSyncInput)
     return;
   }
   await syncAuthUserMetadataWithClient(admin, input);
+}
+
+/** Sync grid plan to Supabase app_metadata (edge tier enforcement). */
+export async function syncSupabaseGridPlan(email: string, gridPlan: string): Promise<void> {
+  const admin = createServiceRoleClient();
+  if (!admin) return;
+  await syncGridPlanMetadataWithClient(admin, email, gridPlan);
 }
 
 /** Mirror account status to Supabase Auth + profiles (e.g. suspend). */

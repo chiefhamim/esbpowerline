@@ -156,10 +156,14 @@ export function GasTab({
           <div className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
             <Info className="h-3.5 w-3.5 text-sky-500" /> Gas Sector Acronyms &amp; Units Footnote
           </div>
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4 text-[10px] text-muted-foreground leading-relaxed">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-4 text-[10px] text-muted-foreground leading-relaxed">
             <div>
               <strong className="text-foreground block font-bold mb-0.5">MMCFD</strong>
               Million Standard Cubic Feet per Day. Standard unit of gas volume flow rate.
+            </div>
+            <div>
+              <strong className="text-foreground block font-bold mb-0.5">BBL (Barrel of Oil)</strong>
+              Standard unit of volume for crude oil and petroleum products (1 BBL = 42 US gallons or ~159 liters).
             </div>
             <div>
               <strong className="text-foreground block font-bold mb-0.5">LNG (Liquefied Natural Gas)</strong>

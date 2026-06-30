@@ -15,6 +15,11 @@ import {
   isBlockedBotUserAgent,
   isSameOriginDailyAccess,
 } from '@/lib/data/grid/daily-access';
+import { getLatestAvailableDate } from '@/lib/data/grid/available-dates';
+import {
+  isDateAllowedForTier,
+  resolveGridAccessTier,
+} from '@/lib/data/grid/grid-tier-access';
 
 const dailyFetchTimestamps = new Map<string, number[]>();
 const DAILY_BURST_WINDOW_MS = 60_000;
@@ -125,7 +130,24 @@ export async function middleware(request: NextRequest) {
       return denyDailyJson('Access Denied: Direct data access is restricted.');
     }
 
-    const response = NextResponse.next();
+    const { response, supabase, user } = await updateSession(request);
+    const { active, role, gridPlan } = await resolveEdgeSession(user, supabase);
+
+    const dateMatch = pathname.match(/\/data\/daily\/(\d{4}-\d{2}-\d{2})\.json$/);
+    const isoDate = dateMatch?.[1];
+    const latestDate = getLatestAvailableDate();
+
+    if (isoDate && latestDate) {
+      const tier = resolveGridAccessTier({
+        isAuthenticated: active,
+        role,
+        gridPlan,
+      });
+      if (!isDateAllowedForTier(isoDate, tier, latestDate)) {
+        return denyDailyJson('Subscription required for historical grid data access.');
+      }
+    }
+
     response.headers.set('Cache-Control', 'private, no-store');
     return response;
   }

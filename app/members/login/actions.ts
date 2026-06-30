@@ -1,6 +1,8 @@
 'use server';
 
+import { headers } from 'next/headers';
 import { revalidatePath } from 'next/cache';
+import { authContinuePath, needsAuthHandoff } from '@/lib/auth-handoff';
 import { registerMemberAction } from '@/lib/actions/member-register';
 import { ensureDemoMemberAccount } from '@/lib/ensure-demo-accounts';
 import {
@@ -141,8 +143,15 @@ export async function memberLoginAction(
     revalidatePath('/', 'layout');
 
     const callbackUrl = safeCallbackUrl(readField(formData, 'callbackUrl'));
+    const destination = callbackUrl ?? '/members';
+    const headerStore = await headers();
+    const host = headerStore.get('host') ?? 'localhost:3000';
+    const redirectTo = needsAuthHandoff(destination, host)
+      ? authContinuePath(destination)
+      : destination;
+
     return {
-      redirectTo: callbackUrl ?? '/members',
+      redirectTo,
       handoffMessage: 'Opening your library…',
     };
   } catch (error) {
@@ -183,8 +192,15 @@ export async function memberSignUpAction(
     revalidatePath('/', 'layout');
 
     const callbackUrl = safeCallbackUrl(readField(formData, 'callbackUrl'));
+    const destination = callbackUrl ?? '/members';
+    const headerStore = await headers();
+    const host = headerStore.get('host') ?? 'localhost:3000';
+    const redirectTo = needsAuthHandoff(destination, host)
+      ? authContinuePath(destination)
+      : destination;
+
     return {
-      redirectTo: callbackUrl ?? '/members',
+      redirectTo,
       handoffMessage: 'Opening your library…',
     };
   } catch (error) {

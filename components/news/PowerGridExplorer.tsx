@@ -36,7 +36,12 @@ import { globalVsDomesticData, historicalExchangeRates } from '@/lib/data/macro/
 import { reservesDepletionData } from '@/lib/data/macro/reserves';
 import { CustomDropdown, TakaIcon, getUpcomingProjectStatusInfo, renderProjectCost } from '@/components/news/power-grid/shared';
 import { GasTab } from '@/components/news/power-grid/GasTab';
+import { GridAccessBanner } from '@/components/news/power-grid/GridAccessBanner';
+import { GridArchiveTeaser } from '@/components/news/power-grid/GridArchiveTeaser';
+import { GridLockedContent } from '@/components/news/power-grid/GridLockedContent';
+import { subtractDaysFromIso } from '@/lib/data/grid/grid-tier-access';
 import { sredaItemsWithIcons } from '@/components/news/power-grid/sreda-icons';
+import { useGridTierAccess } from '@/hooks/useGridTierAccess';
 
 const sredaRenewablesWithIcons = sredaItemsWithIcons(sredaRenewablesData);
 
@@ -56,18 +61,20 @@ export function PowerGridExplorer({
   initialLines,
 }: PowerGridExplorerProps = {}) {
   const chartTheme = useChartTheme();
+  const gridAccess = useGridTierAccess();
   
   // Date Selection States
   const availableDatesList = useMemo<string[]>(() => {
     return availableDates.filter((d) => /^(201[1-9]|202[0-6])-\d{2}-\d{2}$/.test(String(d)));
   }, []);
 
-  const latestDate = getLatestAvailableDate() ?? availableDatesList[availableDatesList.length - 1] ?? '2026-06-29';
+  const latestDate = gridAccess.latestDate;
   const latestFallbackData = useMemo(
     () => getArchiveFallback(latestDate),
     [latestDate],
   );
   const [selectedDate, setSelectedDate] = useState<string>(latestDate);
+  const [tierLockRequired, setTierLockRequired] = useState<ReturnType<typeof gridAccess.requiredTierForDate> | null>(null);
   const [activeData, setActiveData] = useState<GridDailyData>(
     () => getArchiveFallback(latestDate) ?? getArchiveFallback('2026-06-22')!,
   );
@@ -154,13 +161,36 @@ export function PowerGridExplorer({
   const [selectedYear, selectedMonth, selectedDay] = selectedDate.split('-');
 
   // Calculate options dynamically
+  const selectAccessibleDate = useCallback((isoDate: string) => {
+    if (gridAccess.canAccessDate(isoDate)) {
+      setTierLockRequired(null);
+      setSelectedDate(isoDate);
+      return;
+    }
+    setTierLockRequired(gridAccess.requiredTierForDate(isoDate));
+    setSelectedDate(isoDate);
+  }, [gridAccess.canAccessDate, gridAccess.requiredTierForDate]);
+
+  useEffect(() => {
+    if (gridAccess.loading) return;
+    if (!gridAccess.canAccessDate(selectedDate)) {
+      setTierLockRequired(gridAccess.requiredTierForDate(selectedDate));
+    } else {
+      setTierLockRequired(null);
+    }
+  }, [gridAccess.loading, gridAccess.canAccessDate, gridAccess.requiredTierForDate, selectedDate]);
+
   const years = useMemo(() => {
     return Array.from(new Set(availableDatesList.map(d => d.split('-')[0]))).sort((a, b) => b.localeCompare(a));
   }, [availableDatesList]);
 
   const yearOptions = useMemo(() => {
-    return years.map(y => ({ label: y, value: y }));
-  }, [years]);
+    return years.map((y) => {
+      const datesInYear = availableDatesList.filter((d) => d.startsWith(`${y}-`));
+      const hasAccessible = datesInYear.some((d) => gridAccess.canAccessDate(d));
+      return { label: y, value: y, locked: !hasAccessible };
+    });
+  }, [years, availableDatesList, gridAccess.canAccessDate]);
 
   const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 
@@ -173,11 +203,17 @@ export function PowerGridExplorer({
   }, [availableDatesList, selectedYear]);
 
   const monthOptions = useMemo(() => {
-    return monthsForYear.map(m => ({
-      label: monthNames[parseInt(m) - 1] || m,
-      value: m
-    }));
-  }, [monthsForYear]);
+    return monthsForYear.map((m) => {
+      const prefix = `${selectedYear}-${m}-`;
+      const datesInMonth = availableDatesList.filter((d) => d.startsWith(prefix));
+      const hasAccessible = datesInMonth.some((d) => gridAccess.canAccessDate(d));
+      return {
+        label: monthNames[parseInt(m, 10) - 1] || m,
+        value: m,
+        locked: !hasAccessible,
+      };
+    });
+  }, [monthsForYear, availableDatesList, selectedYear, gridAccess.canAccessDate]);
 
   const daysForMonth = useMemo(() => {
     return Array.from(new Set(
@@ -188,65 +224,85 @@ export function PowerGridExplorer({
   }, [availableDatesList, selectedYear, selectedMonth]);
 
   const dayOptions = useMemo(() => {
-    return daysForMonth.map(d => ({
-      label: String(parseInt(d)),
-      value: d
-    }));
-  }, [daysForMonth]);
+    return daysForMonth.map((d) => {
+      const iso = `${selectedYear}-${selectedMonth}-${d}`;
+      return {
+        label: String(parseInt(d, 10)),
+        value: d,
+        locked: !gridAccess.canAccessDate(iso),
+      };
+    });
+  }, [daysForMonth, selectedYear, selectedMonth, gridAccess.canAccessDate]);
 
   const handleYearChange = (newYear: string) => {
-    const months = Array.from(new Set(
-      availableDatesList
-        .filter(d => d.startsWith(newYear + '-'))
-        .map(d => d.split('-')[1])
-    )).sort((a, b) => a.localeCompare(b));
-    if (months.length === 0) return;
+    const datesInYear = availableDatesList.filter((d) => d.startsWith(`${newYear}-`)).sort();
+    if (datesInYear.length === 0) return;
+
+    const months = Array.from(new Set(datesInYear.map((d) => d.split('-')[1]))).sort();
     let targetMonth = selectedMonth;
     if (!months.includes(targetMonth)) {
       targetMonth = months[months.length - 1];
     }
-    const days = Array.from(new Set(
-      availableDatesList
-        .filter(d => d.startsWith(newYear + '-' + targetMonth + '-'))
-        .map(d => d.split('-')[2])
-    )).sort((a, b) => a.localeCompare(b));
+
+    const days = datesInYear
+      .filter((d) => d.startsWith(`${newYear}-${targetMonth}-`))
+      .map((d) => d.split('-')[2])
+      .sort();
     if (days.length === 0) return;
+
     let targetDay = selectedDay;
     if (!days.includes(targetDay)) {
       targetDay = days[days.length - 1];
     }
-    setSelectedDate(`${newYear}-${targetMonth}-${targetDay}`);
+    selectAccessibleDate(`${newYear}-${targetMonth}-${targetDay}`);
   };
 
   const handleMonthChange = (newMonth: string) => {
-    const days = Array.from(new Set(
-      availableDatesList
-        .filter(d => d.startsWith(selectedYear + '-' + newMonth + '-'))
-        .map(d => d.split('-')[2])
-    )).sort((a, b) => a.localeCompare(b));
+    const days = availableDatesList
+      .filter((d) => d.startsWith(`${selectedYear}-${newMonth}-`))
+      .map((d) => d.split('-')[2])
+      .sort();
     if (days.length === 0) return;
     let targetDay = selectedDay;
     if (!days.includes(targetDay)) {
       targetDay = days[days.length - 1];
     }
-    setSelectedDate(`${selectedYear}-${newMonth}-${targetDay}`);
+    selectAccessibleDate(`${selectedYear}-${newMonth}-${targetDay}`);
   };
 
+  const previewLockedArchiveDate = useCallback(() => {
+    const daysBack =
+      gridAccess.tier === 'visitor' ? 7 : gridAccess.tier === 'member' ? 21 : 365 * 6;
+    const sample = subtractDaysFromIso(latestDate, daysBack) ?? availableDatesList[0] ?? latestDate;
+    selectAccessibleDate(sample);
+  }, [gridAccess.tier, latestDate, availableDatesList, selectAccessibleDate]);
+
   const handleDayChange = (newDay: string) => {
-    setSelectedDate(`${selectedYear}-${selectedMonth}-${newDay}`);
+    selectAccessibleDate(`${selectedYear}-${selectedMonth}-${newDay}`);
   };
 
   // Dynamic Fetch Effect
   useEffect(() => {
     let isMounted = true;
-    if (!selectedDate) return;
+    if (!selectedDate || gridAccess.loading) return;
 
+    if (!gridAccess.canAccessDate(selectedDate)) {
+      setTierLockRequired(gridAccess.requiredTierForDate(selectedDate));
+      setIsLoadingDaily(false);
+      setIsDataMissing(false);
+      return;
+    }
+
+    setTierLockRequired(null);
     setIsLoadingDaily(true);
     fetchDailyReport(selectedDate)
       .then((result) => {
         if (!isMounted) return;
         if (result.ok) {
           setActiveData(result.data);
+          setIsDataMissing(false);
+        } else if (!result.ok && result.status === 403) {
+          setTierLockRequired(gridAccess.requiredTierForDate(selectedDate));
           setIsDataMissing(false);
         } else {
           const fallback = getArchiveFallback(selectedDate) ?? latestFallbackData;
@@ -262,7 +318,13 @@ export function PowerGridExplorer({
     return () => {
       isMounted = false;
     };
-  }, [selectedDate, latestFallbackData]);
+  }, [
+    selectedDate,
+    latestFallbackData,
+    gridAccess.loading,
+    gridAccess.canAccessDate,
+    gridAccess.requiredTierForDate,
+  ]);
 
   const [activeKpiTooltip, setActiveKpiTooltip] = useState<string | null>(null);
   const kpiStripRef = useRef<HTMLDivElement>(null);
@@ -654,9 +716,9 @@ export function PowerGridExplorer({
     { id: 'gen', label: 'Generation & Cost', icon: Zap },
     { id: 'gas', label: 'Gas & LNG Supply', icon: Droplet },
     { id: 'imports', label: 'C/B Imports', icon: Globe },
+    { id: 'regional', label: 'Regional Grid', icon: Cable },
     { id: 'renewables', label: 'Renewables (SREDA)', icon: Sun },
     { id: 'transmission', label: 'Technical Information', icon: Activity },
-    { id: 'regional', label: 'Regional Grid', icon: Cable },
     { id: 'macro', label: 'Macro Trends', icon: TrendingUp },
   ] as const;
 
@@ -747,6 +809,12 @@ export function PowerGridExplorer({
         }
       `}</style>
 
+      <GridAccessBanner
+        access={gridAccess}
+        totalArchiveDays={availableDatesList.length}
+        className="mb-4 relative z-50"
+      />
+
       {/* Date Selector Header */}
       <div id="grid-status-overview-header" className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6 relative z-50">
         <div>
@@ -759,7 +827,7 @@ export function PowerGridExplorer({
             {(() => {
               const badge = getBacklogBadgeStyles(selectedDate, latestDate);
               return (
-                <span className={cn("text-[10px] px-1.5 py-0.5 rounded font-bold ml-1 uppercase tracking-wider transition-all duration-300 inline-block align-middle", badge.className)}>
+                <span className={cn("text-[10px] px-1.5 py-0.5 rounded font-bold ml-1 uppercase tracking-wider transition-all duration-300 inline-block align-middle", badge.className, tierLockRequired && 'opacity-50')}>
                   {badge.text}
                 </span>
               );
@@ -789,7 +857,7 @@ export function PowerGridExplorer({
           {/* TODAY Reset Button */}
           <button
             type="button"
-            onClick={() => setSelectedDate(latestDate)}
+            onClick={() => selectAccessibleDate(latestDate)}
             className="flex items-center justify-center gap-1 px-3 py-2 text-xs md:text-sm font-bold bg-transparent border border-border/40 hover:bg-muted/10 hover:border-primary/30 rounded-xl transition-all duration-150 shadow-sm text-foreground"
           >
             <RotateCcw className="h-3.5 w-3.5 text-primary shrink-0" />
@@ -856,6 +924,12 @@ export function PowerGridExplorer({
         </div>
       </div>
 
+      <GridLockedContent
+        locked={tierLockRequired !== null}
+        requiredTier={tierLockRequired}
+        selectedDate={selectedDate}
+        className="min-h-[280px]"
+      >
       {/* KPI Strip */}
       <div className="grid-explorer-kpi-strip relative z-30" ref={kpiStripRef}>
         <div 
@@ -5962,7 +6036,6 @@ export function PowerGridExplorer({
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* Insights Card 1 */}
                 <div className="card p-5 space-y-4">
                   <div className="flex items-center gap-2 pb-2.5 border-b border-border/40">
                     <DollarSign className="h-5 w-5 text-amber-500" />
@@ -5985,7 +6058,7 @@ export function PowerGridExplorer({
                       <span className="font-semibold text-foreground">12.5% - 14.5% (Weighted Average)</span>
                     </div>
                     <p className="text-[11px] text-muted-foreground/90 leading-relaxed pt-1.5 border-t border-border/20">
-                      <strong>Analytical Insight:</strong> Due to BPDB's treasury deficit, payment aging to private Independent Power Producers (IPPs) has inflated from 60 days to over 150 days. Listed IPPs carry heavy receivables on their balance sheets, forcing reliance on high-interest working capital loans (up to 14.5% in 2026), which compresses net profit margins and dilutes dividend payout capacity.
+                      <strong>Analytical Insight:</strong> Due to BPDB&apos;s treasury deficit, payment aging to private Independent Power Producers (IPPs) has inflated from 60 days to over 150 days. Listed IPPs carry heavy receivables on their balance sheets, forcing reliance on high-interest working capital loans (up to 14.5% in 2026), which compresses net profit margins and dilutes dividend payout capacity.
                     </p>
                   </div>
                   <div className="pt-2.5 border-t border-border/20 text-[10px] text-muted-foreground/80 flex flex-wrap justify-between gap-x-2 gap-y-1">
@@ -5995,7 +6068,6 @@ export function PowerGridExplorer({
                   </div>
                 </div>
 
-                {/* Insights Card 2 */}
                 <div className="card p-5 space-y-4">
                   <div className="flex items-center gap-2 pb-2.5 border-b border-border/40">
                     <Globe className="h-5 w-5 text-sky-500" />
@@ -6028,7 +6100,6 @@ export function PowerGridExplorer({
                   </div>
                 </div>
 
-                {/* Insights Card 3 */}
                 <div className="card p-5 space-y-4">
                   <div className="flex items-center gap-2 pb-2.5 border-b border-border/40">
                     <Activity className="h-5 w-5 text-rose-500" />
@@ -6061,7 +6132,6 @@ export function PowerGridExplorer({
                   </div>
                 </div>
 
-                {/* Insights Card 4 */}
                 <div className="card p-5 space-y-4">
                   <div className="flex items-center gap-2 pb-2.5 border-b border-border/40">
                     <Zap className="h-5 w-5 text-emerald-500" />
@@ -6084,7 +6154,7 @@ export function PowerGridExplorer({
                       <span className="font-semibold text-amber-500">43.16% (12,266 MW idle)</span>
                     </div>
                     <p className="text-[11px] text-muted-foreground/90 leading-relaxed pt-1.5 border-t border-border/20">
-                      <strong>Analytical Insight:</strong> Bangladesh operates with a surplus capacity of 43.16%. While providing base-load security, it triggers contractually binding "capacity charges" paid to idle private power plants. These structural capacity charges cost the state an estimated 1.88 Crore BDT daily, driving BPDB's 39,000 Crore BDT operating subsidy requirement.
+                      <strong>Analytical Insight:</strong> Bangladesh operates with a surplus capacity of 43.16%. While providing base-load security, it triggers contractually binding &quot;capacity charges&quot; paid to idle private power plants. These structural capacity charges cost the state an estimated 1.88 Crore BDT daily, driving BPDB&apos;s 39,000 Crore BDT operating subsidy requirement.
                     </p>
                   </div>
                   <div className="pt-2.5 border-t border-border/20 text-[10px] text-muted-foreground/80 flex flex-wrap justify-between gap-x-2 gap-y-1">
@@ -6150,6 +6220,15 @@ export function PowerGridExplorer({
           </div>
         </div>
       </div>
+      </GridLockedContent>
+
+      {tierLockRequired === null && (
+        <GridArchiveTeaser
+          access={gridAccess}
+          totalArchiveDays={availableDatesList.length}
+          onExploreLocked={previewLockedArchiveDate}
+        />
+      )}
     </div>
 
     {/* Print-Only Curated Report Document */}

@@ -36,6 +36,10 @@ export function resolveDailyLoadFromStatus(
     return { ok: false, error: 'Network error while loading daily report' };
   }
 
+  if (httpStatus === 403) {
+    return { ok: false, error: 'tier_locked', status: 403 };
+  }
+
   const status = httpStatus ?? 0;
   return { ok: false, error: `HTTP ${status}`, status };
 }

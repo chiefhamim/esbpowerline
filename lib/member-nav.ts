@@ -6,6 +6,7 @@ import {
   Download,
   MessageSquare,
   UserRound,
+  BarChart3,
 } from 'lucide-react';
 
 export type MemberNavItem = {
@@ -39,6 +40,12 @@ export const MEMBER_NAV: MemberNavItem[] = [
     label: 'Downloads',
     icon: Download,
     description: 'Data packages you fetched',
+  },
+  {
+    href: '/members/subscription',
+    label: 'Grid subscription',
+    icon: BarChart3,
+    description: 'Historical grid data plans',
   },
   {
     href: '/members/comments',

@@ -84,7 +84,10 @@ describe('daily-loader-core status handling', () => {
   it('returns ok:false for 403 without archive masquerade', () => {
     const result = resolveDailyLoadFromStatus('2026-06-15', 403);
     expect(result.ok).toBe(false);
-    if (!result.ok) expect(result.status).toBe(403);
+    if (!result.ok) {
+      expect(result.status).toBe(403);
+      expect(result.error).toBe('tier_locked');
+    }
   });
 
   it('returns ok:false for 429', () => {

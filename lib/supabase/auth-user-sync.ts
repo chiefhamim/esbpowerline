@@ -139,6 +139,27 @@ export async function syncAuthUserStatusWithClient(
   }
 }
 
+/** Sync grid archive plan to Supabase app_metadata for edge middleware tier checks. */
+export async function syncGridPlanMetadataWithClient(
+  admin: SupabaseClient,
+  email: string,
+  gridPlan: string,
+): Promise<void> {
+  const userId = await findUserIdByEmail(admin, email);
+  if (!userId) return;
+
+  const { data: existing } = await admin.auth.admin.getUserById(userId);
+  const appMeta = existing.user?.app_metadata ?? {};
+
+  const { error } = await admin.auth.admin.updateUserById(userId, {
+    app_metadata: {
+      ...appMeta,
+      grid_plan: gridPlan,
+    },
+  });
+  if (error) throw error;
+}
+
 /** Immediately invalidate all active sessions for a user (demotions/suspensions). */
 export async function invalidateAuthSessionWithClient(
   admin: SupabaseClient,
