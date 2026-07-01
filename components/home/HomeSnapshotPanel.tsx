@@ -170,7 +170,7 @@ function LocalSnapshotDashboard({ initialStats }: { initialStats?: any[] }) {
               </ModernTooltip>
             </span>
 
-            <Icon className={`h-[15px] w-[15px] md:h-[18px] md:w-[18px] shrink-0 self-center transition-transform duration-200 group-hover:scale-110 ${s.iconClass}`} />
+            <Icon className={`h-[11.25px] w-[11.25px] md:h-[13.5px] md:w-[13.5px] shrink-0 self-center transition-transform duration-200 group-hover:scale-110 ${s.iconClass}`} />
             
             <div className="flex flex-col min-w-0 flex-1 justify-center gap-1">
               <div className="font-semibold uppercase tracking-wider text-muted-foreground/75 group-hover:text-foreground transition-colors duration-150 select-none leading-none truncate w-full text-[9px] md:text-[10px]">

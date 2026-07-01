@@ -1,11 +1,22 @@
 'use client';
 
-import React from 'react';
+import React, { useMemo } from 'react';
 import {
-  ResponsiveContainer, AreaChart, Area, LineChart, Line, BarChart, Bar, ComposedChart,
-  XAxis, YAxis, CartesianGrid, Tooltip, Legend
+  AreaChart, Area, LineChart, Line, Bar, ComposedChart,
+  XAxis, YAxis, CartesianGrid, Tooltip,
 } from 'recharts';
 import { longitudinalStudyData } from '@/lib/data/macro/longitudinal-study';
+import {
+  GridChartFrame,
+  GRID_CHART_MARGIN,
+  GRID_Y_AXIS_WIDTH,
+  formatAxisCkm,
+  formatAxisMw,
+  formatChartTooltipValue,
+  gridChartAxisTick,
+  gridChartXAxisProps,
+} from '@/components/news/PowerGridChartUI';
+import { formatNumber } from '@/lib/utils';
 import { cn } from '@/lib/utils';
 import { Activity, Layers, TrendingUp, BarChart3 } from 'lucide-react';
 
@@ -19,8 +30,7 @@ export function LongitudinalStudyCharts({ chartTheme }: { chartTheme: any }) {
   const baseGeneration = baseYearData.Installed_Generation_MW || 7296;
   const baseDemand = baseYearData.Peak_Demand_MW || 4890;
 
-  // Generate complete indexed trajectory data dynamically
-  const processedData = data.map((d: any, i: number) => {
+  const processedData = useMemo(() => data.map((d: any, i: number) => {
     const prev = i > 0 ? data[i - 1] : null;
     const genAdded = prev && d.Installed_Generation_MW && prev.Installed_Generation_MW
       ? Math.max(0, d.Installed_Generation_MW - prev.Installed_Generation_MW)
@@ -33,7 +43,22 @@ export function LongitudinalStudyCharts({ chartTheme }: { chartTheme: any }) {
       Generation_Index: d.Installed_Generation_MW ? (d.Installed_Generation_MW / baseGeneration) * 100 : null,
       Demand_Index: d.Peak_Demand_MW ? (d.Peak_Demand_MW / baseDemand) * 100 : null,
     };
-  });
+  }), [data, baseBudget, baseTransmission, baseGeneration, baseDemand]);
+
+  const formatSeriesTooltipValue = (entry: { name?: string; value?: number | null }) => {
+    const name = entry.name ?? '';
+    const value = entry.value;
+    if (name.includes('Index') || name.endsWith('(%)')) {
+      return formatChartTooltipValue(value, { unit: '%', decimals: 1 });
+    }
+    if (name.includes('MW') || name.includes('Gen Cap')) {
+      return formatChartTooltipValue(value, { unit: 'MW', decimals: 0 });
+    }
+    if (name.includes('ckm') || name.includes('Corridor') || name.includes('Ultra')) {
+      return formatChartTooltipValue(value, { unit: 'ckm', decimals: 0 });
+    }
+    return formatChartTooltipValue(value, { decimals: 1 });
+  };
 
   const CustomTooltip = ({
     active,
@@ -54,10 +79,12 @@ export function LongitudinalStudyCharts({ chartTheme }: { chartTheme: any }) {
           </div>
           <div className="space-y-3">
             {payload.map((entry: any, index: number) => (
-              <div key={`item-${index}`} className="flex justify-between items-center text-xs">
+              <div key={`item-${index}`} className="flex justify-between items-center text-xs gap-3">
                 <span className="text-muted-foreground font-semibold">{entry.name}:</span>
-                <span className="font-bold" style={{ color: entry.color }}>
-                  {entry.value != null ? Number(entry.value).toFixed(2) : 'N/A'} {unit || entry.unit || ''}
+                <span className="font-bold tabular-nums" style={{ color: entry.color }}>
+                  {unit
+                    ? `${entry.value != null ? formatNumber(Number(entry.value), unit === 'ckm' || unit === 'MW' ? 0 : 1) : 'N/A'} ${unit}`
+                    : formatSeriesTooltipValue(entry)}
                 </span>
               </div>
             ))}
@@ -80,7 +107,7 @@ export function LongitudinalStudyCharts({ chartTheme }: { chartTheme: any }) {
   };
 
   return (
-    <div className="space-y-8 mt-8 animate-in slide-in-from-bottom-4 duration-500 fade-in">
+    <div className="space-y-8">
       
       {/* Network Evolution by Voltage */}
       <div className="grid-explorer-chart-card card">
@@ -94,12 +121,18 @@ export function LongitudinalStudyCharts({ chartTheme }: { chartTheme: any }) {
           </div>
           <span className="grid-explorer-chip bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20">Voltage Mix</span>
         </div>
-        <div className="grid-explorer-chart-area grid-explorer-chart-area--lg mt-4 px-4 pb-4">
-          <ResponsiveContainer width="100%" height={300}>
-            <LineChart data={processedData.filter((d: any) => d.Transmission_400kV_ckm)} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
+        <GridChartFrame
+          className="mt-4"
+          legend={[
+            { id: '400', label: '400kV Ultra-High', color: '#8b5cf6', variant: 'line' },
+            { id: '230', label: '230kV Corridor', color: '#3b82f6', variant: 'line' },
+            { id: '132', label: '132kV Corridor', color: '#10b981', variant: 'line' },
+          ]}
+        >
+          <LineChart accessibilityLayer={false} data={processedData} margin={GRID_CHART_MARGIN.legend}>
               <CartesianGrid strokeDasharray="3 6" stroke={chartTheme.gridStroke} opacity={0.3} vertical={false} />
-              <XAxis dataKey="Fiscal_Year" tick={{ fontSize: 11, fill: chartTheme.axisTick }} axisLine={false} tickLine={false} />
-              <YAxis tick={{ fontSize: 11, fill: chartTheme.axisTick }} axisLine={false} tickLine={false} tickFormatter={(v) => `${v} ckm`} />
+              <XAxis {...gridChartXAxisProps(chartTheme, { dataKey: 'Fiscal_Year' })} />
+              <YAxis width={GRID_Y_AXIS_WIDTH.single} tick={gridChartAxisTick(chartTheme)} axisLine={false} tickLine={false} tickMargin={4} domain={[0, 'auto']} allowDecimals={false} tickFormatter={formatAxisCkm} />
               <Tooltip content={
                 <CustomTooltip 
                   title="Voltage Evolution" 
@@ -108,22 +141,14 @@ export function LongitudinalStudyCharts({ chartTheme }: { chartTheme: any }) {
                   auditor="PGCB Engineering & Projects Committee"
                 />
               } />
-              <Legend 
-                wrapperStyle={{ fontSize: '11px', paddingTop: '10px' }} 
-                formatter={(value, entry) => {
-                  const color = entry.color || 'inherit';
-                  return <span style={{ color, fontWeight: 600 }}>{value}</span>;
-                }}
-              />
-              <Line type="monotone" dataKey="Transmission_400kV_ckm" name="400kV (Ultra-High)" stroke="#8b5cf6" strokeWidth={3} dot={{ r: 4 }} activeDot={{ r: 6 }} />
-              <Line type="monotone" dataKey="Transmission_230kV_ckm" name="230kV" stroke="#3b82f6" strokeWidth={3} dot={{ r: 4 }} activeDot={{ r: 6 }} />
-              <Line type="monotone" dataKey="Transmission_132kV_ckm" name="132kV" stroke="#10b981" strokeWidth={3} dot={{ r: 4 }} activeDot={{ r: 6 }} />
-            </LineChart>
-          </ResponsiveContainer>
-        </div>
+              <Line type="monotone" dataKey="Transmission_400kV_ckm" name="400kV Ultra-High" stroke="#8b5cf6" strokeWidth={2.5} connectNulls dot={{ r: 3.5 }} activeDot={{ r: 5 }} isAnimationActive={false} />
+              <Line type="monotone" dataKey="Transmission_230kV_ckm" name="230kV Corridor" stroke="#3b82f6" strokeWidth={2.5} connectNulls dot={{ r: 3.5 }} activeDot={{ r: 5 }} isAnimationActive={false} />
+              <Line type="monotone" dataKey="Transmission_132kV_ckm" name="132kV Corridor" stroke="#10b981" strokeWidth={2.5} connectNulls dot={{ r: 3.5 }} activeDot={{ r: 5 }} isAnimationActive={false} />
+          </LineChart>
+        </GridChartFrame>
         
         {/* Card Explanation Block */}
-        <div className="bg-muted/10 p-4 border-t border-border/40 text-xs text-muted-foreground space-y-2">
+        <div className="grid-explorer-chart-note bg-muted/10 p-4 text-xs text-muted-foreground space-y-2">
           <p><strong>What is being shown?</strong></p>
           <ul className="list-disc pl-4 space-y-1">
             <li><strong className="text-[#8b5cf6]">400kV (Ultra-High Voltage Backbone):</strong> The backbone transmission lines built to import electricity (e.g., cross-border interconnections) and evacuate power from mega-generation stations (e.g., Payra, Rampal, Rooppur). This was zero prior to FY2014.</li>
@@ -155,12 +180,18 @@ export function LongitudinalStudyCharts({ chartTheme }: { chartTheme: any }) {
           </div>
           <span className="grid-explorer-chip bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20">Grid Composition</span>
         </div>
-        <div className="grid-explorer-chart-area grid-explorer-chart-area--lg mt-4 px-4 pb-4">
-          <ResponsiveContainer width="100%" height={300}>
-            <AreaChart data={processedData.filter((d: any) => d.Transmission_400kV_ckm)} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
+        <GridChartFrame
+          className="mt-4"
+          legend={[
+            { id: '132a', label: '132kV Base', color: '#10b981', variant: 'area' },
+            { id: '230a', label: '230kV Main', color: '#3b82f6', variant: 'area' },
+            { id: '400a', label: '400kV Ultra', color: '#8b5cf6', variant: 'area' },
+          ]}
+        >
+          <AreaChart accessibilityLayer={false} data={processedData} margin={GRID_CHART_MARGIN.legend}>
               <CartesianGrid strokeDasharray="3 6" stroke={chartTheme.gridStroke} opacity={0.3} vertical={false} />
-              <XAxis dataKey="Fiscal_Year" tick={{ fontSize: 11, fill: chartTheme.axisTick }} axisLine={false} tickLine={false} />
-              <YAxis tick={{ fontSize: 11, fill: chartTheme.axisTick }} axisLine={false} tickLine={false} tickFormatter={(v) => `${v} ckm`} />
+              <XAxis {...gridChartXAxisProps(chartTheme, { dataKey: 'Fiscal_Year' })} />
+              <YAxis width={GRID_Y_AXIS_WIDTH.single} tick={gridChartAxisTick(chartTheme)} axisLine={false} tickLine={false} tickMargin={4} domain={[0, 'auto']} allowDecimals={false} tickFormatter={formatAxisCkm} />
               <Tooltip content={
                 <CustomTooltip 
                   title="Cumulative Capacity" 
@@ -170,22 +201,14 @@ export function LongitudinalStudyCharts({ chartTheme }: { chartTheme: any }) {
                   auditor="NLDC Grid Operations Centre"
                 />
               } />
-              <Legend 
-                wrapperStyle={{ fontSize: '11px', paddingTop: '10px' }} 
-                formatter={(value, entry) => {
-                  const color = entry.color || 'inherit';
-                  return <span style={{ color, fontWeight: 600 }}>{value}</span>;
-                }}
-              />
-              <Area type="monotone" dataKey="Transmission_132kV_ckm" name="132kV Base Grid" stackId="1" stroke="#10b981" fill="#10b981" fillOpacity={0.3} />
-              <Area type="monotone" dataKey="Transmission_230kV_ckm" name="230kV Main Grid" stackId="1" stroke="#3b82f6" fill="#3b82f6" fillOpacity={0.4} />
-              <Area type="monotone" dataKey="Transmission_400kV_ckm" name="400kV Ultra Backbone" stackId="1" stroke="#8b5cf6" fill="#8b5cf6" fillOpacity={0.5} />
-            </AreaChart>
-          </ResponsiveContainer>
-        </div>
+              <Area type="monotone" dataKey="Transmission_132kV_ckm" name="132kV Base" stackId="1" stroke="#10b981" fill="#10b981" fillOpacity={0.3} isAnimationActive={false} />
+              <Area type="monotone" dataKey="Transmission_230kV_ckm" name="230kV Main" stackId="1" stroke="#3b82f6" fill="#3b82f6" fillOpacity={0.4} isAnimationActive={false} />
+              <Area type="monotone" dataKey="Transmission_400kV_ckm" name="400kV Ultra" stackId="1" stroke="#8b5cf6" fill="#8b5cf6" fillOpacity={0.5} isAnimationActive={false} />
+          </AreaChart>
+        </GridChartFrame>
 
         {/* Card Explanation Block */}
-        <div className="bg-muted/10 p-4 border-t border-border/40 text-xs text-muted-foreground space-y-2">
+        <div className="grid-explorer-chart-note bg-muted/10 p-4 text-xs text-muted-foreground space-y-2">
           <p><strong>What is being shown?</strong></p>
           <ul className="list-disc pl-4 space-y-1">
             <li><strong className="text-[#10b981]">132kV Base Grid:</strong> The regional transmission standard, delivering power to municipal substations. It remains the largest network by total physical length, starting from ~6,000 ckm in 2011.</li>
@@ -201,7 +224,7 @@ export function LongitudinalStudyCharts({ chartTheme }: { chartTheme: any }) {
         <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1.5 mt-2 pt-3 border-t border-border/40 text-[10px] text-muted-foreground/80 px-4 pb-4">
           <span>Source: <a href="https://www.pgcb.gov.bd/" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline font-semibold">PGCB Transmission System Studies</a></span>
           <span>Verified by: NLDC (National Load Despatch Centre) System Map</span>
-          <span className="font-medium">Reporting Period: FY 2014 - FY 2025</span>
+          <span className="font-medium">Reporting Period: FY 2011 - FY 2025</span>
         </div>
       </div>
 
@@ -217,37 +240,33 @@ export function LongitudinalStudyCharts({ chartTheme }: { chartTheme: any }) {
           </div>
           <span className="grid-explorer-chip bg-sky-500/10 text-sky-600 dark:text-sky-400 border-sky-500/20">Expansion Rate</span>
         </div>
-        <div className="grid-explorer-chart-area grid-explorer-chart-area--lg mt-4 px-4 pb-4">
-          <ResponsiveContainer width="100%" height={300}>
-            <ComposedChart data={processedData} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
+        <GridChartFrame
+          className="mt-4"
+          legend={[
+            { id: 'grid', label: 'Grid Lines Added', color: '#3b82f6', variant: 'bar' },
+            { id: 'gen', label: 'Gen Cap. Added', color: '#f97316', variant: 'line' },
+          ]}
+        >
+          <ComposedChart accessibilityLayer={false} data={processedData} margin={GRID_CHART_MARGIN.dualAxis} barCategoryGap="18%">
               <CartesianGrid strokeDasharray="3 6" stroke={chartTheme.gridStroke} opacity={0.3} vertical={false} />
-              <XAxis dataKey="Fiscal_Year" tick={{ fontSize: 11, fill: chartTheme.axisTick }} axisLine={false} tickLine={false} />
-              <YAxis yAxisId="left" tick={{ fontSize: 11, fill: chartTheme.axisTick }} axisLine={false} tickLine={false} tickFormatter={(v) => `${v} ckm`} />
-              <YAxis yAxisId="right" orientation="right" tick={{ fontSize: 11, fill: chartTheme.axisTick }} axisLine={false} tickLine={false} tickFormatter={(v) => `${v} MW`} />
+              <XAxis {...gridChartXAxisProps(chartTheme, { dataKey: 'Fiscal_Year' })} />
+              <YAxis yAxisId="left" width={GRID_Y_AXIS_WIDTH.dual} tick={gridChartAxisTick(chartTheme)} axisLine={false} tickLine={false} tickMargin={4} domain={[0, 'auto']} allowDecimals={false} tickFormatter={formatAxisCkm} />
+              <YAxis yAxisId="right" orientation="right" width={GRID_Y_AXIS_WIDTH.dual} tick={gridChartAxisTick(chartTheme)} axisLine={false} tickLine={false} tickMargin={4} domain={[0, 'auto']} allowDecimals={false} tickFormatter={formatAxisMw} />
               <Tooltip content={
                 <CustomTooltip 
                   title="Annual Physical Additions" 
-                  unit="" 
                   calculation="Transmission Added = Total ckm (Current Year) - Total ckm (Previous Year) | Gen Capacity Added = Installed MW (Current) - Installed MW (Previous)"
                   source={<a href="https://www.pgcb.gov.bd/" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline font-semibold">PGCB &amp; BPDB Progress Reports</a>}
                   auditor="PGCB Audit &amp; BPDB Planning Divisions"
                 />
               } cursor={{ fill: chartTheme.gridStroke, opacity: 0.1 }} />
-              <Legend 
-                wrapperStyle={{ fontSize: '11px', paddingTop: '10px' }} 
-                formatter={(value, entry) => {
-                  const color = entry.color || 'inherit';
-                  return <span style={{ color, fontWeight: 600 }}>{value}</span>;
-                }}
-              />
-              <Bar yAxisId="left" dataKey="Transmission_Added_ckm" name="Grid Lines Added (ckm)" fill="#3b82f6" radius={[4, 4, 0, 0]} maxBarSize={20} />
-              <Line yAxisId="right" type="linear" dataKey="Generation_Added_MW" name="Gen Capacity Added (MW)" stroke="#f97316" strokeWidth={2.5} dot={{ stroke: '#f97316', strokeWidth: 2, fill: '#ffffff', r: 4 }} activeDot={{ r: 6 }} />
-            </ComposedChart>
-          </ResponsiveContainer>
-        </div>
+              <Bar yAxisId="left" dataKey="Transmission_Added_ckm" name="Grid Lines Added" fill="#3b82f6" radius={[4, 4, 0, 0]} maxBarSize={24} isAnimationActive={false} />
+              <Line yAxisId="right" type="monotone" dataKey="Generation_Added_MW" name="Gen Cap. Added" stroke="#f97316" strokeWidth={2.5} dot={{ stroke: '#f97316', strokeWidth: 2, fill: '#ffffff', r: 3.5 }} activeDot={{ r: 5 }} isAnimationActive={false} />
+          </ComposedChart>
+        </GridChartFrame>
 
         {/* Card Explanation Block */}
-        <div className="bg-muted/10 p-4 border-t border-border/40 text-xs text-muted-foreground space-y-2">
+        <div className="grid-explorer-chart-note bg-muted/10 p-4 text-xs text-muted-foreground space-y-2">
           <p><strong>What is being shown?</strong></p>
           <ul className="list-disc pl-4 space-y-1">
             <li><strong className="text-[#3b82f6]">Grid Lines Added (ckm):</strong> Represents the net circuit-kilometers of transmission lines commissioned by PGCB in each fiscal year.</li>
@@ -278,12 +297,19 @@ export function LongitudinalStudyCharts({ chartTheme }: { chartTheme: any }) {
           </div>
           <span className="grid-explorer-chip bg-orange-500/10 text-orange-600 dark:text-orange-400 border-orange-500/20">Index Baseline</span>
         </div>
-        <div className="grid-explorer-chart-area grid-explorer-chart-area--lg mt-4 px-4 pb-4">
-          <ResponsiveContainer width="100%" height={300}>
-            <LineChart data={processedData} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
+        <GridChartFrame
+          className="mt-4"
+          legend={[
+            { id: 'budget', label: 'Budget Index', color: '#f59e0b', variant: 'line' },
+            { id: 'gen', label: 'Gen. Cap. Index', color: '#6366f1', variant: 'line' },
+            { id: 'demand', label: 'Peak Demand Index', color: '#f97316', variant: 'line' },
+            { id: 'tx', label: 'Transmission Index', color: '#10b981', variant: 'dashed' },
+          ]}
+        >
+          <LineChart accessibilityLayer={false} data={processedData} margin={GRID_CHART_MARGIN.legend}>
               <CartesianGrid strokeDasharray="3 6" stroke={chartTheme.gridStroke} opacity={0.3} vertical={false} />
-              <XAxis dataKey="Fiscal_Year" tick={{ fontSize: 11, fill: chartTheme.axisTick }} axisLine={false} tickLine={false} />
-              <YAxis tick={{ fontSize: 11, fill: chartTheme.axisTick }} axisLine={false} tickLine={false} tickFormatter={(v) => `${v}%`} />
+              <XAxis {...gridChartXAxisProps(chartTheme, { dataKey: 'Fiscal_Year' })} />
+              <YAxis width={GRID_Y_AXIS_WIDTH.single} tick={gridChartAxisTick(chartTheme)} axisLine={false} tickLine={false} tickMargin={4} domain={[0, 'auto']} allowDecimals={false} tickFormatter={(v) => `${Math.round(v)}%`} />
               <Tooltip content={
                 <CustomTooltip 
                   title="Growth Index (FY11=100)" 
@@ -293,23 +319,15 @@ export function LongitudinalStudyCharts({ chartTheme }: { chartTheme: any }) {
                   auditor="Office of the Comptroller & Auditor General (CAG) / IMED"
                 />
               } />
-              <Legend 
-                wrapperStyle={{ fontSize: '11px', paddingTop: '10px' }} 
-                formatter={(value, entry) => {
-                  const color = entry.color || 'inherit';
-                  return <span style={{ color, fontWeight: 600 }}>{value}</span>;
-                }}
-              />
-              <Line type="monotone" dataKey="Budget_Index" name="Power Division Budget Index" stroke="#f59e0b" strokeWidth={4} dot={{ r: 4 }} activeDot={{ r: 6 }} />
-              <Line type="monotone" dataKey="Generation_Index" name="Installed Gen Capacity Index" stroke="#6366f1" strokeWidth={3} dot={{ r: 4 }} />
-              <Line type="monotone" dataKey="Demand_Index" name="Peak demand Index" stroke="#f97316" strokeWidth={3} dot={{ r: 4 }} />
-              <Line type="monotone" dataKey="Transmission_Index" name="Transmission Line Index" stroke="#10b981" strokeWidth={3} strokeDasharray="5 5" dot={{ r: 4 }} />
-            </LineChart>
-          </ResponsiveContainer>
-        </div>
+              <Line type="monotone" dataKey="Budget_Index" name="Budget Index" stroke="#f59e0b" strokeWidth={2.5} dot={{ r: 3.5 }} activeDot={{ r: 5 }} isAnimationActive={false} />
+              <Line type="monotone" dataKey="Generation_Index" name="Gen. Cap. Index" stroke="#6366f1" strokeWidth={2.5} dot={{ r: 3.5 }} isAnimationActive={false} />
+              <Line type="monotone" dataKey="Demand_Index" name="Peak Demand Index" stroke="#f97316" strokeWidth={2.5} dot={{ r: 3.5 }} isAnimationActive={false} />
+              <Line type="monotone" dataKey="Transmission_Index" name="Transmission Index" stroke="#10b981" strokeWidth={2.5} strokeDasharray="5 5" dot={{ r: 3.5 }} isAnimationActive={false} />
+          </LineChart>
+        </GridChartFrame>
 
         {/* Card Explanation Block */}
-        <div className="bg-muted/10 p-4 border-t border-border/40 text-xs text-muted-foreground space-y-2">
+        <div className="grid-explorer-chart-note bg-muted/10 p-4 text-xs text-muted-foreground space-y-2">
           <p><strong>Structural Decoupling in the Power Sector</strong></p>
           <p className="leading-relaxed">
             This chart indexes all metrics to <strong>FY2011 = 100</strong> to compare their relative growth rates. It highlights a critical structural decoupling in Bangladesh's energy infrastructure:

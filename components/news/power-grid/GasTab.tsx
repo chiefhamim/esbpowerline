@@ -38,6 +38,22 @@ export function GasTab({
     );
   }
 
+  if (!gasProductionData.length) {
+    return (
+      <div className="grid-explorer-panel space-y-6">
+        <div className="grid-explorer-chart-card card p-8 flex flex-col items-center justify-center text-center min-h-[400px]">
+          <div className="p-4 rounded-full bg-muted/20 text-muted-foreground mb-4">
+            <Info className="h-8 w-8 text-primary animate-pulse" />
+          </div>
+          <h4 className="text-base font-bold text-foreground mb-2">Petrobangla Gas &amp; LNG Supply</h4>
+          <p className="text-xs text-muted-foreground max-w-sm">
+            PGCB grid data is available for this date, but Petrobangla production and distribution tables are missing from the daily record. Re-run the official ingest when Petrobangla reports are online.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   const totalActiveFields = gasProductionData.reduce((sum, item) => sum + (item.fields || 0), 0);
   const distPowerTotal = gasDistributionData.reduce((sum, item) => sum + item.power, 0);
   const distFertTotal = gasDistributionData.reduce((sum, item) => sum + item.fertilizer, 0);
@@ -93,7 +109,6 @@ export function GasTab({
           </table>
         </div>
 
-        {/* Card Explanation Block */}
         <div className="bg-muted/10 p-4 border-t border-border/40 text-xs text-muted-foreground space-y-2">
           <p><strong>What is being shown?</strong></p>
           <p className="leading-relaxed">This table displays the daily gas volume (MMCFD) and associated condensate liquids (BBL) produced by local gas fields and foreign operators (Chevron, Tullow), alongside imported liquefied natural gas (LNG) regasified into the grid.</p>
@@ -159,7 +174,6 @@ export function GasTab({
           </table>
         </div>
 
-        {/* Card Explanation Block */}
         <div className="bg-muted/10 p-4 border-t border-border/40 text-xs text-muted-foreground space-y-2">
           <p><strong>What is being shown?</strong></p>
           <p className="leading-relaxed">This table tracks the distribution of natural gas across different sectors (power grid generators, fertilizer plants, and industrial/domestic consumers) by regional distribution utilities.</p>

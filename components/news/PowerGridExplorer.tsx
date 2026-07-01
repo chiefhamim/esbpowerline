@@ -9,14 +9,28 @@ import {
 import { substationsData } from '@/lib/data/infrastructure/substations';
 import {
   ResponsiveContainer, PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis,
-  Tooltip, Line, CartesianGrid, Area, ComposedChart, Legend
+  Tooltip, Line, CartesianGrid, Area, ComposedChart,
 } from 'recharts';
 import { cn, formatNumber } from '@/lib/utils';
 import { useChartTheme } from '@/hooks/useChartTheme';
 import {
   GridLiveBadge,
   GridStatusBadge,
-  mixColor,
+  GridChartFrame,
+  GridRechartsLegend,
+  GRID_CHART_MARGIN,
+  GRID_EXPLORER_CHART_MARGIN,
+  GRID_X_AXIS_PADDING,
+  GRID_Y_AXIS_WIDTH,
+  BDT_TO_CRORE,
+  REGIONAL_ZONE_COLORS,
+  formatAxisCrore,
+  formatAxisMw,
+  formatAxisMmcfd,
+  formatPgcbMonthlyTick,
+  gridChartAxisTick,
+  gridChartXAxisProps,
+  gridChartYAxisProps,
 } from '@/components/news/PowerGridChartUI';
 import { getArchiveFallback } from '@/lib/data/grid/archive-fallback';
 import type { GridDailyData } from '@/lib/data/grid/types';
@@ -33,11 +47,13 @@ import { macroTariffData } from '@/lib/data/macro/tariff';
 import { macroGasData } from '@/lib/data/macro/gas';
 import { macroEconomicData, petrobanglaAuditedFinancials } from '@/lib/data/macro/economics';
 import { globalVsDomesticData, historicalExchangeRates } from '@/lib/data/macro/fuel-prices';
-import { reservesDepletionData } from '@/lib/data/macro/reserves';
+
 import { macroInfrastructureData } from '@/lib/data/macro/infrastructure';
 import { nationalBudgetData } from '@/lib/data/macro/budget';
 import { CustomDropdown, TakaIcon, getUpcomingProjectStatusInfo, renderProjectCost } from '@/components/news/power-grid/shared';
 import { GasTab } from '@/components/news/power-grid/GasTab';
+import { GasReserveDepletionTab } from '@/components/news/power-grid/GasReserveDepletionTab';
+import { MethodologyReconciliationBanner } from '@/components/news/power-grid/MethodologyReconciliationBanner';
 import { GridAccessBanner } from '@/components/news/power-grid/GridAccessBanner';
 import { GridArchiveTeaser } from '@/components/news/power-grid/GridArchiveTeaser';
 import { GridLockedContent } from '@/components/news/power-grid/GridLockedContent';
@@ -492,7 +508,7 @@ export function PowerGridExplorer({
       if (Math.abs(difference) < 2) {
         return;
       }
-      const duration = 950;
+      const duration = 420;
       const startTime = performance.now();
 
       const easeInOutCubic = (t: number) => {
@@ -532,14 +548,35 @@ export function PowerGridExplorer({
 
   const [macroSubTab, setMacroSubTab] = useState<'overview' | 'budget' | 'monthly' | 'pricing' | 'global' | 'reports' | 'reserves' | 'insights'>('overview');
   
-  const handleSubTabClick = (subTabId: any) => {
+  const handleSubTabClick = (subTabId: typeof macroSubTab) => {
     setMacroSubTab(subTabId);
-    const timer = setTimeout(() => {
-      triggerScrollToElement('macro-subtabs-nav');
-    }, 200);
   };
   const [reportsCompany, setReportsCompany] = useState<'bpdb' | 'petrobangla'>('bpdb');
   const [chartsReady, setChartsReady] = useState(false);
+
+  const nationalBudgetMergedData = useMemo(() => {
+    const infraByYear = Object.fromEntries(
+      macroInfrastructureData.map((row) => [row.fiscal_year, row]),
+    );
+    return nationalBudgetData.map((budgetRow) => ({
+      ...budgetRow,
+      ...(infraByYear[budgetRow.fiscal_year] ?? {}),
+    }));
+  }, []);
+
+  const dailyCostChartData = useMemo(
+    () =>
+      generationData
+        .filter((d) => d.cost > 0)
+        .map((d) => ({ ...d, costCrore: d.cost / BDT_TO_CRORE })),
+    [generationData],
+  );
+
+  const peakDemandTime = useMemo(() => {
+    if (!hourlyLoadData.length) return null;
+    return [...hourlyLoadData].sort((a, b) => b.demand - a.demand)[0]?.time ?? null;
+  }, [hourlyLoadData]);
+
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
   const [pricingCompareYear, setPricingCompareYear] = useState<string>('FY 2020');
   const [hoveredCostIndex, setHoveredCostIndex] = useState<number | null>(null);
@@ -551,7 +588,15 @@ export function PowerGridExplorer({
       (pgcbMonthlyData.length > 0 ? pgcbMonthlyData[pgcbMonthlyData.length - 1].date_key : '2026-06'),
   );
   const [monthlyTrendMetric, setMonthlyTrendMetric] = useState<'peaks' | 'energy' | 'fuels'>('peaks');
-  const [selectedFuelTrend, setSelectedFuelTrend] = useState<'gas' | 'coal' | 'hfo' | 'import'>('gas');
+  const [selectedFuelTrend, setSelectedFuelTrend] = useState<'gas' | 'coal' | 'hfo' | 'diesel' | 'import'>('gas');
+  const pgcbFuelTrendData = useMemo(
+    () =>
+      pgcbMonthlyData.map((row) => ({
+        ...row,
+        fuelTrendMkwh: row.generation_by_fuel[selectedFuelTrend] ?? 0,
+      })),
+    [selectedFuelTrend],
+  );
   const [isYearDropdownOpen, setIsYearDropdownOpen] = useState(false);
   const [isMonthDropdownOpen, setIsMonthDropdownOpen] = useState(false);
   const [isFuelDropdownOpen, setIsFuelDropdownOpen] = useState(false);
@@ -572,6 +617,20 @@ export function PowerGridExplorer({
       import: '#a855f7',
     };
     return mapping[fuel.toLowerCase()] || '#94a3b8';
+  };
+
+  const getFuelLabel = (fuel: string) => {
+    const labels: Record<string, string> = {
+      gas: 'Gas',
+      coal: 'Coal',
+      hfo: 'Furnace Oil (HFO)',
+      diesel: 'Diesel',
+      import: 'India Imports',
+      hydro: 'Hydro',
+      solar: 'Solar',
+      wind: 'Wind',
+    };
+    return labels[fuel.toLowerCase()] ?? fuel;
   };
 
   // Substation & Transmission Tab States
@@ -726,6 +785,16 @@ export function PowerGridExplorer({
     { id: 'macro', label: 'Macro Trends', icon: TrendingUp },
   ] as const;
 
+  /** Daily PGCB tabs where gross vs net fuel/cost reconciliation applies */
+  const methodologyTabIds = ['overview', 'gen', 'gas', 'imports'] as const;
+  const showMethodologyForActiveTab = (methodologyTabIds as readonly string[]).includes(activeTab);
+
+  useEffect(() => {
+    if (!showMethodologyForActiveTab) {
+      setIsMethodologyBannerExpanded(false);
+    }
+  }, [showMethodologyForActiveTab]);
+
   // Substation Filtering Logic
   const filteredSubstations = substationsData.filter((sub) => {
     const matchesSearch = sub.name.toLowerCase().includes(subSearch.toLowerCase()) || 
@@ -758,6 +827,19 @@ export function PowerGridExplorer({
   const totalGenMkwhr = generationData.reduce((sum, item) => sum + item.gen, 0);
   const totalCostBdt = generationData.reduce((sum, item) => sum + item.cost, 0);
   const avgCostPerKwh = totalCostBdt / (totalGenMkwhr * 1000000);
+
+  const methodologyBanner = showMethodologyBanner ? (
+    <MethodologyReconciliationBanner
+      expanded={isMethodologyBannerExpanded}
+      onToggleExpanded={() => setIsMethodologyBannerExpanded((open) => !open)}
+      onHide={() => setShowMethodologyBanner(false)}
+      reportDate={systemStats.date}
+      netEnergyGenMkwh={systemStats.totalEnergyGen}
+      grossEnergyGenMkwh={totalGenMkwhr}
+      netDailyCostBdt={systemStats.totalDailyCost}
+      grossDailyCostBdt={totalCostBdt}
+    />
+  ) : null;
 
   // Regional calculations
   const totalRegionalDemand = regionalDemandData.reduce((sum, rd) => sum + rd.demand, 0);
@@ -801,15 +883,20 @@ export function PowerGridExplorer({
           animation: grid-glow-float-3 35s infinite ease-in-out;
         }
         .grid-explorer .card {
-          background-color: color-mix(in srgb, hsl(var(--card)) 85%, transparent) !important;
-          backdrop-filter: blur(16px) !important;
-          -webkit-backdrop-filter: blur(16px) !important;
+          background-color: color-mix(in srgb, hsl(var(--card)) 94%, transparent) !important;
           border-color: hsl(var(--border) / 0.55) !important;
-          transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease !important;
+          transition: border-color 0.2s ease, box-shadow 0.2s ease !important;
         }
         .grid-explorer .card:hover {
           border-color: hsl(var(--primary) / 0.25) !important;
           box-shadow: 0 12px 30px -10px hsl(var(--primary) / 0.08), var(--shadow-lg) !important;
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .grid-glow-blob-1,
+          .grid-glow-blob-2,
+          .grid-glow-blob-3 {
+            animation: none !important;
+          }
         }
       `}</style>
 
@@ -836,7 +923,7 @@ export function PowerGridExplorer({
                 </span>
               );
             })()}
-            {!showMethodologyBanner && (
+            {!showMethodologyBanner && showMethodologyForActiveTab && (
               <span className="relative group inline-flex items-center align-middle">
                 <button
                   type="button"
@@ -1227,104 +1314,6 @@ export function PowerGridExplorer({
         })}
       </div>
 
-      {/* Collapsible Methodology Banner */}
-      {showMethodologyBanner && (
-        <div className="mb-4 bg-muted/10 border border-border/20 rounded-xl overflow-hidden transition-all duration-300">
-          {/* Header (Always Visible) */}
-          <button
-            type="button"
-            onClick={() => setIsMethodologyBannerExpanded(!isMethodologyBannerExpanded)}
-            className="w-full flex items-center justify-between p-2 px-3 text-left transition-colors"
-          >
-            <div className="flex items-center gap-2">
-              <Info className="h-3.5 w-3.5 text-primary shrink-0" />
-              <span className="text-[11px] font-semibold text-muted-foreground hover:text-primary transition-colors leading-none">
-                {isMethodologyBannerExpanded 
-                  ? "Seeing a discrepancy? Here's the data methodology & reconciliation callout. Click to collapse."
-                  : "Seeing a discrepancy? Here's the data methodology & reconciliation callout. Click to drop down."
-                }
-              </span>
-            </div>
-            <ChevronDown className={cn("h-3.5 w-3.5 text-muted-foreground/60 transition-transform duration-200 shrink-0", isMethodologyBannerExpanded && "rotate-180")} />
-          </button>
-
-          {/* Collapsible Body Content */}
-          {isMethodologyBannerExpanded && (
-            <div className="p-4 border-t border-border/20 bg-background/50 space-y-4 animate-in slide-in-from-top-2 duration-200">
-              <p className="text-xs text-muted-foreground leading-relaxed">
-                To maintain audited reporting standards, the system reconciles data between <strong>Gross Generation (Supplied)</strong> and <strong>Net Grid Dispatch (Delivered)</strong>. This explains the discrepancy between the top KPI cards and the detailed fuel charts below:
-              </p>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-3">
-                <div className="p-4 bg-card border border-border/30 rounded-xl space-y-2 shadow-sm">
-                  <h4 className="font-bold text-foreground text-xs flex items-center gap-1.5">
-                    <span className="w-1.5 h-1.5 rounded-full bg-primary" />
-                    1. Generation Volume Discrepancy
-                  </h4>
-                  <p className="text-[11px] text-muted-foreground leading-relaxed">
-                    The top <strong>Daily Generation</strong> KPI card shows <strong>{systemStats.totalEnergyGen.toFixed(1)} MKWh</strong> (Net grid dispatch), while the <strong>Generation Mix Snapshot</strong> chart sums up to <strong>{totalGenMkwhr.toFixed(1)} MKWh</strong> (Gross energy at plant generators).
-                  </p>
-                  <div className="bg-muted/10 p-2 rounded border border-border/20 font-mono text-[10px] text-foreground">
-                    <div>Gross Generation = {totalGenMkwhr.toFixed(1)} MKWh</div>
-                    <div>(-) Station Auxiliary Cons. (~8-10%) = {(totalGenMkwhr - systemStats.totalEnergyGen).toFixed(1)} MKWh</div>
-                    <div className="font-bold border-t border-border/30 mt-1 pt-1 text-primary">Net Grid Dispatch = {systemStats.totalEnergyGen.toFixed(1)} MKWh</div>
-                  </div>
-                </div>
-
-                <div className="p-4 bg-card border border-border/30 rounded-xl space-y-2 shadow-sm">
-                  <h4 className="font-bold text-foreground text-xs flex items-center gap-1.5">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                    2. Fuel &amp; Import Cost Discrepancy
-                  </h4>
-                  <p className="text-[11px] text-muted-foreground leading-relaxed">
-                    The top <strong>Est. Fuel Cost</strong> KPI card shows <strong>{(systemStats.totalDailyCost / 10000000).toFixed(2)} Cr BDT</strong> (Net system cost base), while the <strong>Daily Fuel &amp; Import Cost</strong> bar chart aggregates raw fuel costs to <strong>{(totalCostBdt / 10000000).toFixed(2)} Cr BDT</strong> (Gross plant expenditure).
-                  </p>
-                  <div className="bg-muted/10 p-2 rounded border border-border/20 font-mono text-[10px] text-foreground">
-                    <div>Gross Production Cost = {(totalCostBdt / 10000000).toFixed(2)} Cr BDT</div>
-                    <div>(-) Net system cost = {(systemStats.totalDailyCost / 10000000).toFixed(2)} Cr BDT</div>
-                    <div className="font-bold border-t border-border/30 mt-1 pt-1 text-emerald-500">Loss / Aux Cost Overhead = {((totalCostBdt - systemStats.totalDailyCost) / 10000000).toFixed(2)} Cr BDT</div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Data Flow & Reconciliation Path */}
-              <div className="p-4 bg-muted/5 border border-border/20 rounded-xl space-y-2.5 text-[11px] text-muted-foreground">
-                <h4 className="font-bold text-foreground text-[10px] uppercase tracking-wider">
-                  Reconciliation Path &amp; Operational Flow
-                </h4>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 leading-relaxed">
-                  <div className="space-y-1">
-                    <p className="font-bold text-foreground">1. Generation Source (Supplied)</p>
-                    <p>Generating stations (BPDB, IPPs, Joint Ventures) burn fuels to generate raw electricity. Total generation is measured at the plant generator terminals (busbars) as <strong>Gross Generation</strong> (as displayed in the charts).</p>
-                  </div>
-                  <div className="space-y-1 border-t md:border-t-0 md:border-l border-border/30 pt-2 md:pt-0 md:pl-4">
-                    <p className="font-bold text-foreground">2. Plant Self-Use (Auxiliary Consumption)</p>
-                    <p>Power plants consume <strong>8-10%</strong> of their gross output internally to run critical infrastructure (cooling pumps, fuel feeders, ventilation, control systems, and facility lighting). This load never enters transmission lines.</p>
-                  </div>
-                  <div className="space-y-1 border-t md:border-t-0 md:border-l border-border/30 pt-2 md:pt-0 md:pl-4">
-                    <p className="font-bold text-foreground">3. Grid Transmission &amp; Loss (PGCB &amp; Utilities)</p>
-                    <p>PGCB receives the remaining net power at step-up transformers and transmits it across the high-voltage grid, losing <strong>~3% (system loss)</strong> to heat and line resistance. The final distributed load delivered to utilities (DESCO, DPDC, etc.) is the <strong>Net Grid Dispatch</strong> (as displayed in the KPI cards).</p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex flex-wrap items-center justify-between gap-4 pt-3 border-t border-border/20 text-[10px] text-muted-foreground/80 leading-relaxed">
-                <div>
-                  ※ <strong>Active Example:</strong> On the selected date of <strong>{systemStats.date}</strong>, the difference is exactly <strong>{(totalGenMkwhr - systemStats.totalEnergyGen).toFixed(2)} MKWh</strong>, which represents generating station auxiliary power overhead (~8-10%) and grid dispatch loss.
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setShowMethodologyBanner(false)}
-                  className="text-muted-foreground/60 hover:text-foreground hover:bg-muted/15 px-2 py-1 rounded transition-colors text-[9px] font-bold uppercase tracking-wider"
-                >
-                  Hide Banner Completely
-                </button>
-              </div>
-            </div>
-          )}
-        </div>
-      )}
-
       {/* Tab Panels */}
       <div className="relative min-h-[400px]">
         {isLoadingDaily && (
@@ -1383,6 +1372,7 @@ export function PowerGridExplorer({
             </div>
           </div>
         ) : <div className="grid-explorer-panel space-y-6">
+          {methodologyBanner}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Generation Pie Chart */}
           <div className="grid-explorer-chart-card card">
@@ -1519,37 +1509,6 @@ export function PowerGridExplorer({
               })}
             </div>
 
-            {/* Card Explanation Block */}
-            {(() => {
-              const gasItem = generationData.find(d => d.name === 'Gas');
-              const coalItem = generationData.find(d => d.name === 'Coal');
-              const solarItem = generationData.find(d => d.name === 'Solar');
-              const hydroItem = generationData.find(d => d.name === 'Hydro');
-              
-              const gasShare = totalGenMkwhr > 0 ? ((gasItem?.gen || 0) / totalGenMkwhr) * 100 : 0;
-              const coalShare = totalGenMkwhr > 0 ? ((coalItem?.gen || 0) / totalGenMkwhr) * 100 : 0;
-              const fossilShare = gasShare + coalShare;
-              
-              const solarGen = solarItem?.gen || 0;
-              const hydroGen = hydroItem?.gen || 0;
-              const reShare = totalGenMkwhr > 0 ? ((solarGen + hydroGen) / totalGenMkwhr) * 100 : 0;
-
-              return (
-                <div className="bg-muted/10 p-4 border-t border-border/40 text-xs text-muted-foreground space-y-2">
-                  <p><strong>What is being shown?</strong></p>
-                  <p className="leading-relaxed">This pie chart shows the real-time share of generation by different fuel types for the selected day, breaking down output into: 
-                    {' '}<span className="text-amber-600 dark:text-amber-400 font-bold">Natural Gas</span>, 
-                    {' '}<span className="text-slate-600 dark:text-slate-400 font-bold">Coal</span>, 
-                    {' '}<span className="text-violet-500 font-bold">Cross-Border Imports</span>, 
-                    {' '}<span className="text-rose-500 font-bold">Heavy Fuel Oil (HFO)</span>, 
-                    {' '}<span className="text-sky-500 font-bold">Hydroelectric</span>, and 
-                    {' '}<span className="text-emerald-500 font-bold">Solar PV</span>.
-                  </p>
-                  <p className="leading-relaxed"><strong>Analytical Insight:</strong> <span className="text-amber-600 dark:text-amber-400 font-semibold">Natural Gas</span> ({gasShare.toFixed(1)}%) and imported <span className="text-slate-600 dark:text-slate-400 font-semibold">Coal</span> ({coalShare.toFixed(1)}%) dominate the daily fuel mix, representing <span className="font-bold text-foreground">{fossilShare.toFixed(1)}%</span> of the total system generation. Renewables and local <span className="text-emerald-500 font-bold">Solar/Hydro</span> remain low at <span className="font-bold text-foreground">{reShare.toFixed(2)}%</span>, highlighting a critical dependency on fossil fuels and vulnerable import markets.</p>
-                </div>
-              );
-            })()}
-
             {/* Card Metadata Footer */}
             <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1.5 mt-2 pt-3 border-t border-border/40 text-[10px] text-muted-foreground/80">
               <span>Source: <a href="https://www.pgcb.gov.bd/" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline font-semibold">PGCB Daily Progress Report</a></span>
@@ -1571,19 +1530,21 @@ export function PowerGridExplorer({
             <div className="grid-explorer-chart-area grid-explorer-chart-area--lg mt-4">
               {chartsReady ? (
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={generationData.filter(d => d.cost > 0)} margin={{ top: 10, right: 10, left: 10, bottom: 0 }}>
+                  <BarChart accessibilityLayer={false} data={dailyCostChartData} margin={GRID_EXPLORER_CHART_MARGIN.default}>
                     <CartesianGrid strokeDasharray="3 6" stroke={chartTheme.gridStroke} opacity={0.3} vertical={false} />
                     <XAxis
-                      dataKey="name"
-                      tick={{ fontSize: 11, fill: chartTheme.axisTick }}
-                      axisLine={false}
-                      tickLine={false}
+                      {...gridChartXAxisProps(chartTheme, { dataKey: 'name' })}
+                      tick={{ fontSize: 11, fill: chartTheme.axisTick, dy: 4 }}
                     />
                     <YAxis
+                      width={GRID_Y_AXIS_WIDTH.single}
                       tick={{ fontSize: 11, fill: chartTheme.axisTick }}
                       axisLine={false}
                       tickLine={false}
-                      tickFormatter={(v) => `${v} Cr`}
+                      tickMargin={4}
+                      domain={[0, 'auto']}
+                      allowDecimals={false}
+                      tickFormatter={formatAxisCrore}
                     />
                     <Tooltip
                       content={({ active, payload }) => {
@@ -1619,11 +1580,12 @@ export function PowerGridExplorer({
                       cursor={{ fill: chartTheme.hoverFill, radius: 8 }}
                     />
                     <Bar
-                      dataKey={(d) => d.cost / 10000000}
+                      dataKey="costCrore"
+                      name="Daily Cost (Cr Tk)"
                       radius={[6, 6, 0, 0]}
                       maxBarSize={40}
                     >
-                      {generationData.filter(d => d.cost > 0).map((entry, idx) => {
+                      {dailyCostChartData.map((entry, idx) => {
                         const isDimmed = hoveredCostIndex !== null && hoveredCostIndex !== idx;
                         return (
                           <Cell
@@ -1644,66 +1606,26 @@ export function PowerGridExplorer({
               )}
             </div>
 
-            {/* Quick Stats Grid */}
-            <div className="grid grid-cols-2 gap-4 mt-6 pt-4 border-t border-border/50 text-xs">
-              <div className="flex flex-col gap-1">
-                <span className="text-muted-foreground uppercase font-bold text-[9px] tracking-wider">Avg Production Cost</span>
-                <span className="text-sm font-semibold text-foreground">{systemStats.avgProductionCost.toFixed(3)} Tk / KWh</span>
+            <div className="grid grid-cols-2 gap-3 mt-6 pt-4 border-t border-border/50">
+              <div className="bg-muted/15 border border-border/50 rounded-2xl p-4 shadow-sm flex flex-col items-center justify-center min-h-[5.5rem] text-center">
+                <div className="text-[10px] text-muted-foreground font-semibold uppercase tracking-wider leading-snug">
+                  Avg Production Cost
+                </div>
+                <div className="text-2xl font-bold mt-1.5 text-primary tabular-nums leading-none">
+                  {systemStats.avgProductionCost.toFixed(3)}{' '}
+                  <span className="text-xs font-medium text-muted-foreground">Tk/KWh</span>
+                </div>
               </div>
-              <div className="flex flex-col gap-1">
-                <span className="text-muted-foreground uppercase font-bold text-[9px] tracking-wider">Total Gas to Power</span>
-                <span className="text-sm font-semibold text-foreground">{systemStats.totalGasSuppliedPower.toFixed(2)} MMCFD</span>
+              <div className="bg-muted/15 border border-border/50 rounded-2xl p-4 shadow-sm flex flex-col items-center justify-center min-h-[5.5rem] text-center">
+                <div className="text-[10px] text-muted-foreground font-semibold uppercase tracking-wider leading-snug">
+                  Total Gas to Power
+                </div>
+                <div className="text-2xl font-bold mt-1.5 text-sky-500 tabular-nums leading-none">
+                  {systemStats.totalGasSuppliedPower.toFixed(2)}{' '}
+                  <span className="text-xs font-medium text-muted-foreground">MMCFD</span>
+                </div>
               </div>
             </div>
-
-            {/* Card Explanation Block */}
-            {(() => {
-              const activeCosts = generationData.filter(d => d.gen > 0 && d.unitCost > 0);
-              const mostExpensive = activeCosts.length > 0 ? [...activeCosts].sort((a, b) => b.unitCost - a.unitCost)[0] : null;
-              const cheapest = activeCosts.length > 0 ? [...activeCosts].sort((a, b) => a.unitCost - b.unitCost)[0] : null;
-
-              const getFuelColorClass = (name: string) => {
-                if (name === 'Gas') return 'text-amber-600 dark:text-amber-400 font-bold';
-                if (name === 'Coal') return 'text-slate-600 dark:text-slate-400 font-bold';
-                if (name === 'HFO') return 'text-rose-500 font-bold';
-                if (name === 'Hydro') return 'text-sky-500 font-bold';
-                if (name === 'Solar') return 'text-emerald-500 font-bold';
-                if (name === 'Imports') return 'text-violet-500 font-bold';
-                if (name === 'HSD (Diesel)') return 'text-red-500 font-bold';
-                return 'text-primary font-bold';
-              };
-
-              const getOperationalType = (name: string) => {
-                if (name === 'Gas' || name === 'Coal') return 'base load source';
-                if (name === 'Hydro') return 'seasonal renewable source';
-                if (name === 'Solar') return 'intermittent renewable source';
-                return 'generation source';
-              };
-
-              return (
-                <div className="bg-muted/10 p-4 border-t border-border/40 text-xs text-muted-foreground space-y-2">
-                  <p><strong>What is being shown?</strong></p>
-                  <p className="leading-relaxed">This bar chart displays the daily operational cost in Crore BDT by fuel/import source. The cost is calculated from fuel consumption rates, weighted import prices, and current bulk procurement contracts.</p>
-                  <p className="leading-relaxed"><strong>Analytical Insight:</strong> 
-                    {mostExpensive ? (
-                      <>
-                        {' '}Cross-border power imports and imported liquid fuels (<span className={getFuelColorClass(mostExpensive.name)}>{mostExpensive.name}</span>) represent the highest per-unit cost segments on this day, peaking at <span className="font-bold text-foreground">{mostExpensive.unitCost.toFixed(2)} Tk/KWh</span>.
-                      </>
-                    ) : (
-                      ' Cross-border power imports and imported liquid fuels represent the highest per-unit cost segments.'
-                    )}
-                    {cheapest ? (
-                      <>
-                        {' '}Conversely, <span className={getFuelColorClass(cheapest.name)}>{cheapest.name}</span> remains the most cost-effective {getOperationalType(cheapest.name)} at <span className="font-bold text-foreground">{cheapest.unitCost.toFixed(2)} Tk/KWh</span>.
-                      </>
-                    ) : (
-                      ' Coal and local natural gas remain the most cost-effective base load fuels.'
-                    )}
-                    {' '}Shifting away from expensive liquid fuel plants will lower the average production cost.
-                  </p>
-                </div>
-              );
-            })()}
 
             {/* Card Metadata Footer */}
             <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1.5 mt-2 pt-3 border-t border-border/40 text-[10px] text-muted-foreground/80">
@@ -1727,15 +1649,15 @@ export function PowerGridExplorer({
           <div className="grid-explorer-chart-area grid-explorer-chart-area--lg mt-4 !h-[24rem]">
             {chartsReady ? (
               <ResponsiveContainer width="100%" height="100%">
-                <ComposedChart data={hourlyLoadData} margin={{ top: 10, right: 10, left: 10, bottom: 0 }}>
+                <ComposedChart accessibilityLayer={false} data={hourlyLoadData} margin={GRID_EXPLORER_CHART_MARGIN.topLegend}>
                   <CartesianGrid strokeDasharray="3 6" stroke={chartTheme.gridStroke} opacity={0.3} vertical={false} />
-                  <XAxis dataKey="time" tick={{ fontSize: 10, fill: chartTheme.axisTick }} axisLine={false} tickLine={false} />
-                  <YAxis tick={{ fontSize: 10, fill: chartTheme.axisTick }} axisLine={false} tickLine={false} tickFormatter={(v) => `${v} MW`} />
+                  <XAxis {...gridChartXAxisProps(chartTheme, { dataKey: 'time' })} />
+                  <YAxis width={GRID_Y_AXIS_WIDTH.single} tick={{ fontSize: 10, fill: chartTheme.axisTick }} axisLine={false} tickLine={false} tickMargin={4} domain={[0, 'auto']} allowDecimals={false} tickFormatter={formatAxisMw} />
                   <Tooltip
                     content={({ active, payload }) => {
                       if (!active || !payload?.length) return null;
                       const d = payload[0].payload;
-                      const peakIndicator = d.time === '19:30' || d.time === '21:00' ? ' (Peak Hour)' : '';
+                      const peakIndicator = peakDemandTime && d.time === peakDemandTime ? ' (Peak Hour)' : '';
                       return (
                         <div className="p-4 md:p-5 text-card-foreground border border-border/80 rounded-2xl shadow-2xl text-xs md:text-sm leading-relaxed w-72 md:w-80 max-w-[calc(100vw-2rem)] select-none bg-card">
                           <div className="font-bold text-foreground border-b border-border/40 pb-1.5 mb-2 flex items-center justify-between gap-2">
@@ -1767,16 +1689,21 @@ export function PowerGridExplorer({
                       );
                     }}
                   />
-                  <Legend 
-                    verticalAlign="top" 
-                    height={36} 
-                    iconType="circle"
+                  <GridRechartsLegend
+                    verticalAlign="top"
+                    height={36}
                     iconSize={8}
-                    wrapperStyle={{ fontSize: '11px', paddingBottom: '10px' }}
+                    wrapperStyle={{ fontSize: '11px' }}
+                    colorResolver={(value) => {
+                      if (value === 'Actual Generation') return '#0ea5e9';
+                      if (value === 'Total Demand') return '#eab308';
+                      if (value === 'Load Shedding Deficit') return chartTheme.destructive;
+                      return 'inherit';
+                    }}
                   />
                   <Area type="monotone" dataKey="generation" name="Actual Generation" stroke="#0ea5e9" fill="#0ea5e9" fillOpacity={0.15} strokeWidth={2.5} />
                   <Line type="monotone" dataKey="demand" name="Total Demand" stroke="#eab308" strokeWidth={2} dot={false} strokeDasharray="4 4" />
-                  <Bar dataKey="loadShed" name="Load Shedding Deficit" fill="hsl(var(--destructive))" fillOpacity={0.2} stroke="hsl(var(--destructive))" strokeWidth={1} radius={[2, 2, 0, 0]} maxBarSize={15} />
+                  <Bar dataKey="loadShed" name="Load Shedding Deficit" fill={chartTheme.destructive} fillOpacity={0.2} stroke={chartTheme.destructive} strokeWidth={1} radius={[2, 2, 0, 0]} maxBarSize={15} />
                 </ComposedChart>
               </ResponsiveContainer>
             ) : (
@@ -1841,6 +1768,7 @@ export function PowerGridExplorer({
             </div>
           </div>
         ) : <div className="grid-explorer-panel space-y-6">
+          {methodologyBanner}
           <div className="grid-explorer-chart-card card">
             <div className="grid-explorer-chart-card__head grid-explorer-chart-card__head--border">
               <Zap className="h-5 w-5 text-primary shrink-0" />
@@ -1958,14 +1886,17 @@ export function PowerGridExplorer({
       )}
 
       {!isDataMissing && activeTab === 'gas' && (
-        <GasTab
-          selectedDate={selectedDate}
-          systemStatsDate={systemStats?.date || 'Jun 2026'}
-          gasProductionData={safeGasProductionData}
-          gasDistributionData={gasDistributionData || []}
-          totalGasSupply={totalGasSupply}
-          totalCondensate={totalCondensate}
-        />
+        <div className="grid-explorer-panel space-y-6">
+          {methodologyBanner}
+          <GasTab
+            selectedDate={selectedDate}
+            systemStatsDate={systemStats?.date || 'Jun 2026'}
+            gasProductionData={safeGasProductionData}
+            gasDistributionData={gasDistributionData || []}
+            totalGasSupply={totalGasSupply}
+            totalCondensate={totalCondensate}
+          />
+        </div>
       )}
 
       {!isDataMissing && activeTab === 'imports' && (
@@ -1985,6 +1916,7 @@ export function PowerGridExplorer({
             </div>
           </div>
         ) : <div className="grid-explorer-panel space-y-6">
+          {methodologyBanner}
           <div className="grid-explorer-chart-card card">
             <div className="grid-explorer-chart-card__head grid-explorer-chart-card__head--border">
               <Globe className="h-5 w-5 text-purple-500 shrink-0" />
@@ -2346,7 +2278,7 @@ export function PowerGridExplorer({
 
           {/* Sub-tab 1: Power Transmission */}
           {transSubTab === 'transmission' && (
-            <div className="space-y-6 animate-in fade-in duration-200">
+            <div className="space-y-6 grid-explorer-subpanel">
               {/* Core Operating Function Card */}
               <div className="grid-explorer-chart-card card p-6 bg-gradient-to-r from-primary/5 via-sky-500/5 to-transparent border-primary/25 relative overflow-hidden">
                 {/* Visual grid pattern background decoration */}
@@ -2624,7 +2556,7 @@ export function PowerGridExplorer({
 
           {/* Sub-tab 2: Transmission Line Information */}
           {transSubTab === 'lines' && (
-            <div className="space-y-6 animate-in fade-in duration-200">
+            <div className="space-y-6 grid-explorer-subpanel">
               <div className="grid lg:grid-cols-12 gap-6">
                 {/* Column 1: Transmission Line stats */}
                 <div className="lg:col-span-5 space-y-6">
@@ -2857,7 +2789,7 @@ export function PowerGridExplorer({
 
           {/* Sub-tab 3: Substation Information */}
           {transSubTab === 'substations' && (
-            <div className="space-y-6 animate-in fade-in duration-200">
+            <div className="space-y-6 grid-explorer-subpanel">
               {/* Header Card Grid */}
               <div className="grid lg:grid-cols-3 gap-6">
                 {/* Left: Text Description */}
@@ -3167,7 +3099,7 @@ export function PowerGridExplorer({
 
           {/* Sub-tab 4: Ongoing / Upcoming Projects */}
           {transSubTab === 'projects' && (
-            <div className="space-y-6 animate-in fade-in duration-200">
+            <div className="space-y-6 grid-explorer-subpanel">
               {/* Header block */}
               <div className="grid-explorer-chart-card card p-6 bg-gradient-to-r from-primary/5 via-sky-500/5 to-transparent border-primary/20 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div className="space-y-1">
@@ -3521,7 +3453,7 @@ export function PowerGridExplorer({
 
           {/* Sub-tab: Completed Projects */}
           {transSubTab === 'completed_projects' && (
-            <div className="space-y-6 animate-in fade-in duration-200">
+            <div className="space-y-6 grid-explorer-subpanel">
               {/* Header block */}
               <div className="grid-explorer-chart-card card p-6 bg-gradient-to-r from-primary/5 via-sky-500/5 to-transparent border-primary/20 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div className="space-y-1">
@@ -3753,7 +3685,7 @@ export function PowerGridExplorer({
 
           {/* Sub-tab 5: National Grid Network Diagram */}
           {transSubTab === 'grid_net' && (
-            <div className="space-y-6 animate-in fade-in duration-200">
+            <div className="space-y-6 grid-explorer-subpanel">
               <div className="grid-explorer-chart-card card p-6 bg-gradient-to-r from-primary/5 via-sky-500/5 to-transparent border-primary/25 relative overflow-hidden">
                 <div className="space-y-4">
                   <div className="flex items-start gap-4">
@@ -3823,7 +3755,7 @@ export function PowerGridExplorer({
 
           {/* Sub-tab 5: Geographical Grid Map */}
           {transSubTab === 'geo_map' && (
-            <div className="space-y-6 animate-in fade-in duration-200">
+            <div className="space-y-6 grid-explorer-subpanel">
               <div className="grid-explorer-chart-card card p-6 bg-gradient-to-r from-teal-500/5 via-primary/5 to-transparent border-teal-500/20 relative overflow-hidden">
                 <div className="space-y-4">
                   <div className="flex items-start gap-4">
@@ -3893,7 +3825,7 @@ export function PowerGridExplorer({
 
           {/* Sub-tab 6: OPGW Fiber Network Map */}
           {transSubTab === 'opgw_map' && (
-            <div className="space-y-6 animate-in fade-in duration-200">
+            <div className="space-y-6 grid-explorer-subpanel">
               <div className="grid-explorer-chart-card card p-6 bg-gradient-to-r from-purple-500/5 via-primary/5 to-transparent border-purple-500/20 relative overflow-hidden">
                 <div className="space-y-4">
                   <div className="flex items-start gap-4">
@@ -3963,7 +3895,7 @@ export function PowerGridExplorer({
 
           {/* Sub-tab 7: Optical Fiber Leasing */}
           {transSubTab === 'opgw_lease' && (
-            <div className="space-y-6 animate-in fade-in duration-200">
+            <div className="space-y-6 grid-explorer-subpanel">
               {/* Introduction Card */}
               <div className="grid-explorer-chart-card card p-6 bg-gradient-to-r from-emerald-500/5 via-primary/5 to-transparent border-emerald-500/25 relative overflow-hidden">
                 <div className="absolute inset-0 opacity-[0.03] pointer-events-none" style={{ backgroundImage: 'radial-gradient(circle at 1px 1px, currentColor 1px, transparent 0)', backgroundSize: '16px 16px' }} />
@@ -4338,26 +4270,33 @@ export function PowerGridExplorer({
 
           {/* Sub-tab: National Budget */}
           {macroSubTab === 'budget' && (
-            <div className="space-y-6 animate-in fade-in duration-200">
+            <div className="space-y-6 grid-explorer-subpanel">
               
               {/* National Budget & Infrastructure Growth */}
               <div className="grid-explorer-chart-card card">
                 <div className="grid-explorer-chart-card__head grid-explorer-chart-card__head--border">
                   <Landmark className="h-5 w-5 text-emerald-500 shrink-0" />
                   <div>
-                    <h3 className="grid-explorer-chart-card__title">National Budget &amp; Grid Expansion</h3>
-                    <p className="grid-explorer-chart-card__sub">Ministry of Finance power sector budget allocations vs physical grid expansion</p>
+                    <h3 className="grid-explorer-chart-card__title">National Budget vs Capacity &amp; Peak Generation</h3>
+                    <p className="grid-explorer-chart-card__sub">Power sector fiscal allocation (Crore Tk) plotted against installed capacity and peak generation (MW)</p>
                   </div>
                   <span className="grid-explorer-chip bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20 ml-auto">FY 2011 - 2027</span>
                 </div>
 
-                <div className="grid-explorer-chart-area grid-explorer-chart-area--lg mt-4 px-4 pb-4">
-                  {chartsReady ? (
-                    <ResponsiveContainer width="100%" height={300}>
-                      <ComposedChart
-                        data={nationalBudgetData.map((b, i) => ({ ...b, ...macroInfrastructureData[i] }))}
-                        margin={{ top: 20, right: 10, left: -10, bottom: 0 }}
-                      >
+                <GridChartFrame
+                  className="mt-4"
+                  legend={[
+                    { id: 'budget', label: 'Power Budget (Cr Tk)', color: '#a855f7', variant: 'bar' },
+                    { id: 'cap', label: 'Installed Cap. (MW)', color: '#06b6d4', variant: 'line' },
+                    { id: 'peak', label: 'Peak Gen. (MW)', color: '#f97316', variant: 'line' },
+                  ]}
+                >
+                  <ComposedChart
+                    accessibilityLayer={false}
+                    data={nationalBudgetMergedData}
+                    margin={GRID_CHART_MARGIN.dualAxis}
+                    barCategoryGap="18%"
+                  >
                         <defs>
                           <linearGradient id="budget-grad" x1="0" y1="0" x2="0" y2="1">
                             <stop offset="0%" stopColor="#a855f7" stopOpacity={0.85} />
@@ -4365,9 +4304,38 @@ export function PowerGridExplorer({
                           </linearGradient>
                         </defs>
                         <CartesianGrid strokeDasharray="3 6" stroke={chartTheme.gridStroke} opacity={0.3} vertical={false} />
-                        <XAxis dataKey="fiscal_year" tick={{ fontSize: 11, fill: chartTheme.axisTick }} axisLine={false} tickLine={false} />
-                        <YAxis yAxisId="left" tick={{ fontSize: 11, fill: chartTheme.axisTick }} axisLine={false} tickLine={false} tickFormatter={(v) => `${v/1000}k`} />
-                        <YAxis yAxisId="right" orientation="right" tick={{ fontSize: 11, fill: chartTheme.axisTick }} axisLine={false} tickLine={false} tickFormatter={(v) => `${v/1000}k`} />
+                        <XAxis
+                          dataKey="fiscal_year"
+                          tick={gridChartAxisTick(chartTheme)}
+                          axisLine={false}
+                          tickLine={false}
+                          interval="preserveStartEnd"
+                          minTickGap={14}
+                          padding={GRID_X_AXIS_PADDING}
+                        />
+                        <YAxis
+                          yAxisId="left"
+                          width={GRID_Y_AXIS_WIDTH.dual}
+                          tick={gridChartAxisTick(chartTheme)}
+                          axisLine={false}
+                          tickLine={false}
+                          tickMargin={4}
+                          domain={[0, 'auto']}
+                          allowDecimals={false}
+                          tickFormatter={formatAxisCrore}
+                        />
+                        <YAxis
+                          yAxisId="right"
+                          orientation="right"
+                          width={GRID_Y_AXIS_WIDTH.dual}
+                          tick={gridChartAxisTick(chartTheme)}
+                          axisLine={false}
+                          tickLine={false}
+                          tickMargin={4}
+                          domain={[0, 'auto']}
+                          allowDecimals={false}
+                          tickFormatter={formatAxisMw}
+                        />
                         
                         <Tooltip
                           content={({ active, payload }) => {
@@ -4407,27 +4375,13 @@ export function PowerGridExplorer({
                             );
                           }}
                         />
-                        <Legend 
-                          wrapperStyle={{ fontSize: '11px', paddingTop: '10px' }} 
-                          formatter={(value, entry: any) => {
-                            let color = entry.color || 'inherit';
-                            if (entry.dataKey === 'power_energy_allocation_crore_tk' || (typeof value === 'string' && value.includes('Power Sector Budget'))) {
-                              color = '#a855f7';
-                            }
-                            return <span style={{ color, fontWeight: 600 }}>{value}</span>;
-                          }}
-                        />
-                        <Bar yAxisId="left" dataKey="power_energy_allocation_crore_tk" name="Power Sector Budget (Crore Tk)" fill="url(#budget-grad)" radius={[4, 4, 0, 0]} maxBarSize={40} />
-                        <Line yAxisId="right" type="linear" dataKey="installed_capacity_mw" name="Installed Capacity (MW)" stroke="#06b6d4" strokeWidth={3} dot={{ stroke: '#06b6d4', strokeWidth: 2.5, fill: '#ffffff', r: 4.5 }} activeDot={{ r: 6 }} />
-                        <Line yAxisId="right" type="linear" dataKey="peak_generation_mw" name="Peak Generation (MW)" stroke="#f97316" strokeWidth={2.5} dot={{ stroke: '#f97316', strokeWidth: 2.5, fill: '#ffffff', r: 4.5 }} activeDot={{ r: 6 }} />
-                      </ComposedChart>
-                    </ResponsiveContainer>
-                  ) : (
-                    <div className="grid-explorer-skeleton h-[300px]" />
-                  )}
-                </div>
+                        <Bar yAxisId="left" dataKey="power_energy_allocation_crore_tk" name="Power Budget (Cr Tk)" fill="url(#budget-grad)" radius={[4, 4, 0, 0]} maxBarSize={36} isAnimationActive={false} />
+                        <Line yAxisId="right" type="monotone" dataKey="installed_capacity_mw" name="Installed Cap. (MW)" stroke="#06b6d4" strokeWidth={2.5} dot={{ stroke: '#06b6d4', strokeWidth: 2, fill: '#ffffff', r: 3.5 }} activeDot={{ r: 5 }} isAnimationActive={false} />
+                        <Line yAxisId="right" type="monotone" dataKey="peak_generation_mw" name="Peak Gen. (MW)" stroke="#f97316" strokeWidth={2.5} dot={{ stroke: '#f97316', strokeWidth: 2, fill: '#ffffff', r: 3.5 }} activeDot={{ r: 5 }} isAnimationActive={false} />
+                  </ComposedChart>
+                </GridChartFrame>
                 
-                <div className="bg-muted/10 p-4 border-t border-border/40 text-xs text-muted-foreground space-y-2">
+                <div className="grid-explorer-chart-note bg-muted/10 p-4 text-xs text-muted-foreground space-y-2">
                   <p><strong>What is being shown?</strong></p>
                   <ul className="list-disc pl-4 space-y-1">
                     <li><strong className="text-[#a855f7]">Power Sector Budget (Crore Tk):</strong> The total fiscal allocation dedicated specifically to the Ministry of Power, Energy and Mineral Resources each fiscal year.</li>
@@ -4498,9 +4452,9 @@ export function PowerGridExplorer({
                       roundedClasses: "rounded-b-xl sm:rounded-r-xl sm:rounded-bl-none"
                     }
                   ].map((stat, idx) => (
-                    <div key={idx} className={`flex items-center justify-center gap-2 cursor-help group relative px-4 py-3.5 hover:bg-muted/20 transition-colors ${stat.roundedClasses}`}>
-                      <stat.Icon className={`h-4 w-4 ${stat.iconColor}`} />
-                      <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground group-hover:text-foreground transition-colors border-b border-dashed border-transparent group-hover:border-foreground/30 leading-none mt-0.5">
+                    <div key={idx} className={`flex items-center justify-center gap-2 cursor-help group relative px-4 py-3.5 hover:bg-muted/20 transition-colors duration-200 ${stat.roundedClasses}`}>
+                      <stat.Icon className={`h-4 w-4 ${stat.iconColor} transition-colors duration-200 group-hover:opacity-90`} />
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground group-hover:text-foreground transition-colors duration-200 leading-none mt-0.5">
                         {stat.label}
                       </span>
                       <span className={`font-bold leading-none mt-0.5 ${stat.valueColor}`}>
@@ -4528,13 +4482,32 @@ export function PowerGridExplorer({
                   ))}
                 </div>
 
-                <div className="grid-explorer-chart-area grid-explorer-chart-area--lg mt-4 px-4 pb-4">
-                  {chartsReady ? (
-                    <ResponsiveContainer width="100%" height={300}>
-                      <ComposedChart data={macroTariffData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                <GridChartFrame
+                  className="mt-4"
+                  legend={[
+                    { id: 'tariff', label: 'Bulk Tariff (Tk/kWh)', color: chartTheme.primary, variant: 'bar' },
+                    { id: 'cost', label: 'BPDB Gen. Cost (Tk/kWh)', color: chartTheme.destructive, variant: 'line' },
+                  ]}
+                >
+                  <ComposedChart accessibilityLayer={false} data={macroTariffData} margin={GRID_CHART_MARGIN.legend} barCategoryGap="20%">
                         <CartesianGrid strokeDasharray="3 6" stroke={chartTheme.gridStroke} opacity={0.3} vertical={false} />
-                        <XAxis dataKey="year" tick={{ fontSize: 11, fill: chartTheme.axisTick }} axisLine={false} tickLine={false} />
-                        <YAxis tick={{ fontSize: 11, fill: chartTheme.axisTick }} axisLine={false} tickLine={false} tickFormatter={(v) => `${v} Tk`} />
+                        <XAxis
+                          dataKey="year"
+                          tick={gridChartAxisTick(chartTheme)}
+                          axisLine={false}
+                          tickLine={false}
+                          interval="preserveStartEnd"
+                          minTickGap={16}
+                          padding={GRID_X_AXIS_PADDING}
+                        />
+                        <YAxis
+                          width={GRID_Y_AXIS_WIDTH.single}
+                          tick={gridChartAxisTick(chartTheme)}
+                          axisLine={false}
+                          tickLine={false}
+                          tickMargin={4}
+                          tickFormatter={(v) => `${v} Tk`}
+                        />
                         <Tooltip
                           content={({ active, payload }) => {
                             if (!active || !payload?.length) return null;
@@ -4564,22 +4537,11 @@ export function PowerGridExplorer({
                             );
                           }}
                         />
-                        <Legend 
-                          wrapperStyle={{ fontSize: '11px', paddingTop: '10px' }} 
-                          formatter={(value, entry) => {
-                            const color = entry.color || 'inherit';
-                            return <span style={{ color, fontWeight: 600 }}>{value}</span>;
-                          }}
-                        />
-                        <Bar dataKey="tariff" name="Weighted Avg Bulk Tariff (Tk/kWh)" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} maxBarSize={30} />
-                        <Line dataKey="cost" name="BPDB Generation & Procurement Cost (Tk/kWh)" stroke="hsl(var(--destructive))" strokeWidth={3} dot={{ fill: 'hsl(var(--destructive))', r: 4 }} activeDot={{ r: 6 }} />
-                      </ComposedChart>
-                    </ResponsiveContainer>
-                  ) : (
-                    <div className="grid-explorer-skeleton h-[300px]" />
-                  )}
-                </div>
-                <div className="bg-muted/10 p-4 border-t border-border/40 text-xs text-muted-foreground space-y-2">
+                        <Bar dataKey="tariff" name="Bulk Tariff (Tk/kWh)" fill={chartTheme.primary} radius={[4, 4, 0, 0]} maxBarSize={32} isAnimationActive={false} />
+                        <Line type="monotone" dataKey="cost" name="BPDB Gen. Cost (Tk/kWh)" stroke={chartTheme.destructive} strokeWidth={2.5} dot={{ fill: chartTheme.destructive, r: 3.5 }} activeDot={{ r: 5 }} isAnimationActive={false} />
+                  </ComposedChart>
+                </GridChartFrame>
+                <div className="grid-explorer-chart-note bg-muted/10 p-4 text-xs text-muted-foreground space-y-2">
                   <p><strong>What is being shown?</strong></p>
                   <ul className="list-disc pl-4 space-y-1">
                     <li><strong className="text-destructive">BPDB Generation &amp; Procurement Cost:</strong> The actual per-unit (kWh) cost incurred by BPDB. This includes the cost of fuel (gas, coal, HFO, LNG), cross-border electricity imports, operational/maintenance costs, and <strong>capacity charges</strong> paid to Independent Power Producers (IPPs) and Rental plants.</li>
@@ -4598,7 +4560,7 @@ export function PowerGridExplorer({
                 </div>
               </div>
 
-              {/* Comprehensive Macro-Economic Study 15-Chart Gallery */}
+              {/* Comprehensive Macro-Economic Study */}
               <div className="mt-8">
                 <LongitudinalStudyCharts chartTheme={chartTheme} />
               </div>
@@ -4607,7 +4569,7 @@ export function PowerGridExplorer({
 
           {/* Sub-tab 1: Macro Overview */}
           {macroSubTab === 'overview' && (
-            <div className="space-y-6 animate-in fade-in duration-200">
+            <div className="space-y-6 grid-explorer-subpanel">
               <div className="grid lg:grid-cols-2 gap-6">
                 {/* Wholesale Tariff vs. Unit Production Cost */}
                 <div className="grid-explorer-chart-card card">
@@ -4622,15 +4584,15 @@ export function PowerGridExplorer({
                   <div className="grid-explorer-chart-area grid-explorer-chart-area--lg mt-4">
                     {chartsReady ? (
                       <ResponsiveContainer width="100%" height="100%">
-                        <ComposedChart data={macroTariffData} margin={{ top: 10, right: 10, left: 10, bottom: 0 }}>
+                        <ComposedChart accessibilityLayer={false} data={macroTariffData} margin={GRID_EXPLORER_CHART_MARGIN.default}>
                           <CartesianGrid strokeDasharray="3 6" stroke={chartTheme.gridStroke} opacity={0.3} vertical={false} />
-                          <XAxis dataKey="year" tick={{ fontSize: 11, fill: chartTheme.axisTick }} axisLine={false} tickLine={false} />
-                          <YAxis tick={{ fontSize: 11, fill: chartTheme.axisTick }} axisLine={false} tickLine={false} tickFormatter={(v) => `${v} Tk`} />
+                          <XAxis {...gridChartXAxisProps(chartTheme)} tick={{ fontSize: 11, fill: chartTheme.axisTick, dy: 4 }} />
+                          <YAxis {...gridChartYAxisProps(chartTheme, { tickFormatter: (v) => `${v} Tk` })} tick={{ fontSize: 11, fill: chartTheme.axisTick }} />
                           <Tooltip
                             content={({ active, payload }) => {
                               if (!active || !payload?.length) return null;
                               const d = payload[0].payload;
-                              const deficit = (d.tariff - d.cost).toFixed(2);
+                              const deficit = (d.cost - d.tariff).toFixed(2);
                               return (
                                 <div className="p-4 md:p-5 text-card-foreground border border-border/80 rounded-2xl shadow-2xl text-xs md:text-sm leading-relaxed w-72 md:w-80 max-w-[calc(100vw-2rem)] select-none bg-card">
                                   <div className="font-bold text-foreground border-b border-border/40 pb-1.5 mb-2 flex items-center justify-between gap-2">
@@ -4652,7 +4614,7 @@ export function PowerGridExplorer({
                                     </div>
                                   </div>
                                   <div className="mt-2 pt-2 border-t border-border/30 text-[9px] md:text-[10px] text-muted-foreground leading-normal italic font-medium">
-                                    Calculation: Unit Deficit = Bulk Wholesale Tariff - Average Production Cost
+                                    Calculation: Unit Deficit = Average Production Cost − Bulk Wholesale Tariff
                                   </div>
                                   <div className="mt-2 pt-1.5 border-t border-border/20 text-[8px] md:text-[9px] text-muted-foreground flex flex-col gap-0.5">
                                     <div><strong>Source:</strong> <a href="https://www.bpdb.gov.bd/" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">BPDB Annual Audits</a> &amp; BERC Notifications</div>
@@ -4662,15 +4624,9 @@ export function PowerGridExplorer({
                               );
                             }}
                           />
-                          <Legend 
-                            wrapperStyle={{ fontSize: '11px', paddingTop: '10px' }} 
-                            formatter={(value, entry) => {
-                              const color = entry.color || 'inherit';
-                              return <span style={{ color, fontWeight: 600 }}>{value}</span>;
-                            }}
-                          />
-                          <Bar dataKey="tariff" name="Bulk Wholesale Tariff" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} maxBarSize={30} />
-                          <Line dataKey="cost" name="Average Generation Cost" stroke="hsl(var(--destructive))" strokeWidth={3} dot={{ fill: 'hsl(var(--destructive))', r: 4 }} activeDot={{ r: 6 }} />
+                          <GridRechartsLegend wrapperStyle={{ fontSize: '11px' }} />
+                          <Bar dataKey="tariff" name="Bulk Wholesale Tariff" fill={chartTheme.primary} radius={[4, 4, 0, 0]} maxBarSize={30} />
+                          <Line dataKey="cost" name="Average Generation Cost" stroke={chartTheme.destructive} strokeWidth={3} dot={{ fill: chartTheme.destructive, r: 4 }} activeDot={{ r: 6 }} />
                         </ComposedChart>
                       </ResponsiveContainer>
                     ) : (
@@ -4711,10 +4667,10 @@ export function PowerGridExplorer({
                   <div className="grid-explorer-chart-area grid-explorer-chart-area--lg mt-4">
                     {chartsReady ? (
                       <ResponsiveContainer width="100%" height="100%">
-                        <ComposedChart data={macroGasData} margin={{ top: 10, right: 10, left: 10, bottom: 0 }}>
+                        <ComposedChart accessibilityLayer={false} data={macroGasData} margin={GRID_EXPLORER_CHART_MARGIN.default}>
                           <CartesianGrid strokeDasharray="3 6" stroke={chartTheme.gridStroke} opacity={0.3} vertical={false} />
-                          <XAxis dataKey="year" tick={{ fontSize: 11, fill: chartTheme.axisTick }} axisLine={false} tickLine={false} />
-                          <YAxis tick={{ fontSize: 11, fill: chartTheme.axisTick }} axisLine={false} tickLine={false} tickFormatter={(v) => `${v} M`} />
+                          <XAxis {...gridChartXAxisProps(chartTheme)} tick={{ fontSize: 11, fill: chartTheme.axisTick, dy: 4 }} />
+                          <YAxis {...gridChartYAxisProps(chartTheme, { tickFormatter: (v) => `${formatAxisMmcfd(v)} MMCFD`, domain: [0, 'auto'] })} tick={{ fontSize: 11, fill: chartTheme.axisTick }} />
                           <Tooltip
                             content={({ active, payload }) => {
                               if (!active || !payload?.length) return null;
@@ -4753,8 +4709,9 @@ export function PowerGridExplorer({
                               );
                             }}
                           />
-                          <Area type="monotone" dataKey="domestic" stackId="1" stroke="#0ea5e9" fill="#0ea5e9" fillOpacity={0.15} strokeWidth={2} />
-                          <Area type="monotone" dataKey="lng" stackId="1" stroke="#a855f7" fill="#a855f7" fillOpacity={0.2} strokeWidth={2} />
+                          <GridRechartsLegend wrapperStyle={{ fontSize: '11px' }} />
+                          <Area type="monotone" dataKey="domestic" name="Domestic Gas (MMCFD)" stackId="1" stroke="#0ea5e9" fill="#0ea5e9" fillOpacity={0.15} strokeWidth={2} />
+                          <Area type="monotone" dataKey="lng" name="Imported LNG (MMCFD)" stackId="1" stroke="#a855f7" fill="#a855f7" fillOpacity={0.2} strokeWidth={2} />
                         </ComposedChart>
                       </ResponsiveContainer>
                     ) : (
@@ -4822,7 +4779,7 @@ export function PowerGridExplorer({
 
           {/* Sub-tab: PGCB Monthly Archives */}
           {macroSubTab === 'monthly' && (
-            <div className="space-y-6 animate-in fade-in duration-200">
+            <div className="space-y-6 grid-explorer-subpanel">
               {/* Month/Year Selection Control Panel */}
               {(() => {
                 const currentMonthlyData = pgcbMonthlyData.find(d => d.date_key === selectedMonthlyKey) || pgcbMonthlyData[pgcbMonthlyData.length - 1];
@@ -4831,6 +4788,17 @@ export function PowerGridExplorer({
                 
                 const yearOptions = availableYears.map(y => ({ label: String(y), value: String(y) }));
                 const monthOptions = availableMonths.map(d => ({ label: d.month, value: d.month }));
+                const regionalChartData = currentMonthlyData
+                  ? Object.entries(currentMonthlyData.regional_supply)
+                      .map(([key, value]) => ({
+                        key,
+                        name: key.charAt(0).toUpperCase() + key.slice(1),
+                        value,
+                        color: REGIONAL_ZONE_COLORS[key.toLowerCase()] ?? '#94a3b8',
+                      }))
+                      .sort((a, b) => b.value - a.value)
+                  : [];
+                const regionalTotalMw = regionalChartData.reduce((sum, row) => sum + row.value, 0);
                 return (
                   <>
                     <div className="card p-4 flex flex-col md:flex-row md:items-center justify-between gap-4 bg-card border border-border/60 rounded-2xl shadow-sm relative z-50">
@@ -4934,18 +4902,16 @@ export function PowerGridExplorer({
                       
                       {/* Fuel Mix Card */}
                       <div className="grid-explorer-chart-card card">
-                        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-                          {/* Left Column: Title & Chart */}
-                          <div className="lg:col-span-6 flex flex-col justify-between">
-                            <div className="mb-2">
-                              <h3 className="grid-explorer-chart-card__title">Energy Fuel Mix<sup className="text-orange-500 font-extrabold text-[10px] ml-2 select-none">Monthly</sup></h3>
-                              <p className="grid-explorer-chart-card__sub text-xs text-muted-foreground mt-0.5 leading-relaxed">
-                                Net generation by fuel source in {currentMonthlyData?.month} {currentMonthlyData?.year} (MKWh)
-                              </p>
-                            </div>
-                            
-                            {/* Fuel Mix Pie Chart */}
-                            <div className="grid-explorer-donut-wrap mt-2">
+                        <div className="mb-4">
+                          <h3 className="grid-explorer-chart-card__title">Energy Fuel Mix<sup className="text-orange-500 font-extrabold text-[10px] ml-2 select-none">Monthly</sup></h3>
+                          <p className="grid-explorer-chart-card__sub text-xs text-muted-foreground mt-0.5 leading-relaxed">
+                            Net generation by fuel source in {currentMonthlyData?.month} {currentMonthlyData?.year} (MKWh)
+                          </p>
+                        </div>
+                        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
+                          {/* Left Column: Chart */}
+                          <div className="lg:col-span-6 flex items-center justify-center">
+                            <div className="grid-explorer-donut-wrap grid-explorer-donut-wrap--centered !mb-0">
                               {chartsReady ? (
                                 <PieChart width={200} height={200} margin={{ top: 0, right: 0, bottom: 0, left: 0 }}>
                                   <Pie
@@ -5037,7 +5003,7 @@ export function PowerGridExplorer({
                           </div>
 
                           {/* Right Column: Fuel Mix Table */}
-                          <div className="lg:col-span-6 flex flex-col justify-start pt-1.5">
+                          <div className="lg:col-span-6">
                             <table className="w-full text-[11px] leading-relaxed">
                               <thead>
                                 <tr className="border-b border-border/40 text-muted-foreground text-left">
@@ -5074,45 +5040,40 @@ export function PowerGridExplorer({
 
                       {/* Regional Peak Supply Card */}
                       <div className="grid-explorer-chart-card card">
-                        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-                          {/* Left Column: Title & Chart */}
-                          <div className="lg:col-span-6 flex flex-col justify-between">
-                             <div className="grid-explorer-chart-card__head !p-0 !border-b-0">
-                              <div>
-                                <h3 className="grid-explorer-chart-card__title">Regional Maximum Peak Supply<sup className="text-orange-500 font-extrabold text-[10px] ml-2 select-none">Monthly</sup></h3>
-                                <p className="grid-explorer-chart-card__sub">
-                                  Substation peak loads served by grid zone in {currentMonthlyData?.month} {currentMonthlyData?.year} (MW)
-                                </p>
-                              </div>
-                            </div>
-
-                            {/* Bar Chart */}
-                            <div className="grid-explorer-chart-area grid-explorer-chart-area--lg mt-4 !min-h-[16rem] !h-[16rem]">
+                        <div className="mb-4">
+                          <h3 className="grid-explorer-chart-card__title">Regional Maximum Peak Supply<sup className="text-orange-500 font-extrabold text-[10px] ml-2 select-none">Monthly</sup></h3>
+                          <p className="grid-explorer-chart-card__sub">
+                            Substation peak loads served by grid zone in {currentMonthlyData?.month} {currentMonthlyData?.year} (MW)
+                          </p>
+                        </div>
+                        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-end">
+                          {/* Left Column: Chart */}
+                          <div className="lg:col-span-6 w-full">
+                            <div className="grid-explorer-chart-area grid-explorer-chart-area--lg grid-explorer-chart-area--split !min-h-[16rem] !h-[16rem]">
                               {chartsReady ? (
                                 <ResponsiveContainer width="100%" height="100%">
                                   <BarChart
-                                    data={
-                                      currentMonthlyData
-                                        ? Object.entries(currentMonthlyData.regional_supply).map(([name, value]) => ({
-                                            name: name.charAt(0).toUpperCase() + name.slice(1),
-                                            value
-                                          }))
-                                        : []
-                                    }
-                                    margin={{ top: 10, right: 10, left: 10, bottom: 5 }}
+                                    accessibilityLayer={false}
+                                    data={regionalChartData}
+                                    margin={GRID_EXPLORER_CHART_MARGIN.default}
                                     onMouseLeave={() => setHoveredZoneIndex(null)}
                                   >
                                     <CartesianGrid strokeDasharray="3 6" stroke={chartTheme.gridStroke} opacity={0.3} vertical={false} />
                                     <XAxis
                                       dataKey="name"
-                                      tick={{ fontSize: 11, fill: chartTheme.axisTick }}
+                                      tick={{ fontSize: 11, fill: chartTheme.axisTick, dy: 4 }}
                                       axisLine={false}
                                       tickLine={false}
+                                      padding={GRID_X_AXIS_PADDING}
                                     />
                                     <YAxis
+                                      width={GRID_Y_AXIS_WIDTH.single}
                                       tick={{ fontSize: 11, fill: chartTheme.axisTick }}
                                       axisLine={false}
                                       tickLine={false}
+                                      tickMargin={4}
+                                      domain={[0, 'auto']}
+                                      allowDecimals={false}
                                       tickFormatter={(v) => `${v} MW`}
                                     />
                                     <Bar
@@ -5120,20 +5081,12 @@ export function PowerGridExplorer({
                                       radius={[6, 6, 0, 0]}
                                       maxBarSize={32}
                                     >
-                                      {(currentMonthlyData
-                                        ? Object.entries(currentMonthlyData.regional_supply).map(([name, value]) => ({ name, value }))
-                                        : []
-                                      ).map((entry, index) => {
-                                        const colors = [
-                                          '#0ea5e9', '#06b6d4', '#10b981', '#a855f7',
-                                          '#f97316', '#64748b', '#ef4444', '#eab308', '#ec4899'
-                                        ];
-                                        const color = colors[index % colors.length];
+                                      {regionalChartData.map((entry, index) => {
                                         const isDimmed = hoveredZoneIndex !== null && hoveredZoneIndex !== index;
                                         return (
                                           <Cell
-                                            key={`cell-${index}`}
-                                            fill={color}
+                                            key={entry.key}
+                                            fill={entry.color}
                                             fillOpacity={isDimmed ? 0.35 : 1}
                                             style={{ transition: 'fill-opacity 200ms ease', cursor: 'pointer' }}
                                             onMouseEnter={() => setHoveredZoneIndex(index)}
@@ -5151,7 +5104,7 @@ export function PowerGridExplorer({
                           </div>
 
                           {/* Right Column: Regional Table */}
-                          <div className="lg:col-span-6 flex flex-col justify-start pt-1.5">
+                          <div className="lg:col-span-6 w-full">
                             <table className="w-full text-[11px] leading-relaxed">
                               <thead>
                                 <tr className="border-b border-border/40 text-muted-foreground text-left">
@@ -5161,39 +5114,25 @@ export function PowerGridExplorer({
                                 </tr>
                               </thead>
                               <tbody className="divide-y divide-border/20 text-foreground">
-                                {currentMonthlyData &&
-                                  Object.entries(currentMonthlyData.regional_supply)
-                                    .map(([name, val]) => {
-                                      const totalRegional = Object.values(currentMonthlyData.regional_supply).reduce((a, b) => a + b, 0);
-                                      const pct = (val / totalRegional) * 100;
-                                      return { name, val, pct };
-                                    })
-                                    .sort((a, b) => b.val - a.val)
-                                    .map((z, idx) => {
-                                      const colors = [
-                                        '#0ea5e9', '#06b6d4', '#10b981', '#a855f7',
-                                        '#f97316', '#64748b', '#ef4444', '#eab308', '#ec4899'
-                                      ];
-                                      const zoneName = z.name.charAt(0).toUpperCase() + z.name.slice(1);
-                                      const origIndex = Object.keys(currentMonthlyData.regional_supply).indexOf(z.name);
-                                      const color = colors[origIndex % colors.length];
-                                      const isDimmed = hoveredZoneIndex !== null && hoveredZoneIndex !== origIndex;
-                                      return (
-                                        <tr
-                                          key={idx}
-                                          className={`hover:bg-muted/10 transition-opacity duration-200 ${isDimmed ? 'opacity-35' : 'opacity-100'}`}
-                                          onMouseEnter={() => setHoveredZoneIndex(origIndex)}
-                                          onMouseLeave={() => setHoveredZoneIndex(null)}
-                                        >
-                                          <td className="py-1.5 flex items-center gap-1.5 font-medium">
-                                            <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: color }} />
-                                            <span>{zoneName}</span>
-                                          </td>
-                                          <td className="py-1.5 text-left tabular-nums font-semibold">{formatNumber(z.val)}</td>
-                                          <td className="py-1.5 text-left tabular-nums text-muted-foreground">{z.pct.toFixed(1)}%</td>
-                                        </tr>
-                                      );
-                                    })}
+                                {regionalChartData.map((z, idx) => {
+                                  const pct = regionalTotalMw > 0 ? (z.value / regionalTotalMw) * 100 : 0;
+                                  const isDimmed = hoveredZoneIndex !== null && hoveredZoneIndex !== idx;
+                                  return (
+                                    <tr
+                                      key={z.key}
+                                      className={`hover:bg-muted/10 transition-opacity duration-200 ${isDimmed ? 'opacity-35' : 'opacity-100'}`}
+                                      onMouseEnter={() => setHoveredZoneIndex(idx)}
+                                      onMouseLeave={() => setHoveredZoneIndex(null)}
+                                    >
+                                      <td className="py-1.5 flex items-center gap-1.5 font-medium">
+                                        <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: z.color }} />
+                                        <span>{z.name}</span>
+                                      </td>
+                                      <td className="py-1.5 text-left tabular-nums font-semibold">{formatNumber(z.value)}</td>
+                                      <td className="py-1.5 text-left tabular-nums text-muted-foreground">{pct.toFixed(1)}%</td>
+                                    </tr>
+                                  );
+                                })}
                               </tbody>
                             </table>
                           </div>
@@ -5260,6 +5199,7 @@ export function PowerGridExplorer({
                             { label: 'Gas', value: 'gas' },
                             { label: 'Coal', value: 'coal' },
                             { label: 'Furnace Oil (HFO)', value: 'hfo' },
+                            { label: 'Diesel', value: 'diesel' },
                             { label: 'Imports', value: 'import' }
                           ]}
                           placeholder="Select Fuel"
@@ -5281,23 +5221,24 @@ export function PowerGridExplorer({
                   {chartsReady ? (
                     <ResponsiveContainer width="100%" height="100%">
                       {monthlyTrendMetric === 'peaks' ? (
-                        <ComposedChart data={pgcbMonthlyData} margin={{ top: 10, right: 10, left: 10, bottom: 10 }}>
+                        <ComposedChart accessibilityLayer={false} data={pgcbMonthlyData} margin={GRID_EXPLORER_CHART_MARGIN.topLegend}>
                           <CartesianGrid strokeDasharray="3 6" stroke={chartTheme.gridStroke} opacity={0.3} vertical={false} />
                           <XAxis
                             dataKey="date_key"
                             tick={{ fontSize: 9, fill: chartTheme.axisTick }}
                             axisLine={false}
                             tickLine={false}
-                            tickFormatter={(v) => {
-                              if (v.endsWith("-01")) return v.split("-")[0];
-                              return "";
-                            }}
+                            tickFormatter={formatPgcbMonthlyTick}
                           />
                           <YAxis
+                            width={GRID_Y_AXIS_WIDTH.single}
                             tick={{ fontSize: 10, fill: chartTheme.axisTick }}
                             axisLine={false}
                             tickLine={false}
-                            tickFormatter={(v) => `${v} MW`}
+                            tickMargin={4}
+                            domain={[0, 'auto']}
+                            allowDecimals={false}
+                            tickFormatter={formatAxisMw}
                           />
                           <Tooltip
                             content={({ active, payload }) => {
@@ -5388,27 +5329,28 @@ export function PowerGridExplorer({
                               );
                             }}
                           />
-                          <Legend verticalAlign="top" height={36} wrapperStyle={{ fontSize: '11px' }} />
+                          <GridRechartsLegend verticalAlign="top" height={36} wrapperStyle={{ fontSize: '11px' }} />
                           <Area type="monotone" dataKey="max_evening_peak_demand" name="Estimated Peak Demand" stroke="#f97316" fill="rgba(249, 115, 22, 0.05)" strokeWidth={1.5} />
-                          <Line type="monotone" dataKey="max_evening_peak_gen" name="Maximum Peak Generation" stroke="hsl(var(--primary))" strokeWidth={2.5} dot={false} activeDot={{ r: 5 }} />
+                          <Line type="monotone" dataKey="max_evening_peak_gen" name="Maximum Peak Generation" stroke={chartTheme.primary} strokeWidth={2.5} dot={false} activeDot={{ r: 5 }} />
                         </ComposedChart>
                       ) : monthlyTrendMetric === 'energy' ? (
-                        <ComposedChart data={pgcbMonthlyData} margin={{ top: 10, right: 10, left: 10, bottom: 10 }}>
+                        <ComposedChart accessibilityLayer={false} data={pgcbMonthlyData} margin={GRID_EXPLORER_CHART_MARGIN.topLegend}>
                           <CartesianGrid strokeDasharray="3 6" stroke={chartTheme.gridStroke} opacity={0.3} vertical={false} />
                           <XAxis
                             dataKey="date_key"
                             tick={{ fontSize: 9, fill: chartTheme.axisTick }}
                             axisLine={false}
                             tickLine={false}
-                            tickFormatter={(v) => {
-                              if (v.endsWith("-01")) return v.split("-")[0];
-                              return "";
-                            }}
+                            tickFormatter={formatPgcbMonthlyTick}
                           />
                           <YAxis
+                            width={GRID_Y_AXIS_WIDTH.single}
                             tick={{ fontSize: 10, fill: chartTheme.axisTick }}
                             axisLine={false}
                             tickLine={false}
+                            tickMargin={4}
+                            domain={[0, 'auto']}
+                            allowDecimals={false}
                             tickFormatter={(v) => `${v} MKWh`}
                           />
                           <Tooltip
@@ -5468,33 +5410,34 @@ export function PowerGridExplorer({
                               );
                             }}
                           />
-                          <Legend verticalAlign="top" height={36} wrapperStyle={{ fontSize: '11px' }} />
+                          <GridRechartsLegend verticalAlign="top" height={36} wrapperStyle={{ fontSize: '11px' }} />
                           <Area type="monotone" dataKey="total_net_generation" name="Total Monthly Energy Generation (MKWh)" stroke="#f59e0b" fill="rgba(245, 158, 11, 0.1)" strokeWidth={2.5} />
                         </ComposedChart>
                       ) : (
-                        <ComposedChart data={pgcbMonthlyData} margin={{ top: 10, right: 10, left: 10, bottom: 10 }}>
+                        <ComposedChart accessibilityLayer={false} data={pgcbFuelTrendData} margin={GRID_EXPLORER_CHART_MARGIN.topLegend}>
                           <CartesianGrid strokeDasharray="3 6" stroke={chartTheme.gridStroke} opacity={0.3} vertical={false} />
                           <XAxis
                             dataKey="date_key"
                             tick={{ fontSize: 9, fill: chartTheme.axisTick }}
                             axisLine={false}
                             tickLine={false}
-                            tickFormatter={(v) => {
-                              if (v.endsWith("-01")) return v.split("-")[0];
-                              return "";
-                            }}
+                            tickFormatter={formatPgcbMonthlyTick}
                           />
                           <YAxis
+                            width={GRID_Y_AXIS_WIDTH.single}
                             tick={{ fontSize: 10, fill: chartTheme.axisTick }}
                             axisLine={false}
                             tickLine={false}
+                            tickMargin={4}
+                            domain={[0, 'auto']}
+                            allowDecimals={false}
                             tickFormatter={(v) => `${v} MKWh`}
                           />
                           <Tooltip
                             content={({ active, payload }) => {
                               if (!active || !payload?.length) return null;
                               const d = payload[0].payload;
-                              const fuelVal = d.generation_by_fuel[selectedFuelTrend] || 0;
+                              const fuelVal = d.fuelTrendMkwh ?? 0;
                               
                               // YoY calculation
                               const prevData = pgcbMonthlyData.find(m => m.year === d.year - 1 && m.month === d.month);
@@ -5504,7 +5447,7 @@ export function PowerGridExplorer({
                                 : null;
                                 
                               const share = d.total_net_generation > 0 ? (fuelVal / d.total_net_generation) * 100 : 0;
-                              const fuelLabel = selectedFuelTrend === 'hfo' ? 'Furnace Oil (HFO)' : selectedFuelTrend === 'import' ? 'India Imports' : selectedFuelTrend;
+                              const fuelLabel = getFuelLabel(selectedFuelTrend);
                               
                               return (
                                 <div className="p-4 text-card-foreground border border-border rounded-2xl shadow-xl bg-card/95 backdrop-blur-md text-xs min-w-[240px] z-50">
@@ -5546,11 +5489,11 @@ export function PowerGridExplorer({
                               );
                             }}
                           />
-                          <Legend verticalAlign="top" height={36} wrapperStyle={{ fontSize: '11px' }} />
+                          <GridRechartsLegend verticalAlign="top" height={36} wrapperStyle={{ fontSize: '11px' }} />
                           <Line
                             type="monotone"
-                            dataKey={(d) => d.generation_by_fuel[selectedFuelTrend] || 0}
-                            name={`${selectedFuelTrend.toUpperCase()} Generation Trend (MKWh)`}
+                            dataKey="fuelTrendMkwh"
+                            name={`${getFuelLabel(selectedFuelTrend)} Generation Trend (MKWh)`}
                             stroke={getFuelColor(selectedFuelTrend)}
                             strokeWidth={2.5}
                             dot={false}
@@ -5574,7 +5517,7 @@ export function PowerGridExplorer({
 
           {/* Sub-tab 2: Pricing & Drivers */}
           {macroSubTab === 'pricing' && (
-            <div className="space-y-6 animate-in fade-in duration-200">
+            <div className="space-y-6 grid-explorer-subpanel">
               <div className="p-4 bg-muted/20 border border-border/40 rounded-xl text-xs text-muted-foreground flex flex-col gap-2">
                 <div>
                   <strong>Exchange Rate Sensitivity:</strong> Imported energy commodities (Spot LNG, Coal, Heavy Fuel Oil) are denominated in US Dollars (USD). Therefore, the exchange rate of the Bangladesh Taka (BDT) is a direct multiplier on the domestic cost of power generation.
@@ -5598,11 +5541,11 @@ export function PowerGridExplorer({
                   <div className="grid-explorer-chart-area grid-explorer-chart-area--lg mt-4">
                     {chartsReady ? (
                       <ResponsiveContainer width="100%" height="100%">
-                        <ComposedChart data={macroEconomicData} margin={{ top: 10, right: 10, left: 10, bottom: 0 }}>
+                        <ComposedChart accessibilityLayer={false} data={macroEconomicData} margin={GRID_EXPLORER_CHART_MARGIN.topLegend}>
                           <CartesianGrid strokeDasharray="3 6" stroke={chartTheme.gridStroke} opacity={0.3} vertical={false} />
                           <XAxis dataKey="year" tick={{ fontSize: 11, fill: chartTheme.axisTick }} axisLine={false} tickLine={false} />
-                          <YAxis yAxisId="left" tick={{ fontSize: 11, fill: chartTheme.axisTick }} axisLine={false} tickLine={false} tickFormatter={(v) => `${v} Tk`} />
-                          <YAxis yAxisId="right" orientation="right" tick={{ fontSize: 11, fill: chartTheme.axisTick }} axisLine={false} tickLine={false} tickFormatter={(v) => `${v}%`} />
+                          <YAxis yAxisId="left" width={GRID_Y_AXIS_WIDTH.dual} tick={{ fontSize: 11, fill: chartTheme.axisTick }} axisLine={false} tickLine={false} tickMargin={4} domain={[0, 'auto']} tickFormatter={(v) => `${v} Tk`} />
+                          <YAxis yAxisId="right" orientation="right" width={GRID_Y_AXIS_WIDTH.dual} tick={{ fontSize: 11, fill: chartTheme.axisTick }} axisLine={false} tickLine={false} tickMargin={4} domain={[0, 'auto']} tickFormatter={(v) => `${v}%`} />
                           <Tooltip
                             content={({ active, payload }) => {
                               if (!active || !payload?.length) return null;
@@ -5634,8 +5577,8 @@ export function PowerGridExplorer({
                               );
                             }}
                           />
-                          <Legend verticalAlign="top" height={36} wrapperStyle={{ fontSize: '11px' }} />
-                          <Bar yAxisId="left" dataKey="exchangeRate" name="USD Exchange Rate (BDT)" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} maxBarSize={25} />
+                          <GridRechartsLegend verticalAlign="top" height={36} wrapperStyle={{ fontSize: '11px' }} />
+                          <Bar yAxisId="left" dataKey="exchangeRate" name="USD Exchange Rate (BDT)" fill={chartTheme.primary} radius={[4, 4, 0, 0]} maxBarSize={25} />
                           <Line yAxisId="right" type="monotone" dataKey="inflation" name="Inflation Rate (%)" stroke="#f97316" strokeWidth={3} dot={{ fill: '#f97316', r: 4 }} />
                         </ComposedChart>
                       </ResponsiveContainer>
@@ -5672,11 +5615,11 @@ export function PowerGridExplorer({
                   <div className="grid-explorer-chart-area grid-explorer-chart-area--lg mt-4">
                     {chartsReady ? (
                       <ResponsiveContainer width="100%" height="100%">
-                        <ComposedChart data={macroEconomicData} margin={{ top: 10, right: 10, left: 10, bottom: 0 }}>
+                        <ComposedChart accessibilityLayer={false} data={macroEconomicData} margin={GRID_EXPLORER_CHART_MARGIN.topLegend}>
                           <CartesianGrid strokeDasharray="3 6" stroke={chartTheme.gridStroke} opacity={0.3} vertical={false} />
                           <XAxis dataKey="year" tick={{ fontSize: 11, fill: chartTheme.axisTick }} axisLine={false} tickLine={false} />
-                          <YAxis yAxisId="left" tick={{ fontSize: 11, fill: chartTheme.axisTick }} axisLine={false} tickLine={false} tickFormatter={(v) => `$${v}`} />
-                          <YAxis yAxisId="right" orientation="right" tick={{ fontSize: 11, fill: chartTheme.axisTick }} axisLine={false} tickLine={false} tickFormatter={(v) => `$${v}`} />
+                          <YAxis yAxisId="left" width={GRID_Y_AXIS_WIDTH.dual} tick={{ fontSize: 11, fill: chartTheme.axisTick }} axisLine={false} tickLine={false} tickMargin={4} domain={[0, 'auto']} tickFormatter={(v) => `${v} $/MMBtu`} />
+                          <YAxis yAxisId="right" orientation="right" width={GRID_Y_AXIS_WIDTH.dual} tick={{ fontSize: 11, fill: chartTheme.axisTick }} axisLine={false} tickLine={false} tickMargin={4} domain={[0, 'auto']} tickFormatter={(v) => `${v} $/t`} />
                           <Tooltip
                             content={({ active, payload }) => {
                               if (!active || !payload?.length) return null;
@@ -5708,7 +5651,7 @@ export function PowerGridExplorer({
                               );
                             }}
                           />
-                          <Legend verticalAlign="top" height={36} wrapperStyle={{ fontSize: '11px' }} />
+                          <GridRechartsLegend verticalAlign="top" height={36} wrapperStyle={{ fontSize: '11px' }} />
                           <Area yAxisId="left" type="monotone" dataKey="spotLng" name="Spot LNG (USD/MMBtu)" stroke="#a855f7" fill="rgba(168, 85, 247, 0.15)" strokeWidth={2} />
                           <Line yAxisId="right" type="monotone" dataKey="importCoal" name="Import Coal (USD/Ton)" stroke="#94a3b8" strokeWidth={2.5} dot={{ fill: '#94a3b8', r: 3 }} />
                         </ComposedChart>
@@ -5785,7 +5728,7 @@ export function PowerGridExplorer({
 
           {/* Sub-tab 3: Annual Reports (Audited Statements) */}
           {macroSubTab === 'reports' && (
-            <div className="space-y-6 animate-in fade-in duration-200">
+            <div className="space-y-6 grid-explorer-subpanel">
               <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div className="flex gap-2">
                   <button
@@ -5830,10 +5773,10 @@ export function PowerGridExplorer({
                     <div className="grid-explorer-chart-area grid-explorer-chart-area--lg mt-4 !h-[22rem]">
                       {chartsReady ? (
                         <ResponsiveContainer width="100%" height="100%">
-                          <ComposedChart data={bpdbAuditedFinancials} margin={{ top: 10, right: 10, left: 10, bottom: 0 }}>
+                          <ComposedChart accessibilityLayer={false} data={bpdbAuditedFinancials} margin={GRID_EXPLORER_CHART_MARGIN.topLegend}>
                             <CartesianGrid strokeDasharray="3 6" stroke={chartTheme.gridStroke} opacity={0.3} vertical={false} />
                             <XAxis dataKey="year" tick={{ fontSize: 10, fill: chartTheme.axisTick }} axisLine={false} tickLine={false} />
-                            <YAxis tick={{ fontSize: 10, fill: chartTheme.axisTick }} axisLine={false} tickLine={false} tickFormatter={(v) => `${(v/1000).toFixed(0)}k`} />
+                            <YAxis width={GRID_Y_AXIS_WIDTH.wide} tick={{ fontSize: 10, fill: chartTheme.axisTick }} axisLine={false} tickLine={false} tickMargin={4} domain={[0, 'auto']} tickFormatter={formatAxisCrore} />
                             <Tooltip
                               content={({ active, payload }) => {
                                 if (!active || !payload?.length) return null;
@@ -5873,7 +5816,7 @@ export function PowerGridExplorer({
                                 );
                               }}
                             />
-                            <Legend verticalAlign="top" height={36} wrapperStyle={{ fontSize: '11px' }} />
+                            <GridRechartsLegend verticalAlign="top" height={36} wrapperStyle={{ fontSize: '11px' }} />
                             <Bar dataKey="revenue" name="Operating Revenue" fill="#0ea5e9" stackId="a" radius={[2, 2, 0, 0]} maxBarSize={20} />
                             <Bar dataKey="subsidy" name="Govt Subsidy" fill="#10b981" stackId="a" radius={[2, 2, 0, 0]} maxBarSize={20} />
                             <Bar dataKey="cost" name="Gen &amp; Purchase Cost" fill="#f43f5e" radius={[2, 2, 0, 0]} maxBarSize={20} />
@@ -5942,10 +5885,10 @@ export function PowerGridExplorer({
                     <div className="grid-explorer-chart-area grid-explorer-chart-area--lg mt-4 !h-[22rem]">
                       {chartsReady ? (
                         <ResponsiveContainer width="100%" height="100%">
-                          <ComposedChart data={petrobanglaAuditedFinancials} margin={{ top: 10, right: 10, left: 10, bottom: 0 }}>
+                          <ComposedChart accessibilityLayer={false} data={petrobanglaAuditedFinancials} margin={GRID_EXPLORER_CHART_MARGIN.topLegend}>
                             <CartesianGrid strokeDasharray="3 6" stroke={chartTheme.gridStroke} opacity={0.3} vertical={false} />
                             <XAxis dataKey="year" tick={{ fontSize: 10, fill: chartTheme.axisTick }} axisLine={false} tickLine={false} />
-                            <YAxis tick={{ fontSize: 10, fill: chartTheme.axisTick }} axisLine={false} tickLine={false} tickFormatter={(v) => `${(v/1000).toFixed(0)}k`} />
+                            <YAxis width={GRID_Y_AXIS_WIDTH.wide} tick={{ fontSize: 10, fill: chartTheme.axisTick }} axisLine={false} tickLine={false} tickMargin={4} domain={[0, 'auto']} tickFormatter={formatAxisCrore} />
                             <Tooltip
                               content={({ active, payload }) => {
                                 if (!active || !payload?.length) return null;
@@ -5983,7 +5926,7 @@ export function PowerGridExplorer({
                                 );
                               }}
                             />
-                            <Legend verticalAlign="top" height={36} wrapperStyle={{ fontSize: '11px' }} />
+                            <GridRechartsLegend verticalAlign="top" height={36} wrapperStyle={{ fontSize: '11px' }} />
                             <Bar dataKey="revenue" name="Gas Sales Revenue" fill="#0ea5e9" radius={[2, 2, 0, 0]} maxBarSize={20} />
                             <Bar dataKey="lngCost" name="LNG Import Cost" fill="#a855f7" radius={[2, 2, 0, 0]} maxBarSize={20} />
                             <Line type="monotone" dataKey="netProfit" name="Net Income / Loss" stroke="#eab308" strokeWidth={3} dot={{ fill: '#eab308', r: 4 }} />
@@ -6043,7 +5986,7 @@ export function PowerGridExplorer({
 
           {/* Sub-tab: Global vs. Domestic Pricing Comparisons */}
           {macroSubTab === 'global' && (
-            <div className="space-y-6 animate-in fade-in duration-200">
+            <div className="space-y-6 grid-explorer-subpanel">
               <div className="p-4 bg-primary/5 border border-primary/20 rounded-xl text-xs text-muted-foreground flex flex-col gap-2">
                 <div>
                   <strong className="text-foreground">Global Benchmark Comparison:</strong> Energy cost volatility in Bangladesh is structurally linked to global commodity indexes. This dashboard tracks global benchmark pricing (Brent Crude, World Bank Gas/JKM indexes, and IRENA Solar LCOE) against domestic retail tariffs since 1975, highlighting historical subsidy periods and cost de-linkages.
@@ -6067,11 +6010,11 @@ export function PowerGridExplorer({
                   <div className="grid-explorer-chart-area grid-explorer-chart-area--lg mt-4 !h-[22rem]">
                     {chartsReady ? (
                       <ResponsiveContainer width="100%" height="100%">
-                        <ComposedChart data={globalVsDomesticData} margin={{ top: 10, right: 10, left: 10, bottom: 0 }}>
+                        <ComposedChart accessibilityLayer={false} data={globalVsDomesticData} margin={GRID_EXPLORER_CHART_MARGIN.topLegend}>
                           <CartesianGrid strokeDasharray="3 6" stroke={chartTheme.gridStroke} opacity={0.3} vertical={false} />
                           <XAxis dataKey="year" tick={{ fontSize: 10, fill: chartTheme.axisTick }} axisLine={false} tickLine={false} />
-                          <YAxis yAxisId="left" tick={{ fontSize: 10, fill: chartTheme.axisTick }} axisLine={false} tickLine={false} tickFormatter={(v) => `$${v}`} label={{ value: 'Brent Crude ($/bbl)', angle: -90, position: 'insideLeft', offset: 10, style: { fontSize: '9px', fill: chartTheme.axisTick } }} />
-                          <YAxis yAxisId="right" orientation="right" tick={{ fontSize: 10, fill: chartTheme.axisTick }} axisLine={false} tickLine={false} tickFormatter={(v) => `${v} Tk`} label={{ value: 'Retail Diesel (Tk/L)', angle: 90, position: 'insideRight', offset: 10, style: { fontSize: '9px', fill: chartTheme.axisTick } }} />
+                          <YAxis yAxisId="left" width={GRID_Y_AXIS_WIDTH.wide} tick={{ fontSize: 10, fill: chartTheme.axisTick }} axisLine={false} tickLine={false} tickMargin={4} tickFormatter={(v) => `$${v}`} label={{ value: 'Brent Crude ($/bbl)', angle: -90, position: 'insideLeft', offset: 10, style: { fontSize: '9px', fill: chartTheme.axisTick } }} />
+                          <YAxis yAxisId="right" orientation="right" width={GRID_Y_AXIS_WIDTH.wide} tick={{ fontSize: 10, fill: chartTheme.axisTick }} axisLine={false} tickLine={false} tickMargin={4} tickFormatter={(v) => `${v} Tk`} label={{ value: 'Retail Diesel (Tk/L)', angle: 90, position: 'insideRight', offset: 10, style: { fontSize: '9px', fill: chartTheme.axisTick } }} />
                           <Tooltip
                             content={({ active, payload }) => {
                               if (!active || !payload?.length) return null;
@@ -6121,7 +6064,7 @@ export function PowerGridExplorer({
                               );
                             }}
                           />
-                          <Legend verticalAlign="top" height={36} wrapperStyle={{ fontSize: '11px' }} />
+                          <GridRechartsLegend verticalAlign="top" height={36} wrapperStyle={{ fontSize: '11px' }} />
                           <Line yAxisId="left" type="monotone" dataKey="globalOil" name="Brent Crude ($/bbl)" stroke="#3b82f6" strokeWidth={2.5} dot={{ fill: '#3b82f6', r: 3 }} />
                           <Area yAxisId="right" type="monotone" dataKey="bdDiesel" name="BD Retail Diesel (Tk/L)" fill="#10b981" fillOpacity={0.05} stroke="#10b981" strokeWidth={2.5} dot={{ fill: '#10b981', r: 3 }} />
                         </ComposedChart>
@@ -6152,11 +6095,11 @@ export function PowerGridExplorer({
                   <div className="grid-explorer-chart-area grid-explorer-chart-area--lg mt-4 !h-[22rem]">
                     {chartsReady ? (
                       <ResponsiveContainer width="100%" height="100%">
-                        <ComposedChart data={globalVsDomesticData.filter(x => parseInt(x.year) >= 2010)} margin={{ top: 10, right: 10, left: 10, bottom: 0 }}>
+                        <ComposedChart accessibilityLayer={false} data={globalVsDomesticData.filter(x => parseInt(x.year) >= 2010)} margin={GRID_EXPLORER_CHART_MARGIN.topLegend}>
                           <CartesianGrid strokeDasharray="3 6" stroke={chartTheme.gridStroke} opacity={0.3} vertical={false} />
                           <XAxis dataKey="year" tick={{ fontSize: 10, fill: chartTheme.axisTick }} axisLine={false} tickLine={false} />
-                          <YAxis yAxisId="left" tick={{ fontSize: 10, fill: chartTheme.axisTick }} axisLine={false} tickLine={false} tickFormatter={(v) => `$${v}`} label={{ value: 'Global LNG ($/MMBtu)', angle: -90, position: 'insideLeft', offset: 10, style: { fontSize: '9px', fill: chartTheme.axisTick } }} />
-                          <YAxis yAxisId="right" orientation="right" tick={{ fontSize: 10, fill: chartTheme.axisTick }} axisLine={false} tickLine={false} tickFormatter={(v) => `${v} Tk`} label={{ value: 'BD Avg Gas Tariff (Tk/CM)', angle: 90, position: 'insideRight', offset: 10, style: { fontSize: '9px', fill: chartTheme.axisTick } }} />
+                          <YAxis yAxisId="left" width={GRID_Y_AXIS_WIDTH.wide} tick={{ fontSize: 10, fill: chartTheme.axisTick }} axisLine={false} tickLine={false} tickMargin={4} tickFormatter={(v) => `$${v}`} label={{ value: 'Global LNG ($/MMBtu)', angle: -90, position: 'insideLeft', offset: 10, style: { fontSize: '9px', fill: chartTheme.axisTick } }} />
+                          <YAxis yAxisId="right" orientation="right" width={GRID_Y_AXIS_WIDTH.wide} tick={{ fontSize: 10, fill: chartTheme.axisTick }} axisLine={false} tickLine={false} tickMargin={4} tickFormatter={(v) => `${v} Tk`} label={{ value: 'BD Avg Gas Tariff (Tk/CM)', angle: 90, position: 'insideRight', offset: 10, style: { fontSize: '9px', fill: chartTheme.axisTick } }} />
                           <Tooltip
                             content={({ active, payload }) => {
                               if (!active || !payload?.length) return null;
@@ -6206,7 +6149,7 @@ export function PowerGridExplorer({
                               );
                             }}
                           />
-                          <Legend verticalAlign="top" height={36} wrapperStyle={{ fontSize: '11px' }} />
+                          <GridRechartsLegend verticalAlign="top" height={36} wrapperStyle={{ fontSize: '11px' }} />
                           <Line yAxisId="left" type="monotone" dataKey="globalGas" name="Global LNG ($/MMBtu)" stroke="#8b5cf6" strokeWidth={2.5} dot={{ fill: '#8b5cf6', r: 3 }} />
                           <Area yAxisId="right" type="monotone" dataKey="bdGas" name="BD Avg Gas Tariff (Tk/CM)" fill="#f59e0b" fillOpacity={0.05} stroke="#f59e0b" strokeWidth={2.5} dot={{ fill: '#f59e0b', r: 3 }} />
                         </ComposedChart>
@@ -6238,10 +6181,10 @@ export function PowerGridExplorer({
                 <div className="grid-explorer-chart-area grid-explorer-chart-area--lg mt-4 !h-[22rem]">
                   {chartsReady ? (
                     <ResponsiveContainer width="100%" height="100%">
-                      <ComposedChart data={globalVsDomesticData.filter(x => parseInt(x.year) >= 2015)} margin={{ top: 10, right: 10, left: 10, bottom: 0 }}>
+                      <ComposedChart accessibilityLayer={false} data={globalVsDomesticData.filter(x => parseInt(x.year) >= 2015)} margin={GRID_EXPLORER_CHART_MARGIN.topLegend}>
                         <CartesianGrid strokeDasharray="3 6" stroke={chartTheme.gridStroke} opacity={0.3} vertical={false} />
                         <XAxis dataKey="year" tick={{ fontSize: 10, fill: chartTheme.axisTick }} axisLine={false} tickLine={false} />
-                        <YAxis tick={{ fontSize: 10, fill: chartTheme.axisTick }} axisLine={false} tickLine={false} tickFormatter={(v) => `${v} Tk`} />
+                        <YAxis width={GRID_Y_AXIS_WIDTH.single} tick={{ fontSize: 10, fill: chartTheme.axisTick }} axisLine={false} tickLine={false} tickMargin={4} tickFormatter={(v) => `${v} Tk`} />
                         <Tooltip
                           content={({ active, payload }) => {
                             if (!active || !payload?.length) return null;
@@ -6291,7 +6234,7 @@ export function PowerGridExplorer({
                             );
                           }}
                         />
-                        <Legend verticalAlign="top" height={36} wrapperStyle={{ fontSize: '11px' }} />
+                            <GridRechartsLegend verticalAlign="top" height={36} wrapperStyle={{ fontSize: '11px' }} />
                         <Line type="monotone" dataKey="globalSolarBdt" name="Global Solar LCOE (Tk/KWh)" stroke="#14b8a6" strokeWidth={2.5} dot={{ fill: '#14b8a6', r: 3 }} />
                         <Line type="monotone" dataKey="bdSolar" name="BD Solar Tariff (Tk/KWh)" stroke="#f43f5e" strokeWidth={2.5} dot={{ fill: '#f43f5e', r: 3 }} />
                       </ComposedChart>
@@ -6311,137 +6254,17 @@ export function PowerGridExplorer({
               </div>
             )}
 
-          {/* Sub-tab 4: Gas Reserve Depletion Projections */}
           {macroSubTab === 'reserves' && (
-            <div className="space-y-6 animate-in fade-in duration-200">
-              <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-xl text-xs text-muted-foreground flex flex-col gap-2">
-                <div>
-                  <strong className="text-destructive">Critical Exhaustion Warning:</strong> Natural gas supplies over 55% of Bangladesh's electricity generation and 70% of industrial heating. The depletion of domestic fields is the single largest structural threat to the economy.
-                </div>
-                <div className="pt-1.5 border-t border-border/30">
-                  Remaining recoverable gas reserves are estimated at <strong>7.63 Tcf</strong>. Without major new deep-water discoveries or massive LNG infrastructure investments, national gas production is expected to decline by over 50% by 2032.
-                </div>
-              </div>
-
-              <div className="grid lg:grid-cols-3 gap-6">
-                {/* Depletion Curve Chart */}
-                <div className="grid-explorer-chart-card card lg:col-span-2">
-                  <div className="grid-explorer-chart-card__head">
-                    <div>
-                      <h3 className="grid-explorer-chart-card__title">Domestic Gas Reserves Exhaustion Timeline</h3>
-                      <p className="grid-explorer-chart-card__sub">Remaining recoverable gas reserves under different demand scenarios (Tcf)</p>
-                    </div>
-                    <span className="grid-explorer-chip text-destructive border-destructive/20 bg-destructive/5">7.63 Tcf Left</span>
-                  </div>
-
-                  <div className="grid-explorer-chart-area grid-explorer-chart-area--lg mt-4 !h-[22rem]">
-                    {chartsReady ? (
-                      <ResponsiveContainer width="100%" height="100%">
-                        <ComposedChart data={reservesDepletionData} margin={{ top: 10, right: 10, left: 10, bottom: 0 }}>
-                          <CartesianGrid strokeDasharray="3 6" stroke={chartTheme.gridStroke} opacity={0.3} vertical={false} />
-                          <XAxis dataKey="year" tick={{ fontSize: 10, fill: chartTheme.axisTick }} axisLine={false} tickLine={false} />
-                          <YAxis tick={{ fontSize: 10, fill: chartTheme.axisTick }} axisLine={false} tickLine={false} tickFormatter={(v) => `${v} Tcf`} />
-                          <Tooltip
-                            content={({ active, payload }) => {
-                              if (!active || !payload?.length) return null;
-                              const d = payload[0].payload;
-                              return (
-                                <div className="p-4 md:p-5 text-card-foreground border border-border/80 rounded-2xl shadow-2xl text-xs md:text-sm leading-relaxed w-72 md:w-80 max-w-[calc(100vw-2rem)] select-none bg-card">
-                                  <div className="font-bold text-foreground border-b border-border/40 pb-1.5 mb-2 flex items-center justify-between gap-2">
-                                    <span>Reserves Remaining {d.year}</span>
-                                    <span className="text-[9px] uppercase font-bold text-destructive tracking-wider">Depletion Forecast</span>
-                                  </div>
-                                  <div className="space-y-2 text-[11px] md:text-xs">
-                                    <div className="flex justify-between">
-                                      <span className="text-muted-foreground">Scenario A (Low Growth):</span>
-                                      <span className="font-bold text-emerald-500">{d.lowGrowth.toFixed(2)} Tcf</span>
-                                    </div>
-                                    <div className="flex justify-between">
-                                      <span className="text-muted-foreground">Scenario B (BAU):</span>
-                                      <span className="font-bold text-amber-500">{d.bau.toFixed(2)} Tcf</span>
-                                    </div>
-                                    <div className="flex justify-between">
-                                      <span className="text-muted-foreground">Scenario C (High Growth):</span>
-                                      <span className="font-bold text-destructive">{d.highGrowth.toFixed(2)} Tcf</span>
-                                    </div>
-                                  </div>
-                                  <div className="mt-2 pt-2 border-t border-border/30 text-[9px] md:text-[10px] text-muted-foreground leading-normal italic font-medium">
-                                    Baseline: 7.63 Tcf remaining recoverable reserves out of 29.74 Tcf initial reserves
-                                  </div>
-                                </div>
-                              );
-                            }}
-                          />
-                          <Legend verticalAlign="top" height={36} wrapperStyle={{ fontSize: '11px' }} />
-                          <Line type="monotone" dataKey="bau" name="Business-As-Usual (Exhaustion: 2035)" stroke="#f59e0b" strokeWidth={3} dot={{ fill: '#f59e0b', r: 4 }} />
-                          <Line type="monotone" dataKey="lowGrowth" name="Low Demand Growth (Exhaustion: 2037)" stroke="#10b981" strokeWidth={2} strokeDasharray="5 5" />
-                          <Line type="monotone" dataKey="highGrowth" name="High Growth Demand (Exhaustion: 2033)" stroke="#ef4444" strokeWidth={2} strokeDasharray="5 5" />
-                        </ComposedChart>
-                      </ResponsiveContainer>
-                    ) : (
-                      <div className="grid-explorer-skeleton" />
-                    )}
-                  </div>
-
-                  {/* Card Explanation Block */}
-                  <div className="bg-muted/10 p-4 border-t border-border/40 text-xs text-muted-foreground space-y-2">
-                    <p><strong>What is being shown?</strong></p>
-                    <ul className="list-disc pl-4 space-y-1.5 leading-relaxed">
-                      <li>
-                        <strong className="text-emerald-600 dark:text-emerald-400 font-semibold">Low Demand Growth Scenario (Exhaustion: 2037):</strong> Assumes aggressive integration of utility-scale solar and industrial efficiency measures, extending the life of the remaining 7.63 Tcf reserves by 2 years.
-                      </li>
-                      <li>
-                        <strong className="text-amber-600 dark:text-amber-400 font-semibold">Business-As-Usual Scenario (Exhaustion: 2035):</strong> The baseline pathway showing complete domestic reservoir depletion in 9 years under standard consumption growth.
-                      </li>
-                      <li>
-                        <strong className="text-destructive font-semibold">High Growth Demand Scenario (Exhaustion: 2033):</strong> A rapid depletion pathway where industrial expansion and unchecked gas-to-power generation exhaust reservoirs in just 7 years.
-                      </li>
-                    </ul>
-                    <p className="leading-relaxed pt-1">
-                      <strong>Analytical Insight:</strong> Bangladesh's heavy reliance on domestic gas (which fuels over 55% of power generation) creates a major structural vulnerability. As reservoirs deplete between 2033 and 2037, the country faces an inevitable pivot toward expensive, volatile global LNG markets. This creates a multi-billion dollar fiscal threat, making it urgent to scale up solar/renewables, expand grid storage, and secure long-term LNG contracts rather than relying on spot imports.
-                    </p>
-                  </div>
-
-                  {/* Card Metadata Footer */}
-                  <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1.5 mt-2 pt-3 border-t border-border/40 text-[10px] text-muted-foreground/80 px-4 pb-4">
-                    <span>Source: <a href="https://www.petrobangla.org.bd/" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline font-semibold">Petrobangla Reservoir Studies &amp; Hydrocarbon Unit Bangladesh</a></span>
-                    <span>Audited by: Ministry of Power, Energy &amp; Mineral Resources (MPEMR)</span>
-                    <span className="font-medium">Reporting Period: Multi-Scenario Exhaustion Forecasts (2026)</span>
-                  </div>
-                </div>
-
-                {/* Scenario breakdown cards */}
-                <div className="space-y-4 flex flex-col justify-between">
-                  <div className="card p-4 border-l-4 border-l-emerald-500 space-y-1">
-                    <div className="font-bold text-xs uppercase text-emerald-500 tracking-wider">Scenario A: Low Demand Growth</div>
-                    <div className="text-xl font-bold text-foreground">Exhaustion: 2037</div>
-                    <p className="text-[11px] text-muted-foreground leading-relaxed">
-                      Assumes massive deployment of utility-scale clean renewables and strong industrial energy conservation programs, extending reserve life by 2 years.
-                    </p>
-                  </div>
-
-                  <div className="card p-4 border-l-4 border-l-amber-500 space-y-1">
-                    <div className="font-bold text-xs uppercase text-amber-500 tracking-wider">Scenario B: Business-As-Usual</div>
-                    <div className="text-xl font-bold text-foreground">Exhaustion: 2035</div>
-                    <p className="text-[11px] text-muted-foreground leading-relaxed">
-                      Assumes typical 4-5% annual gas consumption growth. Domestic extraction rates hit absolute zero in 9 years, triggering massive structural import dependence.
-                    </p>
-                  </div>
-
-                  <div className="card p-4 border-l-4 border-l-red-500 space-y-1">
-                    <div className="font-bold text-xs uppercase text-red-500 tracking-wider">Scenario C: High Growth Demand</div>
-                    <div className="text-xl font-bold text-foreground">Exhaustion: 2033</div>
-                    <p className="text-[11px] text-muted-foreground leading-relaxed">
-                      Assumes rapid post-2026 industrial expansion without efficiency measures. Remaining reserves deplete in under 7 years, causing severe supply gaps.
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
+            <GasReserveDepletionTab
+              selectedDate={selectedDate}
+              systemStatsDate={systemStats?.date || 'Jun 2026'}
+              pgcbGasTotal={totalGasSupply}
+              chartsReady={chartsReady}
+            />
           )}
 
           {macroSubTab === 'insights' && (
-            <div className="space-y-6 animate-in fade-in duration-200">
+            <div className="space-y-6 grid-explorer-subpanel">
               <div className="p-4 bg-primary/10 border border-primary/20 rounded-xl text-xs text-muted-foreground flex flex-col gap-2">
                 <div>
                   <strong className="text-primary font-bold">Analyst &amp; Investor Advisory:</strong> This advisory panel integrates audited financial statements, central bank weighted exchange rate data, and Petrobangla production filings to isolate critical financial clues, cash-flow risks, and industrial utilization metrics for energy sector analysts and public equity investors.

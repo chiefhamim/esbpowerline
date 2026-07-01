@@ -1,0 +1,157 @@
+'use client';
+
+import { useMemo } from 'react';
+import {
+  Area,
+  CartesianGrid,
+  ComposedChart,
+  Line,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from 'recharts';
+import { useChartTheme } from '@/hooks/useChartTheme';
+import {
+  GRID_EXPLORER_CHART_MARGIN,
+  GridChartTooltipShell,
+  gridChartXAxisProps,
+  gridChartYAxisProps,
+  GridRechartsLegend,
+} from '@/components/news/PowerGridChartUI';
+import { formatNumber } from '@/lib/utils';
+import { PB_ARCHIVE_COLORS } from '@/lib/data/petrobangla/constants';
+import { filterTimelineDays } from '@/lib/data/petrobangla/compute';
+import type { PetrobanglaTimelineSummary } from '@/lib/data/petrobangla/types';
+import { ArchiveBadge, ArchiveChartFooter } from './PetrobanglaArchiveShared';
+
+const SECTOR_COLORS = {
+  powerSupply: PB_ARCHIVE_COLORS.domestic,
+  fertSupply: PB_ARCHIVE_COLORS.fertilizer,
+  others: PB_ARCHIVE_COLORS.others,
+  powerDemand: PB_ARCHIVE_COLORS.powerDemand,
+} as const;
+
+type SectorRow = {
+  date: string;
+  powerSupply: number;
+  powerDemand: number;
+  fertSupply: number;
+  fertDemand: number;
+  others: number;
+};
+
+function SectorTooltip({
+  active,
+  payload,
+}: {
+  active?: boolean;
+  payload?: { payload?: SectorRow }[];
+}) {
+  if (!active || !payload?.length) return null;
+  const d = payload[0]?.payload;
+  if (!d) return null;
+
+  return (
+    <GridChartTooltipShell title={d.date} accent={SECTOR_COLORS.powerSupply}>
+      <div className="grid-chart-tooltip__grid">
+        <span className="grid-chart-tooltip__label flex items-center gap-1.5">
+          <span className="grid-chart-tooltip__dot shrink-0" style={{ background: SECTOR_COLORS.powerSupply }} />
+          Power supply
+        </span>
+        <span className="grid-chart-tooltip__value" style={{ color: SECTOR_COLORS.powerSupply }}>
+          {formatNumber(d.powerSupply, 1)} MMCFD
+        </span>
+        <span className="grid-chart-tooltip__label flex items-center gap-1.5">
+          <span className="grid-chart-tooltip__dot shrink-0" style={{ background: SECTOR_COLORS.powerDemand }} />
+          Power demand
+        </span>
+        <span className="grid-chart-tooltip__value" style={{ color: SECTOR_COLORS.powerDemand }}>
+          {formatNumber(d.powerDemand, 1)} MMCFD
+        </span>
+        <span className="grid-chart-tooltip__label flex items-center gap-1.5">
+          <span className="grid-chart-tooltip__dot shrink-0" style={{ background: SECTOR_COLORS.fertSupply }} />
+          Fertilizer supply
+        </span>
+        <span className="grid-chart-tooltip__value" style={{ color: SECTOR_COLORS.fertSupply }}>
+          {formatNumber(d.fertSupply, 1)} MMCFD
+        </span>
+        <span className="grid-chart-tooltip__label flex items-center gap-1.5">
+          <span className="grid-chart-tooltip__dot shrink-0" style={{ background: SECTOR_COLORS.others }} />
+          Others / industry
+        </span>
+        <span className="grid-chart-tooltip__value" style={{ color: SECTOR_COLORS.others }}>
+          {formatNumber(d.others, 1)} MMCFD
+        </span>
+      </div>
+    </GridChartTooltipShell>
+  );
+}
+
+export function PetrobanglaArchiveSectorDistribution({
+  timeline,
+  chartsReady,
+  embedded = false,
+  compact = false,
+}: {
+  timeline: PetrobanglaTimelineSummary;
+  chartsReady: boolean;
+  embedded?: boolean;
+  compact?: boolean;
+}) {
+  const chartTheme = useChartTheme();
+
+  const chartData = useMemo(() => {
+    return filterTimelineDays(timeline.days).map((d) => ({
+      date: d.date,
+      powerSupply: d.power_supply ?? 0,
+      powerDemand: d.power_demand ?? 0,
+      fertSupply: d.fertilizer_supply ?? 0,
+      fertDemand: d.fertilizer_demand ?? 0,
+      others: d.others_mmcfd ?? 0,
+    }));
+  }, [timeline]);
+
+  const wrapperClass = embedded ? 'space-y-4 grid-explorer-gas-subview' : 'grid-explorer-chart-card card';
+
+  return (
+    <div className={wrapperClass}>
+      {!compact && (
+        <div className="grid-explorer-chart-card__head grid-explorer-chart-card__head--border">
+          <div>
+            <h3 className="grid-explorer-chart-card__title">Who Gets the Gas<ArchiveBadge /></h3>
+            <p className="grid-explorer-chart-card__sub">Sector allocation — power, fertilizer, industry/others</p>
+          </div>
+        </div>
+      )}
+
+      <div className="grid-explorer-chart-area grid-explorer-chart-area--lg mt-4">
+        {chartsReady ? (
+          <ResponsiveContainer width="100%" height="100%">
+            <ComposedChart data={chartData} margin={GRID_EXPLORER_CHART_MARGIN.default}>
+              <CartesianGrid strokeDasharray="3 6" stroke={chartTheme.gridStroke} opacity={0.3} vertical={false} />
+              <XAxis {...gridChartXAxisProps(chartTheme, { dataKey: 'date', tickFormatter: (v: string) => v.slice(0, 7), interval: Math.floor(chartData.length / 10) })} />
+              <YAxis {...gridChartYAxisProps(chartTheme, { tickFormatter: (v) => formatNumber(v, 0) })} />
+              <Tooltip content={<SectorTooltip />} cursor={{ stroke: chartTheme.gridStroke, strokeWidth: 1 }} />
+              <GridRechartsLegend wrapperStyle={{ fontSize: '11px' }} />
+              <Area type="monotone" dataKey="others" name="Others/Industry" stackId="s" fill={SECTOR_COLORS.others} stroke={SECTOR_COLORS.others} fillOpacity={0.2} />
+              <Area type="monotone" dataKey="fertSupply" name="Fertilizer supply" stackId="s" fill={SECTOR_COLORS.fertSupply} stroke={SECTOR_COLORS.fertSupply} fillOpacity={0.25} />
+              <Area type="monotone" dataKey="powerSupply" name="Power supply" stackId="s" fill={SECTOR_COLORS.powerSupply} stroke={SECTOR_COLORS.powerSupply} fillOpacity={0.2} />
+              <Line type="monotone" dataKey="powerDemand" name="Power demand" stroke={SECTOR_COLORS.powerDemand} strokeWidth={2} dot={false} strokeDasharray="4 4" />
+            </ComposedChart>
+          </ResponsiveContainer>
+        ) : (
+          <div className="grid-explorer-skeleton" />
+        )}
+      </div>
+
+      {!compact && (
+        <ArchiveChartFooter
+          embedded={embedded}
+          dayCount={chartData.length}
+          caption="Sector shares over time — power demand (dashed) vs what plants actually receive."
+        />
+      )}
+    </div>
+  );
+}

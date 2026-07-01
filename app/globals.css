@@ -5453,9 +5453,7 @@ html.theme-dark .locale-toggle__btn--active:hover {
 .grid-explorer-kpi {
   @apply flex items-center justify-center gap-3.5 relative overflow-hidden transition-all duration-300;
   padding: 0.875rem 1rem !important;
-  background-color: color-mix(in srgb, hsl(var(--card)) 75%, transparent) !important;
-  backdrop-filter: blur(8px) !important;
-  -webkit-backdrop-filter: blur(8px) !important;
+  background-color: color-mix(in srgb, hsl(var(--card)) 92%, transparent) !important;
   border: 1px solid hsl(var(--border) / 0.55) !important;
 }
 
@@ -5488,7 +5486,7 @@ html.theme-dark .locale-toggle__btn--active:hover {
 }
 
 .grid-explorer-panel {
-  animation: grid-panel-in 240ms ease;
+  animation: grid-panel-in 180ms ease;
 }
 
 @keyframes grid-panel-in {
@@ -5496,8 +5494,1178 @@ html.theme-dark .locale-toggle__btn--active:hover {
   to { opacity: 1; transform: translateY(0); }
 }
 
+.grid-explorer-subpanel {
+  /* Instant macro sub-tab swap — avoids stacked entrance animations */
+}
+
+.grid-explorer-chart-area--fixed {
+  height: 18.75rem;
+  min-height: 18.75rem;
+}
+
+.grid-explorer-chart-area--macro {
+  margin-left: 0;
+  margin-right: 0;
+  overflow: visible;
+  height: 21.5rem;
+  min-height: 21.5rem;
+}
+
+.grid-explorer-chart-frame {
+  width: 100%;
+  overflow: visible;
+  padding-inline: 0.125rem;
+}
+
+.grid-explorer-chart-frame--with-legend + .grid-explorer-chart-note {
+  border-top: none;
+  margin-top: 0.375rem;
+  padding-top: 0.75rem;
+}
+
+.grid-explorer-chart-area--plot {
+  width: 100%;
+  margin-left: 0;
+  margin-right: 0;
+  overflow: visible;
+  height: 21.5rem;
+  min-height: 21.5rem;
+  position: relative;
+}
+
+.grid-explorer-chart-plot {
+  width: 100%;
+  position: relative;
+}
+
+.grid-explorer .grid-explorer-chart-frame .recharts-responsive-container {
+  width: 100% !important;
+}
+
+.grid-chart-external-legend {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 0.5rem 1.35rem;
+  margin: 0.5rem 0.25rem 0;
+  padding: 0 0.25rem;
+  list-style: none;
+}
+
+.grid-chart-external-legend--bottom {
+  margin: 0.35rem 0.25rem 0;
+  padding: 0.5rem 0.25rem 0;
+  border-top: 1px solid hsl(var(--border) / 0.35);
+}
+
+.grid-chart-external-legend__item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 10px;
+  font-weight: 600;
+  line-height: 1.45;
+}
+
+.grid-chart-external-legend__label {
+  white-space: nowrap;
+}
+
+.grid-chart-external-legend__glyph {
+  flex-shrink: 0;
+  display: block;
+  background: var(--legend-color);
+}
+
+.grid-chart-external-legend__glyph--bar {
+  width: 0.7rem;
+  height: 0.5rem;
+  border-radius: 0.15rem;
+}
+
+.grid-chart-external-legend__glyph--line {
+  width: 0.95rem;
+  height: 0.14rem;
+  border-radius: 999px;
+  position: relative;
+}
+
+.grid-chart-external-legend__glyph--line::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0.32rem;
+  height: 0.32rem;
+  border-radius: 999px;
+  background: var(--legend-color);
+  border: 1.5px solid hsl(var(--background));
+  transform: translate(-50%, -50%);
+}
+
+.grid-chart-external-legend__glyph--area {
+  width: 0.7rem;
+  height: 0.5rem;
+  border-radius: 0.15rem;
+  opacity: 0.6;
+}
+
+.grid-chart-external-legend__glyph--dashed {
+  width: 0.95rem;
+  height: 0;
+  border-top: 2px dashed var(--legend-color);
+  background: transparent;
+}
+
+.grid-explorer-chart-note {
+  border-top: 1px solid hsl(var(--border) / 0.4);
+}
+
+.grid-explorer .recharts-legend-wrapper {
+  width: 100% !important;
+  left: 0 !important;
+  padding-inline: 0.75rem;
+}
+
+.grid-explorer .recharts-legend-item {
+  margin-right: 1rem !important;
+  margin-bottom: 0.2rem !important;
+}
+
+.grid-explorer .recharts-legend-item-text {
+  font-size: 10px !important;
+  overflow: visible !important;
+  margin-left: 0.2rem !important;
+}
+
+.grid-explorer .recharts-legend-item .recharts-surface {
+  overflow: visible;
+}
+
+.grid-explorer .recharts-default-legend {
+  display: flex !important;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 0.35rem 0.45rem;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+.grid-explorer .recharts-cartesian-axis-tick-value {
+  overflow: visible;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .grid-explorer-panel {
+    animation: none;
+  }
+
+  .grid-glow-blob-1,
+  .grid-glow-blob-2,
+  .grid-glow-blob-3 {
+    animation: none !important;
+  }
+}
+
+/* Gas & LNG tab — unified section chrome */
+.grid-explorer-gas-hero {
+  @apply p-5 space-y-4;
+  background: linear-gradient(
+    135deg,
+    hsl(var(--muted) / 0.12) 0%,
+    hsl(var(--background)) 55%,
+    hsl(var(--primary) / 0.04) 100%
+  );
+  border-color: hsl(var(--border) / 0.55);
+}
+
+.grid-explorer-gas-hero__head {
+  @apply flex flex-col lg:flex-row lg:items-start justify-between gap-4;
+}
+
+.grid-explorer-gas-hero__icon {
+  @apply p-2.5 rounded-xl bg-sky-500/10 border border-sky-500/20 shrink-0;
+}
+
+.grid-explorer-gas-hero__title {
+  @apply font-display font-bold text-base text-foreground;
+}
+
+.grid-explorer-gas-hero__sub {
+  @apply text-xs text-muted-foreground mt-1 leading-relaxed max-w-3xl;
+}
+
+.grid-explorer-gas-hero__note {
+  @apply text-[11px] text-muted-foreground leading-relaxed border-t border-border/30 pt-3;
+}
+
+.grid-explorer-gas-hero__modes {
+  @apply lg:text-right;
+}
+
+.grid-explorer-gas-layer-pills {
+  @apply flex flex-wrap gap-2;
+}
+
+.grid-explorer-gas-layer-pill {
+  @apply inline-flex items-center gap-1.5 text-[11px] px-3 py-1.5 rounded-full bg-muted/30 border border-border/50 text-muted-foreground;
+}
+
+.grid-explorer-gas-rail {
+  @apply flex items-start gap-3 pt-2 pb-1;
+}
+
+.grid-explorer-gas-rail__icon {
+  @apply p-2 rounded-lg bg-muted/25 border border-border/40 shrink-0 mt-0.5;
+}
+
+.grid-explorer-gas-rail__title {
+  @apply font-display font-bold text-sm text-foreground;
+}
+
+.grid-explorer-gas-rail__sub {
+  @apply text-[11px] text-muted-foreground mt-0.5 leading-relaxed max-w-2xl;
+}
+
+.grid-explorer-gas-daily-group {
+  @apply relative;
+}
+
+.grid-explorer-gas-subview .grid-explorer-chart-card__head {
+  @apply mb-3 pb-0;
+}
+
+.grid-explorer-gas-subview .grid-explorer-chart-card__head--border {
+  @apply mb-3 pb-3 border-b border-border/30;
+}
+
+.grid-explorer-gas-subview .grid-explorer-chart-card__title {
+  @apply text-sm;
+}
+
+.grid-explorer-macro-gas-block {
+  @apply rounded-2xl border border-border/40 bg-muted/5 overflow-visible;
+}
+
+.grid-explorer-macro-gas-block__head {
+  @apply flex items-start gap-3 px-4 py-3 border-b border-border/30 bg-muted/10;
+}
+
+.grid-explorer-macro-gas-block__icon {
+  @apply p-2 rounded-lg bg-background/80 border border-border/40 shrink-0;
+}
+
+.grid-explorer-macro-gas-block__body {
+  @apply p-4 space-y-4;
+}
+
+.grid-explorer-macro-gas-stat-row {
+  @apply grid grid-cols-2 gap-2;
+}
+
+.grid-explorer-macro-gas-stat {
+  @apply flex flex-col gap-0.5 p-3 rounded-xl border border-border/35 bg-background/60;
+}
+
+.grid-explorer-macro-gas-stat__label {
+  @apply text-[9px] font-bold uppercase tracking-wider text-muted-foreground;
+}
+
+.grid-explorer-macro-gas-stat__value {
+  @apply text-lg font-bold tabular-nums text-foreground leading-tight;
+}
+
+.grid-explorer-macro-gas-stat__hint {
+  @apply text-[10px] text-muted-foreground leading-snug;
+}
+
+.grid-explorer-macro-gas-day-banner {
+  @apply p-3 rounded-xl border border-border/35 bg-background/50;
+}
+
+/* Gas Reserve Depletion macro sub-tab */
+.gas-reserve-tab {
+  @apply space-y-5;
+  animation: grid-panel-in 180ms ease;
+}
+
+.gas-reserve-zone-eyebrow {
+  @apply text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-1;
+}
+
+.gas-reserve-zone-title {
+  @apply font-display font-bold text-base text-foreground leading-tight;
+}
+
+.gas-reserve-zone-sub {
+  @apply text-[11px] text-muted-foreground mt-1 leading-relaxed;
+}
+
+.gas-reserve-zone-head {
+  @apply flex items-start gap-3 px-5 pt-5 pb-4 border-b border-border/35;
+}
+
+.gas-reserve-zone-head--compact {
+  @apply py-3 px-5;
+}
+
+.gas-reserve-zone-head--rail {
+  @apply shrink-0;
+}
+
+.gas-reserve-zone {
+  @apply flex flex-col min-w-0;
+}
+
+.gas-reserve-zone--live {
+  @apply bg-muted/5;
+}
+
+.gas-reserve-zone-foot {
+  @apply mt-auto;
+}
+
+.gas-reserve-zone-split {
+  @apply h-px bg-border/50 mx-5;
+}
+
+.gas-reserve-hero {
+  @apply p-5 space-y-4 overflow-visible;
+  background: linear-gradient(
+    145deg,
+    hsl(var(--muted) / 0.14) 0%,
+    hsl(var(--background)) 45%,
+    hsl(199 89% 48% / 0.05) 100%
+  );
+  border-color: hsl(var(--border) / 0.55);
+}
+
+.gas-reserve-hero__head {
+  @apply flex flex-wrap items-start gap-4;
+}
+
+.gas-reserve-hero__icon {
+  @apply p-3 rounded-2xl bg-sky-500/10 border border-sky-500/20 shrink-0;
+}
+
+.gas-reserve-hero__title {
+  @apply font-display font-bold text-lg text-foreground;
+}
+
+.gas-reserve-hero__sub {
+  @apply text-sm text-muted-foreground mt-1 leading-relaxed max-w-2xl;
+}
+
+.gas-reserve-metric-band {
+  @apply grid grid-cols-2 lg:grid-cols-4 gap-2.5;
+}
+
+.gas-reserve-metric {
+  @apply flex flex-col gap-1 p-3.5 rounded-xl border border-border/35 bg-background/55;
+}
+
+.gas-reserve-metric__top {
+  @apply flex items-center gap-1.5 min-w-0;
+}
+
+.gas-reserve-metric__label {
+  @apply text-[9px] font-bold uppercase tracking-wider text-muted-foreground truncate;
+}
+
+.gas-reserve-metric__value {
+  @apply text-2xl font-bold tabular-nums text-foreground leading-none;
+}
+
+.gas-reserve-metric__hint {
+  @apply text-[9px] text-muted-foreground leading-snug;
+}
+
+/* Depletion trajectory + scenarios — single full-width chart card */
+.gas-reserve-depletion__body {
+  @apply px-5 py-4 space-y-4;
+}
+
+.gas-reserve-depletion__body .grid-chart-external-legend {
+  @apply px-0 mb-1;
+}
+
+.gas-reserve-depletion__chart {
+  @apply w-full;
+  min-height: 17rem;
+  height: 17rem;
+}
+
+@media (min-width: 1024px) {
+  .gas-reserve-depletion__chart {
+    min-height: 20rem;
+    height: 20rem;
+  }
+}
+
+.gas-reserve-scenario-band {
+  @apply grid grid-cols-1 sm:grid-cols-3 gap-2.5;
+}
+
+.gas-reserve-scenario-tile {
+  @apply flex flex-col gap-1 p-3.5 rounded-xl border border-border/35 bg-background/55 text-left transition-all duration-150 cursor-pointer;
+}
+
+.gas-reserve-scenario-tile:hover,
+.gas-reserve-scenario-tile--highlight {
+  @apply border-border/55 bg-background/80;
+  background: color-mix(in srgb, var(--scenario-color) 4%, hsl(var(--background)));
+}
+
+.gas-reserve-scenario-tile--selected {
+  @apply shadow-md border-border/60;
+  background: color-mix(in srgb, var(--scenario-color) 7%, hsl(var(--background)));
+  border-color: color-mix(in srgb, var(--scenario-color) 28%, hsl(var(--border)));
+}
+
+.gas-reserve-scenario-tile__top {
+  @apply flex items-center gap-1.5 min-w-0 flex-wrap;
+}
+
+.gas-reserve-scenario-tile__label {
+  @apply text-[9px] font-bold uppercase tracking-wider text-muted-foreground;
+}
+
+.gas-reserve-scenario-tile__chip {
+  @apply text-[8px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-full border ml-auto;
+}
+
+.gas-reserve-scenario-tile__year {
+  @apply text-2xl font-bold tabular-nums leading-none;
+}
+
+.gas-reserve-scenario-tile__hint {
+  @apply text-[9px] text-muted-foreground leading-snug;
+}
+
+.gas-reserve-scenario-compare__row--active {
+  background: color-mix(in srgb, var(--scenario-color) 6%, hsl(var(--muted) / 0.1));
+}
+
+.gas-reserve-scenario-detail {
+  @apply rounded-xl border border-border/40 bg-card/90 p-4 relative overflow-hidden;
+}
+
+.gas-reserve-scenario-detail::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--scenario-color) 8%, transparent) 0%,
+    transparent 55%
+  );
+  pointer-events: none;
+}
+
+.gas-reserve-scenario-detail__head {
+  @apply flex items-start gap-3 relative;
+}
+
+.gas-reserve-scenario-detail__icon {
+  @apply p-2 rounded-xl border shrink-0;
+  border-color: color-mix(in srgb, var(--scenario-color) 25%, hsl(var(--border)));
+}
+
+.gas-reserve-scenario-detail__title {
+  @apply text-sm font-bold text-foreground leading-snug;
+}
+
+.gas-reserve-scenario-detail__desc {
+  @apply text-[11px] text-muted-foreground mt-1 leading-relaxed;
+}
+
+.gas-reserve-scenario-detail__year {
+  @apply text-2xl font-bold text-foreground tabular-nums leading-none;
+}
+
+.gas-reserve-scenario-detail__stats {
+  @apply grid grid-cols-2 lg:grid-cols-4 gap-2 mt-3 relative;
+}
+
+.gas-reserve-scenario-detail__stat {
+  @apply rounded-xl border border-border/35 bg-background/60 px-2.5 py-2;
+}
+
+.gas-reserve-scenario-detail__stat-label {
+  @apply block text-[9px] font-semibold uppercase tracking-wider text-muted-foreground;
+}
+
+.gas-reserve-scenario-detail__stat-value {
+  @apply block text-sm font-bold text-foreground mt-0.5 tabular-nums;
+}
+
+.gas-reserve-scenario-detail__milestones {
+  @apply mt-3 rounded-xl border border-border/35 bg-background/50 p-2.5 relative;
+}
+
+.gas-reserve-scenario-detail__milestones-head {
+  @apply flex justify-between text-[9px] font-semibold uppercase tracking-wider text-muted-foreground mb-2;
+}
+
+.gas-reserve-scenario-detail__milestones-grid {
+  @apply grid grid-cols-3 sm:grid-cols-5 gap-1.5;
+}
+
+.gas-reserve-scenario-detail__milestone {
+  @apply rounded-lg border border-border/30 bg-card/80 px-1.5 py-1.5 text-center;
+}
+
+.gas-reserve-scenario-detail__milestone--end {
+  background: color-mix(in srgb, var(--scenario-color) 8%, hsl(var(--card)));
+  border-color: color-mix(in srgb, var(--scenario-color) 22%, hsl(var(--border)));
+}
+
+.gas-reserve-scenario-detail__milestone-year {
+  @apply block text-[8px] font-bold uppercase tracking-wider text-muted-foreground;
+}
+
+.gas-reserve-scenario-detail__milestone-value {
+  @apply block text-[11px] font-bold text-foreground mt-0.5 tabular-nums;
+}
+
+.gas-reserve-scenario-detail__endowment-note {
+  @apply text-[9px] text-muted-foreground mt-2 leading-snug;
+}
+
+.gas-reserve-scenario-detail__drivers {
+  @apply mt-3 flex flex-wrap gap-x-4 gap-y-1 text-[10px] text-muted-foreground relative;
+  list-style: none;
+  padding: 0;
+}
+
+.gas-reserve-scenario-detail__drivers li {
+  @apply flex items-start gap-1.5 leading-snug;
+}
+
+.gas-reserve-scenario-detail__drivers li::before {
+  content: '';
+  @apply w-1 h-1 rounded-full mt-1.5 shrink-0;
+  background: var(--scenario-color);
+}
+
+.gas-reserve-scenario-detail__implication {
+  @apply mt-2 text-[10px] text-muted-foreground leading-relaxed italic relative;
+}
+
+.gas-reserve-scenario-detail__runway-wrap {
+  @apply mt-3 relative;
+}
+
+.gas-reserve-scenario-detail__runway {
+  @apply h-2 rounded-full bg-muted/50 overflow-visible relative;
+}
+
+.gas-reserve-scenario-detail__runway-fill {
+  @apply h-full rounded-full transition-all duration-300;
+}
+
+.gas-reserve-scenario-detail__runway-marker {
+  @apply absolute top-1/2 -translate-y-1/2 w-2.5 h-2.5 rounded-full bg-background border-2 -ml-[5px];
+}
+
+.gas-reserve-chart-plot--flex {
+  @apply flex-1 min-h-[14rem] !h-auto;
+}
+
+
+
+.gas-reserve-live-week__body--fill {
+  @apply flex flex-col flex-1 min-h-0 h-full px-4 pb-4 pt-2;
+}
+
+.gas-reserve-live-week__chart-wrap {
+  @apply flex flex-col flex-1 min-h-0;
+}
+
+.gas-reserve-live-week__chart-area {
+  @apply flex-1 min-h-[12rem] !h-auto;
+}
+
+/* Field evidence panel */
+.gas-reserve-evidence {
+  @apply p-0 overflow-visible;
+}
+
+.gas-reserve-evidence__head {
+  @apply flex flex-wrap items-start gap-4 px-5 pt-5 pb-4;
+}
+
+.gas-reserve-evidence__meta {
+  @apply text-[11px] text-muted-foreground mt-2 flex flex-wrap items-center gap-x-2 gap-y-1;
+}
+
+.gas-reserve-evidence__meta .text-border {
+  @apply text-border/60;
+}
+
+.gas-reserve-evidence__mode {
+  @apply text-right;
+}
+
+.gas-reserve-evidence__mode-label {
+  @apply text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-1.5 block;
+}
+
+.gas-reserve-evidence__body {
+  @apply px-5 py-4 space-y-4;
+}
+
+.gas-reserve-evidence__notes {
+  @apply border-t border-border/40 pt-4 space-y-3;
+}
+
+.gas-reserve-evidence__notes .bg-muted\/10 {
+  @apply rounded-xl border border-border/30;
+}
+
+.gas-reserve-archive-panel {
+  @apply space-y-4;
+}
+
+.gas-reserve-archive-panel--embed {
+  @apply space-y-3;
+}
+
+.gas-reserve-archive-panel--embed .grid-explorer-kpi-strip {
+  @apply !grid-cols-2 md:!grid-cols-3 xl:!grid-cols-6;
+}
+
+.gas-reserve-archive-kpi-row {
+  @apply rounded-xl border border-border/35 bg-muted/5 p-2;
+}
+
+.gas-reserve-archive-explorer {
+  @apply space-y-3;
+}
+
+.gas-reserve-archive-view-shell {
+  @apply rounded-xl border border-border/35 bg-background/50 overflow-hidden;
+}
+
+.gas-reserve-archive-view-shell__inner {
+  @apply p-4;
+  min-height: 20rem;
+}
+
+.gas-reserve-archive-view-toolbar {
+  @apply flex flex-wrap items-start justify-between gap-3;
+}
+
+.gas-reserve-archive-view-toolbar__title {
+  @apply text-sm font-bold text-foreground leading-tight;
+}
+
+.gas-reserve-archive-view-toolbar__sub {
+  @apply text-[11px] text-muted-foreground mt-0.5 leading-relaxed;
+}
+
+.gas-reserve-archive-view-toolbar__controls {
+  @apply flex flex-wrap items-center gap-2 shrink-0;
+}
+
+.gas-reserve-archive-context {
+  @apply rounded-xl border border-border/35 bg-muted/10 px-4 py-3 space-y-3;
+}
+
+.gas-reserve-archive-context__head {
+  @apply flex flex-wrap items-center gap-2;
+}
+
+.gas-reserve-archive-context__pill {
+  @apply inline-flex items-center gap-1.5 text-[11px] font-semibold text-foreground px-2.5 py-1 rounded-full bg-background/80 border border-border/40;
+}
+
+.gas-reserve-archive-context__pill--sync {
+  @apply border-emerald-500/25 bg-emerald-500/5;
+}
+
+.gas-reserve-archive-context__stats {
+  @apply grid grid-cols-1 sm:grid-cols-3 gap-2;
+}
+
+.gas-reserve-archive-context__stat-card {
+  @apply flex items-start gap-2 rounded-lg border border-border/30 bg-background/50 px-3 py-2;
+}
+
+.gas-reserve-archive-context__stat-card--decline {
+  @apply border-red-500/15 bg-red-500/5;
+}
+
+.gas-reserve-archive-context__stat-label {
+  @apply block text-[9px] font-bold uppercase tracking-wider text-muted-foreground;
+}
+
+.gas-reserve-archive-context__stat-value {
+  @apply block text-sm font-bold tabular-nums text-foreground leading-tight;
+}
+
+.gas-reserve-archive-context__stat-date {
+  @apply block text-[10px] text-muted-foreground;
+}
+
+.gas-reserve-archive-context__summary {
+  @apply text-[11px] text-muted-foreground leading-relaxed m-0 border-t border-border/30 pt-2.5;
+}
+
+.gas-reserve-archive-tabs {
+  @apply flex flex-wrap gap-1 p-1 rounded-xl bg-muted/20 border border-border/40;
+}
+
+.gas-reserve-archive-tabs__btn {
+  @apply flex-1 min-w-[4.5rem] px-2.5 py-2 rounded-lg text-[10px] font-semibold text-muted-foreground transition-all duration-150;
+}
+
+.gas-reserve-archive-tabs__btn:hover {
+  @apply text-foreground bg-background/60;
+}
+
+.gas-reserve-archive-tabs__btn--active {
+  @apply bg-background text-primary shadow-sm border border-primary/20;
+}
+
+.gas-reserve-segmented {
+  @apply inline-flex p-0.5 rounded-xl bg-muted/25 border border-border/40 gap-0.5;
+}
+
+.gas-reserve-segmented__btn {
+  @apply px-2.5 py-1.5 rounded-lg text-[10px] font-semibold text-muted-foreground transition-all;
+}
+
+.gas-reserve-segmented__btn--active {
+  @apply bg-background text-primary shadow-sm border border-border/50;
+}
+
+.gas-reserve-archive-timeline {
+  min-height: 17rem;
+  height: 17rem;
+}
+
+@media (min-width: 1024px) {
+  .gas-reserve-archive-timeline {
+    min-height: 19rem;
+    height: 19rem;
+  }
+}
+
+.gas-reserve-archive-chart-block {
+  @apply flex flex-col;
+}
+
+.gas-reserve-archive-chart-block__plot .recharts-legend-wrapper {
+  display: none !important;
+}
+
+.gas-reserve-archive-context__stat-card--peak {
+  @apply border-sky-500/25 bg-sky-500/[0.04];
+}
+
+.gas-reserve-archive-context__stat-card--low {
+  @apply border-amber-500/25 bg-amber-500/[0.04];
+}
+
+.gas-reserve-archive-range {
+  @apply inline-flex p-0.5 rounded-xl bg-muted/25 border border-border/40 gap-0.5 shrink-0;
+}
+
+.gas-reserve-archive-range__btn {
+  @apply px-2.5 py-1.5 rounded-lg text-[10px] font-semibold text-muted-foreground transition-all;
+}
+
+.gas-reserve-archive-range__btn:hover {
+  @apply text-foreground bg-background/60;
+}
+
+.gas-reserve-archive-range__btn--active {
+  @apply bg-background text-primary shadow-sm border border-primary/20;
+}
+
+.gas-reserve-archive-range__btn--toggle {
+  @apply border border-border/40 bg-background/40;
+}
+
+.gas-reserve-archive-select {
+  @apply flex flex-col gap-1.5 min-w-0 flex-1;
+}
+
+.gas-reserve-archive-select__label {
+  @apply text-[9px] font-bold uppercase tracking-wider text-muted-foreground px-0.5;
+}
+
+.gas-reserve-archive-select__wrap {
+  @apply relative;
+}
+
+.gas-reserve-archive-select__wrap--sky .gas-reserve-archive-select__input:focus {
+  @apply ring-sky-500/25 border-sky-500/30;
+}
+
+.gas-reserve-archive-select__wrap--emerald .gas-reserve-archive-select__input:focus {
+  @apply ring-emerald-500/25 border-emerald-500/30;
+}
+
+.gas-reserve-archive-select__input {
+  @apply w-full appearance-none px-3 py-2.5 pr-9 text-[11px] font-semibold rounded-xl border border-border/40 bg-muted/20 text-foreground shadow-sm focus:outline-none focus:ring-2 focus:ring-primary/20 cursor-pointer transition-colors;
+}
+
+.gas-reserve-archive-select__chevron {
+  @apply absolute right-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground pointer-events-none;
+}
+
+.gas-reserve-archive-select__hint {
+  @apply text-[9px] text-muted-foreground px-0.5;
+}
+
+.gas-reserve-field-sort {
+  @apply flex-col items-center gap-3 text-center;
+}
+
+.gas-reserve-field-sort__title {
+  @apply w-full;
+}
+
+.gas-reserve-field-sort__chips {
+  @apply flex flex-wrap gap-1.5 justify-center w-full;
+}
+
+.gas-reserve-compare-date-group {
+  @apply flex flex-col gap-2 min-w-0 flex-1;
+}
+
+.gas-reserve-compare-date-group__label {
+  @apply text-[9px] font-bold uppercase tracking-wider text-muted-foreground px-0.5;
+}
+
+.gas-reserve-compare-date-group__hint {
+  @apply text-[9px] text-muted-foreground px-0.5;
+}
+
+.gas-reserve-compare-date-grid {
+  @apply grid grid-cols-3 gap-2 w-full;
+}
+
+.gas-reserve-compare-date-grid__cell {
+  @apply min-w-0;
+}
+
+.gas-reserve-compare-date-group--sky .gas-reserve-compare-date-grid button:focus {
+  @apply border-sky-500/30;
+}
+
+.gas-reserve-compare-date-group--emerald .gas-reserve-compare-date-grid button:focus {
+  @apply border-emerald-500/30;
+}
+
+.gas-reserve-live-week-range {
+  @apply flex flex-wrap items-center justify-center gap-1.5;
+}
+
+.gas-reserve-compare-toolbar {
+  @apply flex flex-col gap-3;
+}
+
+.gas-reserve-compare-toolbar__dates {
+  @apply grid gap-4 sm:grid-cols-[1fr_auto_1fr] sm:items-start;
+}
+
+.gas-reserve-compare-toolbar__arrow {
+  @apply hidden sm:flex items-center justify-center self-center mt-5;
+}
+
+.gas-reserve-compare-toolbar__presets {
+  @apply flex flex-wrap gap-2;
+}
+
+.gas-reserve-compare-panels {
+  @apply grid gap-3 md:grid-cols-2;
+}
+
+.gas-reserve-compare-panel {
+  @apply rounded-xl border border-border/40 bg-background/60 overflow-hidden;
+}
+
+.gas-reserve-compare-panel--left {
+  @apply border-sky-500/20 bg-sky-500/[0.03];
+}
+
+.gas-reserve-compare-panel--right {
+  @apply border-emerald-500/20 bg-emerald-500/[0.03];
+}
+
+.gas-reserve-compare-panel__head {
+  @apply flex items-center justify-between gap-2 px-3 py-2.5 border-b border-border/30 bg-muted/10;
+}
+
+.gas-reserve-compare-panel__date {
+  @apply text-sm font-bold text-foreground tabular-nums;
+}
+
+.gas-reserve-compare-panel__delta {
+  @apply text-[10px] font-bold tabular-nums;
+}
+
+.gas-reserve-compare-panel__stats {
+  @apply grid grid-cols-3 gap-2 p-3 border-b border-border/25;
+}
+
+.gas-reserve-compare-panel__stat {
+  @apply text-center;
+}
+
+.gas-reserve-compare-panel__stat-label {
+  @apply block text-[8px] font-bold uppercase tracking-wider text-muted-foreground;
+}
+
+.gas-reserve-compare-panel__stat-value {
+  @apply block text-sm font-bold text-foreground tabular-nums mt-0.5;
+}
+
+.gas-reserve-compare-panel__table {
+  @apply max-h-44 m-0;
+}
+
+.gas-reserve-compare-panel__foot {
+  @apply px-3 py-2 text-[10px] text-muted-foreground border-t border-border/25;
+}
+
+.gas-reserve-compare-movers {
+  @apply rounded-xl border border-border/35 bg-muted/10 px-3 py-3;
+}
+
+.gas-reserve-compare-movers__title {
+  @apply text-[9px] font-bold uppercase tracking-wider text-muted-foreground mb-2;
+}
+
+.gas-reserve-compare-movers__chips {
+  @apply flex flex-wrap gap-1.5;
+}
+
+.gas-reserve-compare-movers__chip {
+  @apply text-[10px] font-semibold px-2 py-1 rounded-lg border tabular-nums;
+}
+
+.gas-reserve-compare-movers__chip--up {
+  @apply border-emerald-500/25 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300;
+}
+
+.gas-reserve-compare-movers__chip--down {
+  @apply border-red-500/25 bg-red-500/10 text-red-600 dark:text-red-400;
+}
+
+.gas-reserve-scenario-rail {
+  @apply flex flex-col overflow-visible;
+  background: linear-gradient(
+    165deg,
+    hsl(var(--muted) / 0.08) 0%,
+    hsl(var(--background)) 50%,
+    hsl(var(--background)) 100%
+  );
+}
+
+.gas-reserve-scenario-rail__legend {
+  @apply shrink-0 pb-2;
+}
+
+.gas-reserve-scenario-rail__cards {
+  @apply flex flex-col gap-3;
+}
+
+.gas-reserve-endowment-bar__track {
+  @apply flex h-2.5 rounded-full overflow-hidden bg-muted/40 border border-border/40;
+}
+
+.gas-reserve-endowment-bar__fill--extracted {
+  @apply h-full bg-gradient-to-r from-amber-500/80 to-red-500/90 transition-all duration-500;
+}
+
+.gas-reserve-endowment-bar__fill--remaining {
+  @apply h-full bg-gradient-to-r from-sky-500/70 to-emerald-500/60 transition-all duration-500;
+}
+
+.gas-reserve-scenario-compare {
+  @apply rounded-xl border border-border/40 bg-muted/10 overflow-hidden text-[10px];
+}
+
+.gas-reserve-scenario-compare__head,
+.gas-reserve-scenario-compare__row {
+  @apply grid grid-cols-4 gap-2 px-3 py-2 tabular-nums;
+}
+
+.gas-reserve-scenario-compare__head {
+  @apply font-bold uppercase tracking-wider text-muted-foreground border-b border-border/35 bg-background/50;
+}
+
+.gas-reserve-scenario-compare__row {
+  @apply text-muted-foreground border-b border-border/20 last:border-b-0;
+}
+
+.gas-reserve-scenario-compare__name {
+  @apply font-bold;
+}
+
+.gas-reserve-scenario-card {
+  @apply p-3.5 rounded-xl border border-border/40 bg-card/90 relative overflow-visible shrink-0;
+}
+
+.gas-reserve-scenario-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--scenario-color) 8%, transparent) 0%,
+    transparent 55%
+  );
+  pointer-events: none;
+}
+
+.gas-reserve-scenario-card:hover,
+.gas-reserve-scenario-card--active {
+  @apply shadow-lg border-border/55;
+  background: color-mix(in srgb, var(--scenario-color) 5%, hsl(var(--card)));
+  transform: translateY(-1px);
+}
+
+.gas-reserve-scenario-card__head {
+  @apply flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 relative;
+}
+
+.gas-reserve-scenario-card__icon {
+  @apply p-2 rounded-xl border shrink-0;
+  border-color: color-mix(in srgb, var(--scenario-color) 25%, hsl(var(--border)));
+}
+
+.gas-reserve-scenario-card__label {
+  @apply text-sm font-bold text-foreground leading-snug break-words;
+}
+
+.gas-reserve-scenario-card__chip {
+  @apply text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border;
+}
+
+.gas-reserve-scenario-card__year {
+  @apply text-2xl font-bold text-foreground tabular-nums leading-none;
+}
+
+.gas-reserve-scenario-card__desc {
+  @apply text-[11px] text-muted-foreground leading-relaxed;
+}
+
+.gas-reserve-scenario-card__stats {
+  @apply grid grid-cols-2 gap-2 mt-3 relative overflow-visible;
+}
+
+.gas-reserve-scenario-card__stat {
+  @apply rounded-xl border border-border/35 bg-background/60 px-2.5 py-2 min-w-0 overflow-visible;
+}
+
+.gas-reserve-scenario-card__stat-label {
+  @apply block text-[9px] font-semibold uppercase tracking-wider text-muted-foreground leading-tight;
+}
+
+.gas-reserve-scenario-card__stat-value {
+  @apply block text-sm font-bold text-foreground mt-0.5 tabular-nums leading-tight break-words;
+}
+
+.gas-reserve-scenario-card__drivers {
+  @apply mt-3 space-y-1 text-[10px] text-muted-foreground relative;
+  list-style: none;
+  padding: 0;
+}
+
+.gas-reserve-scenario-card__drivers li {
+  @apply flex items-start gap-1.5 leading-snug;
+}
+
+.gas-reserve-scenario-card__drivers li::before {
+  content: '';
+  @apply w-1 h-1 rounded-full mt-1.5 shrink-0;
+  background: var(--scenario-color);
+}
+
+.gas-reserve-scenario-card__milestones {
+  @apply mt-3 rounded-xl border border-border/35 bg-background/50 p-2.5 relative;
+}
+
+.gas-reserve-scenario-card__milestones-head {
+  @apply flex justify-between text-[9px] font-semibold uppercase tracking-wider text-muted-foreground mb-2;
+}
+
+.gas-reserve-scenario-card__milestones-grid {
+  @apply grid grid-cols-5 gap-1.5;
+}
+
+.gas-reserve-scenario-card__milestone {
+  @apply rounded-lg border border-border/30 bg-card/80 px-1.5 py-1.5 text-center;
+}
+
+.gas-reserve-scenario-card__milestone--end {
+  background: color-mix(in srgb, var(--scenario-color) 8%, hsl(var(--card)));
+  border-color: color-mix(in srgb, var(--scenario-color) 22%, hsl(var(--border)));
+}
+
+.gas-reserve-scenario-card__milestone-year {
+  @apply block text-[8px] font-bold uppercase tracking-wider text-muted-foreground;
+}
+
+.gas-reserve-scenario-card__milestone-value {
+  @apply block text-[11px] font-bold text-foreground mt-0.5 tabular-nums;
+}
+
+.gas-reserve-scenario-card__endowment-note {
+  @apply text-[9px] text-muted-foreground mt-2 leading-snug;
+}
+
+.gas-reserve-scenario-card__implication {
+  @apply mt-2 text-[10px] text-muted-foreground leading-relaxed italic relative;
+}
+
+.gas-reserve-scenario-card__runway-wrap {
+  @apply mt-3 relative;
+}
+
+.gas-reserve-scenario-card__runway {
+  @apply h-2 rounded-full bg-muted/50 overflow-visible relative;
+}
+
+.gas-reserve-scenario-card__runway-fill {
+  @apply h-full rounded-full transition-all duration-300;
+}
+
+.gas-reserve-scenario-card__runway-marker {
+  @apply absolute top-1/2 -translate-y-1/2 w-2.5 h-2.5 rounded-full bg-background border-2 -ml-[5px];
+}
+
+.gas-reserve-archive-embed {
+  @apply mt-1;
+}
+
+.gas-reserve-live-week__body .grid-explorer-macro-gas-stat-row {
+  @apply grid-cols-2 gap-2;
+}
+
+.gas-reserve-live-week__body .grid-explorer-macro-gas-stat {
+  @apply p-2.5;
+}
+
+.gas-reserve-live-week__body .grid-explorer-macro-gas-stat__value {
+  @apply text-base;
+}
+
+.gas-reserve-live-week__body .grid-explorer-chart-area--md {
+  min-height: 12.5rem;
+  height: 12.5rem;
+}
+
 .grid-explorer-chart-card {
   @apply p-6 transition-colors duration-200;
+  overflow: visible;
 }
 
 .grid-explorer-chart-card:hover {
@@ -5562,6 +6730,11 @@ html.theme-dark .locale-toggle__btn--active:hover {
   justify-content: center;
 }
 
+.grid-explorer-donut-wrap--centered {
+  height: 12.5rem;
+  margin-bottom: 0;
+}
+
 .grid-explorer-donut-center {
   position: absolute;
   inset: 0;
@@ -5596,11 +6769,22 @@ html.theme-dark .locale-toggle__btn--active:hover {
 
 .grid-explorer-chart-area {
   @apply w-full min-h-[18rem] -mx-1;
+  overflow: visible;
+}
+
+.grid-explorer-chart-area--md {
+  min-height: 16rem;
+  height: 16rem;
 }
 
 .grid-explorer-chart-area--lg {
   min-height: 20rem;
   height: 20rem;
+}
+
+.grid-explorer-chart-area--split {
+  margin-left: 0;
+  margin-right: 0;
 }
 
 .grid-chart-tooltip {
@@ -6048,6 +7232,50 @@ button.grid-explorer-link {
 .grid-explorer .recharts-tooltip-wrapper {
   outline: none !important;
   z-index: 30 !important;
+}
+
+/* Recharts v3 accessibility layer focuses the SVG on click — suppress the focus ring */
+.grid-explorer :is(
+  .recharts-wrapper,
+  .recharts-surface,
+  .recharts-layer,
+  .recharts-pie,
+  .recharts-responsive-container,
+  .grid-explorer-chart-area svg,
+  .grid-explorer-chart-plot svg,
+  .grid-explorer-chart-frame svg
+) {
+  -webkit-tap-highlight-color: transparent;
+}
+
+.grid-explorer :is(
+  .recharts-wrapper,
+  .recharts-surface,
+  .recharts-layer,
+  .recharts-pie,
+  .recharts-responsive-container,
+  .grid-explorer-chart-area svg,
+  .grid-explorer-chart-plot svg,
+  .grid-explorer-chart-frame svg
+):focus,
+.grid-explorer :is(
+  .recharts-wrapper,
+  .recharts-surface,
+  .recharts-layer,
+  .recharts-pie,
+  .recharts-responsive-container,
+  .grid-explorer-chart-area svg,
+  .grid-explorer-chart-plot svg,
+  .grid-explorer-chart-frame svg
+):focus-visible {
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+.grid-explorer .recharts-tooltip-cursor,
+.grid-explorer .recharts-active-bar,
+.grid-explorer .recharts-active-shape {
+  outline: none !important;
 }
 
 .grid-explorer .recharts-active-dot circle {

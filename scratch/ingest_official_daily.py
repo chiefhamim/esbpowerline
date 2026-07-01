@@ -105,28 +105,81 @@ def report_energy_dates(path: Path) -> tuple[date | None, date | None]:
     return report, report - timedelta(days=1)
 
 
-def scrape_petrobangla() -> tuple[Path | None, Path | None]:
-    html = fetch("https://www.petrobangla.org.bd").decode("utf-8", errors="ignore")
-    pdfs = re.findall(r'(/uploads/[^"\'\s>]+\.pdf)', html, re.I)
-    chosen = next((p for p in pdfs if "daily" in p.lower() or "report" in p.lower()), pdfs[0] if pdfs else None)
-    if not chosen:
-        return None, None
-    url = chosen if chosen.startswith("http") else f"https://www.petrobangla.org.bd{chosen}"
-    data = fetch(url)
-    if data[:4] != b"%PDF":
-        return None, None
-    pdf_path = DL / "Petrobangla_latest.pdf"
-    pdf_path.write_bytes(data)
-    text_path = None
+def _petrobangla_pdf_urls() -> list[str]:
+    base = "https://www.petrobangla.org.bd"
+    urls: list[str] = []
     try:
-        import pypdf
-
-        text = "\n".join((page.extract_text() or "") for page in pypdf.PdfReader(str(pdf_path)).pages)
-        text_path = DL / "petrobangla_latest.txt"
-        text_path.write_text(text, encoding="utf-8")
+        html = fetch(base).decode("utf-8", errors="ignore")
+        for path in re.findall(r'(/uploads/[^"\'\s>]+\.pdf)', html, re.I):
+            urls.append(path if path.startswith("http") else f"{base}{path}")
     except Exception as e:
-        print(f"[pb] text extract failed: {e}")
-    return pdf_path, text_path
+        print(f"[pb] homepage scrape failed: {e}")
+    for name in (
+        "Daily_Report.pdf",
+        "Daily%20Report.pdf",
+        "Daily_Report_01-07-2026.pdf",
+        "Daily_Report_30-06-2026.pdf",
+    ):
+        url = f"{base}/uploads/editor/files/{name}"
+        if url not in urls:
+            urls.append(url)
+    return urls
+
+
+def scrape_petrobangla() -> tuple[Path | None, Path | None]:
+    cached_txt = DL / "petrobangla_latest.txt"
+    cached_pdf = DL / "Petrobangla_latest.pdf"
+    if cached_txt.exists() and cached_txt.stat().st_size > 500:
+        return cached_pdf if cached_pdf.exists() else None, cached_txt
+
+    for url in _petrobangla_pdf_urls():
+        try:
+            data = fetch(url)
+        except Exception:
+            continue
+        if data[:4] != b"%PDF" or len(data) < 5000:
+            continue
+        cached_pdf.write_bytes(data)
+        try:
+            import pypdf
+
+            text = "\n".join((page.extract_text() or "") for page in pypdf.PdfReader(str(cached_pdf)).pages)
+            if "II. Distribution" not in text:
+                continue
+            cached_txt.write_text(text, encoding="utf-8")
+            return cached_pdf, cached_txt
+        except Exception as e:
+            print(f"[pb] text extract failed for {url}: {e}")
+    return None, None
+
+
+def _gas_from_json(path: Path) -> dict | None:
+    if not path.exists():
+        return None
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except Exception:
+        return None
+    if not data.get("gasProductionData"):
+        return None
+    return {
+        "gasProductionData": data["gasProductionData"],
+        "gasDistributionData": data.get("gasDistributionData", []),
+    }
+
+
+def _nearest_gas_before(energy: date) -> dict | None:
+    for path in sorted(DAILY.glob("*.json"), reverse=True):
+        try:
+            file_date = date.fromisoformat(path.stem)
+        except ValueError:
+            continue
+        if file_date >= energy:
+            continue
+        gas = _gas_from_json(path)
+        if gas:
+            return gas
+    return None
 
 
 def load_parser():
@@ -137,16 +190,32 @@ def load_parser():
 
 
 def merge_record(parser, energy: date, pgcb_path: Path, pb_text: Path | None) -> dict | None:
-    text_path = DL / f"pgcb_{energy.isoformat()}.txt"
+    iso = energy.isoformat()
+    text_path = DL / f"pgcb_{iso}.txt"
     text_path.write_text(xlsx_to_text(pgcb_path), encoding="utf-8")
     pgcb = parser.parse_pgcb_file(str(text_path), energy)
     if not pgcb:
         return None
+
+    preserved = _gas_from_json(DAILY / f"{iso}.json")
     if pb_text and pb_text.exists():
         pb = parser.parse_petrobangla_file(str(pb_text))
         if pb:
             pgcb["gasProductionData"] = pb["gasProductionData"]
             pgcb["gasDistributionData"] = pb["gasDistributionData"]
+            return pgcb
+
+    if preserved:
+        pgcb["gasProductionData"] = preserved["gasProductionData"]
+        pgcb["gasDistributionData"] = preserved["gasDistributionData"]
+        print(f"[pb] {iso}: kept existing Petrobangla gas (live PDF unavailable)")
+        return pgcb
+
+    fallback = _nearest_gas_before(energy)
+    if fallback:
+        pgcb["gasProductionData"] = fallback["gasProductionData"]
+        pgcb["gasDistributionData"] = fallback["gasDistributionData"]
+        print(f"[pb] {iso}: carried forward gas from prior day (Petrobangla unavailable)")
     return pgcb
 
 
@@ -168,11 +237,8 @@ def main():
     if pb_text:
         print(f"[pb] gas text extracted ({pb_text.stat().st_size} bytes)")
 
-    # Jun 30 needs ERP ~5052 (report 2026-07-01). Also refresh prior synthetic days when files exist.
-    targets = [
-        "2026-06-25", "2026-06-26", "2026-06-27", "2026-06-28",
-        "2026-06-29", "2026-06-30",
-    ]
+    # Backlog catch-up: Jun 29 (report 2026-06-30) + Jun 30 (report 2026-07-01).
+    targets = ["2026-06-29", "2026-06-30"]
 
     written = []
     missing = []
@@ -207,7 +273,9 @@ def main():
 
     if "2026-06-30" in missing:
         print("\nJun 30 energy day requires PGCB report dated 2026-07-01 (ERP ~5052), not yet on erp.powergrid.gov.bd.")
-        print("Latest official energy day on ERP: 2026-06-28 (report 2026-06-29, erp_5050).")
+        if written:
+            latest = max(written)
+            print(f"Latest ingested energy day: {latest}.")
 
     return 0 if "2026-06-30" in written else 2
 
